@@ -3,7 +3,7 @@ import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/StartupScreen/start_up_screen.dart';
+import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -11,7 +11,7 @@ class Routes {
       case RoutesName.StartUpScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => StartUpScreen(),
+          builder: (_) => OnBoardingScreen(),
         );
 
       default:
