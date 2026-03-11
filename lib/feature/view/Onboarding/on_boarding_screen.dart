@@ -19,7 +19,8 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset(AppAssets.onBardingLogo, fit: BoxFit.scaleDown),
+          SvgPicture.asset(AppAssets.onBardingLogo, height: 120),
+          SizedBox(height: 20),
           Container(
             height: 50,
             width: 150,
