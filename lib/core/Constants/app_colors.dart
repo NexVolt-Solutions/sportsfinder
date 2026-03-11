@@ -1,49 +1,28 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color pimaryColor = Color(0xFF3A3559);
+  static const Color pimaryColor = Color(0xFF3B82F6);
   static const Color seconderyColor = Color(0xFF433C4E);
 
-  //BackGround Color
-  static const Color backGroundColor = Color(0xFFF0F0F3);
+  //Text Color
+  static const Color redColor = Color(0xFFDE3B40);
+  static const Color whiteColor = Color(0xFFFFFFFF);
+  static const Color purpleColor = Color(0xFF5A2C96);
+  static const Color greenColor = Color(0xFF02a744);
+  static const Color blueColor = Color(0xFF026df8);
+  static const Color orangeColor = Color(0xFFfda10d);
+  static const Color yellowColor = Color(0xFFfeb30c);
+  static const Color profileIconCircleColor = Color(0xFFdffbef);
 
-  //Text Colors
-  static const Color headingColor = Color(0xFF1E1A24);
-  static const Color subHeadingColor = Color(0xFF1E1A24);
-  static const Color notSelectedColor = Color(0xFF6D6D6D);
-  static const Color redColor = Colors.red;
+  //Bottem Sheet Icon and Circle Color
+  static const Color activeCircleColor = Color(0xFFE3E3E3);
+  static const Color inActiveColor = Color(0xFF6B717F);
+  static const Color activeColor = Color(0xFF000000);
 
-  //Default Color
-  static const Color blackColor = Colors.black;
-  static const Color white = Colors.white;
+  //Text Heading Color
+  static const Color headingTextColor = Color(0xFF171A1F);
+  static const Color subHeadingTextColor = Color(0xFF808080);
+  static const Color profileHeadingTextColor = Color(0xFF707174);
 
-  //Icon Color
-  static const Color iconColor = Color(0xFF798499);
-  static const Color fireColor = Color(0xFFEDAF29);
-
-  //Used for BoxShawdow blur colors
-  static const Color blurTopColor = Color(0xFFFAFBFF);
-  static const Color blurBottomColor = Color(0xFFA6ABBD);
-  static const Color arrowBlurColor = Color(0xFF6F8CB0);
-  static const Color subBlur1Color = Color(0xFFAEAEC0);
-  static const Color subBlur2Color = Color(0xFFDBE6F2);
-
-  //Button Color
-  static const Color buttonColor = Color(0xFF3A3559);
-
-  static const Color black = Color(0x1A000000);
-  static const Color customContinerColorDown = Color(0xFFFFFFFF);
-  static const Color customContainerColorUp = Color(0xFFAEAEC0);
-  static const Color grey = Colors.grey;
-
-  static const LinearGradient blackWhiteGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [white, customContinerColorDown],
-  );
-  static const LinearGradient containerGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [black, white],
-  );
+  //Profile Color
 }
