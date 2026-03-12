@@ -23,10 +23,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
           padding: EdgeInsets.symmetric(horizontal: 20),
           children: [
             Center(
-              child: Image.asset(
-                AppAssets.onBardingLogo,
-                fit: BoxFit.scaleDown,
-              ),
+              child: Image.asset(AppAssets.mainLogo, fit: BoxFit.scaleDown),
             ),
             Padding(
               padding: context.paddingSymmetricR(horizontal: 20, vertical: 30),
