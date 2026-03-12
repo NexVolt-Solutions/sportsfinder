@@ -43,7 +43,7 @@ class Routes {
                     AppText.noRouteFound,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: AppColors.headingTextColor,
+                      color: AppColors.blackcolor,
                       fontSize: context.sp(18),
                       fontWeight: FontWeight.bold,
                     ),
@@ -56,7 +56,7 @@ class Routes {
                     onTap: () => Navigator.pop(context),
                     child: const Icon(
                       Icons.arrow_back_ios,
-                      color: AppColors.headingTextColor,
+                      color: AppColors.blackcolor,
                     ),
                   ),
                 ),

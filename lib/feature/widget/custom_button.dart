@@ -43,7 +43,7 @@ class CustomButton extends StatelessWidget {
             titleText: text ?? '',
             titleSize: context.sp(16),
             titleWeight: FontWeight.w700,
-            titleColor: colorText ?? AppColors.whiteColor,
+            titleColor: colorText ?? AppColors.whitecolor,
           ),
         ),
       ),
