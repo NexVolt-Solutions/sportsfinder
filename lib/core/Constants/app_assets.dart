@@ -15,9 +15,9 @@ class AppAssets {
   //Match Level
   static const String beginnerIcon = "assets/icon/beginner.svg";
   static const String intermidateIcon = "assets/icon/intermediate.svg";
-  static const String advancIcon = "assets/icon/advance.svg";
+  static const String advanceIcon = "assets/icon/advance.svg";
 
-  static const String createMatchIcon = "assets/icon/add.svg";
+  static const String addIcon = "assets/icon/add.svg";
   static const String playerIcon = "assets/icon/people.svg";
 
   static const String locationIcon = "assets/icon/location.svg";
