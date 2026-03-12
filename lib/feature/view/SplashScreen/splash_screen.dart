@@ -11,7 +11,7 @@ class SplashScreen extends StatelessWidget {
       body: Stack(
         children: [
           Image.asset(
-            AppAssets.splashScreenBackFrame,
+            AppAssets.splashScreenBackImage,
             height: context.h(double.infinity),
             width: context.w(double.infinity),
             fit: BoxFit.fill,
