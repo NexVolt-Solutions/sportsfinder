@@ -12,6 +12,7 @@ class AppText {
   static const String password = 'Password';
 
   static const String continueWithGoogle = 'Continue with Google ';
+  static const String skip = 'Skip';
 
   //Auth sign up
   static const String createAccount = 'Create Account';
@@ -142,7 +143,7 @@ class AppText {
   static const String signUp = 'Sign Up';
   static const String signIn = 'Sign In';
   static const String login = 'Login';
-  static const String next = 'next';
+  static const String next = 'Next';
   static const String createMatches = 'Create Match';
   static const String joinMatches = 'Join Match';
   static const String saveChanges = 'Save Changes';
