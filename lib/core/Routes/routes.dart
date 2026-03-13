@@ -3,8 +3,6 @@ import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
-import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 
@@ -16,11 +14,11 @@ class Routes {
           settings: settings,
           builder: (_) => SplashScreen(),
         );
-      // case RoutesName.OnboardingScreen:
-      //   return MaterialPageRoute(
-      //     settings: settings,
-      //     builder: (_) => OnBoardingScreen(),
-      //   );
+      case RoutesName.OnboardingScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => OnBoardingScreen(),
+        );
       // case RoutesName.LoginScreen:
       //   return MaterialPageRoute(
       //     settings: settings,

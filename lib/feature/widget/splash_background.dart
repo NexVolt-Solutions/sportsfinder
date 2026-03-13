@@ -38,7 +38,7 @@ class SplashBackground extends StatelessWidget {
         ),
 
         // Your custom child content goes here
-        if (child != null) child!,
+        ?child,
       ],
     );
   }
