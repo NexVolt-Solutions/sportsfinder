@@ -7,10 +7,24 @@ class AppAssets {
   static const String batIcon = "assets/sport/bat.svg";
   static const String footBallIcon = "assets/sport/football.svg";
   static const String tableTennisIcon = "assets/sport/tableTennis.svg";
+  static const String calendarIcon = "assets/Icon/calendarIcon.svg";
+  static const String clockIcon = "assets/Icon/clockIcon.svg";
+  static const String doneTaskIcon = "assets/Icon/doneTaskIcon.svg";
 
   //Icon
   static const String backIcon = "assets/icon/back.svg";
   static const String nextIcon = "assets/icon/next.svg";
+
+  //BottomBar Icons
+  static const String chatIcon = "assets/bottomBarIcon/chatIcon.svg";
+  static const String homeIcon = "assets/bottomBarIcon/Home.svg";
+  static const String matchesIcon = "assets/bottomBarIcon/matchesIcon.svg";
+  static const String profileIcon = "assets/bottomBarIcon/Profile.svg";
+  static const String searchBarIcon = "assets/bottomBarIcon/Search.svg";
+
+  //Profile Icon
+  static const String editIcon = "assets/profile/editIcon.svg";
+  static const String shareIcon = "assets/profile/shareIcon.svg";
 
   //Match Level
   static const String beginnerIcon = "assets/icon/beginner.svg";
