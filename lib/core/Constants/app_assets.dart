@@ -1,6 +1,6 @@
 class AppAssets {
   //Main Logo
-  static const String mainLogo = "assets/logo/onBoardingLogo.png";
+  static const String mainLogo = "assets/logo/mainLogo.png";
 
   //Sport Icon
   static const String basketBallIcon = "assets/sport/basketball.svg";

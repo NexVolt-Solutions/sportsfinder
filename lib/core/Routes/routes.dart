@@ -16,21 +16,21 @@ class Routes {
           settings: settings,
           builder: (_) => SplashScreen(),
         );
-      case RoutesName.OnboardingScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => OnBoardingScreen(),
-        );
-      case RoutesName.LoginScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => LoginScreen(),
-        );
-      case RoutesName.SignInScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => SignInScreen(),
-        );
+      // case RoutesName.OnboardingScreen:
+      //   return MaterialPageRoute(
+      //     settings: settings,
+      //     builder: (_) => OnBoardingScreen(),
+      //   );
+      // case RoutesName.LoginScreen:
+      //   return MaterialPageRoute(
+      //     settings: settings,
+      //     builder: (_) => LoginScreen(),
+      //   );
+      // case RoutesName.SignInScreen:
+      //   return MaterialPageRoute(
+      //     settings: settings,
+      //     builder: (_) => SignInScreen(),
+      //   );
 
       default:
         return MaterialPageRoute(
