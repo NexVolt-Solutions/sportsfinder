@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/login_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
@@ -35,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: context.padSym(h: 20),
                   children: [
                     SizedBox(height: context.h(22)),
-                    AppBarWidget(onTap: () {}, title: AppText.appName),
+                    AppBarWidget(title: AppText.appName),
                     SizedBox(height: context.h(20)),
                     NormalText(
                       titleText: AppText.welcome,
@@ -88,15 +89,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     GmailButton(),
                     SizedBox(height: context.h(12)),
                     AuthFooterText(
-                      normalText: "Don’t have an account? ",
+                      normalText: "Already have an account? ",
                       actionText: "Sign Up",
                       onTap: () {
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (context) => const SignUpScreen(),
-                        //   ),
-                        // );
+                        Navigator.pushNamed(context, RoutesName.SignInScreen);
                       },
                     ),
                   ],
