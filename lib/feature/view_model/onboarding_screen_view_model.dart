@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 
 class OnboardingScreenViewModel extends ChangeNotifier {
   final PageController pageController = PageController();
@@ -57,10 +58,6 @@ class OnboardingScreenViewModel extends ChangeNotifier {
   }
 
   void onGetStarted(BuildContext context) {
-    // TODO: Navigator.pushReplacementNamed(context, AppRoutes.login);
-  }
-
-  void dispose() {
-    pageController.dispose();
+    Navigator.pushReplacementNamed(context, RoutesName.LoginScreen);
   }
 }

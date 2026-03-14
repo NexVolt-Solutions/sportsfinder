@@ -14,7 +14,7 @@ void main() {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        // home: OnBoardingScreen(),
+        // home: SplashScreen(),
         initialRoute: RoutesName.SplashScreen,
         onGenerateRoute: Routes.generateRoute,
       ),
