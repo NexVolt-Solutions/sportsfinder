@@ -26,7 +26,7 @@ class SplashBackground extends StatelessWidget {
         ),
         // Mid-left circle
         Positioned(
-          top: context.h(660),
+          top: context.h(490),
           left: -context.w(55),
           child: _GlowCircle(context: context),
         ),
@@ -52,13 +52,14 @@ class _GlowCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: context.h(132),
-      width: context.w(144),
+      height: context.h(150),
+      width: context.w(150),
       decoration: BoxDecoration(
+        // color: AppColors.blue20,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.bluecolor.withOpacity(0.22),
+            color: AppColors.blue20,
             offset: const Offset(5, 5),
             blurRadius: 40,
           ),
