@@ -36,7 +36,7 @@ class AppBarWidget extends StatelessWidget {
                     ),
                   ),
                 )
-              : SizedBox(height: context.sh(40), width: context.sw(40)),
+              : SizedBox(height: context.sh(20), width: context.sw(20)),
 
           /// 🏷 Title
           Expanded(

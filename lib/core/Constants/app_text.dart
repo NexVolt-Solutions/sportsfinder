@@ -21,9 +21,9 @@ class AppText {
   static const String phoneNumber = 'Phone Number';
   static const String confirmPassword = 'Confirm Password';
 
-  static const String iAgreeToThe = 'I agree to the';
-  static const String termsOfService = 'Terms of Service';
-  static const String and = 'and';
+  static const String iAgreeToThe = 'I agree to the ';
+  static const String termsOfService = 'Terms of Service ';
+  static const String and = 'and ';
   static const String privacyPolicy = 'Privacy Policy';
 
   //Skill Level
