@@ -38,8 +38,7 @@ class CustomButton extends StatelessWidget {
         child: Padding(
           padding: padding ?? context.paddingSymmetricR(horizontal: 0),
           child: NormalText(
-            crossAxisAlignment:
-                crossAxisAlignment ?? CrossAxisAlignment.center, // ✅ default
+            crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
             titleText: text ?? '',
             titleSize: context.sp(16),
             titleWeight: FontWeight.w700,

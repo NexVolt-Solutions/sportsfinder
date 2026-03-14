@@ -14,6 +14,7 @@ class AppAssets {
   //Icon
   static const String backIcon = "assets/icon/back.svg";
   static const String nextIcon = "assets/icon/next.svg";
+  static const String gmailIcon = "assets/icon/google.svg";
 
   //BottomBar Icons
   static const String chatIcon = "assets/bottomBarIcon/chatIcon.svg";
