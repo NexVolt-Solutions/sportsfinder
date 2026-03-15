@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/bottom_bar_screen_view_model.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/splash_background.dart';
 
 class BottomBarScreen extends StatefulWidget {
