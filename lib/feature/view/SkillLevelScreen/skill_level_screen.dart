@@ -4,7 +4,7 @@ import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view_model/card_icon_widget.dart';
+import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
@@ -75,7 +75,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
 
                         borderColor: isSelected
                             ? AppColors.bluecolor
-                            : AppColors.blue10,
+                            : Colors.transparent,
                         onTap: () {
                           model.selectSkill(index);
                         },
@@ -102,6 +102,24 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                       );
                     },
                   ),
+
+                  // Container(
+                  //   height: 90,
+                  //   width: 300,
+                  //   decoration: BoxDecoration(
+                  //     color: AppColors.bluecolor.withOpacity(.9),
+                  //     borderRadius: BorderRadius.circular(context.radiusR(12)),
+
+                  //     boxShadow: [
+                  //       BoxShadow(
+                  //         color: AppColors.greylight60,
+                  //         offset: Offset(0, 4),
+                  //         blurRadius: 95,
+                  //         blurStyle: BlurStyle.inner,
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                 ],
               ),
             ),

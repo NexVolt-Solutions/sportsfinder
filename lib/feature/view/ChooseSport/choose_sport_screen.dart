@@ -4,7 +4,7 @@ import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view_model/card_icon_widget.dart';
+import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/view_model/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
