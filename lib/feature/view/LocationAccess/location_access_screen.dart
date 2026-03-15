@@ -59,10 +59,14 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
             child: ListView(
               padding: context.padSym(h: 20),
               children: [
-                SizedBox(height: context.h(22)),
-                AppBarWidget(
-                  onTap: () => Navigator.pop(context),
-                  title: AppText.appName,
+                CustomButton(
+                  padding: context.padSym(h: 125),
+                  isEnabled: true,
+                  text: AppText.allowLocation,
+                  color: AppColors.bluecolor,
+                  onTap: () {
+                    Navigator.pushNamed(context, RoutesName.HomeScreen);
+                  },
                 ),
                 SizedBox(height: context.h(234)),
                 SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),

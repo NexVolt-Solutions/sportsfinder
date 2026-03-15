@@ -11,6 +11,7 @@ class AppAssets {
   static const String volleyBallIcon = "assets/sport/volleyball.svg";
   static const String clockIcon = "assets/Icon/clockIcon.svg";
   static const String doneTaskIcon = "assets/Icon/doneTaskIcon.svg";
+  static const String notificationIcon = "assets/icon/notificationIcon.svg";
 
   //Icon
   static const String backIcon = "assets/icon/back.svg";

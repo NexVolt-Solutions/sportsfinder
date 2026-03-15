@@ -32,7 +32,7 @@ class CardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(
             borderRadius ?? context.radiusR(12),
           ),
-          border: Border.all(color: borderColor ?? AppColors.bluecolor),
+          border: Border.all(color: borderColor ?? Colors.transparent),
         ),
         child: child ?? const SizedBox(),
       ),
