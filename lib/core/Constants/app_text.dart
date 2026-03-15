@@ -1,5 +1,6 @@
 /// SportFinding App — Centralized Text Constants
 /// All UI strings extracted from the app's screens.
+library;
 
 class AppText {
   AppText._();
