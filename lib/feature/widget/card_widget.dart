@@ -22,9 +22,8 @@ class CardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(borderRadius ?? context.radiusR(12)),
       child: Container(
         padding: padding ?? context.padSym(h: 12, v: 12),
         margin: context.padSym(v: 12),

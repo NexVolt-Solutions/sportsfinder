@@ -6,4 +6,5 @@ class RoutesName {
   static const String LoginScreen = 'login_screen';
   static const String SignInScreen = 'sigin_screen';
   static const String SkillLevelScreen = 'skill_level_screen';
+  static const String ChooseSportScreen = 'choose_sport_screen';
 }

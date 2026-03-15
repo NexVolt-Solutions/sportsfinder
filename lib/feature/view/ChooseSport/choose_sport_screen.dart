@@ -3,28 +3,27 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/card_icon_widget.dart';
-import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
+import 'package:sport_finding/feature/view_model/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/splash_background.dart';
 
-class SkillLevelScreen extends StatefulWidget {
-  const SkillLevelScreen({super.key});
+class ChooseSportScreen extends StatefulWidget {
+  const ChooseSportScreen({super.key});
 
   @override
-  State<SkillLevelScreen> createState() => _SkillLevelScreenState();
+  State<ChooseSportScreen> createState() => _ChooseSportScreenState();
 }
 
-class _SkillLevelScreenState extends State<SkillLevelScreen> {
+class _ChooseSportScreenState extends State<ChooseSportScreen> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => SkillLevelScreenViewModel(),
-      child: Consumer<SkillLevelScreenViewModel>(
+      create: (context) => ChooseSportScreenViewModel(),
+      child: Consumer<ChooseSportScreenViewModel>(
         builder: (context, model, child) => Scaffold(
           backgroundColor: Colors.white,
           bottomNavigationBar: Padding(
@@ -38,9 +37,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
               isEnabled: true,
               text: AppText.continueButton,
               color: AppColors.bluecolor,
-              onTap: () {
-                Navigator.pushNamed(context, RoutesName.ChooseSportScreen);
-              },
+              onTap: () {},
             ),
           ),
           body: SafeArea(
@@ -49,53 +46,60 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                 padding: context.padSym(h: 20),
                 children: [
                   SizedBox(height: context.h(22)),
-                  AppBarWidget(title: AppText.appName),
+                  AppBarWidget(
+                    onTap: () => Navigator.pop(context),
+                    title: AppText.appName,
+                  ),
                   SizedBox(height: context.h(20)),
                   NormalText(
-                    titleText: AppText.skillLevelTitle,
+                    titleText: AppText.chooseSportsTitle,
                     titleSize: context.sp(20),
                     titleColor: AppColors.blackcolor,
                     titleWeight: FontWeight.w600,
-                    subText: AppText.skillLevelDesc,
+                    subText: AppText.chooseSportsDesc,
                     subColor: AppColors.greylight60,
                     subSize: context.sp(16),
                     subWeight: FontWeight.w500,
                   ),
                   SizedBox(height: context.h(20)),
-                  ListView.builder(
+                  GridView.builder(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: model.skillLevelData.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2, // 2 cards per row
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.1,
+                        ),
                     itemBuilder: (context, index) {
                       final data = model.skillLevelData[index];
                       bool isSelected = model.selectedIndex == index;
 
                       return CardWidget(
                         padding: context.padSym(h: 12, v: 14),
-
                         borderColor: isSelected
                             ? AppColors.bluecolor
                             : AppColors.blue10,
                         onTap: () {
                           model.selectSkill(index);
                         },
-                        child: Row(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             CardIconWidget(
                               imageAsset: data['Image'],
                               isSelected: isSelected,
                             ),
-                            SizedBox(width: context.h(20)),
+
+                            SizedBox(height: context.h(12)),
+
                             NormalText(
                               titleText: data['title'],
                               titleSize: context.sp(14),
                               titleColor: AppColors.blackcolor,
                               titleWeight: FontWeight.w500,
-
-                              subText: data['subTitle'],
-                              subColor: AppColors.greydark,
-                              subSize: context.sp(12),
-                              subWeight: FontWeight.w400,
                             ),
                           ],
                         ),
