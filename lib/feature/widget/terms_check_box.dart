@@ -20,8 +20,8 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
       children: [
         Checkbox(
           value: isChecked,
-          fillColor: MaterialStateProperty.resolveWith((states) {
-            if (states.contains(MaterialState.selected)) {
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
               return AppColors.bluecolor;
             }
             return AppColors.whitecolor;

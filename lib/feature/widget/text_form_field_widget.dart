@@ -23,9 +23,12 @@ class TextFormFieldWidget extends StatelessWidget {
     return TextFormField(
       controller: controller,
       validator: validator,
+
       keyboardType: keyboardType ?? TextInputType.text,
       style: TextStyle(fontSize: context.sp(14), color: AppColors.blackcolor),
       decoration: InputDecoration(
+        alignLabelWithHint: true,
+
         label: label != null
             ? Text(
                 label!,

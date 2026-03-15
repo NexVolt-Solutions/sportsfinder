@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 
 class SplashScreenViewModel extends ChangeNotifier {
-  Future<dynamic> loginto(BuildContext context) async {
-    await Future.delayed(Duration(seconds: 3));
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => OnBoardingScreen()),
-    );
+  Future<void> loginto(BuildContext context) async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (!context.mounted) return;
+    Navigator.pushReplacementNamed(context, RoutesName.OnboardingScreen);
   }
 }

@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/feature/model/skill_level.dart';
 
 class SkillLevelScreenViewModel extends ChangeNotifier {
   int selectedIndex = -1;
 
-  List<Map<String, dynamic>> skillLevelData = [
-    {
-      'Image': AppAssets.beginnerIcon,
-      'title': AppText.beginner,
-      'subTitle': AppText.casualPlayer,
-    },
-    {
-      'Image': AppAssets.intermidateIcon,
-      'title': AppText.intermediate,
-      'subTitle': AppText.regularPlayer,
-    },
-    {
-      'Image': AppAssets.advanceIcon,
-      'title': AppText.advanced,
-      'subTitle': AppText.advanced,
-    },
+  final List<SkillLevel> skillLevels = [
+    SkillLevel(
+      imagePath: AppAssets.beginnerIcon,
+      title: AppText.beginner,
+      subTitle: AppText.casualPlayer,
+    ),
+    SkillLevel(
+      imagePath: AppAssets.intermidateIcon,
+      title: AppText.intermediate,
+      subTitle: AppText.regularPlayer,
+    ),
+    SkillLevel(
+      imagePath: AppAssets.advanceIcon,
+      title: AppText.advanced,
+      subTitle: AppText.competitiveAthlete,
+    ),
   ];
 
   void selectSkill(int index) {

@@ -11,27 +11,29 @@ class AppAssets {
   static const String volleyBallIcon = "assets/sport/volleyball.svg";
   static const String clockIcon = "assets/Icon/clockIcon.svg";
   static const String doneTaskIcon = "assets/Icon/doneTaskIcon.svg";
+  static const String notificationIcon = "assets/icon/notificationIcon.svg";
 
   //Icon
   static const String backIcon = "assets/icon/back.svg";
   static const String nextIcon = "assets/icon/next.svg";
+  static const String farwordIcon = "assets/icon/farwordIcon.svg";
   static const String gmailIcon = "assets/icon/google.svg";
 
-  //BottomBar Icons
-  static const String chatIcon = "assets/bottomBarIcon/chatIcon.svg";
-  static const String homeIcon = "assets/bottomBarIcon/Home.svg";
-  static const String matchesIcon = "assets/bottomBarIcon/matchesIcon.svg";
-  static const String profileIcon = "assets/bottomBarIcon/Profile.svg";
-  static const String searchBarIcon = "assets/bottomBarIcon/Search.svg";
+  //BottomBar Icons (match exact filenames: case-sensitive on Android)
+  static const String chatIcon = "assets/bottomBarIcon/chat.svg";
+  static const String homeIcon = "assets/bottomBarIcon/home.svg";
+  static const String matchesIcon = "assets/bottomBarIcon/matches.svg";
+  static const String profileIcon = "assets/bottomBarIcon/profile.svg";
+  static const String searchBarIcon = "assets/bottomBarIcon/search.svg";
 
   //Profile Icon
   static const String editIcon = "assets/profile/editIcon.svg";
   static const String shareIcon = "assets/profile/shareIcon.svg";
 
   //Onboarding Screen Images
-  static const String firstImage = "assets/onBoarding/1.png";
-  static const String secondImage = "assets/onBoarding/2.png";
-  static const String thirdImage = "assets/onBoarding/3.png";
+  static const String firstImage = "assets/onBoarding/1.svg";
+  static const String secondImage = "assets/onBoarding/2.svg";
+  static const String thirdImage = "assets/onBoarding/3.svg";
 
   //Match Level
   static const String beginnerIcon = "assets/icon/beginner.svg";

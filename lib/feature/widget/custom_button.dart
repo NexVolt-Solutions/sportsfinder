@@ -30,6 +30,7 @@ class CustomButton extends StatelessWidget {
     return GestureDetector(
       onTap: isEnabled ? onTap : null,
       child: Container(
+        width: double.infinity,
         padding: context.padSym(v: 13),
         decoration: BoxDecoration(
           color: color,
@@ -41,7 +42,7 @@ class CustomButton extends StatelessWidget {
             crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
             titleText: text ?? '',
             titleSize: context.sp(16),
-            titleWeight: FontWeight.w700,
+            titleWeight: FontWeight.w500,
             titleColor: colorText ?? AppColors.whitecolor,
           ),
         ),

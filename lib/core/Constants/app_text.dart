@@ -1,5 +1,6 @@
 /// SportFinding App — Centralized Text Constants
 /// All UI strings extracted from the app's screens.
+library;
 
 class AppText {
   AppText._();
@@ -83,6 +84,7 @@ class AppText {
   static const String navMatches = 'Matches';
   static const String navDiscover = 'Discover';
   static const String navChat = 'Chat';
+  static const String navHome = 'Home';
   static const String navProfile = 'Profile';
 
   // ─── Home / Dashboard ────────────────────────────────────────────────────────

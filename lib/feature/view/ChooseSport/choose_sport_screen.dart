@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view_model/card_icon_widget.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/view_model/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
@@ -42,42 +43,50 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
               },
             ),
           ),
-          body: SafeArea(
-            child: SplashBackground(
-              child: ListView(
-                padding: context.padSym(h: 20),
-                children: [
-                  SizedBox(height: context.h(22)),
-                  AppBarWidget(
-                    onTap: () => Navigator.pop(context),
-                    title: AppText.appName,
+          child: CustomButton(
+            isEnabled: true,
+            text: AppText.continueButton,
+            color: AppColors.bluecolor,
+            onTap: () {
+              Navigator.pushNamed(context, RoutesName.LocationAccessScreen);
+            },
+          ),
+        ),
+        body: SafeArea(
+          child: SplashBackground(
+            child: ListView(
+              padding: context.padSym(h: 20),
+              children: [
+                SizedBox(height: context.h(22)),
+                AppBarWidget(
+                  onTap: () => Navigator.pop(context),
+                  title: AppText.appName,
+                ),
+                SizedBox(height: context.h(20)),
+                NormalText(
+                  titleText: AppText.chooseSportsTitle,
+                  titleSize: context.sp(20),
+                  titleColor: AppColors.blackcolor,
+                  titleWeight: FontWeight.w600,
+                  subText: AppText.chooseSportsDesc,
+                  subColor: AppColors.greylight60,
+                  subSize: context.sp(16),
+                  subWeight: FontWeight.w500,
+                ),
+                SizedBox(height: context.h(20)),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: model.skillLevelData.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 cards per row
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.1,
                   ),
-                  SizedBox(height: context.h(20)),
-                  NormalText(
-                    titleText: AppText.chooseSportsTitle,
-                    titleSize: context.sp(20),
-                    titleColor: AppColors.blackcolor,
-                    titleWeight: FontWeight.w600,
-                    subText: AppText.chooseSportsDesc,
-                    subColor: AppColors.greylight60,
-                    subSize: context.sp(16),
-                    subWeight: FontWeight.w500,
-                  ),
-                  SizedBox(height: context.h(20)),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: model.skillLevelData.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, // 2 cards per row
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.1,
-                        ),
-                    itemBuilder: (context, index) {
-                      final data = model.skillLevelData[index];
-                      bool isSelected = model.selectedIndex == index;
+                  itemBuilder: (context, index) {
+                    final data = model.skillLevelData[index];
+                    bool isSelected = model.selectedIndex == index;
 
                       return CardWidget(
                         padding: context.padSym(h: 12, v: 14),
