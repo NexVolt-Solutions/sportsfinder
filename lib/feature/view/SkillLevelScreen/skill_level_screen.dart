@@ -7,6 +7,7 @@ import 'package:sport_finding/feature/view_model/card_icon_widget.dart';
 import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/splash_background.dart';
 
@@ -25,6 +26,20 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
       child: Consumer<SkillLevelScreenViewModel>(
         builder: (context, model, child) => Scaffold(
           backgroundColor: Colors.white,
+          bottomNavigationBar: Padding(
+            padding: EdgeInsetsGeometry.only(
+              top: context.h(3),
+              left: context.w(20),
+              right: context.w(20),
+              bottom: context.text(20),
+            ),
+            child: CustomButton(
+              isEnabled: true,
+              text: AppText.continueButton,
+              color: AppColors.bluecolor,
+              onTap: () {},
+            ),
+          ),
           body: SafeArea(
             child: SplashBackground(
               child: ListView(
