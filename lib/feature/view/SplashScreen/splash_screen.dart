@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -13,11 +14,13 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  SplashScreenViewModel splashScreen = SplashScreenViewModel();
   @override
   void initState() {
-    splashScreen.loginto(context);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SplashScreenViewModel>().loginto(context);
+    });
   }
 
   @override
@@ -38,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.bluecolor.withOpacity(0.2),
-                          offset: Offset(5, 5),
+                          offset: const Offset(5, 5),
                           blurRadius: 80,
                         ),
                       ],
