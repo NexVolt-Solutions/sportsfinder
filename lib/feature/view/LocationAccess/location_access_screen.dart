@@ -31,7 +31,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
               top: context.h(3),
               left: context.w(20),
               right: context.w(20),
-              bottom: context.text(10),
+              bottom: context.text(12),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
