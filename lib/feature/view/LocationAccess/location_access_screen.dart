@@ -43,7 +43,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                   text: AppText.allowLocation,
                   color: AppColors.bluecolor,
                   onTap: () {
-                    Navigator.pushNamed(context, RoutesName.BottomBarScreen);
+                    Navigator.pushNamed(context, RoutesName.HomeScreen);
                   },
                 ),
                 SizedBox(height: context.h(12)),
