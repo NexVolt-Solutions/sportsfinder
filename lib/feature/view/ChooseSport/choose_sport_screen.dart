@@ -37,7 +37,9 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
               isEnabled: true,
               text: AppText.continueButton,
               color: AppColors.bluecolor,
-              onTap: () {},
+              onTap: () {
+                // Navigator.pushNamed(context, routeName);
+              },
             ),
           ),
           body: SafeArea(
@@ -92,9 +94,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                               imageAsset: data['Image'],
                               isSelected: isSelected,
                             ),
-
                             SizedBox(height: context.h(12)),
-
                             NormalText(
                               titleText: data['title'],
                               titleSize: context.sp(14),
