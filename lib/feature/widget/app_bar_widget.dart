@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -21,7 +20,6 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final Color? iconColor;
 
   static const double _kToolbarHeight = 56;
-  static const double _kHorizontalPadding = 16;
   static const double _kIconSize = 24;
 
   const AppBarWidget({
@@ -45,19 +43,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       return GestureDetector(
         onTap: leadingTap,
         behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: SvgPicture.asset(
-            AppAssets.backIcon,
-            width: _kIconSize,
-            height: _kIconSize,
-            colorFilter: ColorFilter.mode(
-              iconColor ?? context.appColors.greyDark,
-              BlendMode.srcIn,
-            ),
-            fit: BoxFit.contain,
-          ),
-        ),
+        child: SvgPicture.asset(AppAssets.backIcon, fit: BoxFit.contain),
       );
     }
     return const SizedBox(width: _kIconSize + 24, height: _kIconSize);
@@ -68,9 +54,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       return Center(
         child: Text(
           title!,
-          style: context.appText.text16Bold.copyWith(
-            color: context.appColors.onSurface,
-          ),
+          style: context.appText.text18Bold,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -87,20 +71,20 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: _kToolbarHeight,
-      padding: EdgeInsets.only(
-        left: context.sw(_kHorizontalPadding),
-        right: context.sw(_kHorizontalPadding),
-      ),
-      color: AppColors.transparent,
-      child: Row(
-        children: [
-          _buildLeading(context),
-          Expanded(child: _buildCenter(context)),
-          _buildTrailing(context),
-        ],
-      ),
+    return Column(
+      children: [
+        SizedBox(height: context.h(20)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildLeading(context),
+            Expanded(child: _buildCenter(context)),
+            _buildTrailing(context),
+          ],
+        ),
+        SizedBox(height: context.h(20)),
+      ],
     );
   }
 }

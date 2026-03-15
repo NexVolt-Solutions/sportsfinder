@@ -24,52 +24,67 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
       builder: (context, model, child) => MainFrame(
-        appBar: AppBarWidget(title: AppText.appName),
-        bottomNavigationBar: Padding(
-          padding: EdgeInsetsGeometry.only(
-            top: context.h(3),
-            left: context.w(20),
-            right: context.w(20),
-            bottom: context.text(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CustomButton(
-                text: AppText.allowLocation,
-                color: context.appColors.primary,
-                onTap: () {
-                  Navigator.pushNamed(context, RoutesName.BottomBarScreen);
-                },
-              ),
-              SizedBox(height: context.h(12)),
-              NormalText(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                titleText: AppText.skipForNow,
-                titleStyle: context.appText.text14W400,
-                titleColor: context.appColors.greyDark,
-              ),
-              SizedBox(height: context.h(20)),
-            ],
-          ),
-        ),
-        child: ListView(
-          padding: context.padSym(h: 20),
+        child: Column(
           children: [
-            SizedBox(height: context.h(234)),
-            SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),
-            SizedBox(height: context.h(20)),
-            Padding(
-              padding: context.padSym(h: 30),
-              child: NormalText(
+            AppBarWidget(title: AppText.appName),
+
+            Flexible(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                titleText: AppText.allowLocationAccess,
-                titleStyle: context.appText.text18W600,
-                titleColor: context.appColors.onSurface,
-                subText: AppText.allowLocationDesc,
-                subStyle: context.appText.text16W400,
-                subAlign: TextAlign.center,
-                subColor: context.appColors.greyDark,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        AppAssets.locationIcon,
+                        fit: BoxFit.scaleDown,
+                      ),
+                      SizedBox(height: context.h(20)),
+                      Padding(
+                        padding: context.padSym(h: 30),
+                        child: NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          titleText: AppText.allowLocationAccess,
+                          titleStyle: context.appText.text18W600,
+                          titleColor: context.appColors.onSurface,
+                          subText: AppText.allowLocationDesc,
+                          subStyle: context.appText.text16W400,
+                          subAlign: TextAlign.center,
+                          subColor: context.appColors.greyDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsetsGeometry.only(
+                top: context.h(3),
+                left: context.w(20),
+                right: context.w(20),
+                bottom: context.text(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomButton(
+                    text: AppText.allowLocation,
+                    color: context.appColors.primary,
+                    onTap: () {
+                      Navigator.pushNamed(context, RoutesName.BottomBarScreen);
+                    },
+                  ),
+                  SizedBox(height: context.h(12)),
+                  NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: AppText.skipForNow,
+                    titleStyle: context.appText.text14W400,
+                    titleColor: context.appColors.greyDark,
+                  ),
+                  SizedBox(height: context.h(20)),
+                ],
               ),
             ),
           ],

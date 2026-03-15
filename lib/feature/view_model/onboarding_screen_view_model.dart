@@ -2,27 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/model/onboarding.dart';
 
 class OnboardingScreenViewModel extends ChangeNotifier {
   final PageController pageController = PageController();
   int currentIndex = 0;
+  bool _isNavigating = false;
 
-  List<Map<String, dynamic>> onBoardingImages = [
-    {
-      'Image': AppAssets.firstImage,
-      'title': AppText.onboardingTitle1,
-      'subTitle': AppText.onboardingDesc1,
-    },
-    {
-      'Image': AppAssets.secondImage,
-      'title': AppText.onboardingTitle2,
-      'subTitle': AppText.onboardingDesc2,
-    },
-    {
-      'Image': AppAssets.thirdImage,
-      'title': AppText.onboardingTitle3,
-      'subTitle': AppText.onboardingDesc3,
-    },
+  List<OnboardingModel> onBoardingImages = [
+    OnboardingModel(
+      image: AppAssets.firstImage,
+      title: AppText.onboardingTitle1,
+      subTitle: AppText.onboardingDesc1,
+    ),
+    OnboardingModel(
+      image: AppAssets.secondImage,
+      title: AppText.onboardingTitle2,
+      subTitle: AppText.onboardingDesc2,
+    ),
+    OnboardingModel(
+      image: AppAssets.thirdImage,
+      title: AppText.onboardingTitle3,
+      subTitle: AppText.onboardingDesc3,
+    ),
   ];
 
   bool get isLastPage => currentIndex == onBoardingImages.length - 1;
@@ -58,7 +60,10 @@ class OnboardingScreenViewModel extends ChangeNotifier {
   }
 
   void onGetStarted(BuildContext context) {
-    Navigator.pushReplacementNamed(context, RoutesName.LoginScreen);
+    if (_isNavigating) return;
+    _isNavigating = true;
+    Navigator.pushReplacementNamed(context, RoutesName.LoginScreen)
+        .whenComplete(() => _isNavigating = false);
   }
 
   @override

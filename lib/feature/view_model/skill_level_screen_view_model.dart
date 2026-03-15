@@ -6,6 +6,8 @@ import 'package:sport_finding/feature/model/skill_level.dart';
 class SkillLevelScreenViewModel extends ChangeNotifier {
   int selectedIndex = -1;
 
+  bool get hasSelection => selectedIndex >= 0;
+
   final List<SkillLevel> skillLevels = [
     SkillLevel(
       imagePath: AppAssets.beginnerIcon,

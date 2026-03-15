@@ -8,7 +8,7 @@ void main() {
     MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      initialRoute: RoutesName.LoginScreen,
+      initialRoute: RoutesName.SplashScreen,
       onGenerateRoute: Routes.generateRoute,
     ),
   );
