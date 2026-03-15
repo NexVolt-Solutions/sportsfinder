@@ -6,7 +6,6 @@ void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      // home: SplashScreen(),
       initialRoute: RoutesName.SplashScreen,
       onGenerateRoute: Routes.generateRoute,
     ),
