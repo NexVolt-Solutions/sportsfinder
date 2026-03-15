@@ -18,7 +18,7 @@ class AppAssets {
   static const String farwordIcon = "assets/icon/farwordIcon.svg";
   static const String gmailIcon = "assets/icon/google.svg";
 
-  //BottomBar Icons
+  //BottomBar Icons (match exact filenames: case-sensitive on Android)
   static const String chatIcon = "assets/bottomBarIcon/chat.svg";
   static const String homeIcon = "assets/bottomBarIcon/home.svg";
   static const String matchesIcon = "assets/bottomBarIcon/matches.svg";

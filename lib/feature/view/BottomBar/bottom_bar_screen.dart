@@ -19,14 +19,15 @@ class BottomBarScreen extends StatelessWidget {
 class _BottomBarContent extends StatelessWidget {
   const _BottomBarContent();
 
-  static const double _barHeight = 56;
+  static const double _barHeight = 64;
   static const double _barBottomPadding = 20;
   static const double _barRadius = 8;
   static const double _homeButtonSize = 48;
+  static const double _navIconSize = 22;
   static const double _barShadowBlur = 12;
   static const double _barShadowOffset = 4;
-  static const double _navItemIconLabelGap = 4;
-  static const double _navLabelFontSize = 12;
+  static const double _navItemIconLabelGap = 2;
+  static const double _navLabelFontSize = 10;
 
   Widget _body(BuildContext context, int selectedIndex) {
     switch (selectedIndex) {
@@ -65,13 +66,17 @@ class _BottomBarContent extends StatelessWidget {
         children: [
           SvgPicture.asset(
             iconPath,
+            width: _navIconSize,
+            height: _navIconSize,
             colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
           ),
-          SizedBox(height: context.sh(_navItemIconLabelGap)),
+          SizedBox(height: _navItemIconLabelGap),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: context.sp(_navLabelFontSize),
+              fontSize: _navLabelFontSize,
               fontWeight: FontWeight.w500,
               color: color,
             ),
@@ -166,15 +171,11 @@ class _BottomBarContent extends StatelessWidget {
                 ),
                 // Center Home button (centered, slightly above bar)
                 Positioned(
-                  bottom: _barHeight / 2 - _homeButtonSize / 1.2,
+                  bottom: _barHeight / 2 - _homeButtonSize / 1.1,
                   child: GestureDetector(
                     onTap: () =>
                         vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
-                    child: SvgPicture.asset(
-                      AppAssets.homeIcon,
-                      width: _homeButtonSize,
-                      height: _homeButtonSize,
-                    ),
+                    child: SvgPicture.asset(AppAssets.homeIcon),
                   ),
                 ),
               ],
