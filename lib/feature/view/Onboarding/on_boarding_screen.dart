@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/onboarding_screen_view_model.dart';
@@ -28,7 +28,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   Widget build(BuildContext context) {
     return Consumer<OnboardingScreenViewModel>(
       builder: (context, model, child) => Scaffold(
-        backgroundColor: AppColors.whitecolor,
+        backgroundColor: context.appColors.surface,
         bottomNavigationBar: Padding(
           padding: EdgeInsetsGeometry.only(
             top: context.h(3),
@@ -38,7 +38,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
           ),
           child: CustomButton(
             text: model.isLastPage ? AppText.next : AppText.next,
-            color: AppColors.bluecolor,
+            color: context.appColors.primary,
             onTap: () => model.onNextTapped(context),
           ),
         ),
@@ -66,9 +66,8 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                               onTap: () => model.onSkipTapped(context),
                               child: NormalText(
                                 titleText: AppText.skip,
-                                titleSize: context.text(16),
-                                titleColor: AppColors.greydark,
-                                titleWeight: FontWeight.w500,
+                                titleStyle: context.appText.text16W500,
+                                titleColor: context.appColors.greyDark,
                               ),
                             ),
                     ],
@@ -88,14 +87,12 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                             NormalText(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               titleText: data['title'],
-                              titleSize: context.text(20),
-                              titleColor: AppColors.blackcolor,
-                              titleWeight: FontWeight.w600,
+                              titleStyle: context.appText.text18W600,
+                              titleColor: context.appColors.onSurface,
                               subText: data['subTitle'],
+                              subStyle: context.appText.text16W400,
                               subAlign: TextAlign.center,
-                              subColor: AppColors.greydark,
-                              subSize: context.text(16),
-                              subWeight: FontWeight.w400,
+                              subColor: context.appColors.greyDark,
                               sizeBoxheight: context.h(1),
                             ),
                           ],

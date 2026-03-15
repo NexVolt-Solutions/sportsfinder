@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
@@ -38,13 +38,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: context.h(20)),
                   NormalText(
                     titleText: AppText.welcomeBack,
-                    titleSize: context.sp(20),
-                    titleColor: AppColors.blackcolor,
-                    titleWeight: FontWeight.w600,
+                    titleStyle: context.appText.text18W600,
                     subText: AppText.loginToContinue,
-                    subColor: AppColors.greylight60,
-                    subSize: context.sp(16),
-                    subWeight: FontWeight.w500,
+                    subStyle: context.appText.text16W400,
+                    subColor: context.appColors.greyLight60,
                   ),
                   SizedBox(height: context.h(20)),
                   TextFormFieldWidget(
@@ -70,9 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: context.h(12)),
                   NormalText(
                     titleText: AppText.forgotPassword,
-                    titleColor: AppColors.greylight60,
-                    titleSize: context.text(14),
-                    titleWeight: FontWeight.w400,
+                    titleStyle: context.appText.text14W400,
+                    titleColor: context.appColors.greyLight60,
                   ),
                   SizedBox(height: context.h(12)),
                   CustomButton(
@@ -81,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       RoutesName.SkillLevelScreen,
                     ),
                     text: AppText.signIn,
-                    color: AppColors.bluecolor,
+                    color: context.appColors.primary,
                   ),
                   SizedBox(height: context.h(12)),
                   GmailButton(),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart' hide BoxShadow;
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
@@ -39,9 +39,8 @@ class CustomButton extends StatelessWidget {
           child: NormalText(
             crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
             titleText: text ?? '',
-            titleSize: context.sp(16),
-            titleWeight: FontWeight.w500,
-            titleColor: colorText ?? AppColors.whitecolor,
+            titleStyle: context.appText.text16W600,
+            titleColor: colorText ?? context.appColors.onPrimary,
           ),
         ),
       ),

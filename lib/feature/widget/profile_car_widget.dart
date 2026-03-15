@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
@@ -20,9 +20,10 @@ class ProfileCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.blue10,
+        color: c.blue10,
         borderRadius: BorderRadius.circular(context.radiusR(12)),
       ),
       child: Row(
@@ -36,13 +37,11 @@ class ProfileCardWidget extends StatelessWidget {
                 children: [
                   NormalText(
                     titleText: title ?? '',
-                    titleSize: context.sp(16),
-                    titleColor: AppColors.blackcolor,
-                    titleWeight: FontWeight.w500,
+                    titleStyle: context.appText.text16W500,
+                    titleColor: c.onSurface,
                     subText: subTitle ?? '',
-                    subColor: AppColors.greydark,
-                    subSize: context.sp(12),
-                    subWeight: FontWeight.w400,
+                    subStyle: context.appText.text14W400,
+                    subColor: c.greyDark,
                   ),
                 ],
               ),
@@ -66,7 +65,7 @@ class BottomBarWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SvgPicture.asset(image ?? '', fit: BoxFit.scaleDown),
-        Text(text ?? ''),
+        Text(text ?? '', style: context.appText.text12W400),
       ],
     );
   }

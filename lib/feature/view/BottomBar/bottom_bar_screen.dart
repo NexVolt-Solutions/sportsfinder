@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/bottom_bar_screen_view_model.dart';
@@ -27,22 +27,22 @@ class _BottomBarContent extends StatelessWidget {
   static const double _barShadowBlur = 12;
   static const double _barShadowOffset = 4;
   static const double _navItemIconLabelGap = 2;
-  static const double _navLabelFontSize = 10;
 
   Widget _body(BuildContext context, int selectedIndex) {
+    final style = context.appText.text16W500;
     switch (selectedIndex) {
       case 0:
-        return const Center(child: Text(AppText.navMatches));
+        return Center(child: Text(AppText.navMatches, style: style));
       case 1:
-        return const Center(child: Text(AppText.navDiscover));
+        return Center(child: Text(AppText.navDiscover, style: style));
       case 2:
-        return const Center(child: Text(AppText.navHome));
+        return Center(child: Text(AppText.navHome, style: style));
       case 3:
-        return const Center(child: Text(AppText.navChat));
+        return Center(child: Text(AppText.navChat, style: style));
       case 4:
-        return const Center(child: Text(AppText.navProfile));
+        return Center(child: Text(AppText.navProfile, style: style));
       default:
-        return const Center(child: Text(AppText.navHome));
+        return Center(child: Text(AppText.navHome, style: style));
     }
   }
 
@@ -55,7 +55,8 @@ class _BottomBarContent extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final isSelected = selectedIndex == index;
-    final color = isSelected ? AppColors.bluecolor : AppColors.greydark;
+    final c = context.appColors;
+    final color = isSelected ? c.primary : c.greyDark;
 
     return GestureDetector(
       onTap: onTap,
@@ -75,11 +76,7 @@ class _BottomBarContent extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: _navLabelFontSize,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
+            style: context.appText.text12W500.copyWith(color: color),
           ),
         ],
       ),
@@ -110,13 +107,13 @@ class _BottomBarContent extends StatelessWidget {
                   padding: context.padSym(v: 8, h: 12),
                   margin: context.padSym(h: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.blue10,
+                    color: context.appColors.blue10,
                     borderRadius: BorderRadius.circular(
                       context.radiusR(_barRadius),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.blue10,
+                        color: context.appColors.blue10,
                         blurRadius: _barShadowBlur,
                         offset: const Offset(0, _barShadowOffset),
                       ),

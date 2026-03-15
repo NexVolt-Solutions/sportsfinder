@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
@@ -34,7 +34,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
           ),
           child: CustomButton(
             text: AppText.continueButton,
-            color: AppColors.bluecolor,
+            color: context.appColors.primary,
             onTap: () {
               Navigator.pushNamed(context, RoutesName.ChooseSportScreen);
             },
@@ -50,13 +50,11 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                 SizedBox(height: context.h(20)),
                 NormalText(
                   titleText: AppText.skillLevelTitle,
-                  titleSize: context.sp(20),
-                  titleColor: AppColors.blackcolor,
-                  titleWeight: FontWeight.w600,
+                  titleStyle: context.appText.text18W600,
+                  titleColor: context.appColors.onSurface,
                   subText: AppText.skillLevelDesc,
-                  subColor: AppColors.greylight60,
-                  subSize: context.sp(16),
-                  subWeight: FontWeight.w500,
+                  subStyle: context.appText.text16W400,
+                  subColor: context.appColors.greyLight60,
                 ),
                 SizedBox(height: context.h(20)),
                 ListView.builder(
@@ -70,7 +68,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                     return CardWidget(
                       padding: context.padSym(h: 12, v: 14),
                       borderColor: isSelected
-                          ? AppColors.bluecolor
+                          ? context.appColors.primary
                           : Colors.transparent,
                       onTap: () => model.selectSkill(index),
                       child: Row(
@@ -82,13 +80,11 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                           SizedBox(width: context.h(20)),
                           NormalText(
                             titleText: skillLevel.title,
-                            titleSize: context.sp(14),
-                            titleColor: AppColors.blackcolor,
-                            titleWeight: FontWeight.w500,
+                            titleStyle: context.appText.text14W600,
+                            titleColor: context.appColors.onSurface,
                             subText: skillLevel.subTitle,
-                            subColor: AppColors.greydark,
-                            subSize: context.sp(12),
-                            subWeight: FontWeight.w400,
+                            subStyle: context.appText.text12W400,
+                            subColor: context.appColors.greyDark,
                           ),
                         ],
                       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
@@ -34,7 +34,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
           ),
           child: CustomButton(
             text: AppText.continueButton,
-            color: AppColors.bluecolor,
+            color: context.appColors.primary,
             onTap: () {
               Navigator.pushNamed(context, RoutesName.LocationAccessScreen);
             },
@@ -53,13 +53,11 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                 SizedBox(height: context.h(20)),
                 NormalText(
                   titleText: AppText.chooseSportsTitle,
-                  titleSize: context.sp(20),
-                  titleColor: AppColors.blackcolor,
-                  titleWeight: FontWeight.w600,
+                  titleStyle: context.appText.text18W600,
+                  titleColor: context.appColors.onSurface,
                   subText: AppText.chooseSportsDesc,
-                  subColor: AppColors.greylight60,
-                  subSize: context.sp(16),
-                  subWeight: FontWeight.w500,
+                  subStyle: context.appText.text16W400,
+                  subColor: context.appColors.greyLight60,
                 ),
                 SizedBox(height: context.h(20)),
                 GridView.builder(
@@ -79,8 +77,8 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                     return CardWidget(
                       padding: context.padSym(h: 12, v: 14),
                       borderColor: isSelected
-                          ? AppColors.bluecolor
-                          : AppColors.blue10,
+                          ? context.appColors.primary
+                          : context.appColors.blue10,
                       onTap: () => model.selectSkill(index),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -92,9 +90,8 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                           SizedBox(height: context.h(12)),
                           NormalText(
                             titleText: sport.title,
-                            titleSize: context.sp(14),
-                            titleColor: AppColors.blackcolor,
-                            titleWeight: FontWeight.w500,
+                            titleStyle: context.appText.text14W600,
+                            titleColor: context.appColors.onSurface,
                           ),
                         ],
                       ),

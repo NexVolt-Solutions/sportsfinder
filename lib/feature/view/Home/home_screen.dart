@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/home_screen_view_model.dart';
@@ -40,9 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       NormalText(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         titleText: AppText.appName,
-                        titleSize: context.sp(20),
-                        titleColor: AppColors.blackcolor,
-                        titleWeight: FontWeight.w600,
+                        titleStyle: context.appText.text18W600,
+                        titleColor: context.appColors.onSurface,
                       ),
                       SvgPicture.asset(AppAssets.notificationIcon),
                     ],
@@ -55,21 +54,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: 50,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.greydark,
+                          color: context.appColors.greyDark,
                         ),
                       ),
                       SizedBox(width: context.w(24)),
                       NormalText(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         titleText: AppText.goodEvening,
-                        titleSize: context.sp(20),
-                        titleColor: AppColors.blackcolor,
-                        titleWeight: FontWeight.w600,
+                        titleStyle: context.appText.text18W600,
+                        titleColor: context.appColors.onSurface,
                         subText: 'Shehzad Khan',
-                        subColor: AppColors.greylight60,
-                        subSize: context.sp(16),
+                        subStyle: context.appText.text16W400,
+                        subColor: context.appColors.greyLight60,
                         titleAlign: TextAlign.center,
-                        subWeight: FontWeight.w500,
                         subAlign: TextAlign.start,
                       ),
                     ],
@@ -96,9 +93,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               NormalText(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 titleText: AppText.createMatchTitle,
-                                titleSize: context.sp(14),
-                                titleColor: AppColors.blackcolor,
-                                titleWeight: FontWeight.w400,
+                                titleStyle: context.appText.text14W600,
+                                titleColor: context.appColors.onSurface,
                               ),
                             ],
                           ),
@@ -112,18 +108,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       NormalText(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         titleText: AppText.createMatchTitle,
-                        titleSize: context.sp(18),
-                        titleColor: AppColors.blackcolor,
-                        titleWeight: FontWeight.w600,
+                        titleStyle: context.appText.text18W600,
+                        titleColor: context.appColors.onSurface,
                       ),
                       Row(
                         children: [
                           NormalText(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             titleText: AppText.viewAll,
-                            titleSize: context.sp(18),
-                            titleColor: AppColors.blackcolor,
-                            titleWeight: FontWeight.w600,
+                            titleStyle: context.appText.text14W500,
+                            titleColor: context.appColors.onSurface,
                           ),
                           SvgPicture.asset(
                             AppAssets.farwordIcon,

@@ -1,8 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class TermsCheckbox extends StatefulWidget {
   const TermsCheckbox({super.key});
@@ -16,18 +15,19 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Row(
       children: [
         Checkbox(
           value: isChecked,
           fillColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.bluecolor;
+              return c.primary;
             }
-            return AppColors.whitecolor;
+            return c.surface;
           }),
-          checkColor: AppColors.whitecolor,
-          side: const BorderSide(color: AppColors.greydark, width: 1.5),
+          checkColor: c.onPrimary,
+          side: BorderSide(color: c.greyDark, width: 1.5),
           onChanged: (value) {
             setState(() {
               isChecked = value ?? false;
@@ -37,17 +37,15 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: TextStyle(
-                color: AppColors.greylight60,
-                fontSize: context.sp(12),
+              style: context.appText.text12W400.copyWith(
+                color: c.greyLight60,
               ),
               children: [
                 TextSpan(text: AppText.iAgreeTo),
                 TextSpan(
                   text: AppText.agreeToTerms,
-                  style: TextStyle(
-                    color: AppColors.bluecolor,
-                    fontWeight: FontWeight.w500,
+                  style: context.appText.text12W500.copyWith(
+                    color: c.primary,
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
@@ -57,9 +55,8 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                 TextSpan(text: AppText.and),
                 TextSpan(
                   text: AppText.privacy,
-                  style: const TextStyle(
-                    color: AppColors.bluecolor,
-                    fontWeight: FontWeight.w500,
+                  style: context.appText.text12W500.copyWith(
+                    color: c.primary,
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {

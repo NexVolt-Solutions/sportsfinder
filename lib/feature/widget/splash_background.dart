@@ -1,6 +1,6 @@
 // splash_background.dart
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class SplashBackground extends StatelessWidget {
@@ -37,8 +37,7 @@ class SplashBackground extends StatelessWidget {
           child: _GlowCircle(context: context),
         ),
 
-        // Your custom child content goes here
-        ?child,
+        child ?? const SizedBox.shrink(),
       ],
     );
   }
@@ -51,15 +50,15 @@ class _GlowCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
       height: context.h(150),
       width: context.w(150),
       decoration: BoxDecoration(
-        // color: AppColors.blue20,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.blue20,
+            color: c.blue20,
             offset: const Offset(5, 5),
             blurRadius: 40,
           ),
