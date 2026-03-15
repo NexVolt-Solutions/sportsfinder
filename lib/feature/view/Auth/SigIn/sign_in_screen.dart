@@ -114,7 +114,10 @@ class _SignInScreenState extends State<SignInScreen> {
                   TermsCheckbox(),
                   SizedBox(height: context.h(10)),
                   CustomButton(
-                    isEnabled: true,
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      RoutesName.SkillLevelScreen,
+                    ),
                     text: AppText.signIn,
                     color: AppColors.bluecolor,
                   ),

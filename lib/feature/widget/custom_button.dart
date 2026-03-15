@@ -10,7 +10,6 @@ class CustomButton extends StatelessWidget {
   final BorderRadius? radius;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
-  final bool isEnabled;
   final CrossAxisAlignment? crossAxisAlignment; // ✅ optional
 
   const CustomButton({
@@ -18,7 +17,6 @@ class CustomButton extends StatelessWidget {
     this.text,
     this.color,
     this.onTap,
-    required this.isEnabled,
     this.colorText,
     this.radius,
     this.padding,
@@ -28,7 +26,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isEnabled ? onTap : null,
+      onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: context.padSym(v: 13),

@@ -33,7 +33,6 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
             bottom: context.text(20),
           ),
           child: CustomButton(
-            isEnabled: true,
             text: AppText.continueButton,
             color: AppColors.bluecolor,
             onTap: () {

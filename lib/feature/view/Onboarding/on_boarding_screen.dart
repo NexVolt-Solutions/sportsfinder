@@ -37,7 +37,6 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             bottom: context.text(20),
           ),
           child: CustomButton(
-            isEnabled: true,
             text: model.isLastPage ? AppText.next : AppText.next,
             color: AppColors.bluecolor,
             onTap: () => model.onNextTapped(context),

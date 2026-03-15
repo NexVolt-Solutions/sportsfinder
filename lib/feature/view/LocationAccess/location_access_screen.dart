@@ -36,7 +36,6 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               CustomButton(
-                isEnabled: true,
                 text: AppText.allowLocation,
                 color: AppColors.bluecolor,
                 onTap: () {
@@ -61,7 +60,6 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
               children: [
                 CustomButton(
                   padding: context.padSym(h: 125),
-                  isEnabled: true,
                   text: AppText.allowLocation,
                   color: AppColors.bluecolor,
                   onTap: () {
