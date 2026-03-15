@@ -10,7 +10,7 @@ import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/gmail_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/splash_background.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/terms_check_box.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
@@ -25,11 +25,8 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<SignScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: SplashBackground(
-            child: Form(
+      builder: (context, model, child) => MainFrame(
+        child: Form(
               key: model.formKey,
               child: ListView(
                 padding: context.padSym(h: 20),
@@ -132,9 +129,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ],
               ),
             ),
-          ),
         ),
-      ),
     );
   }
 }

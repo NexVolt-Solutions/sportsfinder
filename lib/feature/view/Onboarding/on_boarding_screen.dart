@@ -8,7 +8,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/onboarding_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/splash_background.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
@@ -27,8 +27,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<OnboardingScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: context.appColors.surface,
+      builder: (context, model, child) => MainFrame(
         bottomNavigationBar: Padding(
           padding: EdgeInsetsGeometry.only(
             top: context.h(3),
@@ -42,9 +41,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             onTap: () => model.onNextTapped(context),
           ),
         ),
-        body: SafeArea(
-          child: SplashBackground(
-            child: Padding(
+        child: Padding(
               padding: context.padSym(h: 20, v: 20),
               child: Column(
                 children: [
@@ -103,9 +100,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 ],
               ),
             ),
-          ),
         ),
-      ),
     );
   }
 }

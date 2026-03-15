@@ -10,7 +10,7 @@ import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
-import 'package:sport_finding/feature/widget/splash_background.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,12 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return ChangeNotifierProvider(
       create: (context) => HomeScreenViewModel(),
       child: Consumer<HomeScreenViewModel>(
-        builder: (context, model, child) => Scaffold(
-          backgroundColor: Colors.white,
-
-          body: SafeArea(
-            child: SplashBackground(
-              child: ListView(
+        builder: (context, model, child) => MainFrame(
+          child: ListView(
                 padding: context.padSym(h: 20),
                 children: [
                   SizedBox(height: 20),
@@ -129,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-            ),
-          ),
         ),
       ),
     );

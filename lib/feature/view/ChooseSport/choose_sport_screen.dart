@@ -10,7 +10,7 @@ import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/splash_background.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class ChooseSportScreen extends StatefulWidget {
   const ChooseSportScreen({super.key});
@@ -23,8 +23,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ChooseSportScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.white,
+      builder: (context, model, child) => MainFrame(
         bottomNavigationBar: Padding(
           padding: EdgeInsetsGeometry.only(
             top: context.h(3),
@@ -40,9 +39,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
             },
           ),
         ),
-        body: SafeArea(
-          child: SplashBackground(
-            child: ListView(
+        child: ListView(
               padding: context.padSym(h: 20),
               children: [
                 SizedBox(height: context.h(22)),
@@ -100,9 +97,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                 ),
               ],
             ),
-          ),
         ),
-      ),
     );
   }
 }

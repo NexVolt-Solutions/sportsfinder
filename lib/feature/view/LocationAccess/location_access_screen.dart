@@ -10,7 +10,7 @@ import 'package:sport_finding/feature/view_model/location_access_screen_view_mod
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/splash_background.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class LocationAccessScreen extends StatefulWidget {
   const LocationAccessScreen({super.key});
@@ -23,8 +23,8 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.white,
+      builder: (context, model, child) => MainFrame(
+        appBar: AppBarWidget(title: AppText.appName),
         bottomNavigationBar: Padding(
           padding: EdgeInsetsGeometry.only(
             top: context.h(3),
@@ -53,31 +53,26 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
             ],
           ),
         ),
-        appBar: AppBarWidget(title: AppText.appName),
-        body: SafeArea(
-          child: SplashBackground(
-            child: ListView(
-              padding: context.padSym(h: 20),
-              children: [
-                SizedBox(height: context.h(234)),
-                SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),
-                SizedBox(height: context.h(20)),
-                Padding(
-                  padding: context.padSym(h: 30),
-                  child: NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: AppText.allowLocationAccess,
-                    titleStyle: context.appText.text18W600,
-                    titleColor: context.appColors.onSurface,
-                    subText: AppText.allowLocationDesc,
-                    subStyle: context.appText.text16W400,
-                    subAlign: TextAlign.center,
-                    subColor: context.appColors.greyDark,
-                  ),
-                ),
-              ],
+        child: ListView(
+          padding: context.padSym(h: 20),
+          children: [
+            SizedBox(height: context.h(234)),
+            SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),
+            SizedBox(height: context.h(20)),
+            Padding(
+              padding: context.padSym(h: 30),
+              child: NormalText(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                titleText: AppText.allowLocationAccess,
+                titleStyle: context.appText.text18W600,
+                titleColor: context.appColors.onSurface,
+                subText: AppText.allowLocationDesc,
+                subStyle: context.appText.text16W400,
+                subAlign: TextAlign.center,
+                subColor: context.appColors.greyDark,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
