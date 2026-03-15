@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
@@ -48,6 +49,11 @@ class Routes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => LocationAccessScreen(),
+        );
+      case RoutesName.BottomBarScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => BottomBarScreen(),
         );
 
       default:

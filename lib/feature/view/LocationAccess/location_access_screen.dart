@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -42,7 +43,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                   text: AppText.allowLocation,
                   color: AppColors.bluecolor,
                   onTap: () {
-                    // Navigator.pushNamed(context, RoutesName.LocationAccessScreen);
+                    Navigator.pushNamed(context, RoutesName.BottomBarScreen);
                   },
                 ),
                 SizedBox(height: context.h(12)),
