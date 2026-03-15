@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     AppBarWidget(title: AppText.appName),
                     SizedBox(height: context.h(20)),
                     NormalText(
-                      titleText: AppText.welcome,
+                      titleText: AppText.welcomeBack,
                       titleSize: context.sp(20),
                       titleColor: AppColors.blackcolor,
                       titleWeight: FontWeight.w600,
@@ -50,8 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Email",
-                      hintText: "Enter your email",
+                      label: AppText.email,
+                      hintText: AppText.emailHint,
                       controller: model.emailController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -62,8 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Password",
-                      hintText: "Enter your password",
+                      label: AppText.createPassword,
+                      hintText: AppText.passwordHint,
                       controller: model.emailController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: context.h(12)),
                     NormalText(
-                      titleText: AppText.forgetPassword,
+                      titleText: AppText.forgotPassword,
                       titleColor: AppColors.greylight60,
                       titleSize: context.text(14),
                       titleWeight: FontWeight.w400,
@@ -82,6 +82,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: context.h(12)),
                     CustomButton(
                       isEnabled: true,
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        RoutesName.SkillLevelScreen,
+                      ),
                       text: AppText.signIn,
                       color: AppColors.bluecolor,
                     ),
@@ -89,8 +93,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     GmailButton(),
                     SizedBox(height: context.h(12)),
                     AuthFooterText(
-                      normalText: "Already have an account? ",
-                      actionText: "Sign Up",
+                      normalText: AppText.alreadyHaveAccount,
+                      actionText: AppText.signUp,
                       onTap: () {
                         Navigator.pushNamed(context, RoutesName.SignInScreen);
                       },

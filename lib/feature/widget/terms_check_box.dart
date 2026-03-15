@@ -42,9 +42,9 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                 fontSize: context.sp(12),
               ),
               children: [
-                TextSpan(text: AppText.iAgreeToThe),
+                TextSpan(text: AppText.iAgreeTo),
                 TextSpan(
-                  text: AppText.termsOfService,
+                  text: AppText.agreeToTerms,
                   style: TextStyle(
                     color: AppColors.bluecolor,
                     fontWeight: FontWeight.w500,
@@ -56,7 +56,7 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                 ),
                 TextSpan(text: AppText.and),
                 TextSpan(
-                  text: AppText.privacyPolicy,
+                  text: AppText.privacy,
                   style: const TextStyle(
                     color: AppColors.bluecolor,
                     fontWeight: FontWeight.w500,
