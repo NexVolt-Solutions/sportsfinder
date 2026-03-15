@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
+import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
 import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 
 class Routes {
@@ -30,6 +31,11 @@ class Routes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => SignInScreen(),
+        );
+      case RoutesName.SkillLevelScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => SkillLevelScreen(),
         );
 
       default:

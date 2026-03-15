@@ -10,18 +10,18 @@ class OnboardingScreenViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> onBoardingImages = [
     {
       'Image': AppAssets.firstImage,
-      'title': AppText.findSportsNearYou,
-      'subTitle': AppText.discoverPlayerAndSportsMatchesHeppeningInYourArea,
+      'title': AppText.onboardingTitle1,
+      'subTitle': AppText.onboardingDesc1,
     },
     {
       'Image': AppAssets.secondImage,
-      'title': AppText.connectWithPlayers,
-      'subTitle': AppText.joinGanesOrInvitePlayersToMatches,
+      'title': AppText.onboardingTitle2,
+      'subTitle': AppText.onboardingDesc2,
     },
     {
       'Image': AppAssets.thirdImage,
-      'title': AppText.playAndImprove,
-      'subTitle': AppText.complatedWithPlayesOfYourSkillLevelAndEnjoeySports,
+      'title': AppText.onboardingTitle3,
+      'subTitle': AppText.onboardingDesc3,
     },
   ];
 

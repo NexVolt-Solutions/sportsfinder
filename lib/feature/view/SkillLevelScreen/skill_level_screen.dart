@@ -1,0 +1,95 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/view_model/card_icon_widget.dart';
+import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/splash_background.dart';
+
+class SkillLevelScreen extends StatefulWidget {
+  const SkillLevelScreen({super.key});
+
+  @override
+  State<SkillLevelScreen> createState() => _SkillLevelScreenState();
+}
+
+class _SkillLevelScreenState extends State<SkillLevelScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => SkillLevelScreenViewModel(),
+      child: Consumer<SkillLevelScreenViewModel>(
+        builder: (context, model, child) => Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: SplashBackground(
+              child: ListView(
+                padding: context.padSym(h: 20),
+                children: [
+                  SizedBox(height: context.h(22)),
+                  AppBarWidget(title: AppText.appName),
+                  SizedBox(height: context.h(20)),
+                  NormalText(
+                    titleText: AppText.skillLevelTitle,
+                    titleSize: context.sp(20),
+                    titleColor: AppColors.blackcolor,
+                    titleWeight: FontWeight.w600,
+                    subText: AppText.skillLevelDesc,
+                    subColor: AppColors.greylight60,
+                    subSize: context.sp(16),
+                    subWeight: FontWeight.w500,
+                  ),
+                  SizedBox(height: context.h(20)),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: model.skillLevelData.length,
+                    itemBuilder: (context, index) {
+                      final data = model.skillLevelData[index];
+                      bool isSelected = model.selectedIndex == index;
+
+                      return CardWidget(
+                        padding: context.padSym(h: 12, v: 14),
+
+                        borderColor: isSelected
+                            ? AppColors.bluecolor
+                            : AppColors.blue10,
+                        onTap: () {
+                          model.selectSkill(index);
+                        },
+                        child: Row(
+                          children: [
+                            CardIconWidget(
+                              imageAsset: data['Image'],
+                              isSelected: isSelected,
+                            ),
+                            SizedBox(width: context.h(20)),
+                            NormalText(
+                              titleText: data['title'],
+                              titleSize: context.sp(14),
+                              titleColor: AppColors.blackcolor,
+                              titleWeight: FontWeight.w500,
+
+                              subText: data['subTitle'],
+                              subColor: AppColors.greydark,
+                              subSize: context.sp(12),
+                              subWeight: FontWeight.w400,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

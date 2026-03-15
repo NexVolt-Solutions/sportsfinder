@@ -47,14 +47,14 @@ class _SignInScreenState extends State<SignInScreen> {
                       titleSize: context.sp(20),
                       titleColor: AppColors.blackcolor,
                       titleWeight: FontWeight.w600,
-                      subText: AppText.joinSportFindingToday,
+                      subText: AppText.joinSportFinding,
                       subColor: AppColors.greylight60,
                       subSize: context.sp(16),
                       subWeight: FontWeight.w500,
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Full Name",
+                      label: AppText.fullName,
                       hintText: "Enter your name",
                       controller: model.fullNameController,
                       validator: (value) {
@@ -66,8 +66,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Email",
-                      hintText: "Enter your email",
+                      label: AppText.email,
+                      hintText: AppText.emailHint,
                       controller: model.emailController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -78,8 +78,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Phone Number",
-                      hintText: "Enter your phone number",
+                      label: AppText.phoneNumber,
+                      hintText: AppText.phoneHint,
                       controller: model.phoneNumberController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -90,7 +90,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Password",
+                      label: AppText.createPassword,
                       hintText: "Enter your password",
                       controller: model.emailController,
                       validator: (value) {
@@ -102,7 +102,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: context.h(20)),
                     TextFormFieldWidget(
-                      label: "Confirm Password",
+                      label: AppText.confirmPassword,
                       hintText: "Enter your confirm password",
                       controller: model.confirmPasswordController,
                       validator: (value) {
