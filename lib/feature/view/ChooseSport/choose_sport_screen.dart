@@ -22,15 +22,26 @@ class ChooseSportScreen extends StatefulWidget {
 class _ChooseSportScreenState extends State<ChooseSportScreen> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<ChooseSportScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.white,
-        bottomNavigationBar: Padding(
-          padding: EdgeInsetsGeometry.only(
-            top: context.h(3),
-            left: context.w(20),
-            right: context.w(20),
-            bottom: context.text(20),
+    return ChangeNotifierProvider(
+      create: (context) => ChooseSportScreenViewModel(),
+      child: Consumer<ChooseSportScreenViewModel>(
+        builder: (context, model, child) => Scaffold(
+          backgroundColor: Colors.white,
+          bottomNavigationBar: Padding(
+            padding: EdgeInsetsGeometry.only(
+              top: context.h(3),
+              left: context.w(20),
+              right: context.w(20),
+              bottom: context.text(20),
+            ),
+            child: CustomButton(
+              isEnabled: true,
+              text: AppText.continueButton,
+              color: AppColors.bluecolor,
+              onTap: () {
+                // Navigator.pushNamed(context, routeName);
+              },
+            ),
           ),
           child: CustomButton(
             isEnabled: true,
@@ -77,36 +88,35 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                     final data = model.skillLevelData[index];
                     bool isSelected = model.selectedIndex == index;
 
-                    return CardWidget(
-                      padding: context.padSym(h: 12, v: 14),
-                      borderColor: isSelected
-                          ? AppColors.bluecolor
-                          : AppColors.blue10,
-                      onTap: () {
-                        model.selectSkill(index);
-                      },
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CardIconWidget(
-                            imageAsset: data['Image'],
-                            isSelected: isSelected,
-                          ),
-
-                          SizedBox(height: context.h(12)),
-
-                          NormalText(
-                            titleText: data['title'],
-                            titleSize: context.sp(14),
-                            titleColor: AppColors.blackcolor,
-                            titleWeight: FontWeight.w500,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      return CardWidget(
+                        padding: context.padSym(h: 12, v: 14),
+                        borderColor: isSelected
+                            ? AppColors.bluecolor
+                            : AppColors.blue10,
+                        onTap: () {
+                          model.selectSkill(index);
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CardIconWidget(
+                              imageAsset: data['Image'],
+                              isSelected: isSelected,
+                            ),
+                            SizedBox(height: context.h(12)),
+                            NormalText(
+                              titleText: data['title'],
+                              titleSize: context.sp(14),
+                              titleColor: AppColors.blackcolor,
+                              titleWeight: FontWeight.w500,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
