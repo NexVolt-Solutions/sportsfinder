@@ -8,6 +8,7 @@ class AppAssets {
   static const String footBallIcon = "assets/sport/football.svg";
   static const String tableTennisIcon = "assets/sport/tableTennis.svg";
   static const String calendarIcon = "assets/Icon/calendarIcon.svg";
+  static const String volleyBallIcon = "assets/sport/volleyball.svg";
   static const String clockIcon = "assets/Icon/clockIcon.svg";
   static const String doneTaskIcon = "assets/Icon/doneTaskIcon.svg";
 
