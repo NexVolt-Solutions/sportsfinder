@@ -85,7 +85,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Image.asset(data['Image'], fit: BoxFit.scaleDown),
+                            SvgPicture.asset(data['Image']),
                             NormalText(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               titleText: data['title'],

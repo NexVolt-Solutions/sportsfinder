@@ -30,9 +30,9 @@ class AppAssets {
   static const String shareIcon = "assets/profile/shareIcon.svg";
 
   //Onboarding Screen Images
-  static const String firstImage = "assets/onBoarding/1.png";
-  static const String secondImage = "assets/onBoarding/2.png";
-  static const String thirdImage = "assets/onBoarding/3.png";
+  static const String firstImage = "assets/onBoarding/1.svg";
+  static const String secondImage = "assets/onBoarding/2.svg";
+  static const String thirdImage = "assets/onBoarding/3.svg";
 
   //Match Level
   static const String beginnerIcon = "assets/icon/beginner.svg";
