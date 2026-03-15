@@ -7,6 +7,7 @@ import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
+import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
@@ -54,6 +55,11 @@ class Routes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => BottomBarScreen(),
+        );
+      case RoutesName.HomeScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => HomeScreen(),
         );
 
       default:
