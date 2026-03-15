@@ -84,6 +84,7 @@ class AppText {
   static const String navMatches = 'Matches';
   static const String navDiscover = 'Discover';
   static const String navChat = 'Chat';
+  static const String navHome = 'Home';
   static const String navProfile = 'Profile';
 
   // ─── Home / Dashboard ────────────────────────────────────────────────────────

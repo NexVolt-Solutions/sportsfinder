@@ -6,7 +6,7 @@ void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: RoutesName.SplashScreen,
+      initialRoute: RoutesName.BottomBarScreen,
       onGenerateRoute: Routes.generateRoute,
     ),
   );

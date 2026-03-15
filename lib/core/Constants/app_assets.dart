@@ -19,11 +19,11 @@ class AppAssets {
   static const String gmailIcon = "assets/icon/google.svg";
 
   //BottomBar Icons
-  static const String chatIcon = "assets/bottomBarIcon/chatIcon.svg";
-  static const String homeIcon = "assets/bottomBarIcon/Home.svg";
-  static const String matchesIcon = "assets/bottomBarIcon/matchesIcon.svg";
-  static const String profileIcon = "assets/bottomBarIcon/Profile.svg";
-  static const String searchBarIcon = "assets/bottomBarIcon/Search.svg";
+  static const String chatIcon = "assets/bottomBarIcon/chat.svg";
+  static const String homeIcon = "assets/bottomBarIcon/home.svg";
+  static const String matchesIcon = "assets/bottomBarIcon/matches.svg";
+  static const String profileIcon = "assets/bottomBarIcon/profile.svg";
+  static const String searchBarIcon = "assets/bottomBarIcon/search.svg";
 
   //Profile Icon
   static const String editIcon = "assets/profile/editIcon.svg";

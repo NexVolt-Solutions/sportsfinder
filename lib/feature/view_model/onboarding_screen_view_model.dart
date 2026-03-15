@@ -60,4 +60,10 @@ class OnboardingScreenViewModel extends ChangeNotifier {
   void onGetStarted(BuildContext context) {
     Navigator.pushReplacementNamed(context, RoutesName.LoginScreen);
   }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
 }

@@ -23,10 +23,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => LoginScreenViewModel(),
-      child: Consumer<LoginScreenViewModel>(
-        builder: (context, model, child) => Scaffold(
+    return Consumer<LoginScreenViewModel>(
+      builder: (context, model, child) => Scaffold(
           backgroundColor: Colors.white,
           body: SafeArea(
             child: SplashBackground(
@@ -105,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }
