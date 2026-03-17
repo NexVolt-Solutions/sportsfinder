@@ -10,6 +10,7 @@ import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
+import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/splash_background.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -84,18 +85,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       separatorBuilder: (context, index) =>
                           SizedBox(width: context.sw(20)),
                       scrollDirection: Axis.horizontal,
-                      itemCount: 2,
+                      itemCount: model.matcheData.length,
                       itemBuilder: (context, index) {
+                        final match = model.matcheData[index];
+
                         return CardWidget(
                           padding: context.padSym(h: 50, v: 18),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CardIconWidget(imageAsset: AppAssets.addIcon),
+                              CardIconWidget(imageAsset: match.imagePath),
                               SizedBox(height: context.h(8)),
                               NormalText(
                                 crossAxisAlignment: CrossAxisAlignment.center,
-                                titleText: AppText.createMatchTitle,
+                                titleText: match.title,
                                 titleSize: context.sp(14),
                                 titleColor: AppColors.blackcolor,
                                 titleWeight: FontWeight.w400,
@@ -107,31 +110,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   SizedBox(height: context.h(20)),
-                  Row(
-                    children: [
-                      NormalText(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        titleText: AppText.createMatchTitle,
-                        titleSize: context.sp(18),
-                        titleColor: AppColors.blackcolor,
-                        titleWeight: FontWeight.w600,
-                      ),
-                      Row(
-                        children: [
-                          NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: AppText.viewAll,
-                            titleSize: context.sp(18),
-                            titleColor: AppColors.blackcolor,
-                            titleWeight: FontWeight.w600,
-                          ),
-                          SvgPicture.asset(
-                            AppAssets.farwordIcon,
-                            fit: BoxFit.scaleDown,
-                          ),
-                        ],
-                      ),
-                    ],
+                  SectionHeaderWidget(
+                    title: AppText.createMatchTitle,
+                    actionText: AppText.viewAll,
+                    icon: AppAssets.nextIcon,
+                  ),
+                  CardWidget(
+                    padding: context.padSym(h: 50, v: 18),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          titleText: 'Khan Match',
+                          titleSize: context.sp(20),
+                          titleColor: AppColors.blackcolor,
+                          titleWeight: FontWeight.w600,
+                          subText: AppText.basketball,
+                          subColor: AppColors.greylight60,
+                          subSize: context.sp(16),
+                          titleAlign: TextAlign.center,
+                          subWeight: FontWeight.w500,
+                          subAlign: TextAlign.start,
+                        ),
+                        Row(children: [Row(children: [])]),
+                      ],
+                    ),
                   ),
                 ],
               ),

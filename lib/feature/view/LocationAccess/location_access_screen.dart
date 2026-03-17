@@ -7,7 +7,6 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
-import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/splash_background.dart';
@@ -59,15 +58,6 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
             child: ListView(
               padding: context.padSym(h: 20),
               children: [
-                CustomButton(
-                  padding: context.padSym(h: 125),
-                  isEnabled: true,
-                  text: AppText.allowLocation,
-                  color: AppColors.bluecolor,
-                  onTap: () {
-                    Navigator.pushNamed(context, RoutesName.HomeScreen);
-                  },
-                ),
                 SizedBox(height: context.h(234)),
                 SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),
                 SizedBox(height: context.h(20)),

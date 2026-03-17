@@ -51,6 +51,14 @@ class AppText {
   static const String and = 'and ';
   static const String privacy = 'Privacy Policy';
 
+  // ─── OTP / Verification ─────────────────────────────────────────────────────
+  static const String verifyYourAccount = 'Verify Your Account';
+  static const String enterVerificationCode =
+      'Enter the 6-digit code that we have sent to your email';
+  static const String didntReceiveCode = "Didn’t receive the code?";
+  static const String resend = 'Resend';
+  static const String timerExample = '02:30s';
+
   // ─── Location Permission ──────────────────────────────────────────────────────
   static const String allowLocationAccess = 'Allow Location Access';
   static const String allowLocationDesc =
