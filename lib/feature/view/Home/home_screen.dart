@@ -10,7 +10,8 @@ import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
-import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/widget/section_header_widget.dart';
+import 'package:sport_finding/feature/widget/splash_background.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,32 +66,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     titleAlign: TextAlign.center,
                     subAlign: TextAlign.start,
                   ),
-                ],
-              ),
-              SizedBox(height: context.h(20)),
-              SearchBarWidget(),
-              SizedBox(height: context.h(20)),
-              SizedBox(
-                height: context.h(140),
-                width: context.w(double.infinity),
-                child: ListView.separated(
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: context.sw(20)),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 2,
-                  itemBuilder: (context, index) {
-                    return CardWidget(
-                      padding: context.padSym(h: 50, v: 18),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CardIconWidget(imageAsset: AppAssets.addIcon),
-                          SizedBox(height: context.h(8)),
-                          NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: AppText.createMatchTitle,
-                            titleStyle: context.appText.text14W600,
-                            titleColor: context.appColors.onSurface,
+                  SizedBox(height: context.h(20)),
+                  SearchBarWidget(),
+                  SizedBox(height: context.h(20)),
+                  SizedBox(
+                    height: context.h(140),
+                    width: context.w(double.infinity),
+                    child: ListView.separated(
+                      separatorBuilder: (context, index) =>
+                          SizedBox(width: context.sw(20)),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: model.matcheData.length,
+                      itemBuilder: (context, index) {
+                        final match = model.matcheData[index];
+
+                        return CardWidget(
+                          padding: context.padSym(h: 50, v: 18),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CardIconWidget(imageAsset: match.imagePath),
+                              SizedBox(height: context.h(8)),
+                              NormalText(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                titleText: match.title,
+                                titleSize: context.sp(14),
+                                titleColor: AppColors.blackcolor,
+                                titleWeight: FontWeight.w400,
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -107,19 +111,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     titleStyle: context.appText.text18W600,
                     titleColor: context.appColors.onSurface,
                   ),
-                  Row(
-                    children: [
-                      NormalText(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        titleText: AppText.viewAll,
-                        titleStyle: context.appText.text14W500,
-                        titleColor: context.appColors.onSurface,
-                      ),
-                      SvgPicture.asset(
-                        AppAssets.farwordIcon,
-                        fit: BoxFit.scaleDown,
-                      ),
-                    ],
+                  SizedBox(height: context.h(20)),
+                  SectionHeaderWidget(
+                    title: AppText.createMatchTitle,
+                    actionText: AppText.viewAll,
+                    icon: AppAssets.nextIcon,
+                  ),
+                  CardWidget(
+                    padding: context.padSym(h: 50, v: 18),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          titleText: 'Khan Match',
+                          titleSize: context.sp(20),
+                          titleColor: AppColors.blackcolor,
+                          titleWeight: FontWeight.w600,
+                          subText: AppText.basketball,
+                          subColor: AppColors.greylight60,
+                          subSize: context.sp(16),
+                          titleAlign: TextAlign.center,
+                          subWeight: FontWeight.w500,
+                          subAlign: TextAlign.start,
+                        ),
+                        Row(children: [Row(children: [])]),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view_model/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -38,7 +39,7 @@ class _BottomBarContent extends StatelessWidget {
       case 1:
         return const DiscoverTabScreen();
       case 2:
-        return Center(child: Text(AppText.navHome, style: style));
+        return HomeScreen();
       case 3:
         return Center(child: Text(AppText.navChat, style: style));
       case 4:

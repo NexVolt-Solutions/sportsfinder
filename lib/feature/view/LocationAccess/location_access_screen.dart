@@ -7,7 +7,6 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
-import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -60,35 +59,29 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                   ],
                 ),
               ),
-              Padding(
-                padding: EdgeInsetsGeometry.only(
-                  top: context.h(3),
-                  left: context.w(20),
-                  right: context.w(20),
-                  bottom: context.text(12),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomButton(
-                      text: AppText.allowLocation,
-                      color: context.appColors.primary,
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.BottomBarScreen,
-                        );
-                      },
-                    ),
-                    SizedBox(height: context.h(12)),
-                    NormalText(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      titleText: AppText.skipForNow,
-                      titleStyle: context.appText.text14W400,
-                      titleColor: context.appColors.greyDark,
-                    ),
-                    SizedBox(height: context.h(20)),
-                  ],
+            ],
+          ),
+        ),
+        body: SafeArea(
+          child: SplashBackground(
+            child: ListView(
+              padding: context.padSym(h: 20),
+              children: [
+                SizedBox(height: context.h(234)),
+                SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),
+                SizedBox(height: context.h(20)),
+                NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  titleText: AppText.allowLocationAccess,
+                  titleSize: context.sp(20),
+                  titleColor: AppColors.blackcolor,
+                  titleWeight: FontWeight.w600,
+                  subText: AppText.allowLocationDesc,
+                  subColor: AppColors.greylight60,
+                  subSize: context.sp(16),
+                  titleAlign: TextAlign.center,
+                  subWeight: FontWeight.w500,
+                  subAlign: TextAlign.center,
                 ),
               ),
             ],
