@@ -71,8 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: context.h(12)),
                 CustomButton(
-                  onTap: () =>
-                      Navigator.pushNamed(context, RoutesName.SkillLevelScreen),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    RoutesName.OtpVerificationScreen,
+                  ),
                   text: AppText.signIn,
                   color: context.appColors.primary,
                 ),

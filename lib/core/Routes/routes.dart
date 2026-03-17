@@ -11,6 +11,7 @@ import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart'
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
+import 'package:sport_finding/feature/view/Otp/otp_verification_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
 import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 
@@ -85,6 +86,11 @@ class Routes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => HomeScreen(),
+        );
+      case RoutesName.OtpVerificationScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => OtpVerificationScreen(),
         );
 
       default:
