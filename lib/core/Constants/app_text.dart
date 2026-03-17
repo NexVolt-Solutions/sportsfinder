@@ -50,13 +50,14 @@ class AppText {
   static const String agreeToTerms = 'Terms of Service ';
   static const String and = 'and ';
   static const String privacy = 'Privacy Policy';
+  static const String upload = 'Upload Photo';
 
   // ─── OTP / Verification ─────────────────────────────────────────────────────
   static const String verifyYourAccount = 'Verify Your Account';
   static const String enterVerificationCode =
       'Enter the 6-digit code that we have sent to your email';
   static const String didntReceiveCode = "Didn’t receive the code?";
-  static const String resend = 'Resend';
+  static const String resend = ' Resend';
   static const String timerExample = '02:30s';
 
   // ─── Location Permission ──────────────────────────────────────────────────────

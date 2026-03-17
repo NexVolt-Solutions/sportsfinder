@@ -10,4 +10,5 @@ class RoutesName {
   static const String LocationAccessScreen = 'location_access_screen';
   static const String BottomBarScreen = 'bottom_bar_screen';
   static const String HomeScreen = 'home_screen';
+  static const String OtpVerificationScreen = 'otp_verification_screen';
 }

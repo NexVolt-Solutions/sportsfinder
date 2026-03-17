@@ -44,6 +44,48 @@ class _SignInScreenState extends State<SignInScreen> {
                   subColor: context.appColors.greylight,
                 ),
                 SizedBox(height: context.h(20)),
+
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: context.radiusR(50),
+                      backgroundImage: AssetImage('assets/images/profile.jpg'),
+                    ),
+
+                    Transform.translate(
+                      offset: const Offset(55, 40),
+                      child: Container(
+                        padding: EdgeInsets.all(context.radiusR(6)),
+                        decoration: BoxDecoration(
+                          color: context.appColors.onPrimary,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.appColors.greyDark,
+                              offset: const Offset(0, 4),
+                              blurRadius: 80,
+                              blurStyle: BlurStyle.inner,
+                            ),
+                          ],
+                        ),
+                        child: Icon(Icons.camera_alt),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: context.h(12)),
+
+                NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  titleText: AppText.upload,
+                  titleStyle: context.appText.text18W600,
+                  titleColor: context.appColors.primary,
+                ),
+
+                SizedBox(height: context.h(20)),
+
                 TextFormFieldWidget(
                   label: AppText.fullName,
                   hintText: "Enter your name",

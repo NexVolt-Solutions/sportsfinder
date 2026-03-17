@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
@@ -26,6 +27,7 @@ class SectionHeaderWidget extends StatelessWidget {
         NormalText(
           crossAxisAlignment: CrossAxisAlignment.center,
           titleText: title,
+          titleStyle: context.appText.text18W600,
 
           titleColor: AppColors.blackcolor,
         ),
@@ -39,6 +41,7 @@ class SectionHeaderWidget extends StatelessWidget {
                 NormalText(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   titleText: actionText!,
+                  titleStyle: context.appText.text16W600,
                   titleColor: AppColors.bluecolor,
                 ),
                 if (icon != null) ...[
