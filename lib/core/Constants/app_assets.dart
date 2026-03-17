@@ -12,6 +12,9 @@ class AppAssets {
   static const String clockIcon = "assets/icon/clockIcon.svg";
   static const String doneTaskIcon = "assets/icon/doneTaskIcon.svg";
   static const String notificationIcon = "assets/icon/notificationIcon.svg";
+  static const String homeLocIcon = "assets/icon/homeLocIcon.svg";
+  static const String homeTimeIcon = "assets/icon/homeTimeIcon.svg";
+  static const String homeProfileIcon = "assets/icon/homeProfileIcon.svg";
 
   //Icon
   static const String backIcon = "assets/icon/back.svg";
