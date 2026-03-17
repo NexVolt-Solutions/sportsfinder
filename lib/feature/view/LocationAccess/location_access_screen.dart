@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/splash_background.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class LocationAccessScreen extends StatefulWidget {
   const LocationAccessScreen({super.key});
@@ -23,32 +23,41 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
       builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.white,
-        bottomNavigationBar: Padding(
-          padding: EdgeInsetsGeometry.only(
-            top: context.h(3),
-            left: context.w(20),
-            right: context.w(20),
-            bottom: context.text(12),
-          ),
+        body: MainFrame(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              CustomButton(
-                isEnabled: true,
-                text: AppText.allowLocation,
-                color: AppColors.bluecolor,
-                onTap: () {
-                  Navigator.pushNamed(context, RoutesName.BottomBarScreen);
-                },
-              ),
-              SizedBox(height: context.h(12)),
-              NormalText(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                titleText: AppText.skipForNow,
-                titleSize: context.sp(15),
-                titleColor: AppColors.greydark,
-                titleWeight: FontWeight.w500,
+              AppBarWidget(title: AppText.appName),
+
+              Flexible(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          AppAssets.locationIcon,
+                          fit: BoxFit.scaleDown,
+                        ),
+                        SizedBox(height: context.h(20)),
+                        Padding(
+                          padding: context.padSym(h: 30),
+                          child: NormalText(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            titleText: AppText.allowLocationAccess,
+                            titleStyle: context.appText.text18W600,
+                            titleColor: context.appColors.onSurface,
+                            subText: AppText.allowLocationDesc,
+                            subStyle: context.appText.text16W400,
+                            subAlign: TextAlign.center,
+                            subColor: context.appColors.greyDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -74,8 +83,8 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                   subWeight: FontWeight.w500,
                   subAlign: TextAlign.center,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,58 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
 
-class AppBarWidget extends StatelessWidget {
-  final String title;
+class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
+  final String? title;
+
+  final Widget? centerWidget;
+
+  final Widget? leading;
+
+  final Widget? trailing;
+
+  final VoidCallback? onLeadingTap;
+
   final VoidCallback? onTap;
-  final VoidCallback? onHeartTap;
+
+  final Color? iconColor;
+
+  static const double _kToolbarHeight = 56;
+  static const double _kIconSize = 24;
 
   const AppBarWidget({
     super.key,
-    required this.title,
+    this.title,
+    this.centerWidget,
+    this.leading,
+    this.trailing,
+    this.onLeadingTap,
     this.onTap,
-    this.onHeartTap,
+    this.iconColor,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: context.sh(8)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          onTap != null
-              ? GestureDetector(
-                  onTap: onTap,
-                  child: Center(
-                    child: SvgPicture.asset(
-                      AppAssets.backIcon,
-                      fit: BoxFit.scaleDown,
-                      placeholderBuilder: (context) =>
-                          Icon(Icons.arrow_back, color: AppColors.greydark),
-                    ),
-                  ),
-                )
-              : SizedBox(height: context.sh(20), width: context.sw(20)),
+  Size get preferredSize => const Size.fromHeight(_kToolbarHeight);
 
-          /// 🏷 Title
-          Expanded(
-            child: Center(
-              child: NormalText(
-                titleText: title,
-                titleSize: context.sp(20),
-                titleWeight: FontWeight.w600,
-                titleColor: AppColors.blackcolor,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        ],
-      ),
+  Widget _buildLeading(BuildContext context) {
+    if (leading != null) return leading!;
+    final leadingTap = onLeadingTap ?? onTap;
+    if (leadingTap != null) {
+      return GestureDetector(
+        onTap: leadingTap,
+        behavior: HitTestBehavior.opaque,
+        child: SvgPicture.asset(AppAssets.backIcon, fit: BoxFit.contain),
+      );
+    }
+    return const SizedBox(width: _kIconSize + 24, height: _kIconSize);
+  }
+
+  Widget _buildCenter(BuildContext context) {
+    if (title != null && title!.isNotEmpty) {
+      return Center(
+        child: Text(
+          title!,
+          style: context.appText.text18Bold,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    if (centerWidget != null) return centerWidget!;
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildTrailing(BuildContext context) {
+    if (trailing != null) return trailing!;
+    return const SizedBox(width: _kIconSize + 24, height: _kIconSize);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(height: context.h(20)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildLeading(context),
+            Expanded(child: _buildCenter(context)),
+            _buildTrailing(context),
+          ],
+        ),
+        SizedBox(height: context.h(20)),
+      ],
     );
   }
 }

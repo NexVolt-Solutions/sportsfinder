@@ -1,181 +1,179 @@
-// import 'package:flutter/material.dart';
-// import 'package:looklabs/Core/Constants/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 
-// class AppTheme {
-//   // Color Palette from Figma
-//   static const Color primaryTeal = Color(0xFF008080);
-//   static const Color lightGray = Color(0xFFE0E0E0);
-//   static const Color deepTeal = Color(0xFF004D4D);
-//   static const Color slateGray = Color(0xFF708090);
-//   static const Color pureWhite = Color(0xFFFFFFFF);
-//   static const Color darkGray = Color(0xFF363636);
-//   static const Color tealAccent = Color(0xFF2D8B9C);
+/// App colors from theme. Use [context.appColors] instead of [AppColors] in UI.
+class AppColorTheme extends ThemeExtension<AppColorTheme> {
+  const AppColorTheme({
+    required this.primary,
+    required this.onPrimary,
+    required this.surface,
+    required this.onSurface,
+    required this.error,
+    required this.onError,
+    required this.greyDark,
+    required this.greylight,
+    required this.blue10,
+    required this.blue20,
+    required this.transparent,
+    required this.primaryGradient,
+  });
 
-//   // Background gradient colors
-//   static const Color backgroundLight = Color(0xFFF5F7FA);
-//   static const Color textDark = Color(0xFF333333);
-//   static const Color textLight = Color(0xFF666666);
-//   static const Color borderLight = Color(0xFFE5E5E5);
+  final Color primary;
+  final Color onPrimary;
+  final Color surface;
+  final Color onSurface;
+  final Color error;
+  final Color onError;
+  final Color greyDark;
+  final Color greylight;
+  final Color blue10;
+  final Color blue20;
+  final Color transparent;
+  final LinearGradient primaryGradient;
 
-//   // Helper extension for easy theme access
-//   static ThemeData theme(BuildContext context) => Theme.of(context);
-//   static ColorScheme colors(BuildContext context) =>
-//       Theme.of(context).colorScheme;
-//   static TextTheme texts(BuildContext context) => Theme.of(context).textTheme;
+  @override
+  ThemeExtension<AppColorTheme> copyWith({
+    Color? primary,
+    Color? onPrimary,
+    Color? surface,
+    Color? onSurface,
+    Color? error,
+    Color? onError,
+    Color? greyDark,
+    Color? greylight,
+    Color? blue10,
+    Color? blue20,
+    Color? transparent,
+    LinearGradient? primaryGradient,
+  }) => AppColorTheme(
+    primary: primary ?? this.primary,
+    onPrimary: onPrimary ?? this.onPrimary,
+    surface: surface ?? this.surface,
+    onSurface: onSurface ?? this.onSurface,
+    error: error ?? this.error,
+    onError: onError ?? this.onError,
+    greyDark: greyDark ?? this.greyDark,
+    greylight: greylight ?? this.greylight,
+    blue10: blue10 ?? this.blue10,
+    blue20: blue20 ?? this.blue20,
+    transparent: transparent ?? this.transparent,
+    primaryGradient: primaryGradient ?? this.primaryGradient,
+  );
 
-//   static ThemeData get lightTheme {
-//     return ThemeData(
-//       useMaterial3: true,
-//       brightness: Brightness.light,
+  @override
+  ThemeExtension<AppColorTheme> lerp(
+    ThemeExtension<AppColorTheme>? other,
+    double t,
+  ) => this;
+}
 
-//       colorScheme: ColorScheme.light(
-//         primary: AppColors.pimaryColor,
-//         onPrimary: AppColors.white,
+extension AppColorThemeExtension on BuildContext {
+  AppColorTheme get appColors =>
+      Theme.of(this).extension<AppColorTheme>() ?? _defaultAppColorTheme;
+}
 
-//         secondary: AppColors.seconderyColor,
-//         onSecondary: AppColors.white,
+AppColorTheme get _defaultAppColorTheme => AppColorTheme(
+  primary: AppColors.bluecolor,
+  onPrimary: AppColors.whitecolor,
+  surface: AppColors.whitecolor,
+  onSurface: AppColors.blackcolor,
+  error: AppColors.redcolor,
+  onError: AppColors.whitecolor,
+  greyDark: AppColors.greydark,
+  greylight: AppColors.greylight,
+  blue10: AppColors.blue10,
+  blue20: AppColors.blue20,
+  transparent: AppColors.transparent,
+  primaryGradient: AppColors.primaryGradient,
+);
 
-//         tertiary: AppColors.subHeadingColor,
+class AppTextTheme extends ThemeExtension<AppTextTheme> {
+  AppTextTheme({this.color = AppColors.blackcolor});
+  final Color color;
 
-//         surface: AppColors.backGroundColor,
-//         onSurface: AppColors.headingColor,
+  static const String _fontFamily = 'Nunito';
 
-//         background: AppColors.backGroundColor,
+  TextStyle _style(double size, FontWeight weight) => TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+  );
 
-//         error: Colors.red,
-//         onError: AppColors.white,
+  // 18
+  TextStyle get text18W600 => _style(18, FontWeight.w600);
+  TextStyle get text18W500 => _style(18, FontWeight.w500);
+  TextStyle get text18W400 => _style(18, FontWeight.w400);
+  TextStyle get text18Bold => _style(18, FontWeight.bold);
 
-//         // onBackground: textDark,
-//       ),
+  // 16
+  TextStyle get text16W600 => _style(16, FontWeight.w600);
+  TextStyle get text16W500 => _style(16, FontWeight.w500);
+  TextStyle get text16W400 => _style(16, FontWeight.w400);
+  TextStyle get text16Bold => _style(16, FontWeight.bold);
 
-//       scaffoldBackgroundColor: backgroundLight,
+  // 14
+  TextStyle get text14W600 => _style(14, FontWeight.w600);
+  TextStyle get text14W500 => _style(14, FontWeight.w500);
+  TextStyle get text14W400 => _style(14, FontWeight.w400);
+  TextStyle get text14Bold => _style(14, FontWeight.bold);
 
-//       appBarTheme: const AppBarTheme(
-//         elevation: 0,
-//         centerTitle: true,
-//         backgroundColor: pureWhite,
-//         foregroundColor: textDark,
-//         titleTextStyle: TextStyle(
-//           fontSize: 20,
-//           fontWeight: FontWeight.bold,
-//           color: textDark,
-//           fontFamily: 'Roboto',
-//         ),
-//       ),
+  // 12
+  TextStyle get text12W600 => _style(12, FontWeight.w600);
+  TextStyle get text12W500 => _style(12, FontWeight.w500);
+  TextStyle get text12W400 => _style(12, FontWeight.w400);
+  TextStyle get text12Bold => _style(12, FontWeight.bold);
 
-//       textTheme: TextTheme(
-//         // displayLarge: TextStyle.heading1,
-//         displayMedium: TextStyle(
-//           fontSize: 24,
-//           fontWeight: FontWeight.w500,
-//           color: textDark,
-//           fontFamily: 'Roboto',
-//         ),
+  @override
+  ThemeExtension<AppTextTheme> copyWith({Color? color}) =>
+      AppTextTheme(color: color ?? this.color);
 
-//         titleLarge: TextStyle(
-//           fontSize: 20,
-//           fontWeight: FontWeight.w600,
-//           color: textDark,
-//           fontFamily: 'Roboto',
-//         ),
-//         titleMedium: TextStyle(
-//           fontSize: 18,
-//           fontWeight: FontWeight.w600,
-//           color: textDark,
-//           fontFamily: 'Roboto',
-//         ),
-//         bodyLarge: TextStyle(
-//           fontSize: 16,
-//           fontWeight: FontWeight.normal,
-//           color: textDark,
-//           fontFamily: 'Roboto',
-//         ),
-//         bodyMedium: TextStyle(
-//           fontSize: 14,
-//           fontWeight: FontWeight.normal,
-//           color: textLight,
-//           fontFamily: 'Roboto',
-//         ),
-//       ),
+  @override
+  ThemeExtension<AppTextTheme> lerp(
+    ThemeExtension<AppTextTheme>? other,
+    double t,
+  ) => this;
+}
 
-//       elevatedButtonTheme: ElevatedButtonThemeData(
-//         style: ElevatedButton.styleFrom(
-//           backgroundColor: tealAccent,
-//           foregroundColor: pureWhite,
-//           elevation: 0,
-//           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(12),
-//           ),
-//           textStyle: const TextStyle(
-//             fontSize: 16,
-//             fontWeight: FontWeight.bold,
-//             fontFamily: 'Roboto',
-//           ),
-//         ),
-//       ),
+extension AppTextThemeExtension on BuildContext {
+  AppTextTheme get appText =>
+      Theme.of(this).extension<AppTextTheme>() ?? AppTextTheme();
+}
 
-//       // iconButtonTheme: IconButtonThemeData(
-//       //   style: IconButton.styleFrom(
-//       //     backgroundColor: tealAccent,
-//       //     foregroundColor: pureWhite,
-//       //     elevation: 0,
-//       //     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-//       //     shape: RoundedRectangleBorder(
-//       //       borderRadius: BorderRadius.circular(12),
-//       //     ),
+class AppTheme {
+  AppTheme._();
 
-//       //   ),
-//       // ),
-//       outlinedButtonTheme: OutlinedButtonThemeData(
-//         style: OutlinedButton.styleFrom(
-//           foregroundColor: textDark,
-//           side: const BorderSide(color: borderLight, width: 1),
-//           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(12),
-//           ),
-//           textStyle: const TextStyle(
-//             fontSize: 16,
-//             fontWeight: FontWeight.normal,
-//             fontFamily: 'Roboto',
-//           ),
-//         ),
-//       ),
-
-//       inputDecorationTheme: InputDecorationTheme(
-//         filled: true,
-//         fillColor: pureWhite,
-//         border: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: tealAccent, width: 1),
-//         ),
-//         enabledBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: tealAccent, width: 1),
-//         ),
-//         focusedBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: tealAccent, width: 2),
-//         ),
-//         errorBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: Colors.red, width: 1),
-//         ),
-//         focusedErrorBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: Colors.red, width: 2),
-//         ),
-//         contentPadding: const EdgeInsets.symmetric(
-//           horizontal: 16,
-//           vertical: 16,
-//         ),
-//         hintStyle: const TextStyle(
-//           color: textLight,
-//           fontSize: 14,
-//           fontFamily: 'Roboto',
-//         ),
-//       ),
-//     );
-//   }
-// }
+  static ThemeData get light => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    fontFamily: 'Nunito',
+    scaffoldBackgroundColor: AppColors.whitecolor,
+    colorScheme: ColorScheme.light(
+      primary: AppColors.bluecolor,
+      onPrimary: AppColors.whitecolor,
+      secondary: AppColors.bluecolor,
+      onSecondary: AppColors.whitecolor,
+      surface: AppColors.whitecolor,
+      onSurface: AppColors.blackcolor,
+      error: AppColors.redcolor,
+      onError: AppColors.whitecolor,
+    ),
+    extensions: [
+      AppTextTheme(),
+      AppColorTheme(
+        primary: AppColors.bluecolor,
+        onPrimary: AppColors.whitecolor,
+        surface: AppColors.whitecolor,
+        onSurface: AppColors.blackcolor,
+        error: AppColors.redcolor,
+        onError: AppColors.whitecolor,
+        greyDark: AppColors.greydark,
+        greylight: AppColors.greylight,
+        blue10: AppColors.blue10,
+        blue20: AppColors.blue20,
+        transparent: AppColors.transparent,
+        primaryGradient: AppColors.primaryGradient,
+      ),
+    ],
+  );
+}

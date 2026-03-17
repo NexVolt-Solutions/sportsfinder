@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -14,7 +14,7 @@ class GmailButton extends StatelessWidget {
       padding: context.padSym(v: 13),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(context.radiusR(12)),
-        border: Border.all(color: AppColors.bluecolor),
+        border: Border.all(color: context.appColors.primary),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -24,10 +24,8 @@ class GmailButton extends StatelessWidget {
           SizedBox(width: context.w(12)),
           Text(
             AppText.continueWithGoogle,
-            style: TextStyle(
-              color: AppColors.bluecolor,
-              fontSize: context.text(14),
-              fontWeight: FontWeight.w400,
+            style: context.appText.text14W400.copyWith(
+              color: context.appColors.primary,
             ),
           ),
         ],

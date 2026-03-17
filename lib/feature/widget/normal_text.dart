@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 
 class NormalText extends StatelessWidget {
   final String? titleText;
   final String? subText;
 
-  final double? titleSize;
-  final double? subSize;
-  final double? sizeBoxheight;
+  /// When null, uses [AppTextTheme]: title → text16W500, sub → text14W400.
+  final TextStyle? titleStyle;
+  final TextStyle? subStyle;
 
-  final FontWeight? titleWeight;
-  final FontWeight? subWeight;
+  final double? sizeBoxheight;
 
   final Color? titleColor;
   final Color? subColor;
@@ -20,7 +18,6 @@ class NormalText extends StatelessWidget {
   final TextAlign? subAlign;
   final CrossAxisAlignment? crossAxisAlignment;
 
-  /// 🔥 OPTIONAL CONTROL
   final int? maxLines;
   final TextOverflow? overflow;
 
@@ -28,10 +25,8 @@ class NormalText extends StatelessWidget {
     super.key,
     this.titleText,
     this.subText,
-    this.titleSize,
-    this.subSize,
-    this.titleWeight,
-    this.subWeight,
+    this.titleStyle,
+    this.subStyle,
     this.titleColor,
     this.subColor,
     this.titleAlign,
@@ -55,11 +50,8 @@ class NormalText extends StatelessWidget {
               softWrap: true,
               maxLines: maxLines,
               overflow: overflow ?? TextOverflow.visible,
-              style: TextStyle(
-                color: titleColor ?? AppColors.blackcolor,
-                fontSize: titleSize ?? context.sp(16),
-                fontWeight: titleWeight ?? FontWeight.w500,
-                fontFamily: 'Nunito',
+              style: (titleStyle ?? context.appText.text16W500).copyWith(
+                color: titleColor ?? context.appColors.onSurface,
               ),
               textAlign: titleAlign ?? TextAlign.start,
             ),
@@ -73,11 +65,8 @@ class NormalText extends StatelessWidget {
             softWrap: true,
             maxLines: null,
             overflow: TextOverflow.visible,
-            style: TextStyle(
-              color: subColor ?? AppColors.greydark,
-              fontSize: subSize ?? context.sp(14),
-              fontWeight: subWeight ?? FontWeight.w400,
-              fontFamily: 'Nunito',
+            style: (subStyle ?? context.appText.text14W400).copyWith(
+              color: subColor ?? context.appColors.greyDark,
             ),
             textAlign: subAlign ?? TextAlign.start,
           ),

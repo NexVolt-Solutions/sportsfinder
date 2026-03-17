@@ -6,6 +6,8 @@ import 'package:sport_finding/feature/model/sport.dart';
 class ChooseSportScreenViewModel extends ChangeNotifier {
   int selectedIndex = -1;
 
+  bool get hasSelection => selectedIndex >= 0;
+
   final List<Sport> sports = [
     Sport(imagePath: AppAssets.footBallIcon, title: AppText.football),
     Sport(imagePath: AppAssets.basketBallIcon, title: AppText.basketball),

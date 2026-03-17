@@ -9,5 +9,14 @@ class AppColors {
   static const Color greencolor = Color(0xFF00CC46);
   static const Color blackcolor = Color(0xFF000000);
   static const Color greydark = Color(0xFF565656);
-  static const Color greylight60 = Color(0xFF565656);
+  static Color greylight = Color(0xFF565656).withOpacity(0.6);
+
+  /// Light grey for app bar icons on dark background.
+  static const Color transparent = Colors.transparent;
+
+  static LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.bluecolor.withValues(alpha: 0.0), AppColors.whitecolor],
+  );
 }

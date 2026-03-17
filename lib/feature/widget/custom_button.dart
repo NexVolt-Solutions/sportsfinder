@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart' hide BoxShadow;
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
@@ -10,7 +10,6 @@ class CustomButton extends StatelessWidget {
   final BorderRadius? radius;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
-  final bool isEnabled;
   final CrossAxisAlignment? crossAxisAlignment; // ✅ optional
 
   const CustomButton({
@@ -18,7 +17,6 @@ class CustomButton extends StatelessWidget {
     this.text,
     this.color,
     this.onTap,
-    required this.isEnabled,
     this.colorText,
     this.radius,
     this.padding,
@@ -28,7 +26,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isEnabled ? onTap : null,
+      onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: context.padSym(v: 13),
@@ -41,9 +39,8 @@ class CustomButton extends StatelessWidget {
           child: NormalText(
             crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
             titleText: text ?? '',
-            titleSize: context.sp(16),
-            titleWeight: FontWeight.w500,
-            titleColor: colorText ?? AppColors.whitecolor,
+            titleStyle: context.appText.text16W600,
+            titleColor: colorText ?? context.appColors.onPrimary,
           ),
         ),
       ),

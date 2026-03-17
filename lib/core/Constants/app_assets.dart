@@ -7,10 +7,10 @@ class AppAssets {
   static const String batIcon = "assets/sport/bat.svg";
   static const String footBallIcon = "assets/sport/football.svg";
   static const String tableTennisIcon = "assets/sport/tableTennis.svg";
-  static const String calendarIcon = "assets/Icon/calendarIcon.svg";
+  static const String calendarIcon = "assets/icon/calendarIcon.svg";
   static const String volleyBallIcon = "assets/sport/volleyball.svg";
-  static const String clockIcon = "assets/Icon/clockIcon.svg";
-  static const String doneTaskIcon = "assets/Icon/doneTaskIcon.svg";
+  static const String clockIcon = "assets/icon/clockIcon.svg";
+  static const String doneTaskIcon = "assets/icon/doneTaskIcon.svg";
   static const String notificationIcon = "assets/icon/notificationIcon.svg";
 
   //Icon
@@ -21,10 +21,10 @@ class AppAssets {
 
   //BottomBar Icons (match exact filenames: case-sensitive on Android)
   static const String chatIcon = "assets/bottomBarIcon/chat.svg";
-  static const String homeIcon = "assets/bottomBarIcon/home.svg";
+  static const String homeIcon = "assets/bottomBarIcon/Home.svg";
   static const String matchesIcon = "assets/bottomBarIcon/matches.svg";
-  static const String profileIcon = "assets/bottomBarIcon/profile.svg";
-  static const String searchBarIcon = "assets/bottomBarIcon/search.svg";
+  static const String profileIcon = "assets/bottomBarIcon/Profile.svg";
+  static const String searchBarIcon = "assets/bottomBarIcon/Search.svg";
 
   //Profile Icon
   static const String editIcon = "assets/profile/editIcon.svg";
@@ -42,6 +42,7 @@ class AppAssets {
 
   static const String addIcon = "assets/icon/add.svg";
   static const String playerIcon = "assets/icon/people.svg";
+  static const String filterIcon = "assets/icon/filter.svg";
 
   static const String locationIcon = "assets/icon/location.svg";
 

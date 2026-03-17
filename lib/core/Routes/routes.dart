@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Providers/route_providers.dart';
@@ -20,42 +20,66 @@ class Routes {
       case RoutesName.SplashScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.SplashScreen, const SplashScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.SplashScreen,
+            const SplashScreen(),
+          ),
         );
       case RoutesName.OnboardingScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.OnboardingScreen, const OnBoardingScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.OnboardingScreen,
+            const OnBoardingScreen(),
+          ),
         );
       case RoutesName.LoginScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.LoginScreen, const LoginScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.LoginScreen,
+            const LoginScreen(),
+          ),
         );
       case RoutesName.SignInScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.SignInScreen, const SignInScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.SignInScreen,
+            const SignInScreen(),
+          ),
         );
       case RoutesName.SkillLevelScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.SkillLevelScreen, const SkillLevelScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.SkillLevelScreen,
+            const SkillLevelScreen(),
+          ),
         );
       case RoutesName.ChooseSportScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.ChooseSportScreen, const ChooseSportScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.ChooseSportScreen,
+            const ChooseSportScreen(),
+          ),
         );
       case RoutesName.LocationAccessScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.LocationAccessScreen, const LocationAccessScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.LocationAccessScreen,
+            const LocationAccessScreen(),
+          ),
         );
       case RoutesName.BottomBarScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(RoutesName.BottomBarScreen, const BottomBarScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.BottomBarScreen,
+            const BottomBarScreen(),
+          ),
         );
       case RoutesName.HomeScreen:
         return MaterialPageRoute(
@@ -73,10 +97,8 @@ class Routes {
                   child: Text(
                     AppText.noRouteFound,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.blackcolor,
-                      fontSize: context.sp(18),
-                      fontWeight: FontWeight.bold,
+                    style: context.appText.text18Bold.copyWith(
+                      color: context.appColors.onSurface,
                     ),
                   ),
                 ),
@@ -85,9 +107,9 @@ class Routes {
                   left: context.sw(20),
                   child: InkWell(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back_ios,
-                      color: AppColors.blackcolor,
+                      color: context.appColors.onSurface,
                     ),
                   ),
                 ),

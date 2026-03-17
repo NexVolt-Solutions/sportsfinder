@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class TextFormFieldWidget extends StatelessWidget {
@@ -20,45 +20,36 @@ class TextFormFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return TextFormField(
       controller: controller,
       validator: validator,
-
       keyboardType: keyboardType ?? TextInputType.text,
-      style: TextStyle(fontSize: context.sp(14), color: AppColors.blackcolor),
+      style: context.appText.text14W400.copyWith(color: c.greyDark),
       decoration: InputDecoration(
         alignLabelWithHint: true,
-
         label: label != null
             ? Text(
                 label!,
-                style: TextStyle(
-                  color: AppColors.blackcolor,
-                  fontSize: context.sp(14),
-                  fontWeight: FontWeight.w500,
-                ),
+                style: context.appText.text16W400.copyWith(color: c.onSurface),
               )
             : null,
         hintText: hintText,
-        hintStyle: TextStyle(
-          color: AppColors.greydark,
-          fontSize: context.sp(14),
-        ),
+        hintStyle: context.appText.text14W400.copyWith(color: c.greylight),
         filled: true,
-        fillColor: AppColors.whitecolor,
+        fillColor: c.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: const BorderSide(color: AppColors.greydark, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: const BorderSide(color: AppColors.greydark, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: const BorderSide(color: AppColors.greydark, width: 1),
+          borderSide: BorderSide(color: c.primary, width: 1),
         ),
-        contentPadding: context.padSym(v: 14, h: 16),
       ),
     );
   }
