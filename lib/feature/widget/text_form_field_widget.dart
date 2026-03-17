@@ -35,16 +35,16 @@ class TextFormFieldWidget extends StatelessWidget {
               )
             : null,
         hintText: hintText,
-        hintStyle: context.appText.text14W400.copyWith(color: c.greyLight60),
+        hintStyle: context.appText.text14W400.copyWith(color: c.greylight),
         filled: true,
         fillColor: c.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: BorderSide(color: c.greyLight60, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: BorderSide(color: c.greyLight60, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),

@@ -23,7 +23,7 @@ class CardIconWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(context.radiusR(12)),
         boxShadow: [
           BoxShadow(
-            color: c.greyLight60,
+            color: c.greylight,
             offset: const Offset(0, 4),
             blurRadius: 95,
             blurStyle: BlurStyle.inner,

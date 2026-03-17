@@ -184,6 +184,8 @@ class AppText {
   static const String searchMatchesHint = 'Search Matches';
   static const String discoverNearbyPlayers =
       'Discover nearby players in your area';
+  static const String discoverSeeAll = 'See All';
+  static const String filterChipAll = 'All';
 
   // ─── Filters ─────────────────────────────────────────────────────────────────
   static const String filtersTitle = 'Filters';

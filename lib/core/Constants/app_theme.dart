@@ -11,7 +11,7 @@ class AppColorTheme extends ThemeExtension<AppColorTheme> {
     required this.error,
     required this.onError,
     required this.greyDark,
-    required this.greyLight60,
+    required this.greylight,
     required this.blue10,
     required this.blue20,
     required this.transparent,
@@ -25,7 +25,7 @@ class AppColorTheme extends ThemeExtension<AppColorTheme> {
   final Color error;
   final Color onError;
   final Color greyDark;
-  final Color greyLight60;
+  final Color greylight;
   final Color blue10;
   final Color blue20;
   final Color transparent;
@@ -40,33 +40,31 @@ class AppColorTheme extends ThemeExtension<AppColorTheme> {
     Color? error,
     Color? onError,
     Color? greyDark,
-    Color? greyLight60,
+    Color? greylight,
     Color? blue10,
     Color? blue20,
     Color? transparent,
     LinearGradient? primaryGradient,
-  }) =>
-      AppColorTheme(
-        primary: primary ?? this.primary,
-        onPrimary: onPrimary ?? this.onPrimary,
-        surface: surface ?? this.surface,
-        onSurface: onSurface ?? this.onSurface,
-        error: error ?? this.error,
-        onError: onError ?? this.onError,
-        greyDark: greyDark ?? this.greyDark,
-        greyLight60: greyLight60 ?? this.greyLight60,
-        blue10: blue10 ?? this.blue10,
-        blue20: blue20 ?? this.blue20,
-        transparent: transparent ?? this.transparent,
-        primaryGradient: primaryGradient ?? this.primaryGradient,
-      );
+  }) => AppColorTheme(
+    primary: primary ?? this.primary,
+    onPrimary: onPrimary ?? this.onPrimary,
+    surface: surface ?? this.surface,
+    onSurface: onSurface ?? this.onSurface,
+    error: error ?? this.error,
+    onError: onError ?? this.onError,
+    greyDark: greyDark ?? this.greyDark,
+    greylight: greylight ?? this.greylight,
+    blue10: blue10 ?? this.blue10,
+    blue20: blue20 ?? this.blue20,
+    transparent: transparent ?? this.transparent,
+    primaryGradient: primaryGradient ?? this.primaryGradient,
+  );
 
   @override
   ThemeExtension<AppColorTheme> lerp(
     ThemeExtension<AppColorTheme>? other,
     double t,
-  ) =>
-      this;
+  ) => this;
 }
 
 extension AppColorThemeExtension on BuildContext {
@@ -75,19 +73,19 @@ extension AppColorThemeExtension on BuildContext {
 }
 
 AppColorTheme get _defaultAppColorTheme => AppColorTheme(
-      primary: AppColors.bluecolor,
-      onPrimary: AppColors.whitecolor,
-      surface: AppColors.whitecolor,
-      onSurface: AppColors.blackcolor,
-      error: AppColors.redcolor,
-      onError: AppColors.whitecolor,
-      greyDark: AppColors.greydark,
-      greyLight60: AppColors.greylight60,
-      blue10: AppColors.blue10,
-      blue20: AppColors.blue20,
-      transparent: AppColors.transparent,
-      primaryGradient: AppColors.primaryGradient,
-    );
+  primary: AppColors.bluecolor,
+  onPrimary: AppColors.whitecolor,
+  surface: AppColors.whitecolor,
+  onSurface: AppColors.blackcolor,
+  error: AppColors.redcolor,
+  onError: AppColors.whitecolor,
+  greyDark: AppColors.greydark,
+  greylight: AppColors.greylight,
+  blue10: AppColors.blue10,
+  blue20: AppColors.blue20,
+  transparent: AppColors.transparent,
+  primaryGradient: AppColors.primaryGradient,
+);
 
 class AppTextTheme extends ThemeExtension<AppTextTheme> {
   AppTextTheme({this.color = AppColors.blackcolor});
@@ -170,7 +168,7 @@ class AppTheme {
         error: AppColors.redcolor,
         onError: AppColors.whitecolor,
         greyDark: AppColors.greydark,
-        greyLight60: AppColors.greylight60,
+        greylight: AppColors.greylight,
         blue10: AppColors.blue10,
         blue20: AppColors.blue20,
         transparent: AppColors.transparent,

@@ -1,0 +1,96 @@
+import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/feature/model/discovery_match.dart';
+
+/// Filter chip item: label and optional sport key for filtering.
+class SportFilterChip {
+  const SportFilterChip({required this.label, this.sportKey});
+
+  final String label;
+
+  /// If null, means "All" (no sport filter).
+  final String? sportKey;
+}
+
+class DiscoveryTabViewModel extends ChangeNotifier {
+  DiscoveryTabViewModel() {
+    _loadMatches();
+  }
+
+  final TextEditingController searchController = TextEditingController();
+  final List<SportFilterChip> filterChips = const [
+    SportFilterChip(label: AppText.filterChipAll),
+    SportFilterChip(label: AppText.football, sportKey: AppText.football),
+    SportFilterChip(label: AppText.basketball, sportKey: AppText.basketball),
+    SportFilterChip(label: AppText.tennis, sportKey: AppText.tennis),
+    SportFilterChip(label: AppText.volleyball, sportKey: AppText.volleyball),
+  ];
+
+  List<DiscoveryMatch> _allMatches = [];
+  int _selectedFilterIndex = 0;
+
+  List<DiscoveryMatch> get filteredMatches {
+    final query = searchController.text.trim().toLowerCase();
+    final chip = filterChips[_selectedFilterIndex];
+    var list = _allMatches;
+
+    if (chip.sportKey != null) {
+      list = list
+          .where(
+            (m) => m.sportType.toLowerCase() == chip.sportKey!.toLowerCase(),
+          )
+          .toList();
+    }
+    if (query.isNotEmpty) {
+      list = list.where((m) {
+        return m.title.toLowerCase().contains(query) ||
+            m.sportType.toLowerCase().contains(query) ||
+            m.location.toLowerCase().contains(query);
+      }).toList();
+    }
+    return list;
+  }
+
+  int get selectedFilterIndex => _selectedFilterIndex;
+
+  void setSelectedFilterIndex(int index) {
+    if (_selectedFilterIndex == index) return;
+    _selectedFilterIndex = index;
+    notifyListeners();
+  }
+
+  void onSearchChanged() {
+    notifyListeners();
+  }
+
+  void _loadMatches() {
+    _allMatches = [
+      const DiscoveryMatch(
+        id: '1',
+        title: 'Rimsha Match',
+        distanceKm: 2.5,
+        sportType: AppText.basketball,
+        location: 'Central Park Court',
+        dateTime: '16/03/2026, 7:00 PM',
+        participantsJoined: 10,
+        participantsTotal: 10,
+      ),
+      const DiscoveryMatch(
+        id: '2',
+        title: 'Rimsha Match',
+        distanceKm: 2.5,
+        sportType: AppText.basketball,
+        location: 'Central Park Court',
+        dateTime: '16/03/2026, 7:00 PM',
+        participantsJoined: 6,
+        participantsTotal: 10,
+      ),
+    ];
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+}

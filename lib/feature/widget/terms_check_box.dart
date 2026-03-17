@@ -37,16 +37,12 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: context.appText.text12W400.copyWith(
-                color: c.greyLight60,
-              ),
+              style: context.appText.text12W400.copyWith(color: c.greylight),
               children: [
                 TextSpan(text: AppText.iAgreeTo),
                 TextSpan(
                   text: AppText.agreeToTerms,
-                  style: context.appText.text12W500.copyWith(
-                    color: c.primary,
-                  ),
+                  style: context.appText.text12W500.copyWith(color: c.primary),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
                       // Navigate to Terms screen
@@ -55,9 +51,7 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                 TextSpan(text: AppText.and),
                 TextSpan(
                   text: AppText.privacy,
-                  style: context.appText.text12W500.copyWith(
-                    color: c.primary,
-                  ),
+                  style: context.appText.text12W500.copyWith(color: c.primary),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
                       // Navigate to Privacy Policy screen

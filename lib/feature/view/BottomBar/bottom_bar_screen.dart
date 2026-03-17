@@ -6,6 +6,8 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class BottomBarScreen extends StatelessWidget {
   const BottomBarScreen({super.key});
@@ -34,7 +36,7 @@ class _BottomBarContent extends StatelessWidget {
       case 0:
         return Center(child: Text(AppText.navMatches, style: style));
       case 1:
-        return Center(child: Text(AppText.navDiscover, style: style));
+        return const DiscoverTabScreen();
       case 2:
         return Center(child: Text(AppText.navHome, style: style));
       case 3:
@@ -87,7 +89,8 @@ class _BottomBarContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<BottomBarScreenViewModel>(
-        builder: (_, vm, _) => _body(context, vm.selectedIndex),
+        builder: (_, vm, _) =>
+            MainFrame(child: _body(context, vm.selectedIndex)),
       ),
       bottomNavigationBar: Consumer<BottomBarScreenViewModel>(
         builder: (_, vm, _) {
@@ -138,6 +141,7 @@ class _BottomBarContent extends StatelessWidget {
                           label: AppText.navDiscover,
                           index: 1,
                           selectedIndex: vm.selectedIndex,
+
                           onTap: () => vm.setSelectedIndex(1),
                         ),
                       ),

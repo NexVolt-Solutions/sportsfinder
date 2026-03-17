@@ -5,52 +5,41 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class MainFrame extends StatelessWidget {
   final Widget? child;
-  final PreferredSizeWidget? appBar;
-  final Widget? bottomNavigationBar;
 
-  const MainFrame({
-    super.key,
-    this.child,
-    this.appBar,
-    this.bottomNavigationBar,
-  });
+  const MainFrame({super.key, this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: appBar,
-      bottomNavigationBar: bottomNavigationBar,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Top-left circle
-            Positioned(
-              top: 0,
-              left: -context.w(55),
-              child: _GlowCircle(context: context),
-            ),
-            // Mid-right circle
-            Positioned(
-              top: context.h(144),
-              right: -context.w(55),
-              child: _GlowCircle(context: context),
-            ),
-            // Mid-left circle
-            Positioned(
-              top: context.h(490),
-              left: -context.w(55),
-              child: _GlowCircle(context: context),
-            ),
-            // Bottom-right circle
-            Positioned(
-              bottom: context.h(0),
-              right: -context.w(55),
-              child: _GlowCircle(context: context),
-            ),
+    return SafeArea(
+      child: Stack(
+        children: [
+          // Top-left circle
+          Positioned(
+            top: 0,
+            left: -context.w(55),
+            child: _GlowCircle(context: context),
+          ),
+          // Mid-right circle
+          Positioned(
+            top: context.h(144),
+            right: -context.w(55),
+            child: _GlowCircle(context: context),
+          ),
+          // Mid-left circle
+          Positioned(
+            top: context.h(490),
+            left: -context.w(55),
+            child: _GlowCircle(context: context),
+          ),
+          // Bottom-right circle
+          Positioned(
+            bottom: context.h(0),
+            right: -context.w(55),
+            child: _GlowCircle(context: context),
+          ),
 
-            child ?? const SizedBox.shrink(),
-          ],
-        ),
+          child ?? const SizedBox.shrink(),
+        ],
       ),
     );
   }

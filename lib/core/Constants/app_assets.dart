@@ -7,10 +7,10 @@ class AppAssets {
   static const String batIcon = "assets/sport/bat.svg";
   static const String footBallIcon = "assets/sport/football.svg";
   static const String tableTennisIcon = "assets/sport/tableTennis.svg";
-  static const String calendarIcon = "assets/Icon/calendarIcon.svg";
+  static const String calendarIcon = "assets/icon/calendarIcon.svg";
   static const String volleyBallIcon = "assets/sport/volleyball.svg";
-  static const String clockIcon = "assets/Icon/clockIcon.svg";
-  static const String doneTaskIcon = "assets/Icon/doneTaskIcon.svg";
+  static const String clockIcon = "assets/icon/clockIcon.svg";
+  static const String doneTaskIcon = "assets/icon/doneTaskIcon.svg";
   static const String notificationIcon = "assets/icon/notificationIcon.svg";
 
   //Icon
@@ -42,6 +42,7 @@ class AppAssets {
 
   static const String addIcon = "assets/icon/add.svg";
   static const String playerIcon = "assets/icon/people.svg";
+  static const String filterIcon = "assets/icon/filter.svg";
 
   static const String locationIcon = "assets/icon/location.svg";
 
