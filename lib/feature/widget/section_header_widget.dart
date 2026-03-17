@@ -26,9 +26,8 @@ class SectionHeaderWidget extends StatelessWidget {
         NormalText(
           crossAxisAlignment: CrossAxisAlignment.center,
           titleText: title,
-          titleSize: context.sp(18),
+
           titleColor: AppColors.blackcolor,
-          titleWeight: FontWeight.w600,
         ),
 
         /// Right Side (Optional)
@@ -40,9 +39,7 @@ class SectionHeaderWidget extends StatelessWidget {
                 NormalText(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   titleText: actionText!,
-                  titleSize: context.sp(18),
                   titleColor: AppColors.bluecolor,
-                  titleWeight: FontWeight.w600,
                 ),
                 if (icon != null) ...[
                   SizedBox(width: context.w(10)),

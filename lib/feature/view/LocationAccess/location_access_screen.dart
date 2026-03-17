@@ -7,6 +7,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -23,11 +24,38 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
       builder: (context, model, child) => Scaffold(
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: context.padAll(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
+              children: [
+                CustomButton(
+                  text: AppText.allowLocation,
+                  color: context.appColors.primary,
+                  onTap: () =>
+                      Navigator.pushNamed(context, RoutesName.BottomBarScreen),
+                ),
+                SizedBox(height: context.h(12)),
+                GestureDetector(
+                  onTap: () {
+                    // handle skip
+                  },
+                  child: NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: AppText.skipForNow,
+                    titleStyle: context.appText.text16W500,
+                    titleColor: context.appColors.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         body: MainFrame(
           child: Column(
             children: [
               AppBarWidget(title: AppText.appName),
-
               Flexible(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -57,31 +85,6 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                       ],
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        body: SafeArea(
-          child: SplashBackground(
-            child: ListView(
-              padding: context.padSym(h: 20),
-              children: [
-                SizedBox(height: context.h(234)),
-                SvgPicture.asset(AppAssets.locationIcon, fit: BoxFit.scaleDown),
-                SizedBox(height: context.h(20)),
-                NormalText(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  titleText: AppText.allowLocationAccess,
-                  titleSize: context.sp(20),
-                  titleColor: AppColors.blackcolor,
-                  titleWeight: FontWeight.w600,
-                  subText: AppText.allowLocationDesc,
-                  subColor: AppColors.greylight60,
-                  subSize: context.sp(16),
-                  titleAlign: TextAlign.center,
-                  subWeight: FontWeight.w500,
-                  subAlign: TextAlign.center,
                 ),
               ),
             ],
