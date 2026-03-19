@@ -106,7 +106,7 @@ class DiscoveryCard extends StatelessWidget {
                     border: Border.all(color: c.primary.withValues(alpha: 0.4)),
                   ),
                   child: Text(
-                    AppText.discoverSeeAll,
+                    AppText.discover,
                     style: context.appText.text14W500.copyWith(color: c.primary),
                   ),
                 ),

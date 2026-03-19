@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view_model/discovery_tab_view_model.dart';
+import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
 
 /// Horizontal scrollable sport filter chips (All, Football, Basketball, etc.).
 class SportFilterSection extends StatelessWidget {
@@ -24,7 +24,7 @@ class SportFilterSection extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
         itemCount: chips.length,
-        separatorBuilder: (_, __) => SizedBox(width: context.sw(4)),
+        separatorBuilder: (_, _) => SizedBox(width: context.sw(4)),
         itemBuilder: (context, index) {
           final chip = chips[index];
           final isSelected = selectedIndex == index;

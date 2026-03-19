@@ -4,10 +4,13 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Providers/route_providers.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
+import 'package:sport_finding/feature/view/Auth/Signup/sign_up_screen..dart';
 import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/Home/components/player_match_details_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
@@ -34,12 +37,12 @@ class Routes {
             const OnBoardingScreen(),
           ),
         );
-      case RoutesName.LoginScreen:
+      case RoutesName.signUpScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.LoginScreen,
-            const LoginScreen(),
+            RoutesName.signUpScreen,
+            const SignUpScreen(),
           ),
         );
       case RoutesName.SignInScreen:
@@ -85,12 +88,40 @@ class Routes {
       case RoutesName.HomeScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => HomeScreen(),
+          builder: (_) =>
+              RouteProviders.wrapIfNeeded(RoutesName.HomeScreen, HomeScreen()),
         );
       case RoutesName.OtpVerificationScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => OtpVerificationScreen(),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.OtpVerificationScreen,
+            OtpVerificationScreen(),
+          ),
+        );
+      case RoutesName.AllUpComingMatchesScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.AllUpComingMatchesScreen,
+            AllUpcomingMatches(),
+          ),
+        );
+      case RoutesName.SeeAllInvatedPlayerScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.SeeAllInvatedPlayerScreen,
+            SeeAllInvatedPlayerScreen(),
+          ),
+        );
+      case RoutesName.PlayerMatchDetailsScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.PlayerMatchDetailsScreen,
+            PlayerMatchDetailsScreen(),
+          ),
         );
 
       default:

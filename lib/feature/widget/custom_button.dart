@@ -39,8 +39,7 @@ class CustomButton extends StatelessWidget {
           child: NormalText(
             crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
             titleText: text ?? '',
-            titleStyle: context.appText.text16W600,
-            titleColor: colorText ?? context.appColors.onPrimary,
+            titleColor: context.appColors.surface,
           ),
         ),
       ),

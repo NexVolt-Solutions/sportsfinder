@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 extension AppStylesExtension on BuildContext {
@@ -10,7 +9,6 @@ class AppStyles {
   AppStyles(this._context);
   final BuildContext _context;
 
-  AppColorTheme get _c => _context.appColors;
   static const String _fontFamily = 'Nunito';
 
   TextStyle get heading1 => TextStyle(

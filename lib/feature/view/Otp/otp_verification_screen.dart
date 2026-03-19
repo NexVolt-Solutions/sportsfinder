@@ -52,7 +52,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               children: [
                 NormalText(
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  titleText: AppText.appName,
+                  titleText: AppText.sportFinding,
                   titleStyle: context.appText.text18W600,
                   titleColor: context.appColors.onSurface,
                 ),
@@ -66,7 +66,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               titleText: AppText.verifyYourAccount,
               titleStyle: context.appText.text16W600,
               titleColor: context.appColors.onSurface,
-              subText: AppText.enterVerificationCode,
+              subText: AppText.enterThe6DigitCodeWeHaveSentToYourEmail,
               subStyle: context.appText.text12W500,
               subColor: context.appColors.greylight,
             ),
@@ -88,14 +88,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             SizedBox(height: context.h(20)),
             NormalText(
               crossAxisAlignment: CrossAxisAlignment.center,
-              titleText: AppText.resend,
+              titleText: AppText.reSend,
               titleStyle: context.appText.text12W500,
               titleColor: context.appColors.greyDark,
             ),
             SizedBox(height: context.h(20)),
             AuthFooterText(
-              normalText: AppText.didntReceiveCode,
-              actionText: AppText.resend,
+              normalText: AppText.didntReceiveTheCodeResend,
+              actionText: AppText.reSend,
               onTap: () {
                 Navigator.pushNamed(context, RoutesName.BottomBarScreen);
               },

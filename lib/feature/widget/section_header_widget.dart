@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -27,9 +26,9 @@ class SectionHeaderWidget extends StatelessWidget {
         NormalText(
           crossAxisAlignment: CrossAxisAlignment.center,
           titleText: title,
+          maxLines: 2,
           titleStyle: context.appText.text18W600,
-
-          titleColor: AppColors.blackcolor,
+          titleColor: context.appColors.onPrimary,
         ),
 
         /// Right Side (Optional)
@@ -41,8 +40,9 @@ class SectionHeaderWidget extends StatelessWidget {
                 NormalText(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   titleText: actionText!,
+                  maxLines: 2,
                   titleStyle: context.appText.text16W600,
-                  titleColor: AppColors.bluecolor,
+                  titleColor: context.appColors.primary,
                 ),
                 if (icon != null) ...[
                   SizedBox(width: context.w(10)),

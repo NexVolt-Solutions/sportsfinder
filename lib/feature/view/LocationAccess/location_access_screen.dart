@@ -55,7 +55,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
         body: MainFrame(
           child: Column(
             children: [
-              AppBarWidget(title: AppText.appName),
+              AppBarWidget(title: AppText.sportFinding),
               Flexible(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -76,7 +76,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                             titleText: AppText.allowLocationAccess,
                             titleStyle: context.appText.text18W600,
                             titleColor: context.appColors.onSurface,
-                            subText: AppText.allowLocationDesc,
+                            subText: AppText.allowLocation,
                             subStyle: context.appText.text16W400,
                             subAlign: TextAlign.center,
                             subColor: context.appColors.greyDark,
