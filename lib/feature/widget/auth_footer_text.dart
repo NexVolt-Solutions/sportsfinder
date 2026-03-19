@@ -23,7 +23,7 @@ class AuthFooterText extends StatelessWidget {
             color: context.appColors.onSurface,
           ),
           children: [
-            if (normalText != null) TextSpan(text: normalText),
+            if (normalText != null) TextSpan(text: '${normalText!}   '),
             if (actionText != null)
               TextSpan(
                 text: actionText,

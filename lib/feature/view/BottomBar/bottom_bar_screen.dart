@@ -35,17 +35,17 @@ class _BottomBarContent extends StatelessWidget {
     final style = context.appText.text16W500;
     switch (selectedIndex) {
       case 0:
-        return Center(child: Text(AppText.navMatches, style: style));
+        return Center(child: Text('my Matches', style: style));
       case 1:
         return const DiscoverTabScreen();
       case 2:
         return HomeScreen();
       case 3:
-        return Center(child: Text(AppText.navChat, style: style));
+        return Center(child: Text('my Matches', style: style));
       case 4:
-        return Center(child: Text(AppText.navProfile, style: style));
+        return Center(child: Text('my Matches', style: style));
       default:
-        return Center(child: Text(AppText.navHome, style: style));
+        return Center(child: Text('my Matches', style: style));
     }
   }
 
@@ -129,7 +129,7 @@ class _BottomBarContent extends StatelessWidget {
                         child: _navItem(
                           context: context,
                           iconPath: AppAssets.matchesIcon,
-                          label: AppText.navMatches,
+                          label: AppText.match,
                           index: 0,
                           selectedIndex: vm.selectedIndex,
                           onTap: () => vm.setSelectedIndex(0),
@@ -139,7 +139,7 @@ class _BottomBarContent extends StatelessWidget {
                         child: _navItem(
                           context: context,
                           iconPath: AppAssets.searchBarIcon,
-                          label: AppText.navDiscover,
+                          label: AppText.discover,
                           index: 1,
                           selectedIndex: vm.selectedIndex,
 
@@ -152,7 +152,7 @@ class _BottomBarContent extends StatelessWidget {
                         child: _navItem(
                           context: context,
                           iconPath: AppAssets.chatIcon,
-                          label: AppText.navChat,
+                          label: AppText.chat,
                           index: 3,
                           selectedIndex: vm.selectedIndex,
                           onTap: () => vm.setSelectedIndex(3),
@@ -162,7 +162,7 @@ class _BottomBarContent extends StatelessWidget {
                         child: _navItem(
                           context: context,
                           iconPath: AppAssets.profileIcon,
-                          label: AppText.navProfile,
+                          label: AppText.profile,
                           index: 4,
                           selectedIndex: vm.selectedIndex,
                           onTap: () => vm.setSelectedIndex(4),

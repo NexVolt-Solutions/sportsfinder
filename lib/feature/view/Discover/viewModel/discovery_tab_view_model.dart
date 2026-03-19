@@ -19,7 +19,7 @@ class DiscoveryTabViewModel extends ChangeNotifier {
 
   final TextEditingController searchController = TextEditingController();
   final List<SportFilterChip> filterChips = const [
-    SportFilterChip(label: AppText.filterChipAll),
+    SportFilterChip(label: AppText.football),
     SportFilterChip(label: AppText.football, sportKey: AppText.football),
     SportFilterChip(label: AppText.basketball, sportKey: AppText.basketball),
     SportFilterChip(label: AppText.tennis, sportKey: AppText.tennis),

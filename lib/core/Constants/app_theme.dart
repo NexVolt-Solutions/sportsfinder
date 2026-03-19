@@ -88,7 +88,8 @@ AppColorTheme get _defaultAppColorTheme => AppColorTheme(
 );
 
 class AppTextTheme extends ThemeExtension<AppTextTheme> {
-  AppTextTheme({this.color = AppColors.blackcolor});
+  const AppTextTheme({this.color = AppColors.blackcolor});
+
   final Color color;
 
   static const String _fontFamily = 'Nunito';
@@ -99,6 +100,24 @@ class AppTextTheme extends ThemeExtension<AppTextTheme> {
     fontWeight: weight,
     color: color,
   );
+
+  /// Generic dynamic style from theme
+  TextStyle style({
+    required double fontSize,
+    required FontWeight fontWeight,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return TextStyle(
+      fontFamily: _fontFamily,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color ?? this.color,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
 
   // 18
   TextStyle get text18W600 => _style(18, FontWeight.w600);
@@ -125,19 +144,22 @@ class AppTextTheme extends ThemeExtension<AppTextTheme> {
   TextStyle get text12Bold => _style(12, FontWeight.bold);
 
   @override
-  ThemeExtension<AppTextTheme> copyWith({Color? color}) =>
-      AppTextTheme(color: color ?? this.color);
+  ThemeExtension<AppTextTheme> copyWith({Color? color}) {
+    return AppTextTheme(color: color ?? this.color);
+  }
 
   @override
   ThemeExtension<AppTextTheme> lerp(
     ThemeExtension<AppTextTheme>? other,
     double t,
-  ) => this;
+  ) {
+    return this;
+  }
 }
 
 extension AppTextThemeExtension on BuildContext {
   AppTextTheme get appText =>
-      Theme.of(this).extension<AppTextTheme>() ?? AppTextTheme();
+      Theme.of(this).extension<AppTextTheme>() ?? const AppTextTheme();
 }
 
 class AppTheme {

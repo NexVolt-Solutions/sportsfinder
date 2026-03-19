@@ -4,8 +4,13 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class PlayerCountWidget extends StatelessWidget {
-  final playerNo;
-  const PlayerCountWidget({super.key, this.playerNo});
+  final int playerNo1;
+  final int playerNo2;
+  const PlayerCountWidget({
+    super.key,
+    required this.playerNo1,
+    required this.playerNo2,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,12 @@ class PlayerCountWidget extends StatelessWidget {
           ),
         ),
         NormalText(
-          titleText: playerNo,
+          titleText: '$playerNo1',
+          titleColor: context.appColors.greyDark,
+          titleStyle: context.appText.text12W600,
+        ),
+        NormalText(
+          titleText: '/$playerNo2',
           titleColor: context.appColors.greyDark,
           titleStyle: context.appText.text12W600,
         ),

@@ -13,14 +13,14 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<LoginScreenViewModel>(
@@ -31,10 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ListView(
               padding: context.padSym(h: 20),
               children: [
-                AppBarWidget(
-                  title: AppText.appName,
-                  onLeadingTap: () => Navigator.pop(context),
-                ),
+                AppBarWidget(title: AppText.sportFinding),
                 NormalText(
                   titleText: AppText.welcomeBack,
                   titleStyle: context.appText.text18W600,
@@ -45,11 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
                   label: AppText.email,
-                  hintText: AppText.emailHint,
+                  hintText: AppText.emailHit,
                   controller: model.emailController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Email required";
+                      return AppText.emailValidation;
                     }
                     return null;
                   },
@@ -57,10 +54,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
                   label: AppText.createPassword,
-                  hintText: AppText.passwordHint,
+                  hintText: AppText.passwordHit,
                   controller: model.passwordController,
                   validator: (value) => value == null || value.isEmpty
-                      ? "Password required"
+                      ? AppText.passwordValidation
                       : null,
                 ),
                 SizedBox(height: context.h(12)),
@@ -82,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 GmailButton(),
                 SizedBox(height: context.h(12)),
                 AuthFooterText(
-                  normalText: AppText.alreadyHaveAccount,
+                  normalText: AppText.alreadyHaveAnAccountSignIn,
                   actionText: AppText.signUp,
                   onTap: () {
                     Navigator.pushNamed(context, RoutesName.SignInScreen);

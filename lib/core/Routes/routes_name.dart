@@ -3,7 +3,7 @@
 class RoutesName {
   static const String SplashScreen = 'splash_screen';
   static const String OnboardingScreen = 'on_boarding_screen';
-  static const String LoginScreen = 'login_screen';
+  static const String signUpScreen = 'sign_up_screen';
   static const String SignInScreen = 'sigin_screen';
   static const String SkillLevelScreen = 'skill_level_screen';
   static const String ChooseSportScreen = 'choose_sport_screen';
@@ -11,4 +11,8 @@ class RoutesName {
   static const String BottomBarScreen = 'bottom_bar_screen';
   static const String HomeScreen = 'home_screen';
   static const String OtpVerificationScreen = 'otp_verification_screen';
+  static const String AllUpComingMatchesScreen = 'all_upcoing_matches_screen';
+  static const String SeeAllInvatedPlayerScreen =
+      'see_all_invated_player_screen';
+  static const String PlayerMatchDetailsScreen = 'player_match_details_screen';
 }

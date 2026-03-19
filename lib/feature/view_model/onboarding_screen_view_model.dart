@@ -12,18 +12,18 @@ class OnboardingScreenViewModel extends ChangeNotifier {
   List<OnboardingModel> onBoardingImages = [
     OnboardingModel(
       image: AppAssets.firstImage,
-      title: AppText.onboardingTitle1,
-      subTitle: AppText.onboardingDesc1,
+      title: AppText.findSportsNearYou,
+      subTitle: AppText.discoverPlayersAndSportsMatchesHappeningInYourArea,
     ),
     OnboardingModel(
       image: AppAssets.secondImage,
-      title: AppText.onboardingTitle2,
-      subTitle: AppText.onboardingDesc2,
+      title: AppText.connectWithPlayers,
+      subTitle: AppText.joinGamesOrInvitePlayersToMatches,
     ),
     OnboardingModel(
       image: AppAssets.thirdImage,
-      title: AppText.onboardingTitle3,
-      subTitle: AppText.onboardingDesc3,
+      title: AppText.playAndImprove,
+      subTitle: AppText.competeWithPlayersOfYourSkillLevelAndEnjoySports,
     ),
   ];
 
@@ -62,8 +62,10 @@ class OnboardingScreenViewModel extends ChangeNotifier {
   void onGetStarted(BuildContext context) {
     if (_isNavigating) return;
     _isNavigating = true;
-    Navigator.pushReplacementNamed(context, RoutesName.LoginScreen)
-        .whenComplete(() => _isNavigating = false);
+    Navigator.pushReplacementNamed(
+      context,
+      RoutesName.signUpScreen,
+    ).whenComplete(() => _isNavigating = false);
   }
 
   @override

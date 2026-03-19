@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/player_match_detail_screen_view_model.dart';
+import 'package:sport_finding/feature/view_model/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view_model/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/login_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/onboarding_screen_view_model.dart';
+import 'package:sport_finding/feature/view_model/otp_verification_screen_view_model.dart';
+import 'package:sport_finding/feature/view_model/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/sign_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/view_model/splash_screen_view_model.dart';
@@ -29,7 +33,7 @@ class RouteProviders {
           create: (_) => OnboardingScreenViewModel(),
           child: child,
         );
-      case RoutesName.LoginScreen:
+      case RoutesName.signUpScreen:
         return ChangeNotifierProvider(
           create: (_) => LoginScreenViewModel(),
           child: child,
@@ -59,6 +63,27 @@ class RouteProviders {
           create: (_) => BottomBarScreenViewModel(),
           child: child,
         );
+      case RoutesName.OtpVerificationScreen:
+        return ChangeNotifierProvider(
+          create: (_) => OtpVerificationScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.AllUpComingMatchesScreen:
+        return ChangeNotifierProvider(
+          create: (_) => AllUpcommingMatchesViewModel(),
+          child: child,
+        );
+      case RoutesName.SeeAllInvatedPlayerScreen:
+        return ChangeNotifierProvider(
+          create: (_) => SeeAllInvatedPlayerScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.PlayerMatchDetailsScreen:
+        return ChangeNotifierProvider(
+          create: (_) => PlayerMatchDetailScreenViewModel(),
+          child: child,
+        );
+
       default:
         return child;
     }
