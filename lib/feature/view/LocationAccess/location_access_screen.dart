@@ -24,11 +24,38 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
       builder: (context, model, child) => Scaffold(
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: context.padAll(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
+              children: [
+                CustomButton(
+                  text: AppText.allowLocation,
+                  color: context.appColors.primary,
+                  onTap: () =>
+                      Navigator.pushNamed(context, RoutesName.BottomBarScreen),
+                ),
+                SizedBox(height: context.h(12)),
+                GestureDetector(
+                  onTap: () {
+                    // handle skip
+                  },
+                  child: NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: AppText.skipForNow,
+                    titleStyle: context.appText.text16W500,
+                    titleColor: context.appColors.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         body: MainFrame(
           child: Column(
             children: [
-              AppBarWidget(title: AppText.appName),
-
+              AppBarWidget(title: AppText.sportFinding),
               Flexible(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -49,7 +76,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                             titleText: AppText.allowLocationAccess,
                             titleStyle: context.appText.text18W600,
                             titleColor: context.appColors.onSurface,
-                            subText: AppText.allowLocationDesc,
+                            subText: AppText.allowLocation,
                             subStyle: context.appText.text16W400,
                             subAlign: TextAlign.center,
                             subColor: context.appColors.greyDark,
@@ -57,37 +84,6 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsetsGeometry.only(
-                  top: context.h(3),
-                  left: context.w(20),
-                  right: context.w(20),
-                  bottom: context.text(12),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomButton(
-                      text: AppText.allowLocation,
-                      color: context.appColors.primary,
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.BottomBarScreen,
-                        );
-                      },
-                    ),
-                    SizedBox(height: context.h(12)),
-                    NormalText(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      titleText: AppText.skipForNow,
-                      titleStyle: context.appText.text14W400,
-                      titleColor: context.appColors.greyDark,
-                    ),
-                    SizedBox(height: context.h(20)),
                   ],
                 ),
               ),

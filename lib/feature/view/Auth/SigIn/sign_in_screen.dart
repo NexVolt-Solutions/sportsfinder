@@ -33,20 +33,62 @@ class _SignInScreenState extends State<SignInScreen> {
               padding: context.padSym(h: 20),
               children: [
                 AppBarWidget(
-                  onTap: () => Navigator.pop(context),
-                  title: AppText.appName,
+                  onTapFirst: () => Navigator.pop(context),
+                  title: AppText.sportFinding,
                 ),
                 NormalText(
                   titleText: AppText.createAccount,
                   titleStyle: context.appText.text18W600,
-                  subText: AppText.joinSportFinding,
+                  subText: AppText.joinSportFindingToday,
                   subStyle: context.appText.text16W400,
                   subColor: context.appColors.greylight,
                 ),
                 SizedBox(height: context.h(20)),
+
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: context.radiusR(50),
+                      backgroundImage: AssetImage('assets/images/profile.jpg'),
+                    ),
+
+                    Transform.translate(
+                      offset: const Offset(55, 40),
+                      child: Container(
+                        padding: EdgeInsets.all(context.radiusR(6)),
+                        decoration: BoxDecoration(
+                          color: context.appColors.onPrimary,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.appColors.greyDark,
+                              offset: const Offset(0, 4),
+                              blurRadius: 80,
+                              blurStyle: BlurStyle.inner,
+                            ),
+                          ],
+                        ),
+                        child: Icon(Icons.camera_alt),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: context.h(12)),
+
+                NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  titleText: AppText.uploadYourPicture,
+                  titleStyle: context.appText.text18W600,
+                  titleColor: context.appColors.primary,
+                ),
+
+                SizedBox(height: context.h(20)),
+
                 TextFormFieldWidget(
                   label: AppText.fullName,
-                  hintText: "Enter your name",
+                  hintText: AppText.fullNameHit,
                   controller: model.fullNameController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -58,7 +100,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
                   label: AppText.email,
-                  hintText: AppText.emailHint,
+                  hintText: AppText.email,
                   controller: model.emailController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -70,11 +112,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
                   label: AppText.phoneNumber,
-                  hintText: AppText.phoneHint,
+                  hintText: AppText.phoneNumberHit,
                   controller: model.phoneNumberController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Phone number required";
+                      return AppText.phoneNumberValidation;
                     }
                     return null;
                   },
@@ -82,11 +124,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
                   label: AppText.createPassword,
-                  hintText: "Enter your password",
+                  hintText: AppText.passwordHit,
                   controller: model.emailController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Password required";
+                      return AppText.passwordValidation;
                     }
                     return null;
                   },
@@ -94,11 +136,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
                   label: AppText.confirmPassword,
-                  hintText: "Enter your confirm password",
+                  hintText: AppText.passwordHit,
                   controller: model.confirmPasswordController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Confirm Password required";
+                      return AppText.confirmPasswordValidation;
                     }
                     return null;
                   },
@@ -117,10 +159,10 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(height: context.h(12)),
 
                 AuthFooterText(
-                  normalText: "Don’t have an account? ",
-                  actionText: "Sign In",
+                  normalText: AppText.alreadyHaveAnAccountSignIn,
+                  actionText: AppText.signIn,
                   onTap: () {
-                    Navigator.pushNamed(context, RoutesName.LoginScreen);
+                    Navigator.pushNamed(context, RoutesName.signUpScreen);
                   },
                 ),
               ],

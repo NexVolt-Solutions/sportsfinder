@@ -32,14 +32,14 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                   padding: context.padSym(h: 20),
                   children: [
                     AppBarWidget(
-                      onTap: () => Navigator.pop(context),
-                      title: AppText.appName,
+                      onTapFirst: () => Navigator.pop(context),
+                      title: AppText.sportFinding,
                     ),
                     NormalText(
-                      titleText: AppText.chooseSportsTitle,
+                      titleText: AppText.chooseYourSports,
                       titleStyle: context.appText.text18W600,
                       titleColor: context.appColors.onSurface,
-                      subText: AppText.chooseSportsDesc,
+                      subText: AppText.selectTheSportsYouEnjoyPlaying,
                       subStyle: context.appText.text16W400,
                       subColor: context.appColors.greylight,
                     ),
@@ -94,7 +94,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                   bottom: context.text(20),
                 ),
                 child: CustomButton(
-                  text: AppText.continueButton,
+                  text: AppText.continueText,
                   color: context.appColors.primary,
                   onTap: () {
                     if (!model.hasSelection) {

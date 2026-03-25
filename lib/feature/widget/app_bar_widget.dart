@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_theme.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -14,8 +15,10 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final Widget? trailing;
 
   final VoidCallback? onLeadingTap;
+  final VoidCallback? onTrailingTap;
 
-  final VoidCallback? onTap;
+  final VoidCallback? onTapFirst;
+  final VoidCallback? onTapLast;
 
   final Color? iconColor;
 
@@ -29,8 +32,10 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.trailing,
     this.onLeadingTap,
-    this.onTap,
+    this.onTapFirst,
     this.iconColor,
+    this.onTrailingTap,
+    this.onTapLast,
   });
 
   @override
@@ -38,7 +43,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildLeading(BuildContext context) {
     if (leading != null) return leading!;
-    final leadingTap = onLeadingTap ?? onTap;
+    final leadingTap = onLeadingTap ?? onTapFirst;
     if (leadingTap != null) {
       return GestureDetector(
         onTap: leadingTap,
@@ -52,11 +57,9 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildCenter(BuildContext context) {
     if (title != null && title!.isNotEmpty) {
       return Center(
-        child: Text(
-          title!,
-          style: context.appText.text18Bold,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        child: NormalText(
+          titleText: title ?? AppText.sportFinding,
+          titleFontSize: 18,
         ),
       );
     }
@@ -66,6 +69,17 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildTrailing(BuildContext context) {
     if (trailing != null) return trailing!;
+    final trailingTap = onTrailingTap ?? onTapLast;
+    if (trailingTap != null) {
+      return GestureDetector(
+        onTap: trailingTap,
+        behavior: HitTestBehavior.opaque,
+        child: SvgPicture.asset(
+          AppAssets.notificationIcon,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
     return const SizedBox(width: _kIconSize + 24, height: _kIconSize);
   }
 

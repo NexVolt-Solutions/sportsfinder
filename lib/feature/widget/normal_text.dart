@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 
 class NormalText extends StatelessWidget {
-  final String? titleText;
-  final String? subText;
+  final dynamic titleText;
+  final dynamic subText;
 
   final TextStyle? titleStyle;
   final TextStyle? subStyle;
@@ -50,13 +50,13 @@ class NormalText extends StatelessWidget {
   Widget build(BuildContext context) {
     final defaultTitleStyle = context.appText.style(
       fontSize: titleFontSize ?? 16,
-      fontWeight: titleFontWeight ?? FontWeight.w500,
+      fontWeight: titleFontWeight ?? FontWeight.bold,
       color: titleColor ?? context.appColors.onSurface,
     );
 
     final defaultSubStyle = context.appText.style(
-      fontSize: subFontSize ?? 14,
-      fontWeight: subFontWeight ?? FontWeight.w400,
+      fontSize: subFontSize ?? 16,
+      fontWeight: subFontWeight ?? FontWeight.w500,
       color: subColor ?? context.appColors.greyDark,
     );
 
@@ -69,7 +69,7 @@ class NormalText extends StatelessWidget {
             titleText!,
             softWrap: true,
             maxLines: maxLines,
-            overflow: overflow ?? TextOverflow.visible,
+            overflow: overflow ?? TextOverflow.ellipsis,
             style: titleStyle ?? defaultTitleStyle,
             textAlign: titleAlign ?? TextAlign.start,
           ),
@@ -79,6 +79,8 @@ class NormalText extends StatelessWidget {
         if (subText != null)
           Text(
             subText!,
+            maxLines: maxLines,
+            overflow: overflow ?? TextOverflow.ellipsis,
             softWrap: true,
             style: subStyle ?? defaultSubStyle,
             textAlign: subAlign ?? TextAlign.start,

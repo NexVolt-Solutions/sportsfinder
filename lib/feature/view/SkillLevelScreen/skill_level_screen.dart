@@ -31,12 +31,12 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                 child: ListView(
                   padding: context.padSym(h: 20),
                   children: [
-                    AppBarWidget(title: AppText.appName),
+                    AppBarWidget(title: AppText.sportFinding),
                     NormalText(
-                      titleText: AppText.skillLevelTitle,
+                      titleText: AppText.filters,
                       titleStyle: context.appText.text18W600,
                       titleColor: context.appColors.onSurface,
-                      subText: AppText.skillLevelDesc,
+                      subText: AppText.filters,
                       subStyle: context.appText.text16W400,
                       subColor: context.appColors.greylight,
                     ),
@@ -86,7 +86,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                   bottom: context.text(20),
                 ),
                 child: CustomButton(
-                  text: AppText.continueButton,
+                  text: AppText.continueText,
                   color: context.appColors.primary,
                   onTap: () {
                     if (!model.hasSelection) {

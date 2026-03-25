@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view_model/home_screen_view_model.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/detail_match_card.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
-import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/widget/section_header_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,106 +28,153 @@ class _HomeScreenState extends State<HomeScreen> {
     return ChangeNotifierProvider(
       create: (context) => HomeScreenViewModel(),
       child: Consumer<HomeScreenViewModel>(
-        builder: (context, model, child) => MainFrame(
-          child: ListView(
-            padding: context.padSym(h: 20),
-            children: [
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    titleText: AppText.appName,
-                    titleStyle: context.appText.text18W600,
-                    titleColor: context.appColors.onSurface,
-                  ),
-                  SvgPicture.asset(AppAssets.notificationIcon),
-                ],
+        builder: (context, model, child) => ListView(
+          padding: context.padSym(h: 20),
+          children: [
+            AppBarWidget(
+              leading: NormalText(
+                titleText: AppText.sportFinding,
+                titleFontSize: 18,
               ),
-              SizedBox(height: 24),
-              Row(
-                children: [
-                  Container(
-                    height: 50,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: context.appColors.greyDark,
+              onTapLast: () {},
+            ),
+            Row(
+              children: [
+                Container(
+                  height: 50,
+                  width: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: context.appColors.greyDark,
+                  ),
+                ),
+                SizedBox(width: context.w(16)),
+                Expanded(
+                  child: NormalText(
+                    titleText: AppText.heyGoodEvening,
+                    subText: 'Shehzad Khan',
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: context.h(24)),
+            SearchBarWidget(isShow: false),
+            SizedBox(height: context.h(16)),
+            Row(
+              children: [
+                Expanded(
+                  child: CardWidget(
+                    padding: context.padSym(h: 26, v: 18),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CardIconWidget(imageAsset: AppAssets.addIcon),
+                        SizedBox(height: context.h(8)),
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          titleText: AppText.createMatch,
+                          titleColor: AppColors.blackcolor,
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: context.w(24)),
-                  NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    titleText: AppText.goodEvening,
-                    titleStyle: context.appText.text18W600,
-                    titleColor: context.appColors.onSurface,
-                    subText: 'Shehzad Khan',
-                    subStyle: context.appText.text16W400,
-                    subColor: context.appColors.greylight,
-                    titleAlign: TextAlign.center,
-                    subAlign: TextAlign.start,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(20)),
-              SearchBarWidget(),
-              SizedBox(height: context.h(20)),
-              SizedBox(
-                height: context.h(140),
-                width: context.w(double.infinity),
-                child: ListView.separated(
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: context.sw(20)),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 2,
-                  itemBuilder: (context, index) {
-                    return CardWidget(
-                      padding: context.padSym(h: 50, v: 18),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CardIconWidget(imageAsset: AppAssets.addIcon),
-                          SizedBox(height: context.h(8)),
-                          NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: AppText.createMatchTitle,
-                            titleStyle: context.appText.text14W600,
-                            titleColor: context.appColors.onSurface,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
-              ),
-              SizedBox(height: context.h(20)),
-              Row(
-                children: [
-                  NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: AppText.createMatchTitle,
-                    titleStyle: context.appText.text18W600,
-                    titleColor: context.appColors.onSurface,
+                SizedBox(width: context.w(12)),
+                Expanded(
+                  child: CardWidget(
+                    padding: context.padSym(h: 26, v: 18),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CardIconWidget(imageAsset: AppAssets.matchesIcon),
+                        SizedBox(height: context.h(8)),
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          titleText: AppText.findMatch,
+                          titleColor: AppColors.blackcolor,
+                        ),
+                      ],
+                    ),
                   ),
-                  Row(
-                    children: [
-                      NormalText(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        titleText: AppText.viewAll,
-                        titleStyle: context.appText.text14W500,
-                        titleColor: context.appColors.onSurface,
-                      ),
-                      SvgPicture.asset(
-                        AppAssets.farwordIcon,
-                        fit: BoxFit.scaleDown,
-                      ),
-                    ],
-                  ),
-                ],
+                ),
+              ],
+            ),
+
+            SizedBox(height: context.h(16)),
+            SectionHeaderWidget(
+              title: AppText.allUpcomingMatches,
+              actionText: AppText.viewMatch,
+              icon: AppAssets.nextIcon,
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  RoutesName.AllUpComingMatchesScreen,
+                );
+              },
+            ),
+            SizedBox(height: context.h(8)),
+            SizedBox(
+              height: context.h(180),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal, // ✅ horizontal scroll
+                itemCount: model.descoverMatchData.length, // 4 items
+                padding: context.padSym(h: 0),
+                itemBuilder: (context, index) {
+                  final match = model.descoverMatchData[index];
+
+                  return SizedBox(
+                    width: context.w(300),
+                    child: DetailsMatchesCard(
+                      cardOnTap: () {
+                        print("Clicked Match ID: ${match.id}");
+                      },
+                      hostName: match.title,
+                      matchName: match.sportType,
+                      loc: match.location,
+                      time: match.dateTime,
+                      takenPlayer: match.participantsJoined,
+                      totalPlayer: match.participantsTotal,
+                      matchOnTap: () {},
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) =>
+                    SizedBox(width: context.w(12)),
               ),
-            ],
-          ),
+            ),
+            SectionHeaderWidget(title: AppText.popularSports),
+            SizedBox(height: context.h(8)),
+
+            SizedBox(
+              height: context.h(120),
+              width: double.infinity,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: model.sports.length,
+
+                padding: context.padSym(h: 0),
+                itemBuilder: (context, index) {
+                  final sport = model.sports[index];
+
+                  return CardWidget(
+                    padding: context.padSym(h: 32, v: 18),
+                    child: Column(
+                      children: [
+                        CardIconWidget(imageAsset: sport.imagePath),
+                        NormalText(
+                          titleText: sport.title,
+                          titleStyle: context.appText.text16W500,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  return SizedBox(width: context.w(12));
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

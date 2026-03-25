@@ -62,17 +62,14 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                             : Semantics(
                                 label: AppText.skip,
                                 button: true,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => model.onSkipTapped(context),
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Center(
-                                      child: NormalText(
-                                        titleText: AppText.skip,
-                                        titleStyle: context.appText.text16W500,
-                                        titleColor: context.appColors.greyDark,
-                                      ),
+                                child: InkWell(
+                                  onTap: () => model.onSkipTapped(context),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Center(
+                                    child: NormalText(
+                                      titleText: AppText.skip,
+                                      titleStyle: context.appText.text16W500,
+                                      titleColor: context.appColors.greyDark,
                                     ),
                                   ),
                                 ),
@@ -112,7 +109,9 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 SizedBox(height: context.h(20)),
                 CustomButton(
                   text: model.isLastPage ? AppText.getStarted : AppText.next,
+
                   color: context.appColors.primary,
+                  colorText: context.appColors.surface,
                   onTap: () => model.onNextTapped(context),
                 ),
               ],

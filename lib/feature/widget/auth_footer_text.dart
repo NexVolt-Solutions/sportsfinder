@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class AuthFooterText extends StatelessWidget {
   final String? normalText;
@@ -24,7 +23,7 @@ class AuthFooterText extends StatelessWidget {
             color: context.appColors.onSurface,
           ),
           children: [
-            if (normalText != null) TextSpan(text: normalText),
+            if (normalText != null) TextSpan(text: '${normalText!}   '),
             if (actionText != null)
               TextSpan(
                 text: actionText,

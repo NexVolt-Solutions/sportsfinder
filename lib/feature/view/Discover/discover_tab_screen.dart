@@ -5,10 +5,9 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view_model/discovery_tab_view_model.dart';
+import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
 import 'package:sport_finding/feature/widget/discovery_card.dart';
 import 'package:sport_finding/feature/widget/discovery_search_field.dart';
-import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/sport_filter_section.dart';
 
@@ -41,12 +40,12 @@ class _DiscoverTabContent extends StatelessWidget {
               SizedBox(height: context.sh(20)),
               DiscoverySearchField(
                 controller: model.searchController,
-                hintText: AppText.searchMatchesHint,
+                hintText: AppText.searchMatches,
                 onChanged: (_) => model.onSearchChanged(),
                 onFilterTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text(AppText.filtersTitle),
+                      content: const Text(AppText.searchMatches),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -83,13 +82,13 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               NormalText(
-                titleText: AppText.appName,
+                titleText: AppText.sportFinding,
                 titleStyle: this.context.appText.text14W500,
                 titleColor: this.context.appColors.greyDark,
               ),
               SizedBox(height: this.context.sh(4)),
               NormalText(
-                titleText: AppText.discoverTitle,
+                titleText: AppText.discover,
                 titleStyle: this.context.appText.text18W600,
                 titleColor: this.context.appColors.onSurface,
               ),
@@ -100,7 +99,7 @@ class _Header extends StatelessWidget {
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(AppText.notificationsTitle),
+                content: Text(AppText.notification),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -141,7 +140,7 @@ class _MatchesList extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: matches.length,
-      separatorBuilder: (_, __) => SizedBox(height: context.sh(16)),
+      separatorBuilder: (_, _) => SizedBox(height: context.sh(16)),
       itemBuilder: (context, index) {
         final match = matches[index];
         return DiscoveryCard(
@@ -149,7 +148,7 @@ class _MatchesList extends StatelessWidget {
           onSeeAllTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${AppText.discoverSeeAll}: ${match.title}'),
+                content: Text('${AppText.discover}: ${match.title}'),
                 behavior: SnackBarBehavior.floating,
               ),
             );

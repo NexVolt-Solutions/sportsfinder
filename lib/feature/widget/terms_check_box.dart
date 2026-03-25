@@ -39,9 +39,9 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
             text: TextSpan(
               style: context.appText.text12W400.copyWith(color: c.greylight),
               children: [
-                TextSpan(text: AppText.iAgreeTo),
+                TextSpan(text: AppText.iAgreeToThe),
                 TextSpan(
-                  text: AppText.agreeToTerms,
+                  text: AppText.termsOfService,
                   style: context.appText.text12W500.copyWith(color: c.primary),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
@@ -50,7 +50,7 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                 ),
                 TextSpan(text: AppText.and),
                 TextSpan(
-                  text: AppText.privacy,
+                  text: AppText.privacyPolicy,
                   style: context.appText.text12W500.copyWith(color: c.primary),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {

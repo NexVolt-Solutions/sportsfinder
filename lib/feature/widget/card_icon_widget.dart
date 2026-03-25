@@ -16,25 +16,19 @@ class CardIconWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return Container(
-      padding: context.padAll(8),
-      decoration: BoxDecoration(
-        color: isSelected ? c.primary : c.surface,
-        borderRadius: BorderRadius.circular(context.radiusR(12)),
-        boxShadow: [
-          BoxShadow(
-            color: c.greylight,
-            offset: const Offset(0, 4),
-            blurRadius: 95,
-            blurStyle: BlurStyle.inner,
+    return Card(
+      child: Container(
+        padding: context.padAll(8),
+        decoration: BoxDecoration(
+          color: isSelected ? c.primary : c.surface,
+          borderRadius: BorderRadius.circular(context.radiusR(12)),
+        ),
+        child: SvgPicture.asset(
+          imageAsset,
+          colorFilter: ColorFilter.mode(
+            isSelected ? c.onPrimary : c.greyDark,
+            BlendMode.srcIn,
           ),
-        ],
-      ),
-      child: SvgPicture.asset(
-        imageAsset,
-        colorFilter: ColorFilter.mode(
-          isSelected ? c.onPrimary : c.greyDark,
-          BlendMode.srcIn,
         ),
       ),
     );
