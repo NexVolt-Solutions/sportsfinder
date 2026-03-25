@@ -3,7 +3,6 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view_model/discovery_tab_view_model.dart';
 
-/// Horizontal scrollable sport filter chips (All, Football, Basketball, etc.).
 class SportFilterSection extends StatelessWidget {
   const SportFilterSection({
     super.key,

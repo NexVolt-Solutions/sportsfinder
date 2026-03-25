@@ -5,9 +5,14 @@ class NormalText extends StatelessWidget {
   final String? titleText;
   final String? subText;
 
-  /// When null, uses [AppTextTheme]: title → text16W500, sub → text14W400.
   final TextStyle? titleStyle;
   final TextStyle? subStyle;
+
+  final double? titleFontSize;
+  final double? subFontSize;
+
+  final FontWeight? titleFontWeight;
+  final FontWeight? subFontWeight;
 
   final double? sizeBoxheight;
 
@@ -27,6 +32,10 @@ class NormalText extends StatelessWidget {
     this.subText,
     this.titleStyle,
     this.subStyle,
+    this.titleFontSize,
+    this.subFontSize,
+    this.titleFontWeight,
+    this.subFontWeight,
     this.titleColor,
     this.subColor,
     this.titleAlign,
@@ -39,22 +48,30 @@ class NormalText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final defaultTitleStyle = context.appText.style(
+      fontSize: titleFontSize ?? 16,
+      fontWeight: titleFontWeight ?? FontWeight.w500,
+      color: titleColor ?? context.appColors.onSurface,
+    );
+
+    final defaultSubStyle = context.appText.style(
+      fontSize: subFontSize ?? 14,
+      fontWeight: subFontWeight ?? FontWeight.w400,
+      color: subColor ?? context.appColors.greyDark,
+    );
+
     return Column(
       crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (titleText != null)
-          Flexible(
-            child: Text(
-              titleText!,
-              softWrap: true,
-              maxLines: maxLines,
-              overflow: overflow ?? TextOverflow.visible,
-              style: (titleStyle ?? context.appText.text16W500).copyWith(
-                color: titleColor ?? context.appColors.onSurface,
-              ),
-              textAlign: titleAlign ?? TextAlign.start,
-            ),
+          Text(
+            titleText!,
+            softWrap: true,
+            maxLines: maxLines,
+            overflow: overflow ?? TextOverflow.visible,
+            style: titleStyle ?? defaultTitleStyle,
+            textAlign: titleAlign ?? TextAlign.start,
           ),
 
         if (sizeBoxheight != null) SizedBox(height: sizeBoxheight),
@@ -63,11 +80,7 @@ class NormalText extends StatelessWidget {
           Text(
             subText!,
             softWrap: true,
-            maxLines: null,
-            overflow: TextOverflow.visible,
-            style: (subStyle ?? context.appText.text14W400).copyWith(
-              color: subColor ?? context.appColors.greyDark,
-            ),
+            style: subStyle ?? defaultSubStyle,
             textAlign: subAlign ?? TextAlign.start,
           ),
       ],

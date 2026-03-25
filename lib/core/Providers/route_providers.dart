@@ -11,12 +11,9 @@ import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.d
 import 'package:sport_finding/feature/view_model/splash_screen_view_model.dart';
 
 /// Central place for all route-level ChangeNotifier wiring.
-/// Screens are wrapped with their ViewModel here so UI files stay free of Provider setup.
 class RouteProviders {
   RouteProviders._();
 
-  /// Wraps the given [child] with the appropriate ChangeNotifierProvider for [routeName].
-  /// For routes that don't use a ViewModel, returns [child] unchanged.
   static Widget wrapIfNeeded(String routeName, Widget child) {
     switch (routeName) {
       case RoutesName.SplashScreen:
