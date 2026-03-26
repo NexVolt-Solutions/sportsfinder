@@ -14,6 +14,7 @@ import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
+import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int selectedIndex = -1;
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -38,24 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               onTapLast: () {},
             ),
-            Row(
-              children: [
-                Container(
-                  height: 50,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: context.appColors.greyDark,
-                  ),
-                ),
-                SizedBox(width: context.w(16)),
-                Expanded(
-                  child: NormalText(
-                    titleText: AppText.heyGoodEvening,
-                    subText: 'Shehzad Khan',
-                  ),
-                ),
-              ],
+            UserGreetingWidget(
+              title: "Hey, Good Evening",
+              name: "Shehzad Khan",
+
+              isShow: false,
             ),
             SizedBox(height: context.h(24)),
             SearchBarWidget(isShow: false),
@@ -64,6 +53,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: CardWidget(
+                    // borderColor: isSelected
+                    //     ? context.appColors.primary
+                    //     : context.appColors.blue10,
+                    onTap: () {},
                     padding: context.padSym(h: 26, v: 18),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -104,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
             SectionHeaderWidget(
               title: AppText.allUpcomingMatches,
               actionText: AppText.viewMatch,
-              icon: AppAssets.nextIcon,
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -114,27 +106,30 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: context.h(8)),
             SizedBox(
-              height: context.h(180),
+              height: context.h(190),
               child: ListView.separated(
                 scrollDirection: Axis.horizontal, // ✅ horizontal scroll
-                itemCount: model.descoverMatchData.length, // 4 items
+                itemCount: model.matches.length, // 4 items
                 padding: context.padSym(h: 0),
                 itemBuilder: (context, index) {
-                  final match = model.descoverMatchData[index];
+                  final match = model.matches[index];
 
                   return SizedBox(
                     width: context.w(300),
                     child: DetailsMatchesCard(
                       cardOnTap: () {
-                        print("Clicked Match ID: ${match.id}");
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.UserMatchDetailsScreen,
+                          arguments: match, // ✅ Pass the DiscoveryMatch object
+                        );
                       },
                       hostName: match.title,
                       matchName: match.sportType,
                       loc: match.location,
-                      time: match.dateTime,
+                      time: match.date,
                       takenPlayer: match.participantsJoined,
                       totalPlayer: match.participantsTotal,
-                      matchOnTap: () {},
                     ),
                   );
                 },
@@ -146,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: context.h(8)),
 
             SizedBox(
-              height: context.h(120),
+              height: context.h(140),
               width: double.infinity,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,

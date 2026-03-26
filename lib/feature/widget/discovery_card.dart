@@ -8,11 +8,7 @@ import 'package:sport_finding/feature/model/discovery_match.dart';
 
 /// Reusable discovery match card: title, distance, sport, location, date/time, participants, See All.
 class DiscoveryCard extends StatelessWidget {
-  const DiscoveryCard({
-    super.key,
-    required this.match,
-    this.onSeeAllTap,
-  });
+  const DiscoveryCard({super.key, required this.match, this.onSeeAllTap});
 
   final DiscoveryMatch match;
   final VoidCallback? onSeeAllTap;
@@ -42,7 +38,9 @@ class DiscoveryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   match.title,
-                  style: context.appText.text16W600.copyWith(color: c.onSurface),
+                  style: context.appText.text16W600.copyWith(
+                    color: c.onSurface,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -78,7 +76,7 @@ class DiscoveryCard extends StatelessWidget {
           SizedBox(height: context.sh(4)),
           _InfoRow(
             iconPath: AppAssets.clockIcon,
-            text: match.dateTime,
+            text: match.date,
             context: context,
           ),
           SizedBox(height: context.sh(4)),
@@ -107,7 +105,9 @@ class DiscoveryCard extends StatelessWidget {
                   ),
                   child: Text(
                     AppText.discover,
-                    style: context.appText.text14W500.copyWith(color: c.primary),
+                    style: context.appText.text14W500.copyWith(
+                      color: c.primary,
+                    ),
                   ),
                 ),
               ),

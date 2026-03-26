@@ -4,7 +4,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view_model/login_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/Signup/SignUpViewModel/sign_up_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -23,7 +23,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<LoginScreenViewModel>(
+    return Consumer<SignUpScreenViewModel>(
       builder: (context, model, child) => Scaffold(
         body: MainFrame(
           child: Form(

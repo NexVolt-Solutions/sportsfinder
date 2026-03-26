@@ -5,7 +5,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
-import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
+import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -40,7 +40,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                       subStyle: context.appText.text16W400,
                       subColor: context.appColors.greylight,
                     ),
-                    SizedBox(height: context.h(20)),
+                    SizedBox(height: context.h(8)),
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),

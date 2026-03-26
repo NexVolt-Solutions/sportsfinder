@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -27,11 +28,10 @@ class SectionHeaderWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           titleText: title,
           maxLines: 2,
-          titleStyle: context.appText.text18W600,
+          titleStyle: context.appText.text16W600,
           titleColor: context.appColors.onPrimary,
         ),
 
-        /// Right Side (Optional)
         if (actionText != null)
           GestureDetector(
             onTap: onTap,
@@ -41,13 +41,16 @@ class SectionHeaderWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   titleText: actionText!,
                   maxLines: 2,
-                  titleStyle: context.appText.text16W600,
+                  // titleStyle: context.appText.text16W600,
                   titleColor: context.appColors.primary,
+                  titleFontSize: 14,
                 ),
-                if (icon != null) ...[
-                  SizedBox(width: context.w(10)),
-                  SvgPicture.asset(icon!, fit: BoxFit.scaleDown),
-                ],
+
+                SizedBox(width: context.w(10)),
+                SvgPicture.asset(
+                  icon ?? AppAssets.nextIcon,
+                  fit: BoxFit.scaleDown,
+                ),
               ],
             ),
           ),

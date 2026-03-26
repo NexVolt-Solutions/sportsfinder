@@ -5,7 +5,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
-import 'package:sport_finding/feature/view_model/see_all_invated_player_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -54,7 +54,7 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                 SizedBox(
                   height: context.h(200),
                   child: ListView.builder(
-                    itemCount: 1,
+                    itemCount: match.players.length,
                     itemBuilder: (context, index) {
                       return PersonInvitedCard(
                         cardOnTap: () {
@@ -67,7 +67,7 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                         ontap: () {
                           Navigator.pushNamed(
                             context,
-                            RoutesName.PlayerMatchDetailsScreen,
+                            RoutesName.UserMatchDetailsScreen,
                             arguments: match,
                           );
                         },

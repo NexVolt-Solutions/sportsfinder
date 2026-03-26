@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/player_match_detail_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/all_upcomming_matches_view_model.dart';
-import 'package:sport_finding/feature/view_model/bottom_bar_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/choose_sport_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/location_access_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/login_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/onboarding_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/otp_verification_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/see_all_invated_player_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/sign_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/skill_level_screen_view_model.dart';
-import 'package:sport_finding/feature/view_model/splash_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/user_match_detail_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/BottomBarViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
+import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/Signup/SignUpViewModel/sign_up_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboarding_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/SigIn/SignInViewModel/sign_in_screen_view_model.dart';
+import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
+import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/splash_screen_view_model.dart';
 
 /// Central place for all route-level ChangeNotifier wiring.
 /// Screens are wrapped with their ViewModel here so UI files stay free of Provider setup.
@@ -35,12 +36,12 @@ class RouteProviders {
         );
       case RoutesName.signUpScreen:
         return ChangeNotifierProvider(
-          create: (_) => LoginScreenViewModel(),
+          create: (_) => SignUpScreenViewModel(),
           child: child,
         );
       case RoutesName.SignInScreen:
         return ChangeNotifierProvider(
-          create: (_) => SignScreenViewModel(),
+          create: (_) => SignInScreenViewModel(),
           child: child,
         );
       case RoutesName.SkillLevelScreen:
@@ -78,9 +79,15 @@ class RouteProviders {
           create: (_) => SeeAllInvatedPlayerScreenViewModel(),
           child: child,
         );
-      case RoutesName.PlayerMatchDetailsScreen:
+      case RoutesName.UserMatchDetailsScreen:
         return ChangeNotifierProvider(
-          create: (_) => PlayerMatchDetailScreenViewModel(),
+          create: (_) => UserMatchDetailScreenViewModel(),
+          child: child,
+        );
+
+      case RoutesName.HostDetailsScreen:
+        return ChangeNotifierProvider(
+          create: (_) => HostDetailScreenViewModel(),
           child: child,
         );
 

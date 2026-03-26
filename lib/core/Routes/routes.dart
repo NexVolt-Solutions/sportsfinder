@@ -9,7 +9,8 @@ import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
-import 'package:sport_finding/feature/view/Home/components/player_match_details_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/user_match_details_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
@@ -115,12 +116,20 @@ class Routes {
             SeeAllInvatedPlayerScreen(),
           ),
         );
-      case RoutesName.PlayerMatchDetailsScreen:
+      case RoutesName.UserMatchDetailsScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.PlayerMatchDetailsScreen,
-            PlayerMatchDetailsScreen(),
+            RoutesName.UserMatchDetailsScreen,
+            UserMatchDetailsScreen(),
+          ),
+        );
+      case RoutesName.HostDetailsScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.HostDetailsScreen,
+            HostDetailsScreen(),
           ),
         );
 

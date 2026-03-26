@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/feature/view_model/splash_screen_view_model.dart';
+import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/splash_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 
 class SplashScreen extends StatefulWidget {
