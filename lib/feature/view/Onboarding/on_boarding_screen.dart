@@ -5,7 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view_model/onboarding_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboarding_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -109,7 +109,6 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 SizedBox(height: context.h(20)),
                 CustomButton(
                   text: model.isLastPage ? AppText.getStarted : AppText.next,
-
                   color: context.appColors.primary,
                   colorText: context.appColors.surface,
                   onTap: () => model.onNextTapped(context),

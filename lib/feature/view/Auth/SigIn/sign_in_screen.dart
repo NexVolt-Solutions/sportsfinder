@@ -4,7 +4,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view_model/sign_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/SigIn/SignInViewModel/sign_in_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -24,7 +24,7 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<SignScreenViewModel>(
+    return Consumer<SignInScreenViewModel>(
       builder: (context, model, child) => Scaffold(
         body: MainFrame(
           child: Form(
@@ -92,7 +92,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   controller: model.fullNameController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Name required";
+                      return AppText.fullNameValidation;
                     }
                     return null;
                   },
@@ -104,7 +104,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   controller: model.emailController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Email required";
+                      return AppText.emailValidation;
                     }
                     return null;
                   },

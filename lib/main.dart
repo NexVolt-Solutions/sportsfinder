@@ -8,6 +8,7 @@ void main() {
     MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      // home: HostDetailsScreen(),
       initialRoute: RoutesName.SplashScreen,
       onGenerateRoute: Routes.generateRoute,
     ),

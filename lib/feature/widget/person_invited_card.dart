@@ -14,8 +14,9 @@ class PersonInvitedCard extends StatelessWidget {
   final String? matchLevel;
   final String? destance;
   final ontap;
-  final cardOnTap;
+  final VoidCallback? cardOnTap; // whole card tap
   final bool isShow;
+
   const PersonInvitedCard({
     super.key,
     this.playerName,
@@ -27,6 +28,14 @@ class PersonInvitedCard extends StatelessWidget {
     this.cardOnTap,
   });
 
+  // function to get initials from player name
+  String getInitials(String? text) {
+    if (text == null || text.isEmpty) return "";
+    return text.length >= 2
+        ? text.substring(0, 2).toUpperCase()
+        : text.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CardWidget(
@@ -37,51 +46,50 @@ class PersonInvitedCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                height: 42,
-                width: 42,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: context.appColors.primary,
+              // ✅ CircleAvatar like UserMatchCard
+              CircleAvatar(
+                radius: context.radiusR(22), // half of previous 42 height
+                backgroundColor: context.appColors.primary,
+                child: Text(
+                  getInitials(playerName),
+                  style: TextStyle(
+                    color: context.appColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               SizedBox(width: context.w(12)),
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  NormalText(
+                    titleText: playerName ?? 'Shehzad Khan',
+                    titleColor: context.appColors.onSurface,
+                  ),
+                  Row(
                     children: [
                       NormalText(
-                        titleText: playerName ?? 'Shehzad khan',
-                        titleColor: context.appColors.onSurface,
+                        titleText: matchName ?? AppText.football,
+                        titleColor: context.appColors.greylight,
+                        titleStyle: context.appText.text14W500,
                       ),
-                      Row(
-                        children: [
-                          NormalText(
-                            titleText: matchName ?? AppText.football,
-                            titleColor: context.appColors.greylight,
-                            titleStyle: context.appText.text14W500,
-                          ),
-                          SizedBox(width: context.w(12)),
-                          NormalText(
-                            titleText: matchLevel ?? AppText.advanced,
-                            titleColor: context.appColors.greylight,
-                            titleStyle: context.appText.text14W500,
-                          ),
-                        ],
+                      SizedBox(width: context.w(12)),
+                      NormalText(
+                        titleText: matchLevel ?? AppText.advanced,
+                        titleColor: context.appColors.greylight,
+                        titleStyle: context.appText.text14W500,
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          SvgPicture.asset(AppAssets.homeLocIcon),
-                          SizedBox(width: context.w(4)),
-
-                          NormalText(
-                            titleText: destance ?? AppText.filters,
-                            titleColor: context.appColors.greylight,
-                            titleStyle: context.appText.text14W500,
-                          ),
-                        ],
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SvgPicture.asset(AppAssets.homeLocIcon),
+                      SizedBox(width: context.w(4)),
+                      NormalText(
+                        titleText: destance ?? AppText.filters,
+                        titleColor: context.appColors.greylight,
+                        titleStyle: context.appText.text14W500,
                       ),
                     ],
                   ),

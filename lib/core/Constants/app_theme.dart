@@ -31,6 +31,8 @@ class AppColorTheme extends ThemeExtension<AppColorTheme> {
   final Color transparent;
   final LinearGradient primaryGradient;
 
+  Color? get white => null;
+
   @override
   ThemeExtension<AppColorTheme> copyWith({
     Color? primary,

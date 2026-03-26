@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 
 /// Filter chip item: label and optional sport key for filtering.
@@ -64,28 +65,7 @@ class DiscoveryTabViewModel extends ChangeNotifier {
   }
 
   void _loadMatches() {
-    _allMatches = [
-      const DiscoveryMatch(
-        id: '1',
-        title: 'Rimsha Match',
-        distanceKm: 2.5,
-        sportType: AppText.basketball,
-        location: 'Central Park Court',
-        dateTime: '16/03/2026, 7:00 PM',
-        participantsJoined: 10,
-        participantsTotal: 10,
-      ),
-      const DiscoveryMatch(
-        id: '2',
-        title: 'Rimsha Match',
-        distanceKm: 2.5,
-        sportType: AppText.basketball,
-        location: 'Central Park Court',
-        dateTime: '16/03/2026, 7:00 PM',
-        participantsJoined: 6,
-        participantsTotal: 10,
-      ),
-    ];
+    List<DiscoveryMatch> _allMatches = DiscoveryMatchData.allMatches;
   }
 
   @override

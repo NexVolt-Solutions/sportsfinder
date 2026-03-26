@@ -6,17 +6,21 @@ class DiscoveryMatch {
     required this.distanceKm,
     required this.sportType,
     required this.location,
-    required this.dateTime,
+    required this.date,
     required this.participantsJoined,
     required this.participantsTotal,
+    required this.players,
+    required this.time,
   });
+  final List<String> players; // 👈 ADD THIS
 
   final String id;
   final String title;
   final double distanceKm;
   final String sportType;
   final String location;
-  final String dateTime;
+  final String date;
+  final String time;
   final int participantsJoined;
   final int participantsTotal;
 
@@ -40,9 +44,11 @@ class DiscoveryMatch {
       distanceKm: distanceKm ?? this.distanceKm,
       sportType: sportType ?? this.sportType,
       location: location ?? this.location,
-      dateTime: dateTime ?? this.dateTime,
+      date: dateTime ?? this.date,
       participantsJoined: participantsJoined ?? this.participantsJoined,
       participantsTotal: participantsTotal ?? this.participantsTotal,
+      players: [],
+      time: '',
     );
   }
 }

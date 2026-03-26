@@ -14,5 +14,6 @@ class RoutesName {
   static const String AllUpComingMatchesScreen = 'all_upcoing_matches_screen';
   static const String SeeAllInvatedPlayerScreen =
       'see_all_invated_player_screen';
-  static const String PlayerMatchDetailsScreen = 'player_match_details_screen';
+  static const String UserMatchDetailsScreen = 'user_match_details_screen';
+  static const String HostDetailsScreen = 'host_details_screen';
 }

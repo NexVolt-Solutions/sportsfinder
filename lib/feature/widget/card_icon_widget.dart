@@ -17,6 +17,7 @@ class CardIconWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
     return Card(
+      color: isSelected ? c.primary : c.surface,
       child: Container(
         padding: context.padAll(8),
         decoration: BoxDecoration(
