@@ -9,7 +9,9 @@ import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/Home/components/create_match_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/user_match_details_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
@@ -130,6 +132,22 @@ class Routes {
           builder: (_) => RouteProviders.wrapIfNeeded(
             RoutesName.HostDetailsScreen,
             HostDetailsScreen(),
+          ),
+        );
+      case RoutesName.createMatchScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.createMatchScreen,
+            CreateMatchScreen(),
+          ),
+        );
+      case RoutesName.matchCreatedDoneScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.matchCreatedDoneScreen,
+            MatchCreatedDoneScreen(),
           ),
         );
 

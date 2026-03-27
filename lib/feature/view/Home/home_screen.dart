@@ -24,7 +24,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int selectedIndex = -1;
+  bool isSelected = false;
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -53,10 +53,15 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: CardWidget(
-                    // borderColor: isSelected
-                    //     ? context.appColors.primary
-                    //     : context.appColors.blue10,
-                    onTap: () {},
+                    borderColor: isSelected
+                        ? context.appColors.primary
+                        : context.appColors.blue10,
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        RoutesName.createMatchScreen,
+                      );
+                    },
                     padding: context.padSym(h: 26, v: 18),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

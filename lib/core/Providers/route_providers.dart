@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/create_match_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/user_match_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/BottomBarViewModel/bottom_bar_screen_view_model.dart';
@@ -85,6 +87,16 @@ class RouteProviders {
       case RoutesName.HostDetailsScreen:
         return ChangeNotifierProvider(
           create: (_) => HostDetailScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.createMatchScreen:
+        return ChangeNotifierProvider(
+          create: (_) => CreateMatchScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.matchCreatedDoneScreen:
+        return ChangeNotifierProvider(
+          create: (_) => MatchCreatedDoneScreenViewModel(),
           child: child,
         );
 

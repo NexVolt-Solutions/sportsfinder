@@ -7,6 +7,8 @@ import 'package:sport_finding/feature/model/match.dart';
 import 'package:sport_finding/feature/model/sport.dart';
 
 class HomeScreenViewModel extends ChangeNotifier {
+  bool isSelected = false;
+
   List<Match> matcheData = [
     Match(imagePath: AppAssets.addIcon, title: AppText.filters),
     Match(imagePath: AppAssets.matchesIcon, title: AppText.filters),
