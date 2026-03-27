@@ -16,4 +16,6 @@ class RoutesName {
       'see_all_invated_player_screen';
   static const String UserMatchDetailsScreen = 'user_match_details_screen';
   static const String HostDetailsScreen = 'host_details_screen';
+  static const String createMatchScreen = 'create_match_screen';
+  static const String matchCreatedDoneScreen = 'match_created_done_screen';
 }

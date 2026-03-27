@@ -155,6 +155,8 @@ class AppText {
   static const String setUpGameForOthersToJoin =
       'Set up game for others to join.';
   static const String matchTitle = 'Match Title';
+  static const String matchTitleHit = 'Final Tournment';
+  static const String matchTitleValidation = 'required filed';
   static const String matchDuration = 'Match Duration';
   static const String threeHours = '3 hours';
   static const String matchLocationDestination = 'Match Location/ Destination';
@@ -331,4 +333,25 @@ class AppText {
   static const String changes = '9. Changes';
   static const String weMayUpdateTheseTerms =
       'We may update these Terms. Continued use of the app means you accept the updates.';
+
+  //Text field data Text
+  static const String locationHit = 'Match location / Destination';
+  static const String locationValidation = 'required location';
+  static const String skillLevelHit = 'Beginner/Intermedaite/Advance';
+  static const String skillLevelValidation = 'required skill Level';
+  static const String descriptionHit = 'Describe your match...';
+  static const String descriptionValidation = 'required description';
+  static const String dateHit = '16/march/2026';
+  static const String dateValidation = 'required date';
+  static const String matchDurationHit = '--:----';
+  static const String matchDurationValidation = 'required match duration';
+  static const String sportTypeHit = 'cricket';
+  static const String sportTypeValidation = 'required match duration';
+  static const String maximumHit = 'e.g.10';
+  static const String maximumValidation = 'required match duration';
+
+  //textfiled data
+  static const String basicInfo = 'Basic Info';
+  static const String schedule = 'Schedule';
+  static const String selectOnMap = 'Select on Map';
 }
