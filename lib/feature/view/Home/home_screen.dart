@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       cardOnTap: () {
                         Navigator.pushNamed(
                           context,
-                          RoutesName.UserMatchDetailsScreen,
+                          RoutesName.HostDetailsScreen,
                           arguments: match, // ✅ Pass the DiscoveryMatch object
                         );
                       },
