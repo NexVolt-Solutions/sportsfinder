@@ -10,6 +10,7 @@ import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_vie
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/app_svg_icon.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/info_item_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -41,10 +42,35 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
               left: context.w(20),
             ),
             child: CustomButton(
-              text: AppText.startMatch,
+              text: AppText.joinMatch,
               color: context.appColors.primary,
-              onTap: () =>
-                  Navigator.pushNamed(context, RoutesName.BottomBarScreen),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (context) => CustomBottomSheetWidget(
+                    isCenter: true,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          AppAssets.joiningMatchPeopelIcon,
+                          fit: BoxFit.scaleDown,
+                        ),
+                        SizedBox(height: context.h(16)),
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          titleText: AppText.matchIsFull,
+                          maxLines: 5,
+                          subAlign: TextAlign.center,
+                          subText:
+                              AppText.thisMatchHasReachedItsMaximumCapacity,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

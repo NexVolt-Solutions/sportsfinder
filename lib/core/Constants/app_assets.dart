@@ -16,6 +16,8 @@ class AppAssets {
   static const String homeTimeIcon = "assets/icon/homeTimeIcon.svg";
   static const String homeProfileIcon = "assets/icon/homeProfileIcon.svg";
   static const String removeUserIcon = "assets/icon/userRemoveIcon.svg";
+  static const String joiningMatchPeopelIcon =
+      "assets/icon/joinMatchPeopelIcon.svg";
 
   //Icon
   static const String backIcon = "assets/icon/back.svg";
