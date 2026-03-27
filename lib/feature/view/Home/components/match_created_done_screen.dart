@@ -5,12 +5,11 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/social_button_widget.dart';
 
 class MatchCreatedDoneScreen extends StatefulWidget {
   const MatchCreatedDoneScreen({super.key});
@@ -32,12 +31,41 @@ class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
               right: context.w(20),
               left: context.w(20),
             ),
-            child: CustomButton(
-              text: AppText.createMatch,
-              color: context.appColors.primary,
-              onTap: () {
-                Navigator.pushNamed(context, RoutesName.matchCreatedDoneScreen);
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
+              children: [
+                SocialButtonWidget(
+                  imagePath: AppAssets.invitedPeopleIcon,
+                  text: AppText.invitedPlayers,
+                  backgroundColor: context.appColors.primary,
+                  // borderColor: Colors.grey.shade300,
+                  textColor: context.appColors.onPrimary,
+                ),
+
+                SizedBox(height: context.h(12)),
+                SocialButtonWidget(
+                  imagePath: AppAssets.shareIcon,
+                  text: AppText.shareMatch,
+                  onTap: () {
+                    print("Google Login");
+                  },
+                ),
+                SizedBox(height: context.h(12)),
+                GestureDetector(
+                  onTap: () {},
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset(AppAssets.viewMatchIcon),
+                      SizedBox(width: context.w(8)),
+                      NormalText(
+                        subText: AppText.viewMatch,
+                        subColor: context.appColors.greylight,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),

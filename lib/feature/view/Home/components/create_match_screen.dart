@@ -28,7 +28,7 @@ class CreateMatchScreen extends StatefulWidget {
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
   @override
   Widget build(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
 
     return Consumer<CreateMatchScreenViewModel>(
       builder: (context, model, child) => Scaffold(
@@ -51,7 +51,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
         ),
         body: MainFrame(
           child: Form(
-            key: _formKey,
+            key: formKey,
             child: SingleChildScrollView(
               child: Padding(
                 padding: context.padSym(h: 20),

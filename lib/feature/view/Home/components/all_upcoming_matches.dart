@@ -6,7 +6,6 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -49,94 +48,6 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                 ),
                 SizedBox(height: context.h(16)),
 
-                // SearchBarWidget(
-                //   isShow: true,
-                //   onChanged: (text) {
-                //     model.searchMatches(
-                //       text,
-                //     ); // call searchMatches from ViewModel
-                //   },
-                //   onFilterTap: () {
-                //     showModalBottomSheet(
-                //       context: context,
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.vertical(
-                //           top: Radius.circular(20),
-                //         ),
-                //       ),
-                //       builder: (context) {
-                //         return Container(
-                //           padding: EdgeInsets.all(16),
-                //           height: 250,
-                //           child: Column(
-                //             crossAxisAlignment: CrossAxisAlignment.start,
-                //             children: [
-                //               Row(
-                //                 mainAxisAlignment:
-                //                     MainAxisAlignment.spaceBetween,
-                //                 children: [
-                //                   NormalText(
-                //                     crossAxisAlignment:
-                //                         CrossAxisAlignment.center,
-                //                     titleText: AppText.filters,
-                //                     maxLines: 2,
-                //                     titleStyle: context.appText.text16W600,
-                //                     titleColor: context.appColors.onPrimary,
-                //                   ),
-                //                   GestureDetector(
-                //                     onTap: () => Navigator.pop(context),
-                //                     child: Icon(Icons.close, size: 20),
-                //                   ),
-                //                 ],
-                //               ),
-                //               SizedBox(height: context.h(16)),
-                //               NormalText(
-                //                 crossAxisAlignment: CrossAxisAlignment.center,
-                //                 titleText: AppText.sportType,
-                //                 maxLines: 2,
-                //                 titleStyle: context.appText.text16W600,
-                //                 titleColor: context.appColors.onPrimary,
-                //               ),
-                //               // SizedBox(
-                //               //   height: context.h(140),
-                //               //   width: double.infinity,
-                //               //   child: ListView.separated(
-                //               //     scrollDirection: Axis.horizontal,
-                //               //     itemCount: model.sports.length,
-
-                //               //     padding: context.padSym(h: 0),
-                //               //     itemBuilder: (context, index) {
-                //               //       final sport = model.sports[index];
-
-                //               //       return CardWidget(
-                //               //         padding: context.padSym(h: 32, v: 18),
-                //               //         child: Column(
-                //               //           children: [
-                //               //             CardIconWidget(
-                //               //               imageAsset: sport.imagePath,
-                //               //             ),
-                //               //             NormalText(
-                //               //               titleText: sport.title,
-                //               //               titleStyle:
-                //               //                   context.appText.text16W500,
-                //               //             ),
-                //               //           ],
-                //               //         ),
-                //               //       );
-                //               //     },
-                //               //     separatorBuilder:
-                //               //         (BuildContext context, int index) {
-                //               //           return SizedBox(width: context.w(12));
-                //               //         },
-                //               //   ),
-                //               // ),
-                //             ],
-                //           ),
-                //         );
-                //       },
-                //     );
-                //   },
-                // ),
                 SearchBarWidget(
                   isShow: true,
                   onChanged: (text) {

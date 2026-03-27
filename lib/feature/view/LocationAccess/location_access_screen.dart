@@ -26,7 +26,12 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
       builder: (context, model, child) => Scaffold(
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding: context.padAll(16),
+            padding: EdgeInsets.only(
+              top: context.h(5),
+              bottom: context.h(20),
+              right: context.w(20),
+              left: context.w(20),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
               children: [

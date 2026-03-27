@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -11,6 +12,7 @@ import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/gmail_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/widget/social_button_widget.dart';
 import 'package:sport_finding/feature/widget/terms_check_box.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
@@ -155,7 +157,13 @@ class _SignInScreenState extends State<SignInScreen> {
                   color: context.appColors.primary,
                 ),
                 SizedBox(height: context.h(12)),
-                GmailButton(),
+                SocialButtonWidget(
+                  imagePath: AppAssets.gmailIcon,
+                  text: AppText.continueWithGoogle,
+                  onTap: () {
+                    print("Google Login");
+                  },
+                ),
                 SizedBox(height: context.h(12)),
 
                 AuthFooterText(

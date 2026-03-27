@@ -27,7 +27,7 @@ class DiscoveryTabViewModel extends ChangeNotifier {
     SportFilterChip(label: AppText.volleyball, sportKey: AppText.volleyball),
   ];
 
-  List<DiscoveryMatch> _allMatches = [];
+  final List<DiscoveryMatch> _allMatches = [];
   int _selectedFilterIndex = 0;
 
   List<DiscoveryMatch> get filteredMatches {
@@ -65,7 +65,7 @@ class DiscoveryTabViewModel extends ChangeNotifier {
   }
 
   void _loadMatches() {
-    List<DiscoveryMatch> _allMatches = DiscoveryMatchData.allMatches;
+    List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
   }
 
   @override

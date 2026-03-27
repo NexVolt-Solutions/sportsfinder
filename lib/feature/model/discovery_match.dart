@@ -44,7 +44,7 @@ class DiscoveryMatch {
       distanceKm: distanceKm ?? this.distanceKm,
       sportType: sportType ?? this.sportType,
       location: location ?? this.location,
-      date: dateTime ?? this.date,
+      date: dateTime ?? date,
       participantsJoined: participantsJoined ?? this.participantsJoined,
       participantsTotal: participantsTotal ?? this.participantsTotal,
       players: [],
