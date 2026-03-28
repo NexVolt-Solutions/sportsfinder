@@ -17,6 +17,7 @@ class AuthFooterText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RichText(
+      textAlign: TextAlign.center, // ✅ THIS LINE
       text: TextSpan(
         style: context.appText.text14W400.copyWith(
           color: context.appColors.onSurface,

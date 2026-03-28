@@ -44,7 +44,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   subStyle: context.appText.text16W400,
                   subColor: context.appColors.greylight,
                 ),
-                SizedBox(height: context.h(20)),
+                SizedBox(height: context.h(16)),
 
                 Stack(
                   alignment: Alignment.center,
@@ -85,7 +85,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   titleColor: context.appColors.primary,
                 ),
 
-                SizedBox(height: context.h(20)),
+                SizedBox(height: context.h(16)),
 
                 TextFormFieldWidget(
                   label: AppText.fullName,
@@ -98,7 +98,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: context.h(20)),
+                SizedBox(height: context.h(16)),
                 TextFormFieldWidget(
                   label: AppText.email,
                   hintText: AppText.email,
@@ -110,7 +110,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: context.h(20)),
+                SizedBox(height: context.h(16)),
                 TextFormFieldWidget(
                   label: AppText.phoneNumber,
                   hintText: AppText.phoneNumberHit,
@@ -122,7 +122,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: context.h(20)),
+                SizedBox(height: context.h(16)),
                 TextFormFieldWidget(
                   label: AppText.createPassword,
                   hintText: AppText.passwordHit,
@@ -134,7 +134,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: context.h(20)),
+                SizedBox(height: context.h(16)),
                 TextFormFieldWidget(
                   label: AppText.confirmPassword,
                   hintText: AppText.passwordHit,
@@ -146,9 +146,9 @@ class _SignInScreenState extends State<SignInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: context.h(10)),
+                SizedBox(height: context.h(8)),
                 TermsCheckbox(),
-                SizedBox(height: context.h(10)),
+                SizedBox(height: context.h(8)),
                 CustomButton(
                   onTap: () =>
                       Navigator.pushNamed(context, RoutesName.skillLevelScreen),
@@ -165,12 +165,14 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 SizedBox(height: context.h(12)),
 
-                AuthFooterText(
-                  normalText: AppText.alreadyHaveAnAccountSignIn,
-                  actionText: AppText.signIn,
-                  onTap: () {
-                    Navigator.pushNamed(context, RoutesName.signUpScreen);
-                  },
+                Center(
+                  child: AuthFooterText(
+                    normalText: AppText.alreadyHaveAnAccountSignIn,
+                    actionText: AppText.signIn,
+                    onTap: () {
+                      Navigator.pushNamed(context, RoutesName.signUpScreen);
+                    },
+                  ),
                 ),
               ],
             ),
