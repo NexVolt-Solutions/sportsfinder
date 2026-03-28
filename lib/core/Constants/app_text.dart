@@ -159,6 +159,7 @@ class AppText {
   static const String matchTitleHit = 'Final Tournment';
   static const String matchTitleValidation = 'required filed';
   static const String matchDuration = 'Match Duration';
+  static const String matching = 'Matching';
   static const String threeHours = '3 hours';
   static const String matchLocationDestination = 'Match Location/ Destination';
   static const String denmarkCentralPark = 'Denmark Central Park';
@@ -235,6 +236,8 @@ class AppText {
   static const String notification = 'Notification';
   static const String pushNotificationEnabled = 'Push Notifcation enabled';
   static const String readOurTermsOfServices = 'Read our terms of services';
+  static const String readOurTermsOfPrivacyPolicy =
+      'Read our terms of Privacy Policy';
   static const String contactUs = 'Contact Us';
   static const String saveChanges = 'Save Changes';
   static const String share = 'Share';

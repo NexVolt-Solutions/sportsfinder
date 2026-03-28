@@ -74,17 +74,33 @@ class CardWidget extends StatelessWidget {
       child: Container(
         padding: padding ?? context.padSym(h: 12, v: 12),
         margin: context.padSym(v: 12),
+        // decoration: BoxDecoration(
+        //   color: backgroundColor ?? c.blue10,
+        //   borderRadius: BorderRadius.circular(
+        //     borderRadius ?? context.radiusR(12),
+        //   ),
+        //   border: Border.all(
+        //     color: isActive
+        //         ? (activeBorderColor ?? c.primary)
+        //         : (borderColor ?? Colors.transparent),
+        //     width: 1.5,
+        //   ),
+        // ),
         decoration: BoxDecoration(
-          color: backgroundColor ?? c.blue10,
-          borderRadius: BorderRadius.circular(
-            borderRadius ?? context.radiusR(12),
+          // color: context.appColors.blue10,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFEDF6FF), Color(0xFFF5FAFF)],
           ),
-          border: Border.all(
-            color: isActive
-                ? (activeBorderColor ?? c.primary)
-                : (borderColor ?? Colors.transparent),
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: context.appColors.onSurface.withOpacity(0.1),
+              blurRadius: 2,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: child ?? const SizedBox(),
       ),
