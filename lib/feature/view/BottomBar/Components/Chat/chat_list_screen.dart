@@ -7,6 +7,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -32,25 +33,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
               backgroundColor: Theme.of(context).primaryColor,
               child: Icon(Icons.add, color: Colors.white),
             ),
-            body: ListView(
-              padding: context.padSym(h: 20),
-              children: [
-                AppBarWidget(
-                  onTapFirst: () => Navigator.pop(context),
-                  title: AppText.sportFinding,
-                ),
-                SizedBox(height: context.h(236)),
-                SvgPicture.asset(
-                  AppAssets.invitedPeopleIcon,
-                  fit: BoxFit.scaleDown,
-                ),
-                NormalText(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  titleText: AppText.invitePlayers,
-                  subAlign: TextAlign.center,
-                  subText: AppText.discoverNearbyPeopleInYourArea,
-                ),
-              ],
+            body: MainFrame(
+              child: ListView(
+                padding: context.padSym(h: 20),
+                children: [
+                  AppBarWidget(
+                    onTapFirst: () => Navigator.pop(context),
+                    title: AppText.sportFinding,
+                  ),
+                  SizedBox(height: context.h(236)),
+                  SvgPicture.asset(
+                    AppAssets.invitedPeopleIcon,
+                    fit: BoxFit.scaleDown,
+                  ),
+                  NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: AppText.invitePlayers,
+                    subAlign: TextAlign.center,
+                    subText: AppText.discoverNearbyPeopleInYourArea,
+                  ),
+                ],
+              ),
             ),
           );
         },

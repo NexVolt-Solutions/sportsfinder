@@ -43,6 +43,10 @@ class AppAssets {
   //Profile Icon
   static const String editIcon = "assets/profile/editIcon.svg";
   static const String shareIcon = "assets/profile/shareIcon.svg";
+  static const String eyeIcon = "assets/profile/eyeIcon.svg";
+  static const String contactIcon = "assets/profile/contactIcon.svg";
+  static const String privacyIcon = "assets/profile/privacyIcon.svg";
+  static const String termIcon = "assets/profile/termIcon.svg";
 
   //Onboarding Screen Images
   static const String firstImage = "assets/onBoarding/1.svg";
