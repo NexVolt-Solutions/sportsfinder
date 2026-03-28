@@ -110,7 +110,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                     }
                     Navigator.pushNamed(
                       context,
-                      RoutesName.LocationAccessScreen,
+                      RoutesName.locationAccessScreen,
                     );
                   },
                 ),

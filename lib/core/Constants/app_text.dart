@@ -107,7 +107,7 @@ class AppText {
   static const String skillLevel = 'Skill Level';
   static const String players = 'Players';
   static const String overview = 'Overview';
-  static const String invitePlayers = 'Invite Players';
+  static const String invitePlayers = 'Invite People';
   static const String location = 'Location';
   static const String centralPark = 'Central Park';
   static const String centralParkIslamabad = 'Central Park Islamabad';
@@ -133,7 +133,8 @@ class AppText {
   static const String joinMatch = 'Join Match';
   static const String filters = 'Filters';
   static const String sportType = 'Sport Type';
-  static const String distanceFromYou10Km = 'Distance from you: 10 km';
+  static const String distanceFromYou = 'Distance from you:';
+  static const String km = '10 km';
   static const String zeroKm = '0 km';
   static const String anyKm = 'Any km';
   static const String any = 'Any';
@@ -209,8 +210,8 @@ class AppText {
   static const String perfectSeeYouThere = 'Perfect, see you there! 🏀';
   static const String seeYouAtTheGame = 'See you at the game!';
   static const String typeAMessage = 'Type a message...';
-  static const String discoverNearbyPlayersInYourArea =
-      'Discover nearby players in your area';
+  static const String discoverNearbyPeopleInYourArea =
+      'Discover nearby people in your area';
 
   static const String editProfile = 'Edit Profile';
   static const String privacyPolicySportFinding =

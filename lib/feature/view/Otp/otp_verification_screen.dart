@@ -97,7 +97,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               normalText: AppText.didntReceiveTheCodeResend,
               actionText: AppText.reSend,
               onTap: () {
-                Navigator.pushNamed(context, RoutesName.SkillLevelScreen);
+                Navigator.pushNamed(context, RoutesName.skillLevelScreen);
               },
             ),
           ],

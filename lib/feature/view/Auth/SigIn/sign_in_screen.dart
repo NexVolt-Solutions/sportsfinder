@@ -9,7 +9,6 @@ import 'package:sport_finding/feature/view/Auth/SigIn/SignInViewModel/sign_in_sc
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
-import 'package:sport_finding/feature/widget/gmail_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/social_button_widget.dart';
@@ -152,7 +151,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 SizedBox(height: context.h(10)),
                 CustomButton(
                   onTap: () =>
-                      Navigator.pushNamed(context, RoutesName.SkillLevelScreen),
+                      Navigator.pushNamed(context, RoutesName.skillLevelScreen),
                   text: AppText.signIn,
                   color: context.appColors.primary,
                 ),

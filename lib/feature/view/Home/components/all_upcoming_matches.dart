@@ -125,7 +125,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         cardOnTap: () {
                           Navigator.pushNamed(
                             context,
-                            RoutesName.UserMatchDetailsScreen,
+                            RoutesName.userMatchDetailsScreen,
                             arguments: match,
                           );
                         },
@@ -140,7 +140,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         matchOnTap: () {
                           Navigator.pushNamed(
                             context,
-                            RoutesName.SeeAllInvatedPlayerScreen,
+                            RoutesName.seeAllInvatedPlayerScreen,
                             arguments: match,
                           );
                         },

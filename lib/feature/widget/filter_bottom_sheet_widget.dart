@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/custom_button.dart';
+import 'package:sport_finding/feature/widget/custom_slider_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final Function(FilterData) onApply;
@@ -21,23 +26,65 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   int? selectedSportIndex;
   int? selectedSkillIndex;
   double selectedDistance = 10.0;
-  TimeOfDay? selectedTime;
-  DateTime? selectedDate;
-
+  double distance = 50;
   final List<SportType> sports = [
     SportType(name: 'Football', icon: AppAssets.footBallIcon),
     SportType(name: 'Volleyball', icon: AppAssets.volleyBallIcon),
     SportType(name: 'Cricket', icon: AppAssets.tableTennisIcon),
   ];
+  final TextEditingController dateController = TextEditingController();
+  final TextEditingController timeController = TextEditingController();
+  String _getMonthName(int month) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return months[month - 1];
+  }
+
+  DateTime? _selectedDate;
+  DateTime? get selectedDate => _selectedDate;
+
+  TimeOfDay? _selectedTime;
+  TimeOfDay? get selectedTime => _selectedTime;
+
+  // 📅 Date
+  void setDate(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+      dateController.text =
+          '${date.day}/${_getMonthName(date.month)}/${date.year}';
+    });
+  }
+
+  // ⏰ Time
+  void setTime(TimeOfDay time, BuildContext context) {
+    setState(() {
+      _selectedTime = time;
+      timeController.text = time.format(context);
+    });
+  }
 
   final List<String> skillLevels = ['Beginner', 'Intermediate', 'Advanced'];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: context.appColors.onPrimary,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(context.radiusR(12)),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -46,17 +93,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           Container(
             margin: EdgeInsets.only(top: context.h(8)),
             width: context.w(40),
-            height: 4,
+            height: context.h(4),
             decoration: BoxDecoration(
               color: AppColors.greylight,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(context.radiusR(2)),
             ),
           ),
 
           // Content
           Flexible(
             child: SingleChildScrollView(
-              padding: context.padSym(h: 20, v: 16),
+              padding: context.padSym(h: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -82,7 +129,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ],
                   ),
 
-                  SizedBox(height: context.h(16)),
+                  SizedBox(height: context.h(12)),
 
                   // Sport Type Section
                   NormalText(
@@ -126,205 +173,89 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     ),
                   ),
 
-                  SizedBox(height: context.h(24)),
-
                   // Distance Slider
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Distance from you:',
-                        style: TextStyle(
-                          fontSize: context.sp(14),
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.blackcolor,
-                        ),
-                      ),
-                      Text(
-                        '${selectedDistance.toInt()} km',
-                        style: TextStyle(
-                          fontSize: context.sp(14),
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF3EA7FD),
-                        ),
-                      ),
-                    ],
+                  SizedBox(height: context.h(8)),
+                  AuthFooterText(
+                    normalText: AppText.distanceFromYou,
+                    actionText: AppText.km,
+                  ),
+                  SizedBox(height: context.h(4)),
+
+                  CustomSlider(
+                    value: distance,
+                    onChanged: (val) {
+                      setState(() {
+                        distance = val; // 🔥 value coming from widget
+                      });
+                    },
+                  ),
+
+                  SizedBox(height: context.h(16)),
+
+                  // Skill Level Section
+                  NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: AppText.skillLevel,
+                    maxLines: 2,
+                    titleStyle: context.appText.text16W600,
+                    titleColor: context.appColors.onSurface,
                   ),
 
                   SizedBox(height: context.h(8)),
 
-                  SliderTheme(
-                    data: SliderThemeData(
-                      activeTrackColor: const Color(0xFF3EA7FD),
-                      inactiveTrackColor: const Color(0xFFE0E0E0),
-                      thumbColor: const Color(0xFF3EA7FD),
-                      overlayColor: const Color(0xFF3EA7FD).withOpacity(0.2),
-                      trackHeight: 4,
-                      thumbShape: const RoundSliderThumbShape(
-                        enabledThumbRadius: 8,
-                      ),
-                    ),
-                    child: Slider(
-                      value: selectedDistance,
-                      min: 0,
-                      max: 100,
-                      divisions: 20,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedDistance = value;
-                        });
-                      },
-                    ),
-                  ),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '0 km',
-                        style: TextStyle(
-                          fontSize: context.sp(12),
-                          color: AppColors.greydark,
-                        ),
-                      ),
-                      Text(
-                        'Any km',
-                        style: TextStyle(
-                          fontSize: context.sp(12),
-                          color: AppColors.greydark,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: context.h(24)),
-
-                  // Skill Level Section
-                  Text(
-                    'Skill Level',
-                    style: TextStyle(
-                      fontSize: context.sp(16),
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.blackcolor,
-                    ),
-                  ),
-
-                  SizedBox(height: context.h(12)),
-
                   // Skill Level Buttons
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: List.generate(skillLevels.length, (index) {
                       final isSelected = selectedSkillIndex == index;
-                      return Padding(
-                        padding: EdgeInsets.only(right: context.w(12)),
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedSkillIndex = selectedSkillIndex == index
-                                  ? null
-                                  : index;
-                            });
-                          },
-                          child: Container(
-                            padding: context.padSym(h: 20, v: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF3EA7FD).withOpacity(0.1)
-                                  : const Color(0xFFF5F7FA),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF3EA7FD)
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              skillLevels[index],
-                              style: TextStyle(
-                                fontSize: context.sp(14),
-                                fontWeight: FontWeight.w500,
-                                color: isSelected
-                                    ? const Color(0xFF3EA7FD)
-                                    : AppColors.greydark,
-                              ),
-                            ),
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedSkillIndex = selectedSkillIndex == index
+                                ? null
+                                : index;
+                          });
+                        },
+                        child: CardWidget(
+                          padding: context.padSym(h: 24, v: 8),
+
+                          child: NormalText(
+                            titleText: skillLevels[index],
+
+                            titleColor: context.appColors.greyDark,
+                            titleFontSize: context.text(13),
+                            titleFontWeight: FontWeight.w400,
                           ),
                         ),
                       );
                     }),
                   ),
 
-                  SizedBox(height: context.h(24)),
+                  SizedBox(height: context.h(16)),
 
                   // Time and Date Row
                   Row(
                     children: [
                       // Time Picker
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            final time = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
-                            if (time != null) {
-                              setState(() {
-                                selectedTime = time;
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: context.padSym(h: 16, v: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE0E0E0),
-                                width: 1,
+                        child: TextFormFieldWidget(
+                          label: AppText.date,
+                          hintText: AppText.dateHit,
+                          controller: dateController,
+                          readOnly: true,
+                          customSuffix: Padding(
+                            padding: EdgeInsets.all(
+                              context.w(12),
+                            ), // controls spacing
+                            child: SizedBox(
+                              height: context.h(20), // 👈 exact icon size
+                              width: context.w(20),
+                              child: SvgPicture.asset(
+                                AppAssets.calendarIcon,
+                                fit: BoxFit.contain,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Time',
-                                      style: TextStyle(
-                                        fontSize: context.sp(12),
-                                        color: AppColors.greydark,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: context.h(4)),
-                                    Text(
-                                      selectedTime?.format(context) ?? '--:--',
-                                      style: TextStyle(
-                                        fontSize: context.sp(14),
-                                        color: AppColors.blackcolor,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Icon(
-                                  Icons.access_time,
-                                  size: 20,
-                                  color: AppColors.greydark,
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                      ),
-
-                      SizedBox(width: context.w(12)),
-
-                      // Date Picker
-                      Expanded(
-                        child: GestureDetector(
                           onTap: () async {
                             final date = await showDatePicker(
                               context: context,
@@ -335,56 +266,43 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                               ),
                             );
                             if (date != null) {
-                              setState(() {
-                                selectedDate = date;
-                              });
+                              setDate(date);
                             }
                           },
-                          child: Container(
-                            padding: context.padSym(h: 16, v: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE0E0E0),
-                                width: 1,
+                        ),
+                      ),
+
+                      SizedBox(width: context.w(12)),
+
+                      // Date Picker
+                      Expanded(
+                        child: TextFormFieldWidget(
+                          label: AppText.time,
+                          hintText: AppText.dateHit,
+                          controller: timeController,
+                          readOnly: true,
+                          customSuffix: Padding(
+                            padding: EdgeInsets.all(
+                              context.w(12),
+                            ), // controls spacing
+                            child: SizedBox(
+                              height: context.h(20), // 👈 exact icon size
+                              width: context.w(20),
+                              child: SvgPicture.asset(
+                                AppAssets.homeTimeIcon,
+                                fit: BoxFit.contain,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Date',
-                                      style: TextStyle(
-                                        fontSize: context.sp(12),
-                                        color: AppColors.greydark,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: context.h(4)),
-                                    Text(
-                                      selectedDate != null
-                                          ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                                          : 'dd/mm/yyyy',
-                                      style: TextStyle(
-                                        fontSize: context.sp(14),
-                                        color: AppColors.blackcolor,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Icon(
-                                  Icons.calendar_today,
-                                  size: 20,
-                                  color: AppColors.greydark,
-                                ),
-                              ],
-                            ),
                           ),
+                          onTap: () async {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (time != null) {
+                              setTime(time, context);
+                            }
+                          },
                         ),
                       ),
                     ],
@@ -403,27 +321,29 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                               selectedSportIndex = null;
                               selectedSkillIndex = null;
                               selectedDistance = 10.0;
-                              selectedTime = null;
-                              selectedDate = null;
+                              _selectedTime = null;
+                              _selectedDate = null;
                             });
                           },
-                          child: Container(
-                            padding: context.padSym(v: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE0E0E0),
+                          child: Card(
+                            elevation: 2, // shadow
+                            color: context.appColors.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                context.radiusR(12),
+                              ),
+                              side: BorderSide(
+                                color: context
+                                    .appColors
+                                    .onPrimary, // ✅ border color
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              'Reset',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: context.sp(16),
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.blackcolor,
+                            child: Padding(
+                              padding: context.padSym(v: 14),
+                              child: NormalText(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                titleText: AppText.reset,
                               ),
                             ),
                           ),
@@ -435,40 +355,22 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       // Apply Button
                       Expanded(
                         flex: 2,
-                        child: GestureDetector(
+                        child: CustomButton(
+                          text: AppText.apply,
+                          color: context.appColors.primary,
                           onTap: () {
                             final filterData = FilterData(
                               sportIndex: selectedSportIndex,
                               skillLevel: selectedSkillIndex != null
                                   ? skillLevels[selectedSkillIndex!]
                                   : null,
-                              distance: selectedDistance,
-                              time: selectedTime,
-                              date: selectedDate,
+                              distance: distance,
+                              time: _selectedTime,
+                              date: _selectedDate,
                             );
                             widget.onApply(filterData);
                             Navigator.pop(context);
                           },
-                          child: Container(
-                            padding: context.padSym(v: 16),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF42A5F5), Color(0xFF2196F3)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Apply',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: context.sp(16),
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
                         ),
                       ),
                     ],

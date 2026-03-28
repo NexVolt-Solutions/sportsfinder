@@ -9,7 +9,7 @@ void main() {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       // home: HostDetailsScreen(),
-      initialRoute: RoutesName.SplashScreen,
+      initialRoute: RoutesName.splashScreen,
       onGenerateRoute: Routes.generateRoute,
     ),
   );

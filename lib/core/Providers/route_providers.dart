@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/user_match_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/BottomBarViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/Signup/SignUpViewModel/sign_up_screen_view_model.dart';
@@ -23,12 +25,12 @@ class RouteProviders {
 
   static Widget wrapIfNeeded(String routeName, Widget child) {
     switch (routeName) {
-      case RoutesName.SplashScreen:
+      case RoutesName.splashScreen:
         return ChangeNotifierProvider(
           create: (_) => SplashScreenViewModel(),
           child: child,
         );
-      case RoutesName.OnboardingScreen:
+      case RoutesName.onboardingScreen:
         return ChangeNotifierProvider(
           create: (_) => OnboardingScreenViewModel(),
           child: child,
@@ -38,53 +40,53 @@ class RouteProviders {
           create: (_) => SignUpScreenViewModel(),
           child: child,
         );
-      case RoutesName.SignInScreen:
+      case RoutesName.signInScreen:
         return ChangeNotifierProvider(
           create: (_) => SignInScreenViewModel(),
           child: child,
         );
-      case RoutesName.SkillLevelScreen:
+      case RoutesName.skillLevelScreen:
         return ChangeNotifierProvider(
           create: (_) => SkillLevelScreenViewModel(),
           child: child,
         );
-      case RoutesName.ChooseSportScreen:
+      case RoutesName.chooseSportScreen:
         return ChangeNotifierProvider(
           create: (_) => ChooseSportScreenViewModel(),
           child: child,
         );
-      case RoutesName.LocationAccessScreen:
+      case RoutesName.locationAccessScreen:
         return ChangeNotifierProvider(
           create: (_) => LocationAccessScreenViewModel(),
           child: child,
         );
-      case RoutesName.BottomBarScreen:
+      case RoutesName.bottomBarScreen:
         return ChangeNotifierProvider(
           create: (_) => BottomBarScreenViewModel(),
           child: child,
         );
-      case RoutesName.OtpVerificationScreen:
+      case RoutesName.otpVerificationScreen:
         return ChangeNotifierProvider(
           create: (_) => OtpVerificationScreenViewModel(),
           child: child,
         );
-      case RoutesName.AllUpComingMatchesScreen:
+      case RoutesName.allUpComingMatchesScreen:
         return ChangeNotifierProvider(
           create: (_) => AllUpcommingMatchesViewModel(),
           child: child,
         );
-      case RoutesName.SeeAllInvatedPlayerScreen:
+      case RoutesName.seeAllInvatedPlayerScreen:
         return ChangeNotifierProvider(
           create: (_) => SeeAllInvatedPlayerScreenViewModel(),
           child: child,
         );
-      case RoutesName.UserMatchDetailsScreen:
+      case RoutesName.userMatchDetailsScreen:
         return ChangeNotifierProvider(
           create: (_) => UserMatchDetailScreenViewModel(),
           child: child,
         );
 
-      case RoutesName.HostDetailsScreen:
+      case RoutesName.hostDetailsScreen:
         return ChangeNotifierProvider(
           create: (_) => HostDetailScreenViewModel(),
           child: child,
@@ -97,6 +99,16 @@ class RouteProviders {
       case RoutesName.matchCreatedDoneScreen:
         return ChangeNotifierProvider(
           create: (_) => MatchCreatedDoneScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.allMemeberScreen:
+        return ChangeNotifierProvider(
+          create: (_) => AllMemberScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.chatScreen:
+        return ChangeNotifierProvider(
+          create: (_) => ChatScreenViewModel(),
           child: child,
         );
 

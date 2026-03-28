@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pushNamed(
                   context,
-                  RoutesName.AllUpComingMatchesScreen,
+                  RoutesName.allUpComingMatchesScreen,
                 );
               },
             ),
@@ -125,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       cardOnTap: () {
                         Navigator.pushNamed(
                           context,
-                          RoutesName.HostDetailsScreen,
+                          RoutesName.hostDetailsScreen,
                           arguments: match, // ✅ Pass the DiscoveryMatch object
                         );
                       },

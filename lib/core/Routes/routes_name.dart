@@ -1,21 +1,23 @@
 // ignore_for_file: constant_identifier_names
 
 class RoutesName {
-  static const String SplashScreen = 'splash_screen';
-  static const String OnboardingScreen = 'on_boarding_screen';
+  static const String splashScreen = 'splash_screen';
+  static const String onboardingScreen = 'on_boarding_screen';
   static const String signUpScreen = 'sign_up_screen';
-  static const String SignInScreen = 'sigin_screen';
-  static const String SkillLevelScreen = 'skill_level_screen';
-  static const String ChooseSportScreen = 'choose_sport_screen';
-  static const String LocationAccessScreen = 'location_access_screen';
-  static const String BottomBarScreen = 'bottom_bar_screen';
-  static const String HomeScreen = 'home_screen';
-  static const String OtpVerificationScreen = 'otp_verification_screen';
-  static const String AllUpComingMatchesScreen = 'all_upcoing_matches_screen';
-  static const String SeeAllInvatedPlayerScreen =
+  static const String signInScreen = 'sigin_screen';
+  static const String skillLevelScreen = 'skill_level_screen';
+  static const String chooseSportScreen = 'choose_sport_screen';
+  static const String locationAccessScreen = 'location_access_screen';
+  static const String bottomBarScreen = 'bottom_bar_screen';
+  static const String homeScreen = 'home_screen';
+  static const String otpVerificationScreen = 'otp_verification_screen';
+  static const String allUpComingMatchesScreen = 'all_upcoing_matches_screen';
+  static const String seeAllInvatedPlayerScreen =
       'see_all_invated_player_screen';
-  static const String UserMatchDetailsScreen = 'user_match_details_screen';
-  static const String HostDetailsScreen = 'host_details_screen';
+  static const String userMatchDetailsScreen = 'user_match_details_screen';
+  static const String hostDetailsScreen = 'host_details_screen';
   static const String createMatchScreen = 'create_match_screen';
   static const String matchCreatedDoneScreen = 'match_created_done_screen';
+  static const String allMemeberScreen = 'all_member_screen';
+  static const String chatScreen = 'chat_screen';
 }

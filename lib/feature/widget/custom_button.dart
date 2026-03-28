@@ -29,7 +29,7 @@ class CustomButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: context.padSym(v: 13),
+        padding: context.padSym(v: 14),
         decoration: BoxDecoration(
           color: color,
           borderRadius: radius ?? BorderRadius.circular(context.radiusR(12)),

@@ -67,7 +67,7 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                         ontap: () {
                           Navigator.pushNamed(
                             context,
-                            RoutesName.UserMatchDetailsScreen,
+                            RoutesName.userMatchDetailsScreen,
                             arguments: match,
                           );
                         },
