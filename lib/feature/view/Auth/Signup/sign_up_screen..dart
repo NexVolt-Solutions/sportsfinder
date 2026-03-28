@@ -9,7 +9,6 @@ import 'package:sport_finding/feature/view/Auth/Signup/SignUpViewModel/sign_up_s
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
-import 'package:sport_finding/feature/widget/gmail_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/social_button_widget.dart';
@@ -72,7 +71,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 CustomButton(
                   onTap: () => Navigator.pushNamed(
                     context,
-                    RoutesName.OtpVerificationScreen,
+                    RoutesName.otpVerificationScreen,
                   ),
                   text: AppText.signIn,
                   color: context.appColors.primary,
@@ -90,7 +89,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   normalText: AppText.alreadyHaveAnAccountSignIn,
                   actionText: AppText.signUp,
                   onTap: () {
-                    Navigator.pushNamed(context, RoutesName.SignInScreen);
+                    Navigator.pushNamed(context, RoutesName.signInScreen);
                   },
                 ),
               ],

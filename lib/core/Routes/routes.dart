@@ -6,12 +6,13 @@ import 'package:sport_finding/core/Providers/route_providers.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Auth/Signup/sign_up_screen..dart';
 import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/Home/components/create_match_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/user_match_details_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
@@ -24,19 +25,19 @@ import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case RoutesName.SplashScreen:
+      case RoutesName.splashScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.SplashScreen,
+            RoutesName.splashScreen,
             const SplashScreen(),
           ),
         );
-      case RoutesName.OnboardingScreen:
+      case RoutesName.onboardingScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.OnboardingScreen,
+            RoutesName.onboardingScreen,
             const OnBoardingScreen(),
           ),
         );
@@ -48,89 +49,89 @@ class Routes {
             const SignUpScreen(),
           ),
         );
-      case RoutesName.SignInScreen:
+      case RoutesName.signInScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.SignInScreen,
+            RoutesName.signInScreen,
             const SignInScreen(),
           ),
         );
-      case RoutesName.SkillLevelScreen:
+      case RoutesName.skillLevelScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.SkillLevelScreen,
+            RoutesName.skillLevelScreen,
             const SkillLevelScreen(),
           ),
         );
-      case RoutesName.ChooseSportScreen:
+      case RoutesName.chooseSportScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.ChooseSportScreen,
+            RoutesName.chooseSportScreen,
             const ChooseSportScreen(),
           ),
         );
-      case RoutesName.LocationAccessScreen:
+      case RoutesName.locationAccessScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.LocationAccessScreen,
+            RoutesName.locationAccessScreen,
             const LocationAccessScreen(),
           ),
         );
-      case RoutesName.BottomBarScreen:
+      case RoutesName.bottomBarScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.BottomBarScreen,
+            RoutesName.bottomBarScreen,
             const BottomBarScreen(),
           ),
         );
-      case RoutesName.HomeScreen:
+      case RoutesName.homeScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) =>
-              RouteProviders.wrapIfNeeded(RoutesName.HomeScreen, HomeScreen()),
+              RouteProviders.wrapIfNeeded(RoutesName.homeScreen, HomeScreen()),
         );
-      case RoutesName.OtpVerificationScreen:
+      case RoutesName.otpVerificationScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.OtpVerificationScreen,
+            RoutesName.otpVerificationScreen,
             OtpVerificationScreen(),
           ),
         );
-      case RoutesName.AllUpComingMatchesScreen:
+      case RoutesName.allUpComingMatchesScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.AllUpComingMatchesScreen,
+            RoutesName.allUpComingMatchesScreen,
             AllUpcomingMatches(),
           ),
         );
-      case RoutesName.SeeAllInvatedPlayerScreen:
+      case RoutesName.seeAllInvatedPlayerScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.SeeAllInvatedPlayerScreen,
+            RoutesName.seeAllInvatedPlayerScreen,
             SeeAllInvatedPlayerScreen(),
           ),
         );
-      case RoutesName.UserMatchDetailsScreen:
+      case RoutesName.userMatchDetailsScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.UserMatchDetailsScreen,
+            RoutesName.userMatchDetailsScreen,
             UserMatchDetailsScreen(),
           ),
         );
-      case RoutesName.HostDetailsScreen:
+      case RoutesName.hostDetailsScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.HostDetailsScreen,
+            RoutesName.hostDetailsScreen,
             HostDetailsScreen(),
           ),
         );
@@ -142,13 +143,19 @@ class Routes {
             CreateMatchScreen(),
           ),
         );
-      case RoutesName.matchCreatedDoneScreen:
+      case RoutesName.allMemeberScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.matchCreatedDoneScreen,
-            MatchCreatedDoneScreen(),
+            RoutesName.allMemeberScreen,
+            AllMemberScreen(),
           ),
+        );
+      case RoutesName.chatScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) =>
+              RouteProviders.wrapIfNeeded(RoutesName.chatScreen, ChatScreen()),
         );
 
       default:

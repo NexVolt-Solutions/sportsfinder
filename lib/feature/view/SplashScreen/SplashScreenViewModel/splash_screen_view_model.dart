@@ -5,6 +5,6 @@ class SplashScreenViewModel extends ChangeNotifier {
   Future<void> loginto(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 3));
     if (!context.mounted) return;
-    Navigator.pushReplacementNamed(context, RoutesName.OnboardingScreen);
+    Navigator.pushReplacementNamed(context, RoutesName.onboardingScreen);
   }
 }

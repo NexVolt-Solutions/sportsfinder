@@ -2,23 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
-import 'package:sport_finding/feature/model/up_coming.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
 
-class AllUpcommingMatchesViewModel extends ChangeNotifier {
-  final List<UpComing> upComingMatchesText = [
-    UpComing(text: AppText.all),
-    UpComing(text: AppText.football),
-    UpComing(text: AppText.basketball),
-    UpComing(text: AppText.tennis),
-    UpComing(text: AppText.volleyball),
-  ];
-
+class AllMemberScreenViewModel extends ChangeNotifier {
   List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
   List<DiscoveryMatch> matches = [];
 
   int selectedIndex = 0;
   FilterData? currentFilters;
+
+  get upComingMatchesText => null;
 
   AllUpcommingMatchesViewModel() {
     matches = List.from(allMatches);
@@ -107,4 +100,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       applyFilters(currentFilters!);
     }
   }
+
+  // List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
 }

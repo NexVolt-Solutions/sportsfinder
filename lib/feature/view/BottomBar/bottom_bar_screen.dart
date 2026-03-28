@@ -5,8 +5,9 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
-import 'package:sport_finding/feature/view/BottomBar/BottomBarViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 
@@ -41,7 +42,7 @@ class _BottomBarContent extends StatelessWidget {
       case 2:
         return HomeScreen();
       case 3:
-        return Center(child: Text('my Matches', style: style));
+        return ChatListScreen();
       case 4:
         return Center(child: Text('my Matches', style: style));
       default:

@@ -42,7 +42,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
               text: AppText.startMatch,
               color: context.appColors.primary,
               onTap: () =>
-                  Navigator.pushNamed(context, RoutesName.BottomBarScreen),
+                  Navigator.pushNamed(context, RoutesName.bottomBarScreen),
             ),
           ),
         ),
@@ -115,7 +115,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
               SizedBox(height: context.h(16)),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, RoutesName.HostDetailsScreen);
+                  Navigator.pushNamed(context, RoutesName.hostDetailsScreen);
                 },
                 child: CardWidget(
                   padding: context.padSym(h: 82, v: 26),

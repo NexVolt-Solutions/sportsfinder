@@ -100,7 +100,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                       );
                       return;
                     }
-                    Navigator.pushNamed(context, RoutesName.ChooseSportScreen);
+                    Navigator.pushNamed(context, RoutesName.chooseSportScreen);
                   },
                 ),
               ),
