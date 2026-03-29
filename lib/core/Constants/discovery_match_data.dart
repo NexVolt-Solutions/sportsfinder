@@ -13,7 +13,15 @@ class DiscoveryMatchData {
       time: '4:00 PM',
       participantsJoined: 8,
       participantsTotal: 11,
-      players: ["Ali", "Usman", "Ahmad"],
+      players: ['Ali', 'Usman', 'Ahmad'],
+      hostDisplayName: 'Shehzad Khan',
+      skillLevel: 'Intermediate',
+      matchDescription:
+          'Friendly league night at Central Park Stadium. Intermediate level, '
+          'about two hours. Bring your own ball if you can.',
+      hostBio: 'Organizes weekly football in the city. All about fair play.',
+      playerSkills: ['Advanced', 'Intermediate', 'Advanced'],
+      hostMatchesPlayed: 42,
     ),
     DiscoveryMatch(
       id: '2',

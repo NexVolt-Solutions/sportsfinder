@@ -26,135 +26,178 @@ class UserMatchDetailsScreen extends StatefulWidget {
 
 class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is DiscoveryMatch) {
+      final vm = context.read<UserMatchDetailScreenViewModel>();
+      if (vm.match?.id != args.id) {
+        vm.setMatch(args);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final match = ModalRoute.of(context)!.settings.arguments as DiscoveryMatch;
     return Consumer<UserMatchDetailScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: context.h(5),
-              bottom: context.h(20),
-              right: context.w(20),
-              left: context.w(20),
-            ),
-            child: CustomButton(
-              text: AppText.startMatch,
-              color: context.appColors.primary,
-              onTap: () =>
-                  Navigator.pushNamed(context, RoutesName.bottomBarScreen),
-            ),
-          ),
-        ),
-        body: MainFrame(
-          child: ListView(
-            padding: context.padSym(h: 20),
-            children: [
-              AppBarWidget(
-                onLeadingTap: () {
-                  Navigator.pop(context);
-                },
-                title: AppText.sportFinding,
-              ),
-              NormalText(titleText: match.title, subText: match.sportType),
-              SizedBox(height: context.h(20)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InfoItem(
-                    icon: AppAssets.calendarIcon,
-                    title: "Date",
-                    value: match.date,
-                  ),
-                  InfoItem(
-                    icon: AppAssets.clockIcon,
-                    title: "Time",
-                    value: match.time,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(16)),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                children: [
-                  InfoItem(
-                    icon: AppAssets.matchesIcon,
-                    title: "Skill Level",
-                    value: match.sportType,
-                  ),
-                  InfoItem(
-                    icon: AppAssets.playerIcon,
-                    title: "Players",
-                    value: match.participantsJoined.toString(),
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(16)),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                children: [
-                  InfoItem(
-                    icon: AppAssets.locationIcon,
-                    title: "Location",
-                    value: match.location,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(16)),
-
-              UserGreetingWidget(
-                title: 'khan',
-                name: AppText.newYorkUsa,
-                title2: AppText.passionateAboutSportsAndFitness,
-                isShow: true,
-              ),
-              SizedBox(height: context.h(16)),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, RoutesName.hostDetailsScreen);
-                },
-                child: CardWidget(
-                  padding: context.padSym(h: 82, v: 26),
-                  child: NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: match.participantsJoined.toString(),
-                    subText: AppText.matchesPlayed,
-                  ),
+      builder: (context, model, _) {
+        final match = model.match;
+        if (match == null) {
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: context.padSym(h: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      AppText.noRouteFound,
+                      textAlign: TextAlign.center,
+                      style: context.appText.text16W500,
+                    ),
+                    SizedBox(height: context.h(16)),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Back',
+                        style: context.appText.text16W500.copyWith(
+                          color: context.appColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: context.h(16)),
+            ),
+          );
+        }
 
-              NormalText(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                titleText: AppText.aboutThisMatch,
-                sizeBoxheight: context.h(8),
-                maxLines: 5,
-                subText: AppText.friendlyFinalTournamentDescription,
-                subAlign: TextAlign.start,
+        return Scaffold(
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: context.h(5),
+                bottom: context.h(20),
+                right: context.w(20),
+                left: context.w(20),
               ),
-              SizedBox(height: context.h(16)),
-              SectionHeaderWidget(title: AppText.participatedPlayers),
-              ListView.builder(
-                itemCount: match.players.length,
-                shrinkWrap: true, // ✅ important inside another ListView
-                physics:
-                    NeverScrollableScrollPhysics(), // ✅ prevent scroll conflict
-                itemBuilder: (context, index) {
-                  return UserMatchCard(
-                    title: match.players[index],
-                    subTitle: AppText.advanced,
-                    // showActionIcon: index.isEven, // optional logic
-                  );
-                },
+              child: CustomButton(
+                text: AppText.startMatch,
+                color: context.appColors.primary,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  RoutesName.bottomBarScreen,
+                ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+          body: MainFrame(
+            child: ListView(
+              padding: context.padSym(h: 20),
+              children: [
+                AppBarWidget(
+                  onLeadingTap: () => Navigator.pop(context),
+                  title: AppText.sportFinding,
+                ),
+                NormalText(
+                  titleText: match.title,
+                  subText: match.sportType,
+                ),
+                SizedBox(height: context.h(20)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    InfoItem(
+                      icon: AppAssets.calendarIcon,
+                      title: 'Date',
+                      value: match.date,
+                    ),
+                    InfoItem(
+                      icon: AppAssets.clockIcon,
+                      title: 'Time',
+                      value: match.time,
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.h(16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    InfoItem(
+                      icon: AppAssets.matchesIcon,
+                      title: AppText.skillLevel,
+                      value: match.skillLevel,
+                    ),
+                    InfoItem(
+                      icon: AppAssets.playerIcon,
+                      title: AppText.players,
+                      value: match.participantsLabel,
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.h(16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    InfoItem(
+                      icon: AppAssets.locationIcon,
+                      title: AppText.location,
+                      value: match.location,
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.h(16)),
+                UserGreetingWidget(
+                  title: match.displayHostName,
+                  name: match.location,
+                  title2: match.resolvedHostBio,
+                  isShow: true,
+                ),
+                SizedBox(height: context.h(16)),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.hostDetailsScreen,
+                      arguments: match,
+                    );
+                  },
+                  child: CardWidget(
+                    padding: context.padSym(h: 82, v: 26),
+                    child: NormalText(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      titleText: '${match.resolvedHostMatchesPlayed}',
+                      subText: AppText.matchesPlayed,
+                    ),
+                  ),
+                ),
+                SizedBox(height: context.h(16)),
+                NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  titleText: AppText.aboutThisMatch,
+                  sizeBoxheight: context.h(8),
+                  maxLines: 8,
+                  subText: match.aboutText,
+                  subAlign: TextAlign.start,
+                ),
+                SizedBox(height: context.h(16)),
+                SectionHeaderWidget(title: AppText.participatedPlayers),
+                ListView.builder(
+                  itemCount: match.players.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return UserMatchCard(
+                      title: match.players[index],
+                      subTitle: match.playerSkillAt(index),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

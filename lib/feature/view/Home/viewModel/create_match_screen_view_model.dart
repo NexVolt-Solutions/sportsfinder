@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/feature/model/discovery_match.dart';
 
 // class CreateMatchScreenViewModel extends ChangeNotifier {
 //   final _formKey = GlobalKey<FormState>();
@@ -155,6 +156,11 @@ import 'package:flutter/material.dart';
 // }import 'package:flutter/material.dart';
 
 class CreateMatchScreenViewModel extends ChangeNotifier {
+  CreateMatchScreenViewModel() {
+    matchDurationController.text = '$_duration minutes';
+    maxPlayersController.text = _maxPlayers.toString();
+  }
+
   final formKey = GlobalKey<FormState>();
 
   // 🔤 Controllers (ONLY for text fields)
@@ -251,17 +257,48 @@ class CreateMatchScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🚀 Create Match
-  void createMatch() {
-    print('Match Title: ${matchTitleController.text}');
-    print('Date: ${dateController.text}');
-    print('Time: ${timeController.text}');
-    print('Duration: $_duration minutes');
-    print('Location: ${locationController.text}');
-    print('Max Players: $_maxPlayers');
-    print('Skill Level: $selectedSkillLevel');
-    print('Sport Type: $selectedSportType');
-    print('Description: ${descriptionController.text}');
+  /// Returns false if required fields are missing (shows a snackbar from the UI).
+  bool validateForCreate() {
+    if (!(formKey.currentState?.validate() ?? false)) return false;
+    if (dateController.text.trim().isEmpty) return false;
+    if (timeController.text.trim().isEmpty) return false;
+    if (locationController.text.trim().isEmpty) return false;
+    return true;
+  }
+
+  /// Builds a [DiscoveryMatch] from the current form (call after validation).
+  DiscoveryMatch toCreatedDiscoveryMatch() {
+    final sport = selectedSportType ?? sportTypes.first;
+    final skill = selectedSkillLevel ?? skillLevels[1];
+    final loc = locationController.text.trim();
+    final desc = descriptionController.text.trim();
+    final dateStr = dateController.text.trim();
+    final timeStr = timeController.text.trim();
+    final title = matchTitleController.text.trim();
+
+    final durationNote = 'Duration: $_duration min.';
+    final fullDescription = desc.isEmpty
+        ? '$durationNote ${loc.isNotEmpty ? 'At $loc.' : ''}'
+        : '$desc\n$durationNote';
+
+    return DiscoveryMatch(
+      id: 'created_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      distanceKm: 0,
+      sportType: sport,
+      location: loc.isEmpty ? 'Location TBD' : loc,
+      date: dateStr.isEmpty ? '—' : dateStr,
+      time: timeStr.isEmpty ? '—' : timeStr,
+      participantsJoined: 1,
+      participantsTotal: _maxPlayers.clamp(2, 99),
+      players: const ['You'],
+      hostDisplayName: 'You',
+      skillLevel: skill,
+      matchDescription: fullDescription,
+      hostBio: 'You created this match. Invite players from the success screen.',
+      playerSkills: const ['Host'],
+      hostMatchesPlayed: 1,
+    );
   }
 
   // 📅 Helper

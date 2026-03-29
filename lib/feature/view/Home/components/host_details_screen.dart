@@ -5,6 +5,8 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/app_svg_icon.dart';
@@ -29,9 +31,22 @@ class HostDetailsScreen extends StatefulWidget {
 class _HostDetailsScreenState extends State<HostDetailsScreen> {
   @override
   Widget build(BuildContext context) {
-    // final match = ModalRoute.of(context)!.settings.arguments as DiscoveryMatch;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final match = args is DiscoveryMatch ? args : null;
+
+    if (match == null) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            AppText.noRouteFound,
+            style: context.appText.text16W500,
+          ),
+        ),
+      );
+    }
+
     return Consumer<HostDetailScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
+      builder: (context, model, _) => Scaffold(
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
@@ -78,16 +93,12 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
             padding: context.padSym(h: 20),
             children: [
               AppBarWidget(
-                onLeadingTap: () {
-                  Navigator.pop(context);
-                },
+                onLeadingTap: () => Navigator.pop(context),
                 title: AppText.sportFinding,
               ),
               NormalText(
-                titleText: 'Host Data',
-                // match.title,
-                subText: 'Host Title',
-                // match.sportType
+                titleText: match.title,
+                subText: match.sportType,
               ),
               SizedBox(height: context.h(20)),
               Row(
@@ -95,44 +106,40 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                 children: [
                   InfoItem(
                     icon: AppAssets.calendarIcon,
-                    title: "Date",
-                    value: "Oct 26, 2024",
+                    title: 'Date',
+                    value: match.date,
                   ),
                   InfoItem(
                     icon: AppAssets.clockIcon,
-                    title: "Time",
-                    value: "7:00 PM",
+                    title: 'Time',
+                    value: match.time,
                   ),
                 ],
               ),
               SizedBox(height: context.h(16)),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                 children: [
                   InfoItem(
                     icon: AppAssets.matchesIcon,
-                    title: "Skill Level",
-                    value: "Intermediate",
+                    title: AppText.skillLevel,
+                    value: match.skillLevel,
                   ),
                   InfoItem(
                     icon: AppAssets.playerIcon,
-                    title: "Players",
-                    value: "10/10",
+                    title: AppText.players,
+                    value: match.participantsLabel,
                   ),
                 ],
               ),
               SizedBox(height: context.h(16)),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                 children: [
                   InfoItem(
                     icon: AppAssets.locationIcon,
-                    title: "Location",
-                    value: "Central Park",
+                    title: AppText.location,
+                    value: match.location,
                   ),
                 ],
               ),
@@ -143,7 +150,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   child: Row(
                     children: List.generate(model.buttonName.length, (index) {
                       final isSelected = model.selectedIndex == index;
-
                       return GestureDetector(
                         onTap: () => model.changeIndex(index),
                         child: isSelected
@@ -167,13 +173,12 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   ),
                 ),
               ),
-
               SizedBox(height: context.h(16)),
               if (model.selectedIndex == 0) ...[
                 UserGreetingWidget(
-                  title: "Shehzad (Host)",
-                  name: AppText.newYorkUsa,
-                  title2: AppText.passionateAboutSportsAndFitness,
+                  title: match.displayHostName,
+                  name: match.location,
+                  title2: match.resolvedHostBio,
                   isShow: true,
                 ),
                 SizedBox(height: context.h(16)),
@@ -181,7 +186,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   padding: context.padSym(h: 82, v: 26),
                   child: NormalText(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: '42',
+                    titleText: '${match.resolvedHostMatchesPlayed}',
                     subText: AppText.matchesPlayed,
                   ),
                 ),
@@ -190,112 +195,123 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   titleText: AppText.aboutThisMatch,
                   sizeBoxheight: context.h(8),
-                  maxLines: 5,
-                  subText: AppText.friendlyFinalTournamentDescription,
+                  maxLines: 8,
+                  subText: match.aboutText,
                   subAlign: TextAlign.start,
                 ),
                 SizedBox(height: context.h(16)),
                 SectionHeaderWidget(title: AppText.participatedPlayers),
                 ListView.builder(
-                  itemCount: 5, // 👈 show 5 items
-                  shrinkWrap: true, // if inside another scroll
-                  physics: const NeverScrollableScrollPhysics(), // optional
+                  itemCount: match.players.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     return UserMatchCard(
                       onActionTap: () {},
-                      onCardTap: () {},
-                      title: AppText.shareMatch,
-                      subTitle: AppText.advanced,
+                      onCardTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.userMatchDetailsScreen,
+                          arguments: match,
+                        );
+                      },
+                      title: match.players[index],
+                      subTitle: match.playerSkillAt(index),
                       showActionIcon: true,
                     );
                   },
                 ),
                 SizedBox(height: context.h(16)),
               ],
-
               if (model.selectedIndex == 1) ...[
                 SectionHeaderWidget(title: AppText.participatedPlayers),
                 SizedBox(height: context.h(8)),
-
                 ListView.builder(
-                  itemCount: 3, // 👈 show 5 items
-                  shrinkWrap: true, // if inside another scroll
-                  physics: const NeverScrollableScrollPhysics(), // optional
+                  itemCount: match.players.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     return PersonInvitedCard(
-                      playerName: "Ali Khan",
-                      matchName: "Football",
-                      matchLevel: "Advanced",
-                      destance: "3 km",
-                      isShow: true, // show the invite button
-                      ontap: () {
-                        print("Invite button tapped for Ali Khan");
-                      },
+                      playerName: match.players[index],
+                      matchName: match.sportType,
+                      matchLevel: match.playerSkillAt(index),
+                      destance: '${match.distanceKm} km',
+                      isShow: true,
+                      ontap: () {},
                       cardOnTap: () {
-                        print("Card tapped for Ali Khan");
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.userMatchDetailsScreen,
+                          arguments: match,
+                        );
                       },
                     );
                   },
                 ),
                 SizedBox(height: context.h(16)),
-
                 SectionHeaderWidget(title: AppText.nearbyPlayers),
                 SizedBox(height: context.h(8)),
-
                 ListView.builder(
-                  itemCount: 3, // 👈 show 5 items
-                  shrinkWrap: true, // if inside another scroll
-                  physics: const NeverScrollableScrollPhysics(), // optional
+                  itemCount: match.players.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
+                    final i =
+                        (index + 1) % match.players.length;
                     return PersonInvitedCard(
-                      playerName: "Ali Khan",
-                      matchName: "Football",
-                      matchLevel: "Advanced",
-                      destance: "3 km",
-                      isShow: true, // show the invite button
-                      ontap: () {
-                        print("Invite button tapped for Ali Khan");
-                      },
+                      playerName: match.players[i],
+                      matchName: match.sportType,
+                      matchLevel: match.playerSkillAt(i),
+                      destance:
+                          '${(match.distanceKm + index * 0.3).toStringAsFixed(1)} km',
+                      isShow: true,
+                      ontap: () {},
                       cardOnTap: () {
-                        print("Card tapped for Ali Khan");
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.userMatchDetailsScreen,
+                          arguments: match,
+                        );
                       },
                     );
                   },
                 ),
                 SizedBox(height: context.h(16)),
-
                 SectionHeaderWidget(title: AppText.recommendedPlayers),
                 SizedBox(height: context.h(8)),
-
                 ListView.builder(
-                  itemCount: 3, // 👈 show 5 items
-                  shrinkWrap: true, // if inside another scroll
-                  physics: const NeverScrollableScrollPhysics(), // optional
+                  itemCount: match.players.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
+                    final i =
+                        (match.players.length - 1 - index) %
+                            match.players.length;
                     return PersonInvitedCard(
-                      playerName: "Ali Khan",
-                      matchName: "Football",
-                      matchLevel: "Advanced",
-                      destance: "3 km",
-                      isShow: true, // show the invite button
-                      ontap: () {
-                        print("Invite button tapped for Ali Khan");
-                      },
+                      playerName: match.players[i],
+                      matchName: match.sportType,
+                      matchLevel: match.playerSkillAt(i),
+                      destance:
+                          '${(match.distanceKm + 0.5 + index * 0.2).toStringAsFixed(1)} km',
+                      isShow: true,
+                      ontap: () {},
                       cardOnTap: () {
-                        print("Card tapped for Ali Khan");
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.userMatchDetailsScreen,
+                          arguments: match,
+                        );
                       },
                     );
                   },
                 ),
                 SizedBox(height: context.h(16)),
               ],
-
               if (model.selectedIndex == 2) ...[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12), // rounded corners
+                  borderRadius: BorderRadius.circular(12),
                   child: Stack(
                     children: [
-                      // 1️⃣ Map Image
                       Container(
                         height: context.h(174),
                         width: context.w(380),
@@ -312,14 +328,12 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           padding: context.padAll(12),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: Icon(Icons.fullscreen, size: 20),
-                              onPressed: () {
-                                print('Fullscreen tapped');
-                              },
+                              icon: const Icon(Icons.fullscreen, size: 20),
+                              onPressed: () {},
                             ),
                           ),
                         ),
@@ -327,21 +341,22 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                     ],
                   ),
                 ),
-
                 SizedBox(height: context.h(16)),
-                SectionHeaderWidget(title: AppText.centralPark),
+                SectionHeaderWidget(title: match.location),
                 SizedBox(height: context.h(8)),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppSvgIcon(
                       icon: AppAssets.locationIcon,
                       color: context.appColors.greylight,
                     ),
                     SizedBox(width: context.w(4)),
-
-                    NormalText(
-                      subText: AppText.basketballCourtAddress,
-                      subColor: context.appColors.greylight,
+                    Expanded(
+                      child: NormalText(
+                        subText: match.location,
+                        subColor: context.appColors.greylight,
+                      ),
                     ),
                   ],
                 ),

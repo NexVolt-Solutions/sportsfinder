@@ -64,7 +64,7 @@ class OnboardingScreenViewModel extends ChangeNotifier {
     _isNavigating = true;
     Navigator.pushReplacementNamed(
       context,
-      RoutesName.signUpScreen,
+      RoutesName.LoginScreen,
     ).whenComplete(() => _isNavigating = false);
   }
 

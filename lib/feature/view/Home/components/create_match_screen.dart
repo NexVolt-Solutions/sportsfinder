@@ -26,8 +26,6 @@ class CreateMatchScreen extends StatefulWidget {
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
   @override
   Widget build(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-
     return Consumer<CreateMatchScreenViewModel>(
       builder: (context, model, child) => Scaffold(
         bottomNavigationBar: SafeArea(
@@ -42,14 +40,29 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               text: AppText.createMatch,
               color: context.appColors.primary,
               onTap: () {
-                Navigator.pushNamed(context, RoutesName.matchCreatedDoneScreen);
+                if (!model.validateForCreate()) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Please enter match title, date, time, and location.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                final created = model.toCreatedDiscoveryMatch();
+                Navigator.pushNamed(
+                  context,
+                  RoutesName.matchCreatedDoneScreen,
+                  arguments: created,
+                );
               },
             ),
           ),
         ),
         body: MainFrame(
           child: Form(
-            key: formKey,
+            key: model.formKey,
             child: SingleChildScrollView(
               child: Padding(
                 padding: context.padSym(h: 20),

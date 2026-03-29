@@ -4,14 +4,15 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Providers/route_providers.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Auth/Signup/sign_up_screen..dart';
-import 'package:sport_finding/feature/view/Auth/SigIn/sign_in_screen.dart';
+import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
+import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/Home/components/create_match_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/user_match_details_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
@@ -41,21 +42,19 @@ class Routes {
             const OnBoardingScreen(),
           ),
         );
-      case RoutesName.signUpScreen:
+      case RoutesName.LoginScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.signUpScreen,
-            const SignUpScreen(),
+            RoutesName.LoginScreen,
+            const LoginScreen(),
           ),
         );
-      case RoutesName.signInScreen:
+      case RoutesName.SignUp:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.signInScreen,
-            const SignInScreen(),
-          ),
+          builder: (_) =>
+              RouteProviders.wrapIfNeeded(RoutesName.SignUp, const SignUp()),
         );
       case RoutesName.skillLevelScreen:
         return MaterialPageRoute(
@@ -141,6 +140,14 @@ class Routes {
           builder: (_) => RouteProviders.wrapIfNeeded(
             RoutesName.createMatchScreen,
             CreateMatchScreen(),
+          ),
+        );
+      case RoutesName.matchCreatedDoneScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.matchCreatedDoneScreen,
+            const MatchCreatedDoneScreen(),
           ),
         );
       case RoutesName.allMemeberScreen:

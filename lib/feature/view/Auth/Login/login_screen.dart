@@ -5,7 +5,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Auth/Signup/SignUpViewModel/sign_up_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -14,17 +14,17 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/social_button_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<SignUpScreenViewModel>(
+    return Consumer<LoginScreenViewModel>(
       builder: (context, model, child) => Scaffold(
         body: MainFrame(
           child: Form(
@@ -89,7 +89,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   normalText: AppText.alreadyHaveAnAccountSignIn,
                   actionText: AppText.signUp,
                   onTap: () {
-                    Navigator.pushNamed(context, RoutesName.signInScreen);
+                    Navigator.pushNamed(context, RoutesName.SignUp);
                   },
                 ),
               ],

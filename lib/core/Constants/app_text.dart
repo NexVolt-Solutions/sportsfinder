@@ -9,8 +9,7 @@ class AppText {
   static const String verifyYourAccount = 'Verify Your Account';
   static const String enterThe6DigitCodeWeHaveSentToYourEmail =
       'Enter the 6-digit that we have sent to yahoo@gmail.com';
-  static const String didntReceiveTheCodeResend =
-      'Didn’t receive the code? Resend';
+  static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
   static const String skip = 'Skip';
   static const String sportFinding = 'SportFinding';
   static const String uploadYourPicture = 'Upload your picture';
@@ -142,7 +141,7 @@ class AppText {
   static const String date = 'Date';
   static const String inviteFromContacts = 'Invite from Contacts';
   static const String shareInviteLink = 'Share Invite Link';
-  static const String reSend = 'resend';
+  static const String reSend = 'Resend';
   static const String reset = 'Reset';
   static const String apply = 'Apply';
   static const String popularSports = 'Popular Sports';

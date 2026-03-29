@@ -121,12 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   return SizedBox(
                     width: context.w(300),
-                    child: DetailsMatchesCard(
+                    child:                     DetailsMatchesCard(
                       cardOnTap: () {
                         Navigator.pushNamed(
                           context,
-                          RoutesName.hostDetailsScreen,
-                          arguments: match, // ✅ Pass the DiscoveryMatch object
+                          RoutesName.userMatchDetailsScreen,
+                          arguments: match,
                         );
                       },
                       hostName: match.title,

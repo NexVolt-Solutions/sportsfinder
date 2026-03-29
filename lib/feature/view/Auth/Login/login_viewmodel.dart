@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-class SignUpScreenViewModel extends ChangeNotifier {
+class LoginScreenViewModel extends ChangeNotifier {
   final _formKey = GlobalKey<FormState>();
   GlobalKey<FormState> get formKey => _formKey;
 

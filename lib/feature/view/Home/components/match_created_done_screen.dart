@@ -5,6 +5,8 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -21,8 +23,11 @@ class MatchCreatedDoneScreen extends StatefulWidget {
 class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final createdMatch = args is DiscoveryMatch ? args : null;
+
     return Consumer<MatchCreatedDoneScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
+      builder: (context, model, _) => Scaffold(
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
@@ -32,27 +37,31 @@ class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
               left: context.w(20),
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
+              mainAxisSize: MainAxisSize.min,
               children: [
                 SocialButtonWidget(
                   imagePath: AppAssets.invitedPeopleIcon,
                   text: AppText.invitedPlayers,
                   backgroundColor: context.appColors.primary,
-                  // borderColor: Colors.grey.shade300,
                   textColor: context.appColors.onPrimary,
                 ),
-
                 SizedBox(height: context.h(12)),
                 SocialButtonWidget(
                   imagePath: AppAssets.shareIcon,
                   text: AppText.shareMatch,
-                  onTap: () {
-                    print("Google Login");
-                  },
+                  onTap: () {},
                 ),
                 SizedBox(height: context.h(12)),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: createdMatch == null
+                      ? null
+                      : () {
+                          Navigator.pushNamed(
+                            context,
+                            RoutesName.userMatchDetailsScreen,
+                            arguments: createdMatch,
+                          );
+                        },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -88,6 +97,15 @@ class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
                 subAlign: TextAlign.center,
                 subText: AppText.yourMatchIsLiveShareItWithFriends,
               ),
+              if (createdMatch != null) ...[
+                SizedBox(height: context.h(16)),
+                NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  titleText: createdMatch.title,
+                  subAlign: TextAlign.center,
+                  subText: createdMatch.sportType,
+                ),
+              ],
             ],
           ),
         ),

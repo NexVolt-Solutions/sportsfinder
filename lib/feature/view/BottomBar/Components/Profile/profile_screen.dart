@@ -11,6 +11,7 @@ import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_seeting_card.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/profile_my_sport_card_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 class ProfileScreen extends StatefulWidget {

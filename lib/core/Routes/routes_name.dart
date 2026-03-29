@@ -3,8 +3,8 @@
 class RoutesName {
   static const String splashScreen = 'splash_screen';
   static const String onboardingScreen = 'on_boarding_screen';
-  static const String signUpScreen = 'sign_up_screen';
-  static const String signInScreen = 'sigin_screen';
+  static const String LoginScreen = 'login_screen';
+  static const String SignUp = 'sign_up';
   static const String skillLevelScreen = 'skill_level_screen';
   static const String chooseSportScreen = 'choose_sport_screen';
   static const String locationAccessScreen = 'location_access_screen';

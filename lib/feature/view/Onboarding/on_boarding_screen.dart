@@ -31,50 +31,42 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: model.isFirstPage
-                            ? const SizedBox.shrink()
-                            : Semantics(
-                                label: 'Go back',
-                                button: true,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: model.onBackTapped,
-                                    borderRadius: BorderRadius.circular(24),
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                        AppAssets.backIcon,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                      SizedBox(
-                        width: 56,
-                        height: 48,
-                        child: model.isFirstPage || model.isLastPage
-                            ? const SizedBox.shrink()
-                            : Semantics(
-                                label: AppText.skip,
-                                button: true,
+                      model.isFirstPage
+                          ? const SizedBox.shrink()
+                          : Semantics(
+                              label: 'Go back',
+                              button: true,
+                              child: Material(
+                                color: Colors.transparent,
                                 child: InkWell(
-                                  onTap: () => model.onSkipTapped(context),
-                                  borderRadius: BorderRadius.circular(8),
+                                  onTap: model.onBackTapped,
+                                  borderRadius: BorderRadius.circular(24),
                                   child: Center(
-                                    child: NormalText(
-                                      titleText: AppText.skip,
-                                      titleStyle: context.appText.text16W500,
-                                      titleColor: context.appColors.greyDark,
+                                    child: SvgPicture.asset(
+                                      AppAssets.backIcon,
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
                                 ),
                               ),
-                      ),
+                            ),
+                      model.isFirstPage || model.isLastPage
+                          ? const SizedBox.shrink()
+                          : Semantics(
+                              label: AppText.skip,
+                              button: true,
+                              child: InkWell(
+                                onTap: () => model.onSkipTapped(context),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Center(
+                                  child: NormalText(
+                                    titleText: AppText.skip,
+                                    titleStyle: context.appText.text16W500,
+                                    titleColor: context.appColors.greyDark,
+                                  ),
+                                ),
+                              ),
+                            ),
                     ],
                   ),
                 ),

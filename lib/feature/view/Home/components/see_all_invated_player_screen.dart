@@ -57,11 +57,9 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                     itemCount: match.players.length,
                     itemBuilder: (context, index) {
                       return PersonInvitedCard(
-                        cardOnTap: () {
-                          print("Clicked Match ID: ${match.id}");
-                        },
-                        playerName: match.title,
-                        matchLevel: AppText.advanced,
+                        cardOnTap: () {},
+                        playerName: match.players[index],
+                        matchLevel: match.playerSkillAt(index),
                         matchName: match.sportType,
                         destance: "${match.distanceKm} km",
                         ontap: () {

@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
 import 'package:sport_finding/feature/widget/discovery_card.dart';
 import 'package:sport_finding/feature/widget/discovery_search_field.dart';
@@ -145,12 +146,18 @@ class _MatchesList extends StatelessWidget {
         final match = matches[index];
         return DiscoveryCard(
           match: match,
+          onCardTap: () {
+            Navigator.pushNamed(
+              context,
+              RoutesName.userMatchDetailsScreen,
+              arguments: match,
+            );
+          },
           onSeeAllTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${AppText.discover}: ${match.title}'),
-                behavior: SnackBarBehavior.floating,
-              ),
+            Navigator.pushNamed(
+              context,
+              RoutesName.seeAllInvatedPlayerScreen,
+              arguments: match,
             );
           },
         );

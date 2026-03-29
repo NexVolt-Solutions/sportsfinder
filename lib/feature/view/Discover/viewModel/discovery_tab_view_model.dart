@@ -14,9 +14,7 @@ class SportFilterChip {
 }
 
 class DiscoveryTabViewModel extends ChangeNotifier {
-  DiscoveryTabViewModel() {
-    _loadMatches();
-  }
+  DiscoveryTabViewModel();
 
   final TextEditingController searchController = TextEditingController();
   final List<SportFilterChip> filterChips = const [
@@ -27,7 +25,8 @@ class DiscoveryTabViewModel extends ChangeNotifier {
     SportFilterChip(label: AppText.volleyball, sportKey: AppText.volleyball),
   ];
 
-  final List<DiscoveryMatch> _allMatches = [];
+  final List<DiscoveryMatch> _allMatches =
+      List<DiscoveryMatch>.from(DiscoveryMatchData.allMatches);
   int _selectedFilterIndex = 0;
 
   List<DiscoveryMatch> get filteredMatches {
@@ -62,10 +61,6 @@ class DiscoveryTabViewModel extends ChangeNotifier {
 
   void onSearchChanged() {
     notifyListeners();
-  }
-
-  void _loadMatches() {
-    List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
   }
 
   @override

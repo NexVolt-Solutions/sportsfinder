@@ -17,9 +17,9 @@ class AuthFooterText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RichText(
-      textAlign: TextAlign.center, // ✅ THIS LINE
+      textAlign: TextAlign.center,
       text: TextSpan(
-        style: context.appText.text14W400.copyWith(
+        style: context.appText.text16W500.copyWith(
           color: context.appColors.onSurface,
         ),
         children: [
@@ -27,7 +27,7 @@ class AuthFooterText extends StatelessWidget {
           if (actionText != null)
             TextSpan(
               text: actionText,
-              style: context.appText.text16W400.copyWith(
+              style: context.appText.text16Bold.copyWith(
                 color: context.appColors.primary,
               ),
               recognizer: onTap != null

@@ -11,11 +11,11 @@ import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Auth/Signup/SignUpViewModel/sign_up_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboarding_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Auth/SigIn/SignInViewModel/sign_in_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/splash_screen_view_model.dart';
 
@@ -35,14 +35,14 @@ class RouteProviders {
           create: (_) => OnboardingScreenViewModel(),
           child: child,
         );
-      case RoutesName.signUpScreen:
+      case RoutesName.LoginScreen:
         return ChangeNotifierProvider(
-          create: (_) => SignUpScreenViewModel(),
+          create: (_) => LoginScreenViewModel(),
           child: child,
         );
-      case RoutesName.signInScreen:
+      case RoutesName.SignUp:
         return ChangeNotifierProvider(
-          create: (_) => SignInScreenViewModel(),
+          create: (_) => SignUpViewModel(),
           child: child,
         );
       case RoutesName.skillLevelScreen:
