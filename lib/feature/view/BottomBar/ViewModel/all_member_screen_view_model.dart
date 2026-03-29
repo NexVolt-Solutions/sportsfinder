@@ -4,6 +4,11 @@ import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
 
+class FilterOption {
+  final String text;
+  FilterOption({required this.text});
+}
+
 class AllMemberScreenViewModel extends ChangeNotifier {
   List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
   List<DiscoveryMatch> matches = [];
@@ -11,9 +16,14 @@ class AllMemberScreenViewModel extends ChangeNotifier {
   int selectedIndex = 0;
   FilterData? currentFilters;
 
-  get upComingMatchesText => null;
+  List<FilterOption> get upComingMatchesText => [
+    FilterOption(text: 'All'),
+    FilterOption(text: 'Football'),
+    FilterOption(text: 'Volleyball'),
+    FilterOption(text: 'Cricket'),
+  ];
 
-  AllUpcommingMatchesViewModel() {
+  void AllUpcommingMatchesViewModel() {
     matches = List.from(allMatches);
   }
 

@@ -93,7 +93,14 @@ class CardWidget extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [Color(0xFFEDF6FF), Color(0xFFF5FAFF)],
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(context.radiusR(12)),
+          border: Border.all(
+            color: isActive
+                ? (activeBorderColor ?? c.primary)
+                : (borderColor ?? Colors.transparent),
+            width: 1.5,
+          ),
+
           boxShadow: [
             BoxShadow(
               color: context.appColors.onSurface.withOpacity(0.1),
