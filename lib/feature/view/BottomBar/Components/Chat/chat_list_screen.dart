@@ -28,7 +28,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
       child: Consumer<ChatScreenViewModel>(
         builder: (context, model, _) {
           return Scaffold(
-            // 1️⃣ Add the FAB
+            backgroundColor: widget.embedInBottomBar
+                ? Colors.transparent
+                : null,
             floatingActionButton: FloatingActionButton(
               onPressed: () {
                 Navigator.pushNamed(context, RoutesName.allMemeberScreen);
@@ -37,6 +39,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: Icon(Icons.add, color: Colors.white),
             ),
             body: MainFrame(
+              showDecorationLayer: !widget.embedInBottomBar,
               child: ListView(
                 padding: context.padSym(h: 20),
                 children: [

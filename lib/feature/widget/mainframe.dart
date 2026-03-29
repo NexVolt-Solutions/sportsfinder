@@ -4,15 +4,28 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class MainFrame extends StatelessWidget {
+  const MainFrame({super.key, this.child, this.showDecorationLayer = true});
+
   final Widget? child;
 
-  const MainFrame({super.key, this.child});
+  /// When false, only [child] is built — no glow layer or [SafeArea].
+  /// Use inside [BottomBarScreen] tabs so one outer [MainFrame] owns the decoration.
+  final bool showDecorationLayer;
 
   @override
   Widget build(BuildContext context) {
+    final content = child ?? const SizedBox.shrink();
+    if (!showDecorationLayer) {
+      return content;
+    }
+    final canvas = Theme.of(context).scaffoldBackgroundColor;
     return SafeArea(
       child: Stack(
+        fit: StackFit.expand,
         children: [
+          Positioned.fill(
+            child: DecoratedBox(decoration: BoxDecoration(color: canvas)),
+          ),
           // Top-left circle
           Positioned(
             top: 0,
@@ -38,7 +51,7 @@ class MainFrame extends StatelessWidget {
             child: _GlowCircle(context: context),
           ),
 
-          child ?? const SizedBox.shrink(),
+          Positioned.fill(child: content),
         ],
       ),
     );

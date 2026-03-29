@@ -10,7 +10,7 @@ import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
-import 'package:sport_finding/feature/widget/detail_match_card.dart';
+import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 
@@ -23,7 +23,6 @@ class AllUpcomingMatches extends StatefulWidget {
 
   final bool embedAsBottomTab;
 
-  /// Defaults to [AppText.allUpcomingMatches].
   final String? listTitle;
 
   @override
@@ -86,7 +85,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                     return CardWidget(
                       padding: context.padSym(h: 22, v: 7),
                       isActive: model.selectedIndex == index,
-                      activeBorderColor: context.appColors.primary,
+                      // activeBorderColor: context.appColors.primary,
                       onTap: () {
                         model.filterMatches(index);
                       },
@@ -124,21 +123,10 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         padding: context.padSym(h: 0),
                         itemBuilder: (context, index) {
                           final match = model.matches[index];
-                          return DetailsMatchesCard(
-                            isHostedByCurrentUser: match.isHostedByCurrentUser,
-                            showHostingBadge:
-                                model.listScope ==
-                                UpcomingMatchesScope.allUpcoming,
-                            navigationMatch: match,
-                            hostName: match.title,
-                            matchName: match.sportType,
-                            loc: match.location,
-                            time: match.date,
-                            takenPlayer: match.participantsJoined,
-                            totalPlayer: match.participantsTotal,
-                            isActive: true,
-                            distance: match.distanceKm,
-                            matchOnTap: () {
+                          // Shared match row: GlobalMatchCard (same as Home / Discover).
+                          return GlobalMatchCard.fromDiscovery(
+                            match,
+                            onSeeAllTap: () {
                               Navigator.pushNamed(
                                 context,
                                 RoutesName.seeAllInvatedPlayerScreen,

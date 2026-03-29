@@ -22,11 +22,19 @@ class HomeScreenViewModel extends ChangeNotifier {
     Sport(imagePath: AppAssets.batIcon, title: AppText.cricket),
   ];
 
-  List<DiscoveryMatch> matches = DiscoveryMatchData.allMatches
-      .where(
-        (m) =>
-            !m.involvesCurrentUser &&
-            m.isUpcomingRelativeTo(DateTime.now()),
-      )
-      .toList();
+  /// Future matches only; **your hosted rows first** so the hosting badge is visible
+  /// on the home carousel without scrolling past many other hosts’ games.
+  late final List<DiscoveryMatch> matches = _loadUpcomingMatches();
+
+  List<DiscoveryMatch> _loadUpcomingMatches() {
+    final now = DateTime.now();
+    final list = DiscoveryMatchData.allMatches
+        .where((m) => m.isUpcomingRelativeTo(now))
+        .toList()
+      ..sort((a, b) {
+        if (a.isHostedByCurrentUser == b.isHostedByCurrentUser) return 0;
+        return a.isHostedByCurrentUser ? -1 : 1;
+      });
+    return list;
+  }
 }

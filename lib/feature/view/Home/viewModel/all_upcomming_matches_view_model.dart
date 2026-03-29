@@ -33,9 +33,16 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     allMatches = switch (scope) {
       UpcomingMatchesScope.myMatches =>
         raw.where((m) => m.isHostedByCurrentUser).toList(),
+      // Future starts only; includes your hosted matches and everyone else's.
       UpcomingMatchesScope.allUpcoming =>
         raw.where((m) => m.isUpcomingRelativeTo(now)).toList(),
     };
+    if (scope == UpcomingMatchesScope.allUpcoming) {
+      allMatches.sort((a, b) {
+        if (a.isHostedByCurrentUser == b.isHostedByCurrentUser) return 0;
+        return a.isHostedByCurrentUser ? -1 : 1;
+      });
+    }
     matches = List.from(allMatches);
   }
 

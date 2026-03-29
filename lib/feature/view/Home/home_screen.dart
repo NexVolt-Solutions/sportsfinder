@@ -9,7 +9,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/detail_match_card.dart';
+import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -121,27 +121,19 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             SizedBox(height: context.h(8)),
+            // Shared match row: GlobalMatchCard (same as Discover / All Upcoming).
             SizedBox(
-              height: context.h(190),
+              height: GlobalMatchCard.listSlotHeight(context),
               child: ListView.separated(
-                scrollDirection: Axis.horizontal, // ✅ horizontal scroll
-                itemCount: model.matches.length, // 4 items
+                scrollDirection: Axis.horizontal,
+                itemCount: model.matches.length,
                 padding: context.padSym(h: 0),
                 itemBuilder: (context, index) {
                   final match = model.matches[index];
 
                   return SizedBox(
                     width: context.w(300),
-                    child: DetailsMatchesCard(
-                      isHostedByCurrentUser: match.isHostedByCurrentUser,
-                      navigationMatch: match,
-                      hostName: match.title,
-                      matchName: match.sportType,
-                      loc: match.location,
-                      time: match.date,
-                      takenPlayer: match.participantsJoined,
-                      totalPlayer: match.participantsTotal,
-                    ),
+                    child: GlobalMatchCard.fromDiscovery(match),
                   );
                 },
                 separatorBuilder: (context, index) =>

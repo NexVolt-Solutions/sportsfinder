@@ -81,6 +81,7 @@ class _DiscoverTabContent extends StatelessWidget {
   }
 }
 
+/// Match rows use [GlobalMatchCard] via [DiscoveryCard] — keep in sync with Home.
 class _MatchesList extends StatelessWidget {
   const _MatchesList({required this.model});
 
@@ -105,6 +106,7 @@ class _MatchesList extends StatelessWidget {
       separatorBuilder: (_, _) => SizedBox(height: context.sh(16)),
       itemBuilder: (context, index) {
         final match = matches[index];
+        // Global match row (same widget as Home / All Upcoming).
         return DiscoveryCard(
           match: match,
           onSeeAllTap: () {

@@ -61,36 +61,29 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
           child: Column(
             children: [
               AppBarWidget(title: AppText.sportFinding),
-              Flexible(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          AppAssets.locationIcon,
-                          fit: BoxFit.scaleDown,
-                        ),
-                        SizedBox(height: context.h(20)),
-                        Padding(
-                          padding: context.padSym(h: 30),
-                          child: NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: AppText.allowLocationAccess,
-                            titleStyle: context.appText.text18W600,
-                            titleColor: context.appColors.onSurface,
-                            subText: AppText.allowLocation,
-                            subStyle: context.appText.text16W400,
-                            subAlign: TextAlign.center,
-                            subColor: context.appColors.greyDark,
-                          ),
-                        ),
-                      ],
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset(
+                    AppAssets.locationIcon,
+                    fit: BoxFit.scaleDown,
+                  ),
+                  SizedBox(height: context.h(20)),
+                  Center(
+                    child: NormalText(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      titleText: AppText.allowLocationAccess,
+                      titleStyle: context.appText.text18W600,
+                      titleColor: context.appColors.onSurface,
+                      subText: AppText
+                          .allowLocationToDiscoverNearbySportsMatchesAndPlayersInYourArea,
+                      subStyle: context.appText.text16W400,
+                      subAlign: TextAlign.center,
+                      maxLines: 2,
+                      subColor: context.appColors.greyDark,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),

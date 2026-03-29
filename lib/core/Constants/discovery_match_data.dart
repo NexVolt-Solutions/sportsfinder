@@ -4,6 +4,7 @@ import 'package:sport_finding/feature/model/discovery_match.dart';
 class DiscoveryMatchData {
   /// Seed ids treated as hosted by [AppUser.current] (demo data).
   static const Set<String> _idsHostedByCurrentUser = {
+    'h0',
     '1',
     '2',
     '11',
@@ -23,6 +24,24 @@ class DiscoveryMatchData {
       .toList();
 
   static final List<DiscoveryMatch> _seedMatches = [
+    // First in lists: you host, upcoming — shows “You’re hosting” in UI.
+    DiscoveryMatch(
+      id: 'h0',
+      title: 'Your pickup game',
+      distanceKm: 0.6,
+      sportType: 'Football',
+      location: 'Riverside Grounds',
+      date: '30/03/2026',
+      time: '7:00 PM',
+      participantsJoined: 4,
+      participantsTotal: 10,
+      players: ['Ali', 'Usman'],
+      hostDisplayName: 'Shehzad Khan',
+      skillLevel: 'Intermediate',
+      matchDescription: 'Casual evening kickabout. All levels welcome.',
+      hostBio: 'Local organiser — join any time.',
+      hostMatchesPlayed: 24,
+    ),
     // Football Matches
     DiscoveryMatch(
       id: '1',
@@ -30,7 +49,7 @@ class DiscoveryMatchData {
       distanceKm: 1.5,
       sportType: 'Football',
       location: 'Central Park Stadium',
-      date: '26/03/2026',
+      date: '05/04/2026',
       time: '4:00 PM',
       participantsJoined: 8,
       participantsTotal: 11,
@@ -50,7 +69,7 @@ class DiscoveryMatchData {
       distanceKm: 2.3,
       sportType: 'Football',
       location: 'Greenfield Arena',
-      date: '27/03/2026',
+      date: '09/04/2026',
       time: '5:30 PM',
       participantsJoined: 6,
       participantsTotal: 10,
@@ -160,7 +179,7 @@ class DiscoveryMatchData {
       distanceKm: 1.2,
       sportType: 'Tennis',
       location: 'Central Tennis Court',
-      date: '26/03/2026',
+      date: '11/04/2026',
       time: '4:00 PM',
       participantsJoined: 2,
       participantsTotal: 4,
@@ -282,7 +301,7 @@ class DiscoveryMatchData {
       distanceKm: 2.0,
       sportType: 'Volleyball',
       location: 'City Sports Center',
-      date: '26/03/2026',
+      date: '14/04/2026',
       time: '5:30 PM',
       participantsJoined: 6,
       participantsTotal: 12,
@@ -402,7 +421,7 @@ class DiscoveryMatchData {
       distanceKm: 1.5,
       sportType: 'Basketball',
       location: 'Downtown Basketball Court',
-      date: '26/03/2026',
+      date: '18/04/2026',
       time: '6:00 PM',
       participantsJoined: 8,
       participantsTotal: 10,

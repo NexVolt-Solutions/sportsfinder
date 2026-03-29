@@ -32,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           return MainFrame(
+            showDecorationLayer: !widget.embedInBottomBar,
             child: ListView(
               padding: context.padSym(h: 20),
               children: [

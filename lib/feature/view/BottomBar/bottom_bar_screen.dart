@@ -48,12 +48,16 @@ class _BottomBarContent extends StatelessWidget {
 
   static const double _barHeight = 64;
   static const double _barBottomPadding = 20;
-  static const double _barRadius = 8;
+  static const double _barRadius = 12;
   static const double _homeButtonSize = 48;
   static const double _navIconSize = 22;
   static const double _barShadowBlur = 12;
   static const double _barShadowOffset = 4;
   static const double _navItemIconLabelGap = 2;
+
+  /// Vertical room for the capsule plus the home control sitting slightly above it.
+  static double _bottomChromeHeight(BuildContext context) =>
+      _barHeight + context.h(20);
 
   static final List<Widget> _tabChildren = <Widget>[
     const _MyMatchesTabSlot(),
@@ -103,6 +107,7 @@ class _BottomBarContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Consumer<BottomBarScreenViewModel>(
         builder: (context, vm, _) => MainFrame(
           child: Column(
@@ -130,101 +135,98 @@ class _BottomBarContent extends StatelessWidget {
                   children: _tabChildren,
                 ),
               ),
+              Padding(
+                padding: EdgeInsets.only(bottom: _barBottomPadding),
+                child: SizedBox(
+                  height: _bottomChromeHeight(context),
+                  width: double.infinity,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Positioned(
+                        left: context.sw(20),
+                        right: context.sw(20),
+                        bottom: 0,
+                        height: _barHeight,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: context.appColors.surface,
+                            borderRadius: BorderRadius.circular(
+                              context.radiusR(_barRadius),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.appColors.blue20,
+                                blurRadius: _barShadowBlur,
+                                offset: const Offset(0, _barShadowOffset),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _navItem(
+                                  context: context,
+                                  iconPath: AppAssets.matchesIcon,
+                                  label: AppText.match,
+                                  index: 0,
+                                  selectedIndex: vm.selectedIndex,
+                                  onTap: () => vm.setSelectedIndex(0),
+                                ),
+                              ),
+                              Expanded(
+                                child: _navItem(
+                                  context: context,
+                                  iconPath: AppAssets.searchBarIcon,
+                                  label: AppText.discover,
+                                  index: 1,
+                                  selectedIndex: vm.selectedIndex,
+                                  onTap: () => vm.setSelectedIndex(1),
+                                ),
+                              ),
+                              SizedBox(width: context.sw(12)),
+                              Expanded(child: SizedBox(width: context.sw(12))),
+                              Expanded(
+                                child: _navItem(
+                                  context: context,
+                                  iconPath: AppAssets.chatIcon,
+                                  label: AppText.chat,
+                                  index: 3,
+                                  selectedIndex: vm.selectedIndex,
+                                  onTap: () => vm.setSelectedIndex(3),
+                                ),
+                              ),
+                              Expanded(
+                                child: _navItem(
+                                  context: context,
+                                  iconPath: AppAssets.profileIcon,
+                                  label: AppText.profile,
+                                  index: 4,
+                                  selectedIndex: vm.selectedIndex,
+                                  onTap: () => vm.setSelectedIndex(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: _barHeight / 2 - _homeButtonSize / 1.1,
+                        child: GestureDetector(
+                          onTap: () => vm.setSelectedIndex(
+                            BottomBarScreenViewModel.homeIndex,
+                          ),
+                          child: SvgPicture.asset(AppAssets.homeIcon),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: Consumer<BottomBarScreenViewModel>(
-        builder: (_, vm, _) {
-          final bottomPadding = MediaQuery.of(context).padding.bottom;
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: bottomPadding + _barBottomPadding,
-              top: _barBottomPadding,
-            ),
-            child: Stack(
-              alignment: Alignment.topCenter,
-              clipBehavior: Clip.none,
-              children: [
-                // Main capsule bar — fixed height for consistent look
-                Container(
-                  height: _barHeight,
-                  padding: context.padSym(v: 8, h: 12),
-                  margin: context.padSym(h: 12),
-                  decoration: BoxDecoration(
-                    color: context.appColors.blue10,
-                    borderRadius: BorderRadius.circular(
-                      context.radiusR(_barRadius),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.appColors.blue10,
-                        blurRadius: _barShadowBlur,
-                        offset: const Offset(0, _barShadowOffset),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _navItem(
-                          context: context,
-                          iconPath: AppAssets.matchesIcon,
-                          label: AppText.match,
-                          index: 0,
-                          selectedIndex: vm.selectedIndex,
-                          onTap: () => vm.setSelectedIndex(0),
-                        ),
-                      ),
-                      Expanded(
-                        child: _navItem(
-                          context: context,
-                          iconPath: AppAssets.searchBarIcon,
-                          label: AppText.discover,
-                          index: 1,
-                          selectedIndex: vm.selectedIndex,
-
-                          onTap: () => vm.setSelectedIndex(1),
-                        ),
-                      ),
-                      SizedBox(width: context.sw(12)),
-                      Expanded(child: SizedBox(width: context.sw(12))),
-                      Expanded(
-                        child: _navItem(
-                          context: context,
-                          iconPath: AppAssets.chatIcon,
-                          label: AppText.chat,
-                          index: 3,
-                          selectedIndex: vm.selectedIndex,
-                          onTap: () => vm.setSelectedIndex(3),
-                        ),
-                      ),
-                      Expanded(
-                        child: _navItem(
-                          context: context,
-                          iconPath: AppAssets.profileIcon,
-                          label: AppText.profile,
-                          index: 4,
-                          selectedIndex: vm.selectedIndex,
-                          onTap: () => vm.setSelectedIndex(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Center Home button (centered, slightly above bar)
-                Positioned(
-                  bottom: _barHeight / 2 - _homeButtonSize / 1.1,
-                  child: GestureDetector(
-                    onTap: () =>
-                        vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
-                    child: SvgPicture.asset(AppAssets.homeIcon),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

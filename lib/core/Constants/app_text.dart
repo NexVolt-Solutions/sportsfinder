@@ -73,6 +73,9 @@ class AppText {
   static const String privacyPolicy = ' Privacy Policy';
   static const String signUp = 'Sign Up';
   static const String allowLocation = 'Allow Location';
+  static const String
+  allowLocationToDiscoverNearbySportsMatchesAndPlayersInYourArea =
+      'Discover nearby sports matches and players in your area..';
   static const String next = 'Next';
   static const String getStarted = 'Get Started';
   static const String continueText = 'Continue';

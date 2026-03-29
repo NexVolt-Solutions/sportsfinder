@@ -37,10 +37,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
     if (match == null) {
       return Scaffold(
         body: Center(
-          child: Text(
-            AppText.noRouteFound,
-            style: context.appText.text16W500,
-          ),
+          child: Text(AppText.noRouteFound, style: context.appText.text16W500),
         ),
       );
     }
@@ -96,10 +93,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                 onLeadingTap: () => Navigator.pop(context),
                 title: AppText.sportFinding,
               ),
-              NormalText(
-                titleText: match.title,
-                subText: match.sportType,
-              ),
+              NormalText(titleText: match.title, subText: match.sportType),
               SizedBox(height: context.h(20)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -183,7 +177,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                 ),
                 SizedBox(height: context.h(16)),
                 CardWidget(
-                  padding: context.padSym(h: 82, v: 26),
                   child: NormalText(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     titleText: '${match.resolvedHostMatchesPlayed}',
@@ -246,8 +239,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
-                    final i =
-                        (index + 1) % match.players.length;
+                    final i = (index + 1) % match.players.length;
                     return PersonInvitedCard(
                       playerName: match.players[i],
                       matchName: match.sportType,
@@ -271,7 +263,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   itemBuilder: (context, index) {
                     final i =
                         (match.players.length - 1 - index) %
-                            match.players.length;
+                        match.players.length;
                     return PersonInvitedCard(
                       playerName: match.players[i],
                       matchName: match.sportType,
