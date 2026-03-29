@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/detail_match_card.dart';
@@ -81,6 +82,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: CardWidget(
                     padding: context.padSym(h: 26, v: 18),
+                    onTap: () {
+                      context
+                          .read<BottomBarScreenViewModel>()
+                          .setSelectedIndex(1);
+                    },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

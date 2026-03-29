@@ -123,7 +123,7 @@ class Routes {
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
             RoutesName.userMatchDetailsScreen,
-            UserMatchDetailsScreen(),
+            const UserMatchDetailsScreen(),
           ),
         );
       case RoutesName.hostDetailsScreen:

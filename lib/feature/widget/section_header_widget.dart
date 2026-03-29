@@ -28,8 +28,6 @@ class SectionHeaderWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           titleText: title,
           maxLines: 2,
-          titleStyle: context.appText.text16W600,
-          titleColor: context.appColors.onPrimary,
         ),
 
         if (actionText != null)

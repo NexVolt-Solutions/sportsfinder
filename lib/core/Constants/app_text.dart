@@ -349,7 +349,7 @@ class AppText {
   static const String matchDurationHit = '--:----';
   static const String matchDurationValidation = 'required match duration';
   static const String sportTypeHit = 'cricket';
-  static const String sportTypeValidation = 'required match duration';
+  static const String sportTypeValidation = 'Sport type required';
   static const String maximumHit = 'e.g.10';
   static const String maximumValidation = 'required match duration';
 

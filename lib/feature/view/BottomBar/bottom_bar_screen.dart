@@ -8,6 +8,8 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -34,10 +36,12 @@ class _BottomBarContent extends StatelessWidget {
   static const double _navItemIconLabelGap = 2;
 
   Widget _body(BuildContext context, int selectedIndex) {
-    final style = context.appText.text16W500;
     switch (selectedIndex) {
       case 0:
-        return Center(child: Text('my Matches', style: style));
+        return ChangeNotifierProvider(
+          create: (_) => AllUpcommingMatchesViewModel(),
+          child: const AllUpcomingMatches(embedAsBottomTab: true),
+        );
       case 1:
         return const DiscoverTabScreen();
       case 2:

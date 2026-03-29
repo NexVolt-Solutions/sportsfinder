@@ -6,7 +6,6 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/user_match_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
@@ -81,10 +80,7 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.userMatchDetailsScreen:
-        return ChangeNotifierProvider(
-          create: (_) => UserMatchDetailScreenViewModel(),
-          child: child,
-        );
+        return child;
 
       case RoutesName.hostDetailsScreen:
         return ChangeNotifierProvider(

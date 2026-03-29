@@ -12,6 +12,7 @@ import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/drop_down_from_field_widget.dart';
 import 'package:sport_finding/feature/widget/search_drop_down_field_widget.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
@@ -110,6 +111,34 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       hintText: AppText.descriptionHit,
                       controller: model.descriptionController,
                       maxLines: 5,
+                    ),
+                    SizedBox(height: context.h(16)),
+                    DropdownFormFieldWidget(
+                      label: AppText.sportType,
+                      hintText: AppText.chooseYourSports,
+                      items: model.sportTypes,
+                      value: model.selectedSportType,
+                      onChanged: model.setSportType,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return AppText.sportTypeValidation;
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: context.h(16)),
+                    DropdownFormFieldWidget(
+                      label: AppText.skillLevel,
+                      hintText: AppText.skillLevelHint,
+                      items: model.skillLevels,
+                      value: model.selectedSkillLevel,
+                      onChanged: model.setSkillLevel,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return AppText.skillLevelValidation;
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: context.h(16)),
                     SectionHeaderWidget(title: AppText.schedule),

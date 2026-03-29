@@ -157,6 +157,8 @@ import 'package:sport_finding/feature/model/discovery_match.dart';
 
 class CreateMatchScreenViewModel extends ChangeNotifier {
   CreateMatchScreenViewModel() {
+    selectedSportType = sportTypes.first;
+    selectedSkillLevel = skillLevels[1];
     matchDurationController.text = '$_duration minutes';
     maxPlayersController.text = _maxPlayers.toString();
   }
@@ -260,6 +262,7 @@ class CreateMatchScreenViewModel extends ChangeNotifier {
   /// Returns false if required fields are missing (shows a snackbar from the UI).
   bool validateForCreate() {
     if (!(formKey.currentState?.validate() ?? false)) return false;
+    if (selectedSportType == null || selectedSkillLevel == null) return false;
     if (dateController.text.trim().isEmpty) return false;
     if (timeController.text.trim().isEmpty) return false;
     if (locationController.text.trim().isEmpty) return false;

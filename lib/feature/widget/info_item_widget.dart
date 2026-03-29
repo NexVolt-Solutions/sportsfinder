@@ -27,12 +27,7 @@ class InfoItem extends StatelessWidget {
           child: AppSvgIcon(icon: icon, color: context.appColors.primary),
         ),
         SizedBox(width: context.w(8)),
-        NormalText(
-          titleText: title,
-          titleColor: context.appColors.greylight,
-          subText: value,
-          subColor: context.appColors.onSurface,
-        ),
+        NormalText(titleText: title, subText: value),
       ],
     );
   }

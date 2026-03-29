@@ -84,14 +84,18 @@ class UserGreetingWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               NormalText(titleText: title),
-              NormalText(subText: name),
+              NormalText(
+                subText: name,
+                maxLines: 2,
+                subStyle: context.appText.text14W500,
+              ),
 
               // ✅ Conditional show here
               if (isShow && title2 != null && title2!.isNotEmpty)
                 NormalText(
                   titleText: title2!,
-                  titleColor: context.appColors.greylight,
-                  subFontSize: 12,
+                  maxLines: 2,
+                  titleStyle: context.appText.text12W400,
                 ),
             ],
           ),
