@@ -35,7 +35,7 @@ class CustomSettingCard extends StatelessWidget {
       trailingWidget = Switch(
         value: switchValue ?? false,
         onChanged: onSwitchChanged,
-        activeColor: context.appColors.primary,
+        activeThumbColor: context.appColors.primary,
       );
     }
 
@@ -67,7 +67,7 @@ class CustomSettingCard extends StatelessWidget {
           ),
 
           /// 🔹 RIGHT SIDE (Optional)
-          if (trailingWidget != null) trailingWidget,
+          ?trailingWidget,
         ],
       ),
     );

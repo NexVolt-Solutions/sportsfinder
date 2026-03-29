@@ -5,6 +5,7 @@ import 'package:sport_finding/feature/model/my_sport.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 
 class ProfileScreenViewModel extends ChangeNotifier {
+  int selectedSportIndex = -1;
   List<Map<String, dynamic>> profileData = [
     {
       'leading': AppAssets.eyeIcon,
