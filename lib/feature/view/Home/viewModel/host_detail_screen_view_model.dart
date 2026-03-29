@@ -6,7 +6,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   int selectedIndex = 0;
   final List<String> buttonName = [
     AppText.overview,
-    AppText.invitePlayers,
+    AppText.players,
     AppText.location,
   ];
 
@@ -31,7 +31,11 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       match.players.length,
       (i) => match.playerSkillAt(i),
     );
-    notifyListeners();
+    // Do not call [notifyListeners] here: [bindMatch] runs from
+    // [didChangeDependencies] while the [ChangeNotifierProvider] subtree may
+    // still be mounting; notifying during that phase triggers `!_dirty` asserts.
+    // Roster is assigned synchronously before the first [build], so [Consumer]
+    // already sees the correct data.
   }
 
   void changeIndex(int index) {

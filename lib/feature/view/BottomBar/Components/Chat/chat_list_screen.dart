@@ -57,7 +57,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                   NormalText(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: AppText.invitePlayers,
+                    titleText: AppText.players,
                     subAlign: TextAlign.center,
                     subText: AppText.discoverNearbyPeopleInYourArea,
                   ),

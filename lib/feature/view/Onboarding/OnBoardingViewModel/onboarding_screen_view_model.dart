@@ -18,7 +18,7 @@ class OnboardingScreenViewModel extends ChangeNotifier {
     OnboardingModel(
       image: AppAssets.secondImage,
       title: AppText.connectWithPlayers,
-      subTitle: AppText.joinGamesOrInvitePlayersToMatches,
+      subTitle: AppText.joinGamesOrplayersToMatches,
     ),
     OnboardingModel(
       image: AppAssets.thirdImage,

@@ -60,7 +60,7 @@ class AppText {
       'Discover nearby sports matches and players in your area.';
   static const String discoverPlayersAndSportsMatchesHappeningInYourArea =
       'Discover players and sports matches happening in your area.';
-  static const String joinGamesOrInvitePlayersToMatches =
+  static const String joinGamesOrplayersToMatches =
       'Join games or invite players to matches.';
   static const String competeWithPlayersOfYourSkillLevelAndEnjoySports =
       'Compete with players of your skill level and enjoy sports.';
@@ -116,7 +116,6 @@ class AppText {
   static const String skillLevel = 'Skill Level';
   static const String players = 'Players';
   static const String overview = 'Overview';
-  static const String invitePlayers = 'Invite People';
   static const String location = 'Location';
   static const String centralPark = 'Central Park';
   static const String centralParkIslamabad = 'Central Park Islamabad';
