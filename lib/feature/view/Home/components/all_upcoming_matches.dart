@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
@@ -14,9 +15,16 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 
 class AllUpcomingMatches extends StatefulWidget {
-  const AllUpcomingMatches({super.key, this.embedAsBottomTab = false});
+  const AllUpcomingMatches({
+    super.key,
+    this.embedAsBottomTab = false,
+    this.listTitle,
+  });
 
   final bool embedAsBottomTab;
+
+  /// Defaults to [AppText.allUpcomingMatches].
+  final String? listTitle;
 
   @override
   State<AllUpcomingMatches> createState() => _AllUpcomingMatchesState();
@@ -32,19 +40,17 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppBarWidget(
-                leading: NormalText(
-                  titleText: AppText.sportFinding,
-                  titleFontSize: 18,
+              if (!widget.embedAsBottomTab)
+                AppBarWidget(
+                  leading: NormalText(
+                    titleText: AppText.sportFinding,
+                    titleFontSize: 18,
+                  ),
+                  onTapLast: () {},
                 ),
-                onTapLast: () {},
-              ),
               NormalText(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                maxLines: 2,
-                titleText: AppText.allUpcomingMatches,
-                titleStyle: context.appText.text18W600,
-                titleColor: context.appColors.onSurface,
+                titleText: widget.listTitle ?? AppText.allUpcomingMatches,
               ),
               SizedBox(height: context.h(16)),
               SearchBarWidget(
@@ -98,46 +104,59 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                 ),
               ),
               Expanded(
-                child: ListView.separated(
-                  itemCount: model.matches.length,
-                  padding: context.padSym(h: 0),
-                  itemBuilder: (context, index) {
-                    final match = model.matches[index];
-                    return DetailsMatchesCard(
-                      cardOnTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.userMatchDetailsScreen,
-                          arguments: match,
-                        );
-                      },
-                      hostName: match.title,
-                      matchName: match.sportType,
-                      loc: match.location,
-                      time: match.date,
-                      takenPlayer: match.participantsJoined,
-                      totalPlayer: match.participantsTotal,
-                      isActive: true,
-                      distance: match.distanceKm,
-                      matchOnTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.seeAllInvatedPlayerScreen,
-                          arguments: match,
-                        );
-                      },
-                    );
-                  },
-                  separatorBuilder: (context, index) =>
-                      SizedBox(height: context.h(12)),
-                ),
+                child: model.matches.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: context.padSym(h: 16),
+                          child: Text(
+                            model.listScope == UpcomingMatchesScope.myMatches
+                                ? AppText.noHostedMatchesYet
+                                : AppText.noMatchesFound,
+                            textAlign: TextAlign.center,
+                            style: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: model.matches.length,
+                        padding: context.padSym(h: 0),
+                        itemBuilder: (context, index) {
+                          final match = model.matches[index];
+                          return DetailsMatchesCard(
+                            isHostedByCurrentUser: match.isHostedByCurrentUser,
+                            showHostingBadge:
+                                model.listScope ==
+                                UpcomingMatchesScope.allUpcoming,
+                            navigationMatch: match,
+                            hostName: match.title,
+                            matchName: match.sportType,
+                            loc: match.location,
+                            time: match.date,
+                            takenPlayer: match.participantsJoined,
+                            totalPlayer: match.participantsTotal,
+                            isActive: true,
+                            distance: match.distanceKm,
+                            matchOnTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                RoutesName.seeAllInvatedPlayerScreen,
+                                arguments: match,
+                              );
+                            },
+                          );
+                        },
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: context.h(12)),
+                      ),
               ),
             ],
           ),
         );
 
         if (widget.embedAsBottomTab) {
-          return content;
+          return SizedBox.expand(child: content);
         }
         return Scaffold(body: MainFrame(child: content));
       },

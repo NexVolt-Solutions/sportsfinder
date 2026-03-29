@@ -3,6 +3,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/model/up_coming.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
@@ -14,13 +15,27 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     UpComing(text: AppText.volleyball),
   ];
 
-  List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
+  final UpcomingMatchesScope scope;
+
+  UpcomingMatchesScope get listScope => scope;
+
+  List<DiscoveryMatch> allMatches = [];
   List<DiscoveryMatch> matches = [];
 
   int selectedIndex = 0;
   FilterData? currentFilters;
 
-  AllUpcommingMatchesViewModel() {
+  AllUpcommingMatchesViewModel({
+    this.scope = UpcomingMatchesScope.allUpcoming,
+  }) {
+    final raw = DiscoveryMatchData.allMatches;
+    final now = DateTime.now();
+    allMatches = switch (scope) {
+      UpcomingMatchesScope.myMatches =>
+        raw.where((m) => m.isHostedByCurrentUser).toList(),
+      UpcomingMatchesScope.allUpcoming =>
+        raw.where((m) => m.isUpcomingRelativeTo(now)).toList(),
+    };
     matches = List.from(allMatches);
   }
 
@@ -50,7 +65,8 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     if (query.isEmpty) {
       filterMatches(selectedIndex);
     } else {
-      matches = allMatches
+      final base = _baseListForFilters();
+      matches = base
           .where(
             (match) =>
                 match.title.toLowerCase().contains(query.toLowerCase()) ||
@@ -60,6 +76,18 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
           .toList();
       notifyListeners();
     }
+  }
+
+  List<DiscoveryMatch> _baseListForFilters() {
+    if (selectedIndex == 0) {
+      return List.from(allMatches);
+    }
+    final filterType = upComingMatchesText[selectedIndex].text;
+    return allMatches
+        .where(
+          (match) => match.sportType.toLowerCase() == filterType.toLowerCase(),
+        )
+        .toList();
   }
 
   void applyFilters(FilterData filterData) {

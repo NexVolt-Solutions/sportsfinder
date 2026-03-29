@@ -5,14 +5,18 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
-import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
+import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class BottomBarScreen extends StatelessWidget {
   const BottomBarScreen({super.key});
@@ -20,6 +24,22 @@ class BottomBarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const _BottomBarContent();
+  }
+}
+
+class _MyMatchesTabSlot extends StatelessWidget {
+  const _MyMatchesTabSlot();
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) =>
+          AllUpcommingMatchesViewModel(scope: UpcomingMatchesScope.myMatches),
+      child: const AllUpcomingMatches(
+        embedAsBottomTab: true,
+        listTitle: AppText.myMatches,
+      ),
+    );
   }
 }
 
@@ -35,25 +55,13 @@ class _BottomBarContent extends StatelessWidget {
   static const double _barShadowOffset = 4;
   static const double _navItemIconLabelGap = 2;
 
-  Widget _body(BuildContext context, int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return ChangeNotifierProvider(
-          create: (_) => AllUpcommingMatchesViewModel(),
-          child: const AllUpcomingMatches(embedAsBottomTab: true),
-        );
-      case 1:
-        return const DiscoverTabScreen();
-      case 2:
-        return HomeScreen();
-      case 3:
-        return ChatListScreen();
-      case 4:
-        return ProfileScreen();
-      default:
-        return HomeScreen();
-    }
-  }
+  static final List<Widget> _tabChildren = <Widget>[
+    const _MyMatchesTabSlot(),
+    const DiscoverTabScreen(embedInBottomBar: true),
+    const HomeScreen(showAppBar: false),
+    const ChatListScreen(embedInBottomBar: true),
+    const ProfileScreen(embedInBottomBar: true),
+  ];
 
   Widget _navItem({
     required BuildContext context,
@@ -96,8 +104,35 @@ class _BottomBarContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<BottomBarScreenViewModel>(
-        builder: (_, vm, _) =>
-            MainFrame(child: _body(context, vm.selectedIndex)),
+        builder: (context, vm, _) => MainFrame(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: context.padSym(h: 20),
+                child: AppBarWidget(
+                  leading: NormalText(
+                    titleText: AppText.sportFinding,
+                    titleFontSize: 18,
+                  ),
+                  onTrailingTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.notificationsScreen,
+                    );
+                  },
+                ),
+              ),
+              Expanded(
+                child: IndexedStack(
+                  index: vm.selectedIndex.clamp(0, _tabChildren.length - 1),
+                  sizing: StackFit.expand,
+                  children: _tabChildren,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       bottomNavigationBar: Consumer<BottomBarScreenViewModel>(
         builder: (_, vm, _) {

@@ -1,7 +1,28 @@
+import 'package:sport_finding/feature/model/app_user.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 
 class DiscoveryMatchData {
-  static List<DiscoveryMatch> allMatches = [
+  /// Seed ids treated as hosted by [AppUser.current] (demo data).
+  static const Set<String> _idsHostedByCurrentUser = {
+    '1',
+    '2',
+    '11',
+    '21',
+    '31',
+    'p2',
+  };
+
+  static List<DiscoveryMatch> get allMatches => _seedMatches
+      .map(
+        (m) => m.copyWith(
+          hostUserId: _idsHostedByCurrentUser.contains(m.id)
+              ? AppUser.current.id
+              : 'host_external_${m.id}',
+        ),
+      )
+      .toList();
+
+  static final List<DiscoveryMatch> _seedMatches = [
     // Football Matches
     DiscoveryMatch(
       id: '1',
@@ -45,7 +66,7 @@ class DiscoveryMatchData {
       time: '6:00 PM',
       participantsJoined: 9,
       participantsTotal: 12,
-      players: ["Ali", "Usman", "Ahmad"],
+      players: ["Ali", "Usman", "Ahmad", "Shehzad Khan"],
     ),
     DiscoveryMatch(
       id: '4',
@@ -494,6 +515,31 @@ class DiscoveryMatchData {
       participantsJoined: 10,
       participantsTotal: 10,
       players: ["Ali", "Usman", "Ahmad"],
+    ),
+    // Past dates — hidden from "All Upcoming"; "p2" still appears under My Matches (you host).
+    DiscoveryMatch(
+      id: 'p1',
+      title: 'Early March Friendly',
+      distanceKm: 2.0,
+      sportType: 'Football',
+      location: 'Old Town Pitch',
+      date: '08/03/2026',
+      time: '11:00 AM',
+      participantsJoined: 6,
+      participantsTotal: 10,
+      players: ['Ali', 'Usman'],
+    ),
+    DiscoveryMatch(
+      id: 'p2',
+      title: 'Your Tuesday League (past)',
+      distanceKm: 1.0,
+      sportType: 'Football',
+      location: 'Main Ground',
+      date: '11/03/2026',
+      time: '2:00 PM',
+      participantsJoined: 10,
+      participantsTotal: 10,
+      players: ['Ali', 'Usman', 'Ahmad'],
     ),
   ];
 }

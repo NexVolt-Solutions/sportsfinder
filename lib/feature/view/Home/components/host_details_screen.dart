@@ -5,7 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -208,13 +208,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   itemBuilder: (context, index) {
                     return UserMatchCard(
                       onActionTap: () {},
-                      onCardTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.userMatchDetailsScreen,
-                          arguments: match,
-                        );
-                      },
+                      onCardTap: () =>
+                          match.pushUserMatchDetailsScreen(context),
                       title: match.players[index],
                       subTitle: match.playerSkillAt(index),
                       showActionIcon: true,
@@ -238,13 +233,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       destance: '${match.distanceKm} km',
                       isShow: true,
                       ontap: () {},
-                      cardOnTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.userMatchDetailsScreen,
-                          arguments: match,
-                        );
-                      },
+                      cardOnTap: () =>
+                          match.pushUserMatchDetailsScreen(context),
                     );
                   },
                 ),
@@ -266,13 +256,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           '${(match.distanceKm + index * 0.3).toStringAsFixed(1)} km',
                       isShow: true,
                       ontap: () {},
-                      cardOnTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.userMatchDetailsScreen,
-                          arguments: match,
-                        );
-                      },
+                      cardOnTap: () =>
+                          match.pushUserMatchDetailsScreen(context),
                     );
                   },
                 ),
@@ -295,13 +280,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           '${(match.distanceKm + 0.5 + index * 0.2).toStringAsFixed(1)} km',
                       isShow: true,
                       ontap: () {},
-                      cardOnTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.userMatchDetailsScreen,
-                          arguments: match,
-                        );
-                      },
+                      cardOnTap: () =>
+                          match.pushUserMatchDetailsScreen(context),
                     );
                   },
                 ),

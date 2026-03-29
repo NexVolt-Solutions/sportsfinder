@@ -1,3 +1,5 @@
+import 'package:sport_finding/feature/model/app_user.dart';
+
 /// Model for a single match (home, discover, lists, and detail flows).
 class DiscoveryMatch {
   const DiscoveryMatch({
@@ -11,6 +13,7 @@ class DiscoveryMatch {
     required this.participantsTotal,
     required this.players,
     required this.time,
+    this.hostUserId = '',
     this.hostDisplayName = '',
     this.skillLevel = 'Intermediate',
     this.matchDescription = '',
@@ -30,6 +33,9 @@ class DiscoveryMatch {
   final int participantsTotal;
   final List<String> players;
 
+  /// Host account id (compare with [AppUser.id] for "my match").
+  final String hostUserId;
+
   /// Shown in host-style blocks; falls back to [title] if empty.
   final String hostDisplayName;
   final String skillLevel;
@@ -43,6 +49,62 @@ class DiscoveryMatch {
   final int hostMatchesPlayed;
 
   String get participantsLabel => '$participantsJoined/$participantsTotal';
+
+  bool isHostedBy(AppUser user) =>
+      hostUserId.isNotEmpty && hostUserId == user.id;
+
+  bool get isHostedByCurrentUser => isHostedBy(AppUser.current);
+
+  /// True if the signed-in user is in [players] (by display name) or listed as `'You'`.
+  bool get isJoinedByCurrentUser {
+    final n = AppUser.current.displayName.trim().toLowerCase();
+    if (n.isEmpty) return false;
+    for (final p in players) {
+      final t = p.trim().toLowerCase();
+      if (t == 'you' || t == n) return true;
+    }
+    return false;
+  }
+
+  /// Hosted or joined — used for the **My Matches** tab (any schedule date).
+  bool get involvesCurrentUser =>
+      isHostedByCurrentUser || isJoinedByCurrentUser;
+
+  /// Parsed [date] (`dd/MM/yyyy`) + [time] (`h:mm AM/PM`); null if parsing fails.
+  DateTime? get matchScheduledStart {
+    final dm = _dateSlashPattern.firstMatch(date.trim());
+    if (dm == null) return null;
+    final day = int.tryParse(dm[1]!);
+    final month = int.tryParse(dm[2]!);
+    final year = int.tryParse(dm[3]!);
+    if (day == null || month == null || year == null) return null;
+    final tm = _timeAmPmPattern.firstMatch(time.trim());
+    if (tm == null) {
+      return DateTime(year, month, day);
+    }
+    var hour = int.tryParse(tm[1]!);
+    final minute = int.tryParse(tm[2]!) ?? 0;
+    final ap = tm[3]!.toUpperCase();
+    if (hour == null) return DateTime(year, month, day);
+    if (ap == 'PM' && hour != 12) hour += 12;
+    if (ap == 'AM' && hour == 12) hour = 0;
+    return DateTime(year, month, day, hour, minute);
+  }
+
+  /// **Upcoming** = scheduled start strictly after [now]. Unparseable dates count as upcoming.
+  bool isUpcomingRelativeTo(DateTime now) {
+    final start = matchScheduledStart;
+    if (start == null) return true;
+    return start.isAfter(now);
+  }
+
+  static final RegExp _dateSlashPattern = RegExp(
+    r'^(\d{1,2})/(\d{1,2})/(\d{4})$',
+  );
+  static final RegExp _timeAmPmPattern = RegExp(
+    r'^(\d{1,2}):(\d{2})\s*(AM|PM)$',
+    caseSensitive: false,
+  );
 
   String get displayHostName =>
       hostDisplayName.isNotEmpty ? hostDisplayName : title;
@@ -83,6 +145,7 @@ class DiscoveryMatch {
     int? participantsJoined,
     int? participantsTotal,
     List<String>? players,
+    String? hostUserId,
     String? hostDisplayName,
     String? skillLevel,
     String? matchDescription,
@@ -101,6 +164,7 @@ class DiscoveryMatch {
       participantsJoined: participantsJoined ?? this.participantsJoined,
       participantsTotal: participantsTotal ?? this.participantsTotal,
       players: players ?? this.players,
+      hostUserId: hostUserId ?? this.hostUserId,
       hostDisplayName: hostDisplayName ?? this.hostDisplayName,
       skillLevel: skillLevel ?? this.skillLevel,
       matchDescription: matchDescription ?? this.matchDescription,

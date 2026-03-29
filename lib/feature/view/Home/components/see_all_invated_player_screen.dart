@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -57,18 +57,12 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                     itemCount: match.players.length,
                     itemBuilder: (context, index) {
                       return PersonInvitedCard(
-                        cardOnTap: () {},
+                        cardOnTap: () => match.pushMatchOrHostScreen(context),
                         playerName: match.players[index],
                         matchLevel: match.playerSkillAt(index),
                         matchName: match.sportType,
                         destance: "${match.distanceKm} km",
-                        ontap: () {
-                          Navigator.pushNamed(
-                            context,
-                            RoutesName.userMatchDetailsScreen,
-                            arguments: match,
-                          );
-                        },
+                        ontap: () => match.pushMatchOrHostScreen(context),
                       );
                     },
                   ),

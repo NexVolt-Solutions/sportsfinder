@@ -84,6 +84,13 @@ class AppText {
   static const String today = 'Today';
   static const String heyGoodEvening = 'Hey, Good Evening!';
   static const String allUpcomingMatches = 'All Upcoming Matches';
+  static const String myMatches = 'My Matches';
+  static const String noHostedMatchesYet =
+      'No matches you host yet. Create a match from Home.';
+  static const String noMyMatchesYet =
+      'No matches yet. Join a game or create one from Home.';
+  static const String noMatchesFound = 'No matches found';
+  static const String youAreHosting = "You're hosting";
   static const String allInvitedPlayers = 'All Invited Players';
   static const String finalTournament = 'Final Tournament';
   static const String rimshaInvitedYouToJoinABasketballMatch =

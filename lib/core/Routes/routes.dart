@@ -18,6 +18,7 @@ import 'package:sport_finding/feature/view/Home/components/user_match_details_sc
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
+import 'package:sport_finding/feature/view/Notifications/notifications_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/Otp/otp_verification_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
@@ -163,6 +164,14 @@ class Routes {
           settings: settings,
           builder: (_) =>
               RouteProviders.wrapIfNeeded(RoutesName.chatScreen, ChatScreen()),
+        );
+      case RoutesName.notificationsScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.notificationsScreen,
+            const NotificationsScreen(),
+          ),
         );
 
       default:

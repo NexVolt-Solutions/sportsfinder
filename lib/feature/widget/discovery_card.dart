@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 
 class DiscoveryCard extends StatelessWidget {
@@ -22,7 +23,7 @@ class DiscoveryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
     return GestureDetector(
-      onTap: onCardTap,
+      onTap: onCardTap ?? () => match.pushMatchOrHostScreen(context),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: EdgeInsets.all(context.sw(16)),

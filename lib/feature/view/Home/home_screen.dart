@@ -18,7 +18,10 @@ import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.showAppBar = true});
+
+  /// When false (e.g. inside [BottomBarScreen]), the shell provides [AppBarWidget].
+  final bool showAppBar;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -34,13 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, model, child) => ListView(
           padding: context.padSym(h: 20),
           children: [
-            AppBarWidget(
-              leading: NormalText(
-                titleText: AppText.sportFinding,
-                titleFontSize: 18,
+            if (widget.showAppBar) ...[
+              AppBarWidget(
+                leading: NormalText(
+                  titleText: AppText.sportFinding,
+                  titleFontSize: 18,
+                ),
+                onTapLast: () {},
               ),
-              onTapLast: () {},
-            ),
+            ],
             UserGreetingWidget(
               title: "Hey, Good Evening",
               name: "Shehzad Khan",
@@ -83,9 +88,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: CardWidget(
                     padding: context.padSym(h: 26, v: 18),
                     onTap: () {
-                      context
-                          .read<BottomBarScreenViewModel>()
-                          .setSelectedIndex(1);
+                      context.read<BottomBarScreenViewModel>().setSelectedIndex(
+                        1,
+                      );
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -127,14 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   return SizedBox(
                     width: context.w(300),
-                    child:                     DetailsMatchesCard(
-                      cardOnTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.userMatchDetailsScreen,
-                          arguments: match,
-                        );
-                      },
+                    child: DetailsMatchesCard(
+                      isHostedByCurrentUser: match.isHostedByCurrentUser,
+                      navigationMatch: match,
                       hostName: match.title,
                       matchName: match.sportType,
                       loc: match.location,

@@ -7,6 +7,7 @@ import 'package:sport_finding/feature/view/Home/viewModel/create_match_screen_vi
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
@@ -71,7 +72,9 @@ class RouteProviders {
         );
       case RoutesName.allUpComingMatchesScreen:
         return ChangeNotifierProvider(
-          create: (_) => AllUpcommingMatchesViewModel(),
+          create: (_) => AllUpcommingMatchesViewModel(
+            scope: UpcomingMatchesScope.allUpcoming,
+          ),
           child: child,
         );
       case RoutesName.seeAllInvatedPlayerScreen:
@@ -107,6 +110,8 @@ class RouteProviders {
           create: (_) => ChatScreenViewModel(),
           child: child,
         );
+      case RoutesName.notificationsScreen:
+        return child;
 
       default:
         return child;

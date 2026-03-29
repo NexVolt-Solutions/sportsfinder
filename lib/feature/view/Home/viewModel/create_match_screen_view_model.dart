@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/feature/model/app_user.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 
 // class CreateMatchScreenViewModel extends ChangeNotifier {
@@ -286,6 +287,7 @@ class CreateMatchScreenViewModel extends ChangeNotifier {
 
     return DiscoveryMatch(
       id: 'created_${DateTime.now().millisecondsSinceEpoch}',
+      hostUserId: AppUser.current.id,
       title: title,
       distanceKm: 0,
       sportType: sport,
@@ -298,7 +300,8 @@ class CreateMatchScreenViewModel extends ChangeNotifier {
       hostDisplayName: 'You',
       skillLevel: skill,
       matchDescription: fullDescription,
-      hostBio: 'You created this match. Invite players from the success screen.',
+      hostBio:
+          'You created this match. Invite players from the success screen.',
       playerSkills: const ['Host'],
       hostMatchesPlayed: 1,
     );

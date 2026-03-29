@@ -3,6 +3,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -132,28 +133,30 @@ class UserMatchDetailsScreen extends StatelessWidget {
               isShow: true,
             ),
             SizedBox(height: context.h(16)),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  RoutesName.hostDetailsScreen,
-                  arguments: match,
-                );
-              },
-              child: CardWidget(
-                padding: context.padSym(h: 82, v: 26),
-                child: NormalText(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  titleText: '${match.resolvedHostMatchesPlayed}',
-                  subText: AppText.matchesPlayed,
+            if (match.isHostedByCurrentUser) ...[
+              NormalText(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                titleText: AppText.youAreHosting,
+                titleColor: context.appColors.primary,
+                titleStyle: context.appText.text14W600,
+              ),
+            ] else ...[
+              GestureDetector(
+                onTap: () => match.pushHostDetailsScreen(context),
+                child: CardWidget(
+                  padding: context.padSym(h: 82, v: 26),
+                  child: NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: '${match.resolvedHostMatchesPlayed}',
+                    subText: AppText.matchesPlayed,
+                  ),
                 ),
               ),
-            ),
+            ],
             SizedBox(height: context.h(16)),
             NormalText(
               crossAxisAlignment: CrossAxisAlignment.start,
               titleText: AppText.aboutThisMatch,
-              sizeBoxheight: context.h(8),
               maxLines: 8,
               subText: match.aboutText,
               subAlign: TextAlign.start,

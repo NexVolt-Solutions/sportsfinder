@@ -25,8 +25,15 @@ class DiscoveryTabViewModel extends ChangeNotifier {
     SportFilterChip(label: AppText.volleyball, sportKey: AppText.volleyball),
   ];
 
-  final List<DiscoveryMatch> _allMatches =
-      List<DiscoveryMatch>.from(DiscoveryMatchData.allMatches);
+  final List<DiscoveryMatch> _allMatches = List<DiscoveryMatch>.from(
+    DiscoveryMatchData.allMatches,
+  )
+      .where(
+        (m) =>
+            !m.involvesCurrentUser &&
+            m.isUpcomingRelativeTo(DateTime.now()),
+      )
+      .toList();
   int _selectedFilterIndex = 0;
 
   List<DiscoveryMatch> get filteredMatches {

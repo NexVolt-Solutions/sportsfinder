@@ -20,4 +20,5 @@ class RoutesName {
   static const String matchCreatedDoneScreen = 'match_created_done_screen';
   static const String allMemeberScreen = 'all_member_screen';
   static const String chatScreen = 'chat_screen';
+  static const String notificationsScreen = 'notifications_screen';
 }

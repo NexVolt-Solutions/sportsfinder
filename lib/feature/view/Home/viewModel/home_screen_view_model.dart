@@ -22,5 +22,11 @@ class HomeScreenViewModel extends ChangeNotifier {
     Sport(imagePath: AppAssets.batIcon, title: AppText.cricket),
   ];
 
-  List<DiscoveryMatch> matches = DiscoveryMatchData.allMatches;
+  List<DiscoveryMatch> matches = DiscoveryMatchData.allMatches
+      .where(
+        (m) =>
+            !m.involvesCurrentUser &&
+            m.isUpcomingRelativeTo(DateTime.now()),
+      )
+      .toList();
 }

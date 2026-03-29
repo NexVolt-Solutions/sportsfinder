@@ -11,7 +11,10 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({super.key});
+  const ChatListScreen({super.key, this.embedInBottomBar = false});
+
+  /// When true, [BottomBarScreen] supplies the shared [AppBarWidget].
+  final bool embedInBottomBar;
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -37,11 +40,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: ListView(
                 padding: context.padSym(h: 20),
                 children: [
-                  AppBarWidget(
-                    onTapFirst: () => Navigator.pop(context),
-                    title: AppText.sportFinding,
+                  if (!widget.embedInBottomBar)
+                    AppBarWidget(
+                      onTapFirst: () => Navigator.pop(context),
+                      title: AppText.sportFinding,
+                    ),
+                  SizedBox(
+                    height: context.h(widget.embedInBottomBar ? 120 : 236),
                   ),
-                  SizedBox(height: context.h(236)),
                   SvgPicture.asset(
                     AppAssets.invitedPeopleIcon,
                     fit: BoxFit.scaleDown,

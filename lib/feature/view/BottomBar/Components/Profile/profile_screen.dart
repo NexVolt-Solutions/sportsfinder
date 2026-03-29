@@ -15,7 +15,10 @@ import 'package:sport_finding/feature/widget/profile_my_sport_card_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.embedInBottomBar = false});
+
+  /// When true, [BottomBarScreen] supplies the shared [AppBarWidget].
+  final bool embedInBottomBar;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -32,13 +35,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: ListView(
               padding: context.padSym(h: 20),
               children: [
-                AppBarWidget(
-                  onTapFirst: () => Navigator.pop(context),
-
-                  leading: NormalText(titleText: AppText.sportFinding),
-                  trailing: SvgPicture.asset(AppAssets.notificationIcon),
-                ),
-
+                if (!widget.embedInBottomBar)
+                  AppBarWidget(
+                    onTapFirst: () => Navigator.pop(context),
+                    leading: NormalText(titleText: AppText.sportFinding),
+                    trailing: SvgPicture.asset(AppAssets.notificationIcon),
+                  ),
                 NormalText(titleText: AppText.profile),
                 UserGreetingWidget(
                   title: "Shehzad (Host)",

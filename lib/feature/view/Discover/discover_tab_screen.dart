@@ -7,6 +7,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
+import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/discovery_card.dart';
 import 'package:sport_finding/feature/widget/discovery_search_field.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -14,30 +15,42 @@ import 'package:sport_finding/feature/widget/sport_filter_section.dart';
 
 /// Discover tab content: search, sport filters, and list of discovery match cards.
 class DiscoverTabScreen extends StatelessWidget {
-  const DiscoverTabScreen({super.key});
+  const DiscoverTabScreen({super.key, this.embedInBottomBar = false});
+
+  /// When true, [BottomBarScreen] supplies the shared [AppBarWidget].
+  final bool embedInBottomBar;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => DiscoveryTabViewModel(),
-      child: const _DiscoverTabContent(),
+      child: _DiscoverTabContent(embedInBottomBar: embedInBottomBar),
     );
   }
 }
 
 class _DiscoverTabContent extends StatelessWidget {
-  const _DiscoverTabContent();
+  const _DiscoverTabContent({required this.embedInBottomBar});
+
+  final bool embedInBottomBar;
 
   @override
   Widget build(BuildContext context) {
     return Consumer<DiscoveryTabViewModel>(
       builder: (context, model, _) {
         return Padding(
-          padding: context.padSym(h: 20, v: 16),
+          padding: context.padSym(h: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Header(context: context),
+              if (!embedInBottomBar) ...[
+                AppBarWidget(
+                  onTapFirst: () => Navigator.pop(context),
+                  leading: NormalText(titleText: AppText.sportFinding),
+                  trailing: SvgPicture.asset(AppAssets.notificationIcon),
+                ),
+              ],
+              NormalText(titleText: AppText.discover),
               SizedBox(height: context.sh(20)),
               DiscoverySearchField(
                 controller: model.searchController,
@@ -68,58 +81,6 @@ class _DiscoverTabContent extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.context});
-
-  final BuildContext context;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              NormalText(
-                titleText: AppText.sportFinding,
-                titleStyle: this.context.appText.text14W500,
-                titleColor: this.context.appColors.greyDark,
-              ),
-              SizedBox(height: this.context.sh(4)),
-              NormalText(
-                titleText: AppText.discover,
-                titleStyle: this.context.appText.text18W600,
-                titleColor: this.context.appColors.onSurface,
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(AppText.notification),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
-          child: SvgPicture.asset(
-            AppAssets.notificationIcon,
-            width: context.sw(24),
-            height: context.sw(24),
-            colorFilter: ColorFilter.mode(
-              context.appColors.greyDark,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _MatchesList extends StatelessWidget {
   const _MatchesList({required this.model});
 
@@ -146,13 +107,6 @@ class _MatchesList extends StatelessWidget {
         final match = matches[index];
         return DiscoveryCard(
           match: match,
-          onCardTap: () {
-            Navigator.pushNamed(
-              context,
-              RoutesName.userMatchDetailsScreen,
-              arguments: match,
-            );
-          },
           onSeeAllTap: () {
             Navigator.pushNamed(
               context,
