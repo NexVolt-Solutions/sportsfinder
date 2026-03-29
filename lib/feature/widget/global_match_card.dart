@@ -16,11 +16,11 @@ import 'package:sport_finding/feature/widget/player_count_widget.dart';
 /// Change this widget to update match list appearance app-wide.
 class GlobalMatchCard extends StatelessWidget {
   /// Fixed inner row height (scaled) so hosted / non-hosted cards align everywhere.
-  static double contentHeight(BuildContext context) => context.sh(180);
+  static double contentHeight(BuildContext context) => context.sh(168);
 
   /// CardWidget margin (24) + vertical padding (36) + [contentHeight].
   static double listSlotHeight(BuildContext context) =>
-      contentHeight(context) + 60;
+      contentHeight(context) + 50;
 
   const GlobalMatchCard({
     super.key,
@@ -34,7 +34,6 @@ class GlobalMatchCard extends StatelessWidget {
     this.cardOnTap,
     this.matchOnTap,
     this.navigationMatch,
-    this.isActive = false,
     this.distance,
     this.isHostedByCurrentUser = false,
     this.showHostingBadge = true,
@@ -76,10 +75,9 @@ class GlobalMatchCard extends StatelessWidget {
   final int? playerNumer;
   final int takenPlayer;
   final int totalPlayer;
-  final bool isActive;
   final bool isHostedByCurrentUser;
 
-  /// When false, hosting chip and primary border emphasis are hidden.
+  /// When false, hosting chip is hidden.
   final bool showHostingBadge;
   final VoidCallback? cardOnTap;
   final VoidCallback? matchOnTap;
@@ -123,9 +121,6 @@ class GlobalMatchCard extends StatelessWidget {
           (navigationMatch != null
               ? () => navigationMatch!.pushMatchOrHostScreen(context)
               : null),
-      activeBorderColor: hostingEmphasis ? primary : AppColors.bluecolor,
-      borderColor: hostingEmphasis ? primary.withValues(alpha: 0.45) : null,
-      isActive: isActive || hostingEmphasis,
       padding: context.padSym(h: 16, v: 18),
       child: SizedBox(
         height: innerH,

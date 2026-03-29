@@ -1,4 +1,47 @@
+// import 'package:flutter/material.dart';
+// import 'package:sport_finding/core/Constants/app_theme.dart';
+// import 'package:sport_finding/core/Constants/size_extension.dart';
+
+// class CardWidget extends StatelessWidget {
+//   final Widget? child;
+//   final EdgeInsetsGeometry? padding;
+//   final VoidCallback? onTap;
+//   final Color? borderColor;
+//   final Color? backgroundColor;
+//   final double? borderRadius;
+
+//   const CardWidget({
+//     super.key,
+//     this.child,
+//     this.padding,
+//     this.onTap,
+//     this.borderColor,
+//     this.backgroundColor,
+//     this.borderRadius,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final c = context.appColors;
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         padding: padding ?? context.padSym(h: 12, v: 12),
+//         margin: context.padSym(v: 12),
+//         decoration: BoxDecoration(
+//           color: backgroundColor ?? c.blue10,
+//           borderRadius: BorderRadius.circular(
+//             borderRadius ?? context.radiusR(12),
+//           ),
+//           border: Border.all(color: borderColor ?? c.transparent),
+//         ),
+//         child: child ?? const SizedBox(),
+//       ),
+//     );
+//   }
+// }
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -27,22 +70,51 @@ class CardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return Container(
-      padding: padding ?? context.padSym(h: 12, v: 24),
-      margin: context.padSym(v: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? context.appColors.blue10,
-        borderRadius: BorderRadius.circular(context.radiusR(12)),
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        margin: context.padSym(v: 8),
+        child: Container(
+          padding: padding ?? context.padSym(h: 12, v: 12),
+          // margin: context.padSym(v: 12),
+          // decoration: BoxDecoration(
+          //   color: backgroundColor ?? c.blue10,
+          //   borderRadius: BorderRadius.circular(
+          //     borderRadius ?? context.radiusR(12),
+          //   ),
+          //   border: Border.all(
+          //     color: isActive
+          //         ? (activeBorderColor ?? c.primary)
+          //         : (borderColor ?? Colors.transparent),
+          //     width: 1.5,
+          //   ),
+          // ),
+          decoration: BoxDecoration(
+            // color: context.appColors.blue10,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.blue10, AppColors.blue20],
+            ),
+            borderRadius: BorderRadius.circular(context.radiusR(12)),
 
-        boxShadow: [
-          BoxShadow(
-            color: context.appColors.onSurface.withOpacity(0.1),
-            blurRadius: 2,
-            offset: const Offset(0, 2),
+            border: Border.all(
+              color: isActive
+                  ? (activeBorderColor ?? c.primary)
+                  : (borderColor ?? Colors.transparent),
+              width: 1.5,
+            ),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: context.appColors.onSurface.withOpacity(0.1),
+            //     blurRadius: 2,
+            //     offset: const Offset(0, 2),
+            //   ),
+            // ],
           ),
-        ],
+          child: child ?? const SizedBox(),
+        ),
       ),
-      child: child ?? const SizedBox(),
     );
   }
 }

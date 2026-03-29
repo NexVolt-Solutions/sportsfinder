@@ -39,16 +39,11 @@ class SectionHeaderWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   titleText: actionText!,
                   maxLines: 2,
-                  // titleStyle: context.appText.text16W600,
                   titleColor: context.appColors.primary,
-                  titleFontSize: 14,
                 ),
 
                 SizedBox(width: context.w(10)),
-                SvgPicture.asset(
-                  icon ?? AppAssets.nextIcon,
-                  fit: BoxFit.scaleDown,
-                ),
+                SvgPicture.asset(icon ?? AppAssets.nextIcon),
               ],
             ),
           ),
