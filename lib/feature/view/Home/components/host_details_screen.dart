@@ -208,6 +208,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   sizeBoxheight: context.h(8),
                   maxLines: 8,
                   subText: match.aboutText,
+
                   subAlign: TextAlign.start,
                 ),
                 SizedBox(height: context.h(16)),
