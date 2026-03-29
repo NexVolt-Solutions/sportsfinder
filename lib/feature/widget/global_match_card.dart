@@ -204,7 +204,7 @@ class GlobalMatchCard extends StatelessWidget {
                     ontap: matchOnTap ?? () {},
                     text: AppText.seeAll,
                     color: context.appColors.primary,
-                    textColor: context.appColors.onPrimary,
+                    textColor: AppColors.whitecolor,
                   ),
                 ],
               ),

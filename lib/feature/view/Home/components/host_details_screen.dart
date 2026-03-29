@@ -30,6 +30,15 @@ class HostDetailsScreen extends StatefulWidget {
 
 class _HostDetailsScreenState extends State<HostDetailsScreen> {
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is DiscoveryMatch) {
+      context.read<HostDetailScreenViewModel>().bindMatch(args);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
     final match = args is DiscoveryMatch ? args : null;
@@ -122,7 +131,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   InfoItem(
                     icon: AppAssets.playerIcon,
                     title: AppText.players,
-                    value: match.participantsLabel,
+                    value: '${model.rosterCount}/${match.participantsTotal}',
                   ),
                 ],
               ),
@@ -144,24 +153,33 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   child: Row(
                     children: List.generate(model.buttonName.length, (index) {
                       final isSelected = model.selectedIndex == index;
-                      return GestureDetector(
-                        onTap: () => model.changeIndex(index),
-                        child: isSelected
-                            ? CardWidget(
-                                padding: context.padSym(h: 16, v: 8),
-                                child: NormalText(
-                                  titleText: model.buttonName[index],
-                                  titleColor: context.appColors.primary,
-                                  titleFontSize: 16,
-                                ),
-                              )
-                            : Padding(
-                                padding: context.padSym(h: 16, v: 8),
-                                child: NormalText(
-                                  subText: model.buttonName[index],
-                                  subColor: context.appColors.greylight,
-                                ),
-                              ),
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => model.changeIndex(index),
+                          behavior: HitTestBehavior.opaque,
+                          child: Center(
+                            child: isSelected
+                                ? CardWidget(
+                                    padding: context.padSym(h: 8, v: 8),
+                                    child: NormalText(
+                                      titleText: model.buttonName[index],
+                                      titleColor: context.appColors.primary,
+                                      titleFontSize: 14,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  )
+                                : Padding(
+                                    padding: context.padSym(h: 8, v: 8),
+                                    child: NormalText(
+                                      subText: model.buttonName[index],
+                                      subColor: context.appColors.greylight,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                          ),
+                        ),
                       );
                     }),
                   ),
@@ -194,89 +212,112 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                 ),
                 SizedBox(height: context.h(16)),
                 SectionHeaderWidget(title: AppText.participatedPlayers),
-                ListView.builder(
-                  itemCount: match.players.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return UserMatchCard(
-                      onActionTap: () {},
-                      onCardTap: () =>
-                          match.pushUserMatchDetailsScreen(context),
-                      title: match.players[index],
-                      subTitle: match.playerSkillAt(index),
-                      showActionIcon: true,
-                    );
-                  },
-                ),
+                if (model.rosterCount == 0)
+                  Padding(
+                    padding: context.padSym(v: 12),
+                    child: Text(
+                      AppText.noPlayersOnRoster,
+                      style: context.appText.text14W400.copyWith(
+                        color: context.appColors.greyDark,
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    itemCount: model.rosterCount,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      return UserMatchCard(
+                        onActionTap: () => model.removePlayerAt(index),
+                        onCardTap: () =>
+                            match.pushUserMatchDetailsScreen(context),
+                        title: model.rosterNameAt(index),
+                        subTitle: model.rosterSkillAt(index),
+                        showActionIcon: true,
+                      );
+                    },
+                  ),
                 SizedBox(height: context.h(16)),
               ],
               if (model.selectedIndex == 1) ...[
                 SectionHeaderWidget(title: AppText.participatedPlayers),
                 SizedBox(height: context.h(8)),
-                ListView.builder(
-                  itemCount: match.players.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return PersonInvitedCard(
-                      playerName: match.players[index],
-                      matchName: match.sportType,
-                      matchLevel: match.playerSkillAt(index),
-                      destance: '${match.distanceKm} km',
-                      isShow: true,
-                      ontap: () {},
-                      cardOnTap: () =>
-                          match.pushUserMatchDetailsScreen(context),
-                    );
-                  },
-                ),
-                SizedBox(height: context.h(16)),
-                SectionHeaderWidget(title: AppText.nearbyPlayers),
-                SizedBox(height: context.h(8)),
-                ListView.builder(
-                  itemCount: match.players.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final i = (index + 1) % match.players.length;
-                    return PersonInvitedCard(
-                      playerName: match.players[i],
-                      matchName: match.sportType,
-                      matchLevel: match.playerSkillAt(i),
-                      destance:
-                          '${(match.distanceKm + index * 0.3).toStringAsFixed(1)} km',
-                      isShow: true,
-                      ontap: () {},
-                      cardOnTap: () =>
-                          match.pushUserMatchDetailsScreen(context),
-                    );
-                  },
-                ),
-                SizedBox(height: context.h(16)),
-                SectionHeaderWidget(title: AppText.recommendedPlayers),
-                SizedBox(height: context.h(8)),
-                ListView.builder(
-                  itemCount: match.players.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final i =
-                        (match.players.length - 1 - index) %
-                        match.players.length;
-                    return PersonInvitedCard(
-                      playerName: match.players[i],
-                      matchName: match.sportType,
-                      matchLevel: match.playerSkillAt(i),
-                      destance:
-                          '${(match.distanceKm + 0.5 + index * 0.2).toStringAsFixed(1)} km',
-                      isShow: true,
-                      ontap: () {},
-                      cardOnTap: () =>
-                          match.pushUserMatchDetailsScreen(context),
-                    );
-                  },
-                ),
+                if (model.rosterCount == 0)
+                  Padding(
+                    padding: context.padSym(v: 8),
+                    child: Text(
+                      AppText.noPlayersOnRoster,
+                      style: context.appText.text14W400.copyWith(
+                        color: context.appColors.greyDark,
+                      ),
+                    ),
+                  )
+                else ...[
+                  ListView.builder(
+                    itemCount: model.rosterCount,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      return PersonInvitedCard(
+                        playerName: model.rosterNameAt(index),
+                        matchName: match.sportType,
+                        matchLevel: model.rosterSkillAt(index),
+                        destance: '${match.distanceKm} km',
+                        isShow: true,
+                        ontap: () {},
+                        cardOnTap: () =>
+                            match.pushUserMatchDetailsScreen(context),
+                      );
+                    },
+                  ),
+                  SizedBox(height: context.h(16)),
+                  SectionHeaderWidget(title: AppText.nearbyPlayers),
+                  SizedBox(height: context.h(8)),
+                  ListView.builder(
+                    itemCount: model.rosterCount,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final n = model.rosterCount;
+                      final i = n <= 0 ? 0 : (index + 1) % n;
+                      return PersonInvitedCard(
+                        playerName: model.rosterNameAt(i),
+                        matchName: match.sportType,
+                        matchLevel: model.rosterSkillAt(i),
+                        destance:
+                            '${(match.distanceKm + index * 0.3).toStringAsFixed(1)} km',
+                        isShow: true,
+                        ontap: () {},
+                        cardOnTap: () =>
+                            match.pushUserMatchDetailsScreen(context),
+                      );
+                    },
+                  ),
+                  SizedBox(height: context.h(16)),
+                  SectionHeaderWidget(title: AppText.recommendedPlayers),
+                  SizedBox(height: context.h(8)),
+                  ListView.builder(
+                    itemCount: model.rosterCount,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final n = model.rosterCount;
+                      final i = n <= 0 ? 0 : (n - 1 - index) % n;
+                      return PersonInvitedCard(
+                        playerName: model.rosterNameAt(i),
+                        matchName: match.sportType,
+                        matchLevel: model.rosterSkillAt(i),
+                        destance:
+                            '${(match.distanceKm + 0.5 + index * 0.2).toStringAsFixed(1)} km',
+                        isShow: true,
+                        ontap: () {},
+                        cardOnTap: () =>
+                            match.pushUserMatchDetailsScreen(context),
+                      );
+                    },
+                  ),
+                ],
                 SizedBox(height: context.h(16)),
               ],
               if (model.selectedIndex == 2) ...[

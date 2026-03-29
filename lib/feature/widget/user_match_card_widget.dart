@@ -36,27 +36,33 @@ class UserMatchCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: context.radiusR(22),
-                backgroundColor: context.appColors.greyDark,
-                child: Text(
-                  getInitials(title),
-                  style: TextStyle(
-                    color: context.appColors.white,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: context.radiusR(22),
+                  backgroundColor: context.appColors.greyDark,
+                  child: Text(
+                    getInitials(title),
+                    style: TextStyle(
+                      color: context.appColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: context.w(12)),
-              NormalText(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                titleText: title,
-                subText: subTitle,
-                subAlign: TextAlign.start,
-              ),
-            ],
+                SizedBox(width: context.w(12)),
+                Expanded(
+                  child: NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    titleText: title,
+                    subText: subTitle,
+                    subAlign: TextAlign.start,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
 
           /// ✅ Show/Hide SVG with onTap

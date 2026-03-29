@@ -135,6 +135,7 @@ class AppText {
   static const String thisMatchHasReachedItsMaximumCapacity =
       'This match has reached its maximum capacity. You can get notified if a spot opens up or explore matches.';
   static const String participatedPlayers = 'Participated Players';
+  static const String noPlayersOnRoster = 'No players on the roster.';
   static const String basketballCourtAddress =
       'Basketball Court #3, Central Park, New York';
   static const String nearbyPlayers = 'Nearby Players';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -30,8 +31,10 @@ class MatchCardButton extends StatelessWidget {
           ),
           child: NormalText(
             titleText: text,
-            titleColor: textColor,
-            titleStyle: context.appText.text12W500,
+            titleStyle: context.appText.text12W600.copyWith(
+              height: 1.5,
+              color: textColor,
+            ),
           ),
         ),
       ),

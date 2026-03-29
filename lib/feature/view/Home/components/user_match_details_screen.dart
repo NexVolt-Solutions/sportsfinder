@@ -141,15 +141,12 @@ class UserMatchDetailsScreen extends StatelessWidget {
                 titleStyle: context.appText.text14W600,
               ),
             ] else ...[
-              GestureDetector(
-                onTap: () => match.pushHostDetailsScreen(context),
-                child: CardWidget(
-                  padding: context.padSym(h: 82, v: 26),
-                  child: NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: '${match.resolvedHostMatchesPlayed}',
-                    subText: AppText.matchesPlayed,
-                  ),
+              CardWidget(
+                padding: context.padSym(h: 82, v: 26),
+                child: NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  titleText: '${match.resolvedHostMatchesPlayed}',
+                  subText: AppText.matchesPlayed,
                 ),
               ),
             ],
