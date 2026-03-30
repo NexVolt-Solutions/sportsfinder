@@ -54,6 +54,7 @@ class CardWidget extends StatelessWidget {
   final double? borderRadius;
   final bool isActive; // controlled by parent
   final Color? activeBorderColor;
+  final double elevation;
 
   const CardWidget({
     super.key,
@@ -65,6 +66,7 @@ class CardWidget extends StatelessWidget {
     this.borderRadius,
     this.isActive = false,
     this.activeBorderColor,
+    this.elevation = 1,
   });
 
   @override
@@ -74,6 +76,13 @@ class CardWidget extends StatelessWidget {
       onTap: onTap,
       child: Card(
         margin: context.padSym(v: 8),
+        elevation: elevation,
+        shadowColor: Colors.black.withValues(alpha: 0.12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(
+            borderRadius ?? context.radiusR(12),
+          ),
+        ),
         child: Container(
           padding: padding ?? context.padSym(h: 12, v: 12),
           // margin: context.padSym(v: 12),

@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/model/follow_connection_user.dart';
 import 'package:sport_finding/feature/model/my_sport.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 
 class ProfileScreenViewModel extends ChangeNotifier {
   int selectedSportIndex = -1;
+
+  /// Profile header — swap for API user later.
+  String get profileDisplayName => 'Shehzad (Host)';
+  String get profileLocation => AppText.newYorkUsa;
+  String get profileBio => AppText.passionateAboutSportsAndFitness;
+  bool get showBioOnProfile => true;
+
+  int get followersCount => kDefaultFollowConnectionUsers.length;
+  int get followingCount => kDefaultFollowConnectionUsers.length;
+  int get matchesPlayedCount => 12;
+
+  String get followersCountLabel => '$followersCount';
+  String get followingCountLabel => '$followingCount';
+  String get matchesPlayedLabel => '$matchesPlayedCount';
+
   List<Map<String, dynamic>> profileData = [
     {
       'leading': AppAssets.eyeIcon,
@@ -38,11 +54,12 @@ class ProfileScreenViewModel extends ChangeNotifier {
     {
       'leading': AppAssets.privacyIcon,
       'title': AppText.privacyPolicy,
-      'subtitle': AppText.readOurTermsOfServices,
+      'subtitle': AppText.readOurTermsOfPrivacyPolicy,
       'trailingType': 'arrow',
       'switchValue': false,
     },
   ];
+
   List<MySport> sportsList = [
     MySport(name: AppText.football, skill: AppText.beginner),
     MySport(name: AppText.basketball, skill: AppText.intermediate),
@@ -55,19 +72,34 @@ class ProfileScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void openFollowers(BuildContext context) {
+    Navigator.pushNamed(context, RoutesName.followersScreen);
+  }
+
+  void openFollowing(BuildContext context) {
+    Navigator.pushNamed(context, RoutesName.followingScreen);
+  }
+
+  void openNotifications(BuildContext context) {
+    Navigator.pushNamed(context, RoutesName.notificationsScreen);
+  }
+
   void onTapFun(BuildContext context, int index) {
     switch (index) {
       case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-        );
+        Navigator.pushNamed(context, RoutesName.publicProfileScreen);
         break;
-
+      case 1:
+        Navigator.pushNamed(context, RoutesName.privateProfileScreen);
+        break;
       case 3:
-        // Privacy
+        Navigator.pushNamed(context, RoutesName.termsOfServiceScreen);
         break;
-
+      case 4:
+        Navigator.pushNamed(context, RoutesName.privacyPolicyScreen);
+        break;
+      case 2:
+        break;
       default:
         break;
     }

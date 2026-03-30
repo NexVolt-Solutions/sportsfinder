@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -76,18 +74,7 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                           itemBuilder: (context, index) {
                             final m = model.matches[index];
                             return PersonInvitedCard(
-                              cardOnTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        ChangeNotifierProvider(
-                                          create: (_) => ChatScreenViewModel(),
-                                          child: const ChatScreen(),
-                                        ),
-                                  ),
-                                );
-                              },
+                              cardOnTap: () => Navigator.pop(context, m.title),
                               playerName: m.title,
                               matchLevel: m.skillLevel,
                               matchName: m.sportType,

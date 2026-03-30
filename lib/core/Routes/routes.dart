@@ -18,6 +18,13 @@ import 'package:sport_finding/feature/view/Home/components/user_match_details_sc
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/edit_profile_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/private_profile_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/public_profile_screen.dart';
+import 'package:sport_finding/feature/view/Legal/privacy_policy_screen.dart';
+import 'package:sport_finding/feature/view/Legal/terms_of_service_screen.dart';
 import 'package:sport_finding/feature/view/Notifications/notifications_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/Otp/otp_verification_screen.dart';
@@ -172,6 +179,41 @@ class Routes {
             RoutesName.notificationsScreen,
             const NotificationsScreen(),
           ),
+        );
+      case RoutesName.followersScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const FollowersScreen(),
+        );
+      case RoutesName.followingScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const FollowingScreen(),
+        );
+      case RoutesName.privacyPolicyScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const PrivacyPolicyScreen(),
+        );
+      case RoutesName.termsOfServiceScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const TermsOfServiceScreen(),
+        );
+      case RoutesName.publicProfileScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const PublicProfileScreen(),
+        );
+      case RoutesName.privateProfileScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const PrivateProfileScreen(),
+        );
+      case RoutesName.editProfileScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const EditProfileScreen(),
         );
 
       default:

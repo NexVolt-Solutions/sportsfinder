@@ -10,7 +10,11 @@ class CustomButton extends StatelessWidget {
   final BorderRadius? radius;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
-  final CrossAxisAlignment? crossAxisAlignment; // ✅ optional
+  final CrossAxisAlignment? crossAxisAlignment;
+  final Widget? leading;
+  final bool outlined;
+  final Color? borderColor;
+  final TextStyle? titleStyle;
 
   const CustomButton({
     super.key,
@@ -20,27 +24,65 @@ class CustomButton extends StatelessWidget {
     this.colorText,
     this.radius,
     this.padding,
-    this.crossAxisAlignment, // ✅
+    this.crossAxisAlignment,
+    this.leading,
+    this.outlined = false,
+    this.borderColor,
+    this.titleStyle,
   });
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
+    final t = context.appText;
+
+    final backgroundColor = outlined
+        ? (color ?? c.transparent)
+        : (color ?? c.primary);
+    final labelColor = colorText ?? (outlined ? c.greyDark : c.onPrimary);
+
+    final effectiveTitleStyle =
+        titleStyle ??
+        (outlined
+            ? t.text16W500.copyWith(color: labelColor)
+            : t.text16Bold.copyWith(color: labelColor));
+
+    final label = NormalText(
+      crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
+      titleText: text ?? '',
+      titleStyle: effectiveTitleStyle,
+    );
+
+    final content = leading != null
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              leading!,
+              SizedBox(width: context.w(8)),
+              label,
+            ],
+          )
+        : label;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: context.padSym(v: 14),
+        padding: padding ?? context.padSym(v: 14),
         decoration: BoxDecoration(
-          color: color,
+          color: backgroundColor,
           borderRadius: radius ?? BorderRadius.circular(context.radiusR(12)),
+          border: outlined
+              ? Border.all(
+                  color: borderColor ?? const Color(0xFFCCCCCC),
+                  width: 1,
+                )
+              : null,
         ),
         child: Padding(
           padding: padding ?? context.paddingSymmetricR(horizontal: 0),
-          child: NormalText(
-            crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
-            titleText: text ?? '',
-            titleColor: context.appColors.surface,
-          ),
+          child: Center(child: content),
         ),
       ),
     );

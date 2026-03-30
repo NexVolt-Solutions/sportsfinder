@@ -21,4 +21,11 @@ class RoutesName {
   static const String allMemeberScreen = 'all_member_screen';
   static const String chatScreen = 'chat_screen';
   static const String notificationsScreen = 'notifications_screen';
+  static const String followersScreen = 'followers_screen';
+  static const String followingScreen = 'following_screen';
+  static const String privacyPolicyScreen = 'privacy_policy_screen';
+  static const String termsOfServiceScreen = 'terms_of_service_screen';
+  static const String publicProfileScreen = 'public_profile_screen';
+  static const String privateProfileScreen = 'private_profile_screen';
+  static const String editProfileScreen = 'edit_profile_screen';
 }

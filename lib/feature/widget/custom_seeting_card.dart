@@ -51,23 +51,30 @@ class CustomSettingCard extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                SvgPicture.asset(icon),
-                SizedBox(width: context.w(20)),
+                SvgPicture.asset(
+                  icon,
+                  width: context.w(24),
+                  height: context.h(24),
+                ),
+                SizedBox(width: context.w(8)),
                 Expanded(
                   child: NormalText(
                     titleText: title,
+                    titleStyle: context.appText.text14W600.copyWith(
+                      color: context.appColors.greyDark,
+                    ),
                     subText: subtitle,
-                    subFontSize: context.text(12),
-                    subFontWeight: FontWeight.w400,
-                    subColor: context.appColors.greylight,
+                    maxLines: 2,
+                    subStyle: context.appText.text12W400.copyWith(
+                      color: context.appColors.greyDark,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          /// 🔹 RIGHT SIDE (Optional)
-          ?trailingWidget,
+          trailingWidget ?? const SizedBox.shrink(),
         ],
       ),
     );

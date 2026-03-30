@@ -7,29 +7,36 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 class ProfileMySportCardWidget extends StatelessWidget {
   final String sportName;
   final String buttonName;
+  final Color? skillLabelColor;
+
   const ProfileMySportCardWidget({
     super.key,
     required this.sportName,
     required this.buttonName,
+    this.skillLabelColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return CardWidget(
-      padding: context.padSym(h: 16, v: 14),
+      padding: context.padSym(h: 12, v: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          NormalText(subText: sportName),
+          NormalText(
+            subText: sportName,
+            subStyle: context.appText.text12W600.copyWith(
+              color: context.appColors.greyDark,
+            ),
+          ),
           CardWidget(
-            padding: context.padSym(h: 24, v: 8),
-
+            padding: context.padSym(h: 6, v: 4),
             child: NormalText(
               titleText: buttonName,
-
-              titleColor: context.appColors.greyDark,
-              titleFontSize: context.text(13),
-              titleFontWeight: FontWeight.w400,
+              titleColor: skillLabelColor ?? context.appColors.greyDark,
+              titleStyle: context.appText.text12W400.copyWith(
+                color: skillLabelColor ?? context.appColors.greyDark,
+              ),
             ),
           ),
         ],

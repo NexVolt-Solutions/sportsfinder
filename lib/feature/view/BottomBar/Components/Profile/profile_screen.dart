@@ -5,26 +5,27 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/core.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/custom_seeting_card.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/profile_my_sport_card_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
-class ProfileScreen extends StatefulWidget {
+/// Light outline for profile secondary actions. [AppColors.greylight] is a translucent *dark* grey, so it disappears on [AppColors.blue10].
+const Color _kProfileActionOutline = Color(0xFFCCCCCC);
+
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
 
   /// When true, [BottomBarScreen] supplies the shared [AppBarWidget].
   final bool embedInBottomBar;
 
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -32,59 +33,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           return MainFrame(
-            showDecorationLayer: !widget.embedInBottomBar,
+            showDecorationLayer: !embedInBottomBar,
             child: ListView(
-              padding: context.padSym(h: 20),
+              padding: context
+                  .padSym(h: 20)
+                  .copyWith(
+                    bottom: embedInBottomBar ? context.h(100) : context.h(24),
+                  ),
               children: [
-                if (!widget.embedInBottomBar)
+                if (!embedInBottomBar)
                   AppBarWidget(
                     onTapFirst: () => Navigator.pop(context),
                     leading: NormalText(titleText: AppText.sportFinding),
-                    trailing: SvgPicture.asset(AppAssets.notificationIcon),
+                    trailing: GestureDetector(
+                      onTap: () => model.openNotifications(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: SvgPicture.asset(AppAssets.notificationIcon),
+                    ),
                   ),
                 NormalText(titleText: AppText.profile),
+                SizedBox(height: context.h(16)),
                 UserGreetingWidget(
-                  title: "Shehzad (Host)",
-                  name: AppText.newYorkUsa,
-                  title2: AppText.passionateAboutSportsAndFitness,
-                  isShow: true,
+                  title: model.profileDisplayName,
+                  name: model.profileLocation,
+                  title2: model.profileBio,
+                  isShow: model.showBioOnProfile,
                 ),
                 SizedBox(height: context.h(16)),
                 Row(
                   children: [
                     Expanded(
                       child: CardWidget(
+                        onTap: () => model.openFollowers(context),
                         padding: context.padSym(h: 22, v: 18),
                         child: NormalText(
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: '45',
+                          titleText: model.followersCountLabel,
                           subText: AppText.followers,
-                          subColor: context.appColors.greylight,
+                          subStyle: context.appText.text12W400.copyWith(
+                            color: context.appColors.greyDark,
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(width: context.w(12)),
                     Expanded(
                       child: CardWidget(
+                        onTap: () => model.openFollowing(context),
                         padding: context.padSym(h: 22, v: 18),
                         child: NormalText(
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: '45',
+                          titleText: model.followingCountLabel,
                           subText: AppText.following,
-                          subColor: context.appColors.greylight,
+                          subStyle: context.appText.text12W400.copyWith(
+                            color: context.appColors.greyDark,
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(width: context.w(12)),
-
                     Expanded(
                       child: CardWidget(
                         padding: context.padSym(h: 22, v: 18),
                         child: NormalText(
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: '45',
-                          subText: AppText.matching,
-                          subColor: context.appColors.greylight,
+                          titleText: model.matchesPlayedLabel,
+                          subText: AppText.matches,
+                          subStyle: context.appText.text12W400.copyWith(
+                            color: context.appColors.greyDark,
+                          ),
                         ),
                       ),
                     ),
@@ -103,13 +120,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       subtitle: item['subtitle'],
                       trailingType: item['trailingType'],
                       switchValue: item['switchValue'],
-
-                      /// 🔥 SWITCH HANDLER
                       onSwitchChanged: (val) {
                         model.toggleSwitch(index, val);
                       },
-
-                      /// 🔥 TAP HANDLER
                       onTap: () => model.onTapFun(context, index),
                     );
                   },
@@ -121,11 +134,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     final sport = model.sportsList[index];
-                    return ProfileMySportCardWidget(
+                    return ProfilePrivateSportRow(
                       sportName: sport.name,
-                      buttonName: sport.skill,
+                      skillLabel: sport.skill,
                     );
                   },
+                ),
+                SizedBox(height: context.h(16)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        color: context.appColors.transparent,
+                        outlined: true,
+                        leading: SvgPicture.asset(AppAssets.edit),
+                        borderColor: AppColors.bluecolor,
+                        radius: BorderRadius.circular(context.radiusR(12)),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          RoutesName.editProfileScreen,
+                        ),
+                        text: AppText.editProfile,
+                      ),
+                    ),
+                    SizedBox(width: context.w(12)),
+                    Expanded(
+                      child: CustomButton(
+                        color: context.appColors.transparent,
+                        outlined: true,
+                        leading: SvgPicture.asset(AppAssets.share),
+                        borderColor: AppColors.bluecolor,
+                        radius: BorderRadius.circular(context.radiusR(12)),
+                        onTap: () {},
+
+                        text: AppText.share,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "sport_finding" "\0"
+            VALUE "CompanyName", "sportfinding.com" "\0"
+            VALUE "FileDescription", "SportFinding" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "sport_finding" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "sport_finding.exe" "\0"
-            VALUE "ProductName", "sport_finding" "\0"
+            VALUE "InternalName", "SportFinding" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 sportfinding.com. All rights reserved." "\0"
+            VALUE "OriginalFilename", "SportFinding.exe" "\0"
+            VALUE "ProductName", "SportFinding" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -47,7 +47,7 @@ class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
                 ),
                 SizedBox(height: context.h(12)),
                 SocialButtonWidget(
-                  imagePath: AppAssets.shareIcon,
+                  imagePath: AppAssets.share,
                   text: AppText.shareMatch,
                   onTap: () {},
                 ),

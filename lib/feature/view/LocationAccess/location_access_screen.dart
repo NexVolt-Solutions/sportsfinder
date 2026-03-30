@@ -59,31 +59,52 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
         ),
         body: MainFrame(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppBarWidget(title: AppText.sportFinding),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SvgPicture.asset(
-                    AppAssets.locationIcon,
-                    fit: BoxFit.scaleDown,
-                  ),
-                  SizedBox(height: context.h(20)),
-                  Center(
-                    child: NormalText(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      titleText: AppText.allowLocationAccess,
-                      titleStyle: context.appText.text18W600,
-                      titleColor: context.appColors.onSurface,
-                      subText: AppText
-                          .allowLocationToDiscoverNearbySportsMatchesAndPlayersInYourArea,
-                      subStyle: context.appText.text16W400,
-                      subAlign: TextAlign.center,
-                      maxLines: 2,
-                      subColor: context.appColors.greyDark,
-                    ),
-                  ),
-                ],
+              Padding(
+                padding: context.padSym(h: 20),
+                child: AppBarWidget(title: AppText.sportFinding),
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: context.padSym(h: 20),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                          maxHeight: constraints.maxHeight,
+                          minWidth: constraints.maxWidth,
+                          maxWidth: constraints.maxWidth,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              AppAssets.locationIcon,
+                              fit: BoxFit.scaleDown,
+                            ),
+                            SizedBox(height: context.h(20)),
+                            NormalText(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              titleText: AppText.allowLocationAccess,
+                              titleStyle: context.appText.text18W600,
+                              titleColor: context.appColors.onSurface,
+                              titleAlign: TextAlign.center,
+                              subText: AppText
+                                  .allowLocationToDiscoverNearbySportsMatchesAndPlayersInYourArea,
+                              subStyle: context.appText.text16W400,
+                              subAlign: TextAlign.center,
+                              maxLines: 4,
+                              subColor: context.appColors.greyDark,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),

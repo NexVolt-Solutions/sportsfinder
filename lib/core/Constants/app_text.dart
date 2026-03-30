@@ -69,6 +69,9 @@ class AppText {
   static const String confirmPasswordValidation = "confirm password required";
   static const String iAgreeToThe = 'I agree to the';
   static const String termsOfService = ' Terms of Service';
+
+  /// App bar title (no leading space).
+  static const String termsOfServiceTitle = 'Terms of Service';
   static const String and = ' and';
   static const String privacyPolicy = ' Privacy Policy';
   static const String signUp = 'Sign Up';
@@ -168,7 +171,7 @@ class AppText {
   static const String matchTitleHit = 'Final Tournment';
   static const String matchTitleValidation = 'required filed';
   static const String matchDuration = 'Match Duration';
-  static const String matching = 'Matching';
+  static const String matches = 'Matches';
   static const String threeHours = '3 hours';
   static const String matchLocationDestination = 'Match Location/ Destination';
   static const String denmarkCentralPark = 'Denmark Central Park';
@@ -195,10 +198,25 @@ class AppText {
   static const String invited = 'Invited';
   static const String invite = 'Invite';
   static const String follow = 'Follow';
+
+  /// Search field placeholder (profile connections screens).
+  static const String search = 'Search';
+  static const String followBack = 'Follow Back';
+
+  /// Outlined state on Following list (user already follows this person).
+  static const String followed = 'Followed';
+  static const String noConnectionsMatchSearch = 'No people match your search.';
   static const String message = 'Message';
   static const String followers = 'Followers';
   static const String following = 'Following';
   static const String rate = 'Rate';
+  static const String ratePlayer = 'Rate Player';
+  static const String rating = 'Rating';
+  static const String ratingUserPrefix = 'Rating ';
+  static const String writeYourExperience = 'Write your experience...';
+  static const String submitReview = 'Submit Review';
+  static const String davidGam = 'David gam';
+  static const String oneDayAgo = '1 day ago';
   static const String mySports = 'My Sports';
   static const String reviews = 'Reviews';
   static const String hadAGreatMatchReview =
@@ -224,6 +242,7 @@ class AppText {
       'Discover nearby people in your area';
 
   static const String editProfile = 'Edit Profile';
+  static const String nameLabel = 'Name';
   static const String privacyPolicySportFinding =
       'Privacy Policy – SportFinding';
   static const String termsOfServiceSportFinding =

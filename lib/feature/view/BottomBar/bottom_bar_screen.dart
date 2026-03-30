@@ -121,12 +121,11 @@ class _BottomBarContent extends StatelessWidget {
                     titleText: AppText.sportFinding,
                     titleFontSize: 18,
                   ),
-                  onTrailingTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      RoutesName.notificationsScreen,
-                    );
-                  },
+
+                  onTrailingTap: () => Navigator.pushNamed(
+                    context,
+                    RoutesName.notificationsScreen,
+                  ),
                 ),
               ),
               Expanded(

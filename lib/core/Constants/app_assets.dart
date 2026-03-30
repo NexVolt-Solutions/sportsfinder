@@ -42,7 +42,6 @@ class AppAssets {
 
   //Profile Icon
   static const String editIcon = "assets/profile/editIcon.svg";
-  static const String shareIcon = "assets/profile/shareIcon.svg";
   static const String eyeIcon = "assets/profile/eyeIcon.svg";
   static const String contactIcon = "assets/profile/contactIcon.svg";
   static const String privacyIcon = "assets/profile/privacyIcon.svg";
@@ -65,4 +64,12 @@ class AppAssets {
   static const String locationIcon = "assets/icon/location.svg";
 
   static const String searchIcon = "assets/icon/search.svg";
+
+  static const String follow = "assets/icon/follow.svg";
+  static const String follower = "assets/icon/follower.svg";
+  static const String chat = "assets/icon/chat.svg";
+  static const String iconOutline = "assets/icon/location_outline.svg";
+
+  static const String edit = "assets/icon/edit.svg";
+  static const String share = "assets/icon/share.svg";
 }

@@ -122,8 +122,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         SizedBox(width: context.w(12)),
 
                         NormalText(
-                          titleText: AppText.alexJohnson,
-                          subText: AppText.online,
+                          titleText: model.contactName,
+                          subText: model.isOnline
+                              ? AppText.online
+                              : AppText.players,
                           subColor: context.appColors.greylight,
                         ),
                       ],
@@ -135,29 +137,38 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
 
-                // Chat message list
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: context.w(20),
-                      vertical: context.h(12),
-                    ),
-                    itemCount: model.messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = model.messages[index];
-                      final showDate =
-                          index == 0 ||
-                          model.messages[index - 1].date != msg.date;
+                  child: model.isEmpty
+                      ? Center(
+                          child: NormalText(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            titleText: 'Chat initiated',
+                            subText: 'Say hi to ${model.contactName}',
+                            subAlign: TextAlign.center,
+                            subColor: context.appColors.greylight,
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: context.w(20),
+                            vertical: context.h(12),
+                          ),
+                          itemCount: model.messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = model.messages[index];
+                            final showDate =
+                                index == 0 ||
+                                model.messages[index - 1].date != msg.date;
 
-                      return Column(
-                        children: [
-                          if (showDate) _buildDateChip(context, msg.date),
-                          _buildMessageBubble(context, msg),
-                        ],
-                      );
-                    },
-                  ),
+                            return Column(
+                              children: [
+                                if (showDate) _buildDateChip(context, msg.date),
+                                _buildMessageBubble(context, msg),
+                              ],
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
