@@ -193,7 +193,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     SizedBox(height: context.h(22)),
                     TextFormFieldWidget(
-                      label: AppText.nameLabel,
+                      label: AppText.editProfileNameField,
                       controller: _nameController,
                       keyboardType: TextInputType.name,
                     ),

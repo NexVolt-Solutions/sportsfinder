@@ -53,330 +53,311 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
 
     return Consumer<HostDetailScreenViewModel>(
       builder: (context, model, _) => Scaffold(
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: context.h(5),
-              bottom: context.h(20),
-              right: context.w(20),
-              left: context.w(20),
-            ),
-            child: CustomButton(
-              text: AppText.joinMatch,
-              color: context.appColors.primary,
-              onTap: () {
-                showDialog(
-                  context: context,
-                  barrierDismissible: true,
-                  builder: (context) => CustomBottomSheetWidget(
-                    isCenter: true,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+        backgroundColor: context.appColors.surface,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: MainFrame(
+                child: ListView(
+                  padding: context.padSym(h: 20),
+                  children: [
+                    AppBarWidget(
+                      onLeadingTap: () => Navigator.pop(context),
+                      title: AppText.hostMatchDetails,
+                    ),
+                    NormalText(
+                      titleText: match.title,
+                      subText: match.sportType,
+                    ),
+                    SizedBox(height: context.h(20)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SvgPicture.asset(
-                          AppAssets.joiningMatchPeopelIcon,
-                          fit: BoxFit.scaleDown,
+                        InfoItem(
+                          icon: AppAssets.calendarIcon,
+                          title: 'Date',
+                          value: match.date,
                         ),
-                        SizedBox(height: context.h(16)),
-                        NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: AppText.matchIsFull,
-                          maxLines: 5,
-                          subAlign: TextAlign.center,
-                          subText:
-                              AppText.thisMatchHasReachedItsMaximumCapacity,
+                        InfoItem(
+                          icon: AppAssets.clockIcon,
+                          title: 'Time',
+                          value: match.time,
                         ),
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        body: MainFrame(
-          child: ListView(
-            padding: context.padSym(h: 20),
-            children: [
-              AppBarWidget(
-                onLeadingTap: () => Navigator.pop(context),
-                title: AppText.sportFinding,
-              ),
-              NormalText(titleText: match.title, subText: match.sportType),
-              SizedBox(height: context.h(20)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InfoItem(
-                    icon: AppAssets.calendarIcon,
-                    title: 'Date',
-                    value: match.date,
-                  ),
-                  InfoItem(
-                    icon: AppAssets.clockIcon,
-                    title: 'Time',
-                    value: match.time,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(16)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InfoItem(
-                    icon: AppAssets.matchesIcon,
-                    title: AppText.skillLevel,
-                    value: match.skillLevel,
-                  ),
-                  InfoItem(
-                    icon: AppAssets.playerIcon,
-                    title: AppText.players,
-                    value: '${model.rosterCount}/${match.participantsTotal}',
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(16)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InfoItem(
-                    icon: AppAssets.locationIcon,
-                    title: AppText.location,
-                    value: match.location,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.h(16)),
-              Card(
-                child: Padding(
-                  padding: context.padSym(h: 12),
-                  child: Row(
-                    children: List.generate(model.buttonName.length, (index) {
-                      final isSelected = model.selectedIndex == index;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => model.changeIndex(index),
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: isSelected
-                                ? CardWidget(
-                                    padding: context.padSym(h: 8, v: 8),
-                                    child: NormalText(
-                                      titleText: model.buttonName[index],
-                                      titleColor: context.appColors.primary,
-                                      titleFontSize: 14,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  )
-                                : Padding(
-                                    padding: context.padSym(h: 8, v: 8),
-                                    child: NormalText(
-                                      subText: model.buttonName[index],
-                                      subColor: context.appColors.greylight,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                          ),
+                    SizedBox(height: context.h(16)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        InfoItem(
+                          icon: AppAssets.matchesIcon,
+                          title: AppText.skillLevel,
+                          value: match.skillLevel,
                         ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-              SizedBox(height: context.h(16)),
-              if (model.selectedIndex == 0) ...[
-                UserGreetingWidget(
-                  title: match.displayHostName,
-                  name: match.location,
-                  title2: match.resolvedHostBio,
-                  isShow: true,
-                ),
-                SizedBox(height: context.h(16)),
-                CardWidget(
-                  child: NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleText: '${match.resolvedHostMatchesPlayed}',
-                    subText: AppText.matchesPlayed,
-                  ),
-                ),
-                SizedBox(height: context.h(16)),
-                NormalText(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  titleText: AppText.aboutThisMatch,
-                  sizeBoxheight: context.h(8),
-                  maxLines: 8,
-                  subText: match.aboutText,
+                        InfoItem(
+                          icon: AppAssets.playerIcon,
+                          title: AppText.players,
+                          value:
+                              '${model.rosterCount}/${match.participantsTotal}',
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: context.h(16)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        InfoItem(
+                          icon: AppAssets.locationIcon,
+                          title: AppText.location,
+                          value: match.location,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: context.h(16)),
+                    Card(
+                      child: Padding(
+                        padding: context.padSym(h: 12),
+                        child: Row(
+                          children: List.generate(model.buttonName.length, (
+                            index,
+                          ) {
+                            final isSelected = model.selectedIndex == index;
+                            return Expanded(
+                              child: GestureDetector(
+                                onTap: () => model.changeIndex(index),
+                                behavior: HitTestBehavior.opaque,
+                                child: Center(
+                                  child: isSelected
+                                      ? CardWidget(
+                                          padding: context.padSym(h: 8, v: 8),
+                                          child: NormalText(
+                                            titleText: model.buttonName[index],
+                                            titleColor:
+                                                context.appColors.primary,
+                                            titleFontSize: 14,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        )
+                                      : Padding(
+                                          padding: context.padSym(h: 8, v: 8),
+                                          child: NormalText(
+                                            subText: model.buttonName[index],
+                                            subColor:
+                                                context.appColors.greylight,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: context.h(16)),
+                    if (model.selectedIndex == 0) ...[
+                      UserGreetingWidget(
+                        title: match.displayHostName,
+                        name: match.location,
+                        title2: match.resolvedHostBio,
+                        isShow: true,
+                      ),
+                      SizedBox(height: context.h(16)),
+                      CardWidget(
+                        child: NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          titleText: '${match.resolvedHostMatchesPlayed}',
+                          subText: AppText.matchesPlayed,
+                        ),
+                      ),
+                      SizedBox(height: context.h(16)),
+                      NormalText(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        titleText: AppText.aboutThisMatch,
+                        sizeBoxheight: context.h(8),
+                        maxLines: 8,
+                        subText: match.aboutText,
 
-                  subAlign: TextAlign.start,
-                ),
-                SizedBox(height: context.h(16)),
-                SectionHeaderWidget(title: AppText.participatedPlayers),
-                if (model.rosterCount == 0)
-                  Padding(
-                    padding: context.padSym(v: 12),
-                    child: Text(
-                      AppText.noPlayersOnRoster,
-                      style: context.appText.text14W400.copyWith(
-                        color: context.appColors.greyDark,
+                        subAlign: TextAlign.start,
                       ),
-                    ),
-                  )
-                else
-                  ListView.builder(
-                    itemCount: model.rosterCount,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return UserMatchCard(
-                        onActionTap: () => model.removePlayerAt(index),
-                        onCardTap: () =>
-                            match.pushUserMatchDetailsScreen(context),
-                        title: model.rosterNameAt(index),
-                        subTitle: model.rosterSkillAt(index),
-                        showActionIcon: true,
-                      );
-                    },
-                  ),
-                SizedBox(height: context.h(16)),
-              ],
-              if (model.selectedIndex == 1) ...[
-                SectionHeaderWidget(title: AppText.participatedPlayers),
-                SizedBox(height: context.h(8)),
-                if (model.rosterCount == 0)
-                  Padding(
-                    padding: context.padSym(v: 8),
-                    child: Text(
-                      AppText.noPlayersOnRoster,
-                      style: context.appText.text14W400.copyWith(
-                        color: context.appColors.greyDark,
-                      ),
-                    ),
-                  )
-                else ...[
-                  ListView.builder(
-                    itemCount: model.rosterCount,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return PersonInvitedCard(
-                        playerName: model.rosterNameAt(index),
-                        matchName: match.sportType,
-                        matchLevel: model.rosterSkillAt(index),
-                        destance: '${match.distanceKm} km',
-                        isShow: true,
-                        ontap: () {},
-                        cardOnTap: () =>
-                            match.pushUserMatchDetailsScreen(context),
-                      );
-                    },
-                  ),
-                  SizedBox(height: context.h(16)),
-                  SectionHeaderWidget(title: AppText.nearbyPlayers),
-                  SizedBox(height: context.h(8)),
-                  ListView.builder(
-                    itemCount: model.rosterCount,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final n = model.rosterCount;
-                      final i = n <= 0 ? 0 : (index + 1) % n;
-                      return PersonInvitedCard(
-                        playerName: model.rosterNameAt(i),
-                        matchName: match.sportType,
-                        matchLevel: model.rosterSkillAt(i),
-                        destance:
-                            '${(match.distanceKm + index * 0.3).toStringAsFixed(1)} km',
-                        isShow: true,
-                        ontap: () {},
-                        cardOnTap: () =>
-                            match.pushUserMatchDetailsScreen(context),
-                      );
-                    },
-                  ),
-                  SizedBox(height: context.h(16)),
-                  SectionHeaderWidget(title: AppText.recommendedPlayers),
-                  SizedBox(height: context.h(8)),
-                  ListView.builder(
-                    itemCount: model.rosterCount,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final n = model.rosterCount;
-                      final i = n <= 0 ? 0 : (n - 1 - index) % n;
-                      return PersonInvitedCard(
-                        playerName: model.rosterNameAt(i),
-                        matchName: match.sportType,
-                        matchLevel: model.rosterSkillAt(i),
-                        destance:
-                            '${(match.distanceKm + 0.5 + index * 0.2).toStringAsFixed(1)} km',
-                        isShow: true,
-                        ontap: () {},
-                        cardOnTap: () =>
-                            match.pushUserMatchDetailsScreen(context),
-                      );
-                    },
-                  ),
-                ],
-                SizedBox(height: context.h(16)),
-              ],
-              if (model.selectedIndex == 2) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: context.h(174),
-                        width: context.w(380),
-                        decoration: BoxDecoration(
-                          color: context.appColors.blue10,
-                          borderRadius: BorderRadius.circular(
-                            context.radiusR(12),
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Padding(
-                          padding: context.padAll(12),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.fullscreen, size: 20),
-                              onPressed: () {},
+                      SizedBox(height: context.h(16)),
+                      SectionHeaderWidget(title: AppText.participatedPlayers),
+                      if (model.rosterCount == 0)
+                        Padding(
+                          padding: context.padSym(v: 12),
+                          child: Text(
+                            AppText.noPlayersOnRoster,
+                            style: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
                             ),
                           ),
+                        )
+                      else
+                        ListView.builder(
+                          itemCount: model.rosterCount,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return UserMatchCard(
+                              onActionTap: () => model.removePlayerAt(index),
+                              onCardTap: () => match.pushPublicProfileForPlayer(
+                                context,
+                                displayName: model.rosterNameAt(index),
+                                userIdSuffix: 'roster_$index',
+                              ),
+                              title: model.rosterNameAt(index),
+                              subTitle: model.rosterSkillAt(index),
+                              showActionIcon: true,
+                            );
+                          },
                         ),
+                      SizedBox(height: context.h(16)),
+                    ],
+                    if (model.selectedIndex == 1) ...[
+                      SectionHeaderWidget(title: AppText.participatedPlayers),
+                      SizedBox(height: context.h(8)),
+                      if (model.rosterCount == 0)
+                        Padding(
+                          padding: context.padSym(v: 8),
+                          child: Text(
+                            AppText.noPlayersOnRoster,
+                            style: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
+                          ),
+                        )
+                      else ...[
+                        ListView.builder(
+                          itemCount: model.rosterCount,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return PersonInvitedCard(
+                              playerName: model.rosterNameAt(index),
+                              matchName: match.sportType,
+                              matchLevel: model.rosterSkillAt(index),
+                              destance: '${match.distanceKm} km',
+                              isShow: true,
+                              ontap: () {},
+                              cardOnTap: () => match.pushPublicProfileForPlayer(
+                                context,
+                                displayName: model.rosterNameAt(index),
+                                userIdSuffix: 'invited_participated_$index',
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                      SizedBox(height: context.h(16)),
+                    ],
+                    if (model.selectedIndex == 2) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          children: [
+                            Container(
+                              height: context.h(174),
+                              width: context.w(380),
+                              decoration: BoxDecoration(
+                                color: context.appColors.blue10,
+                                borderRadius: BorderRadius.circular(
+                                  context.radiusR(12),
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: Padding(
+                                padding: context.padAll(12),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.fullscreen,
+                                      size: 20,
+                                    ),
+                                    onPressed: () {},
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: context.h(16)),
+                      SectionHeaderWidget(title: match.location),
+                      SizedBox(height: context.h(8)),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppSvgIcon(
+                            icon: AppAssets.locationIcon,
+                            color: context.appColors.greylight,
+                          ),
+                          SizedBox(width: context.w(4)),
+                          Expanded(
+                            child: NormalText(
+                              subText: match.location,
+                              subColor: context.appColors.greylight,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ),
-                SizedBox(height: context.h(16)),
-                SectionHeaderWidget(title: match.location),
-                SizedBox(height: context.h(8)),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppSvgIcon(
-                      icon: AppAssets.locationIcon,
-                      color: context.appColors.greylight,
-                    ),
-                    SizedBox(width: context.w(4)),
-                    Expanded(
-                      child: NormalText(
-                        subText: match.location,
-                        subColor: context.appColors.greylight,
-                      ),
-                    ),
                   ],
                 ),
-              ],
-            ],
-          ),
+              ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: context.h(5),
+                  bottom: context.h(20),
+                  right: context.w(20),
+                  left: context.w(20),
+                ),
+                child: CustomButton(
+                  text: AppText.joinMatch,
+                  color: context.appColors.primary,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: true,
+                      builder: (context) => CustomBottomSheetWidget(
+                        isCenter: true,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              AppAssets.joiningMatchPeopelIcon,
+                              fit: BoxFit.scaleDown,
+                            ),
+                            SizedBox(height: context.h(16)),
+                            NormalText(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              titleText: AppText.matchIsFull,
+                              maxLines: 5,
+                              subAlign: TextAlign.center,
+                              subText:
+                                  AppText.thisMatchHasReachedItsMaximumCapacity,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

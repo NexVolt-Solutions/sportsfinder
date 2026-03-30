@@ -242,7 +242,6 @@ class AppText {
       'Discover nearby people in your area';
 
   static const String editProfile = 'Edit Profile';
-  static const String nameLabel = 'Name';
   static const String privacyPolicySportFinding =
       'Privacy Policy – SportFinding';
   static const String termsOfServiceSportFinding =
@@ -386,4 +385,10 @@ class AppText {
   static const String basicInfo = 'Basic Info';
   static const String schedule = 'Schedule';
   static const String selectOnMap = 'Select on Map';
+
+  /// Label for the name field on the Edit Profile screen.
+  static const String editProfileNameField = 'Name';
+
+  static const String hostMatchDetails = 'Host Match Details';
+  static const String matchDetails = 'Match Details';
 }

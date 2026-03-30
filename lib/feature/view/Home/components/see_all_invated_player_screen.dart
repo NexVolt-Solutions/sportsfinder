@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
+import 'package:sport_finding/feature/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -56,13 +57,22 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                   child: ListView.builder(
                     itemCount: match.players.length,
                     itemBuilder: (context, index) {
+                      final playerName = match.players[index];
                       return PersonInvitedCard(
-                        cardOnTap: () => match.pushMatchOrHostScreen(context),
-                        playerName: match.players[index],
+                        cardOnTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            RoutesName.publicProfileScreen,
+                            arguments: PublicProfileArgs(
+                              userId: '${match.id}_invited_$index',
+                              displayName: playerName,
+                            ),
+                          );
+                        },
+                        playerName: playerName,
                         matchLevel: match.playerSkillAt(index),
                         matchName: match.sportType,
-                        destance: "${match.distanceKm} km",
-                        ontap: () => match.pushMatchOrHostScreen(context),
+                        destance: '${match.distanceKm} km',
                       );
                     },
                   ),

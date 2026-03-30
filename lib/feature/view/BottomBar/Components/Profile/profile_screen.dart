@@ -147,13 +147,17 @@ class ProfileScreen extends StatelessWidget {
                     Expanded(
                       child: CustomButton(
                         color: context.appColors.transparent,
+
                         outlined: true,
+                        titleStyle: context.appText.text16Bold.copyWith(
+                          color: AppColors.bluecolor,
+                        ),
                         leading: SvgPicture.asset(AppAssets.edit),
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),
                         onTap: () => Navigator.pushNamed(
                           context,
-                          RoutesName.editProfileScreen,
+                          RoutesName.editProfileRoute,
                         ),
                         text: AppText.editProfile,
                       ),
@@ -163,6 +167,9 @@ class ProfileScreen extends StatelessWidget {
                       child: CustomButton(
                         color: context.appColors.transparent,
                         outlined: true,
+                        titleStyle: context.appText.text16Bold.copyWith(
+                          color: AppColors.bluecolor,
+                        ),
                         leading: SvgPicture.asset(AppAssets.share),
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),

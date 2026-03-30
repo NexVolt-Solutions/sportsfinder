@@ -74,6 +74,9 @@ class CardWidget extends StatelessWidget {
     final c = context.appColors;
     return GestureDetector(
       onTap: onTap,
+      behavior: onTap != null
+          ? HitTestBehavior.opaque
+          : HitTestBehavior.deferToChild,
       child: Card(
         margin: context.padSym(v: 8),
         elevation: elevation,

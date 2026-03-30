@@ -5,17 +5,19 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/public_profile_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/profile_my_sport_card_widget.dart';
 
 class PublicProfileScreen extends StatelessWidget {
-  const PublicProfileScreen({super.key});
+  const PublicProfileScreen({super.key, this.args});
+
+  /// From [RouteSettings.arguments]; avoids [ModalRoute.of] inside Provider `create`.
+  final PublicProfileArgs? args;
 
   void _showRateSheet(BuildContext context, PublicProfileViewModel model) {
     final c = context.appColors;
@@ -35,7 +37,7 @@ class PublicProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PublicProfileViewModel(),
+      create: (_) => PublicProfileViewModel(args: args),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: MainFrame(
@@ -174,11 +176,7 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
                   child: NormalText(
                     titleText:
                         '${AppText.ratingUserPrefix}${widget.model.displayName}',
-                    titleStyle: t.style(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w400,
-                      color: c.onSurface,
-                    ),
+
                     maxLines: 1,
                   ),
                 ),

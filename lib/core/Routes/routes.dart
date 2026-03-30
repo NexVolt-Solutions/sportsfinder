@@ -21,6 +21,7 @@ import 'package:sport_finding/feature/view/LocationAccess/location_access_screen
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/edit_profile_screen.dart';
+import 'package:sport_finding/feature/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/private_profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/public_profile_screen.dart';
 import 'package:sport_finding/feature/view/Legal/privacy_policy_screen.dart';
@@ -203,14 +204,18 @@ class Routes {
       case RoutesName.publicProfileScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const PublicProfileScreen(),
+          builder: (_) => PublicProfileScreen(
+            args: settings.arguments is PublicProfileArgs
+                ? settings.arguments as PublicProfileArgs
+                : null,
+          ),
         );
       case RoutesName.privateProfileScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const PrivateProfileScreen(),
         );
-      case RoutesName.editProfileScreen:
+      case RoutesName.editProfileRoute:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const EditProfileScreen(),

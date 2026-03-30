@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
+import 'package:sport_finding/feature/model/public_profile_args.dart';
 
 extension DiscoveryMatchNavigation on DiscoveryMatch {
   /// Hosted by the current user → [HostDetailsScreen]; otherwise → [UserMatchDetailsScreen].
@@ -27,6 +28,24 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
       context,
       RoutesName.hostDetailsScreen,
       arguments: this,
+    );
+  }
+
+  /// Opens [PublicProfileScreen] for a player name from host / match flows.
+  void pushPublicProfileForPlayer(
+    BuildContext context, {
+    required String displayName,
+    required String userIdSuffix,
+  }) {
+    final name = displayName.trim();
+    if (name.isEmpty) return;
+    Navigator.pushNamed(
+      context,
+      RoutesName.publicProfileScreen,
+      arguments: PublicProfileArgs(
+        userId: '${id}_$userIdSuffix',
+        displayName: name,
+      ),
     );
   }
 }

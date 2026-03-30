@@ -27,5 +27,5 @@ class RoutesName {
   static const String termsOfServiceScreen = 'terms_of_service_screen';
   static const String publicProfileScreen = 'public_profile_screen';
   static const String privateProfileScreen = 'private_profile_screen';
-  static const String editProfileScreen = 'edit_profile_screen';
+  static const String editProfileRoute = 'edit_profile_screen';
 }

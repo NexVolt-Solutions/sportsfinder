@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide BoxShadow;
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -69,15 +70,12 @@ class CustomButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: padding ?? context.padSym(v: 14),
+        padding: padding ?? context.padSym(v: 10),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: radius ?? BorderRadius.circular(context.radiusR(12)),
           border: outlined
-              ? Border.all(
-                  color: borderColor ?? const Color(0xFFCCCCCC),
-                  width: 1,
-                )
+              ? Border.all(color: borderColor ?? AppColors.greylight, width: 1)
               : null,
         ),
         child: Padding(
