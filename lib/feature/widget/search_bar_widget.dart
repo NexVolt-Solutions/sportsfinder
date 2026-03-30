@@ -50,7 +50,9 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
-class SearchBarWidget extends StatelessWidget {
+/// Search field with a tappable search icon.
+/// Tapping the magnifier submits the search by calling [onChanged].
+class SearchBarWidget extends StatefulWidget {
   final bool isShow;
   final ValueChanged<String>? onChanged; // callback for search text
   final VoidCallback? onFilterTap; // callback for filter icon tap
@@ -61,6 +63,29 @@ class SearchBarWidget extends StatelessWidget {
     this.onChanged,
     this.onFilterTap,
   });
+
+  @override
+  State<SearchBarWidget> createState() => _SearchBarWidgetState();
+}
+
+class _SearchBarWidgetState extends State<SearchBarWidget> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      widget.onChanged?.call(_controller.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,22 +102,32 @@ class SearchBarWidget extends StatelessWidget {
               border: Border.all(color: c.primary, width: 1.2),
             ),
             child: TextField(
-              onChanged: onChanged,
+              controller: _controller,
+              focusNode: _focusNode,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => widget.onChanged?.call(_controller.text),
               decoration: InputDecoration(
-                icon: Icon(Icons.search, color: c.greyDark),
+                // Use suffixIcon so tapping it can submit search.
                 hintText: "Search sports or locations...",
                 hintStyle: context.appText.text14W400.copyWith(
                   color: c.greyDark,
                 ),
                 border: InputBorder.none,
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.search, color: c.greyDark),
+                  onPressed: () {
+                    _focusNode.requestFocus();
+                    widget.onChanged?.call(_controller.text);
+                  },
+                ),
               ),
             ),
           ),
         ),
         SizedBox(width: context.w(12)),
-        if (isShow)
+        if (widget.isShow)
           GestureDetector(
-            onTap: onFilterTap, // call parent when tapped
+            onTap: widget.onFilterTap,
             child: SvgPicture.asset(AppAssets.filterIcon),
           ),
       ],

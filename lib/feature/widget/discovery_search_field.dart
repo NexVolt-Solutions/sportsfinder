@@ -38,7 +38,11 @@ class DiscoverySearchField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                SvgIconWidget(c: c, icon: AppAssets.searchIcon),
+                InkWell(
+                  borderRadius: BorderRadius.circular(context.radiusR(12)),
+                  onTap: () => onChanged?.call(controller.text),
+                  child: SvgIconWidget(c: c, icon: AppAssets.searchIcon),
+                ),
                 SizedBox(width: context.sw(12)),
                 Expanded(
                   child: TextField(

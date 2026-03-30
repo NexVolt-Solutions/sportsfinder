@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
+import 'package:sport_finding/feature/model/match_filters.dart';
 
-/// Filter chip item: label and optional sport key for filtering.
 class SportFilterChip {
   const SportFilterChip({required this.label, this.sportKey});
 
@@ -25,16 +25,16 @@ class DiscoveryTabViewModel extends ChangeNotifier {
     SportFilterChip(label: AppText.volleyball, sportKey: AppText.volleyball),
   ];
 
-  final List<DiscoveryMatch> _allMatches = List<DiscoveryMatch>.from(
-    DiscoveryMatchData.allMatches,
-  )
-      .where(
-        (m) =>
-            !m.involvesCurrentUser &&
-            m.isUpcomingRelativeTo(DateTime.now()),
-      )
-      .toList();
+  final List<DiscoveryMatch> _allMatches =
+      List<DiscoveryMatch>.from(DiscoveryMatchData.allMatches)
+          .where(
+            (m) =>
+                !m.involvesCurrentUser &&
+                m.isUpcomingRelativeTo(DateTime.now()),
+          )
+          .toList();
   int _selectedFilterIndex = 0;
+  FilterData? currentFilters;
 
   List<DiscoveryMatch> get filteredMatches {
     final query = searchController.text.trim().toLowerCase();
@@ -55,6 +55,9 @@ class DiscoveryTabViewModel extends ChangeNotifier {
             m.location.toLowerCase().contains(query);
       }).toList();
     }
+    if (currentFilters != null) {
+      list = applyFilterDataToMatches(list, currentFilters!);
+    }
     return list;
   }
 
@@ -67,6 +70,11 @@ class DiscoveryTabViewModel extends ChangeNotifier {
   }
 
   void onSearchChanged() {
+    notifyListeners();
+  }
+
+  void applyFilters(FilterData filterData) {
+    currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
     notifyListeners();
   }
 

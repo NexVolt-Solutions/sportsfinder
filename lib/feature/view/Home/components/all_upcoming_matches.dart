@@ -7,8 +7,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/card_widget.dart';
-import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
+import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -73,35 +72,8 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                 },
               ),
               SizedBox(height: context.h(16)),
-              SizedBox(
-                height: context.h(65),
-                width: context.w(double.infinity),
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: model.upComingMatchesText.length,
-                  padding: EdgeInsets.zero,
-                  itemBuilder: (context, index) {
-                    final upComingMatches = model.upComingMatchesText[index];
-                    return CardWidget(
-                      padding: context.padSym(h: 22, v: 7),
-                      isActive: model.selectedIndex == index,
-                      // activeBorderColor: context.appColors.primary,
-                      onTap: () {
-                        model.filterMatches(index);
-                      },
-                      child: NormalText(
-                        titleText: upComingMatches.text,
-                        titleStyle: context.appText.text16W500,
-                        titleColor: model.selectedIndex == index
-                            ? context.appColors.primary
-                            : context.appColors.greylight,
-                      ),
-                    );
-                  },
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: context.w(12)),
-                ),
-              ),
+              // Categories tabs removed (All / Football / Basketball / etc.).
+              SizedBox.shrink(),
               Expanded(
                 child: model.matches.isEmpty
                     ? Center(

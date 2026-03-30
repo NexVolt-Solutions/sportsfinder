@@ -183,6 +183,7 @@ class DiscoveryMatchData {
       time: '4:00 PM',
       participantsJoined: 2,
       participantsTotal: 4,
+      skillLevel: 'Advanced',
       players: ["Ali", "Usman", "Ahmad"],
     ),
     DiscoveryMatch(
@@ -305,6 +306,7 @@ class DiscoveryMatchData {
       time: '5:30 PM',
       participantsJoined: 6,
       participantsTotal: 12,
+      skillLevel: 'Beginner',
       players: ["Ali", "Usman", "Ahmad"],
     ),
     DiscoveryMatch(
@@ -425,6 +427,7 @@ class DiscoveryMatchData {
       time: '6:00 PM',
       participantsJoined: 8,
       participantsTotal: 10,
+      skillLevel: 'Advanced',
       players: ["Ali", "Usman", "Ahmad"],
     ),
     DiscoveryMatch(

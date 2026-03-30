@@ -183,6 +183,11 @@ class CreateMatchScreenViewModel extends ChangeNotifier {
   int _duration = 90;
   int get duration => _duration;
 
+  final List<int> durationOptions = List<int>.generate(
+    12, // 15..180 (15 * 12)
+    (i) => 15 * (i + 1),
+  );
+
   int _maxPlayers = 10;
   int get maxPlayers => _maxPlayers;
 
@@ -220,18 +225,26 @@ class CreateMatchScreenViewModel extends ChangeNotifier {
   }
 
   // ⏱ Duration
-  void incrementDuration() {
-    _duration += 15;
+  void setDuration(int minutes) {
+    if (!durationOptions.contains(minutes)) return;
+    _duration = minutes;
     matchDurationController.text = '$_duration minutes';
     notifyListeners();
   }
 
+  void incrementDuration() {
+    final idx = durationOptions.indexOf(_duration);
+    final next = idx < 0 ? durationOptions.first : durationOptions[idx + 1];
+    setDuration(next);
+  }
+
   void decrementDuration() {
-    if (_duration > 15) {
-      _duration -= 15;
-      matchDurationController.text = '$_duration minutes';
-      notifyListeners();
+    final idx = durationOptions.indexOf(_duration);
+    if (idx <= 0) {
+      setDuration(durationOptions.first);
+      return;
     }
+    setDuration(durationOptions[idx - 1]);
   }
 
   // 👥 Players

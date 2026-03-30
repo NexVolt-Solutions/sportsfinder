@@ -10,8 +10,8 @@ import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/discovery_card.dart';
 import 'package:sport_finding/feature/widget/discovery_search_field.dart';
+import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/sport_filter_section.dart';
 
 /// Discover tab content: search, sport filters, and list of discovery match cards.
 class DiscoverTabScreen extends StatelessWidget {
@@ -57,20 +57,17 @@ class _DiscoverTabContent extends StatelessWidget {
                 hintText: AppText.searchMatches,
                 onChanged: (_) => model.onSearchChanged(),
                 onFilterTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text(AppText.searchMatches),
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) {
+                      return FilterBottomSheet(onApply: model.applyFilters);
+                    },
                   );
                 },
               ),
-              SizedBox(height: context.sh(24)),
-              SportFilterSection(
-                chips: model.filterChips,
-                selectedIndex: model.selectedFilterIndex,
-                onSelected: model.setSelectedFilterIndex,
-              ),
+
               SizedBox(height: context.sh(20)),
               Expanded(child: _MatchesList(model: model)),
             ],
@@ -103,7 +100,7 @@ class _MatchesList extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: matches.length,
-      separatorBuilder: (_, _) => SizedBox(height: context.sh(16)),
+      separatorBuilder: (_, _) => SizedBox(height: context.sh(0)),
       itemBuilder: (context, index) {
         final match = matches[index];
         // Global match row (same widget as Home / All Upcoming).

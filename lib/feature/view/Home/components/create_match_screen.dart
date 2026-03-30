@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -25,6 +26,73 @@ class CreateMatchScreen extends StatefulWidget {
 }
 
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
+  Future<void> _showDurationPicker(
+    BuildContext context,
+    CreateMatchScreenViewModel model,
+  ) async {
+    final initialIndex = model.durationOptions.indexOf(model.duration);
+    final safeInitialIndex = initialIndex < 0 ? 0 : initialIndex;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final pickerHeight = context.h(260);
+        return SizedBox(
+          height: pickerHeight,
+          child: SafeArea(
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.appColors.onPrimary,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(context.radiusR(16)),
+                ),
+              ),
+              padding: EdgeInsets.only(bottom: context.h(12)),
+              child: Column(
+                children: [
+                  SizedBox(height: context.h(8)),
+                  SizedBox(
+                    height: context.h(200),
+                    child: CupertinoPicker(
+                      itemExtent: context.h(40),
+                      scrollController: FixedExtentScrollController(
+                        initialItem: safeInitialIndex,
+                      ),
+                      onSelectedItemChanged: (i) {
+                        final minutes = model.durationOptions[i];
+                        model.setDuration(minutes);
+                      },
+                      children: model.durationOptions
+                          .map(
+                            (m) => Center(
+                              child: Text(
+                                '$m minutes',
+                                style: context.appText.text16W600,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: Text(
+                      AppText.done,
+                      style: context.appText.text16W600,
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<CreateMatchScreenViewModel>(
@@ -113,97 +181,106 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       maxLines: 5,
                     ),
                     SizedBox(height: context.h(16)),
-                    DropdownFormFieldWidget(
-                      label: AppText.sportType,
-                      hintText: AppText.chooseYourSports,
-                      items: model.sportTypes,
-                      value: model.selectedSportType,
-                      onChanged: model.setSportType,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppText.sportTypeValidation;
-                        }
-                        return null;
-                      },
+                    // Same height controls for consistency.
+                    SizedBox(
+                      height: context.h(56),
+                      child: DropdownFormFieldWidget(
+                        label: AppText.sportType,
+                        hintText: AppText.chooseYourSports,
+                        items: model.sportTypes,
+                        value: model.selectedSportType,
+                        onChanged: model.setSportType,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppText.sportTypeValidation;
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                     SizedBox(height: context.h(16)),
-                    DropdownFormFieldWidget(
-                      label: AppText.skillLevel,
-                      hintText: AppText.skillLevelHint,
-                      items: model.skillLevels,
-                      value: model.selectedSkillLevel,
-                      onChanged: model.setSkillLevel,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppText.skillLevelValidation;
-                        }
-                        return null;
-                      },
+                    SizedBox(
+                      height: context.h(56),
+                      child: DropdownFormFieldWidget(
+                        label: AppText.skillLevel,
+                        hintText: AppText.skillLevelHint,
+                        items: model.skillLevels,
+                        value: model.selectedSkillLevel,
+                        onChanged: model.setSkillLevel,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppText.skillLevelValidation;
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                     SizedBox(height: context.h(16)),
                     SectionHeaderWidget(title: AppText.schedule),
                     SizedBox(height: context.h(16)),
-                    TextFormFieldWidget(
-                      label: AppText.date,
-                      hintText: AppText.dateHit,
-                      controller: model.dateController,
-                      readOnly: true,
-                      customSuffix: Padding(
-                        padding: EdgeInsets.all(
-                          context.w(12),
-                        ), // controls spacing
-                        child: SizedBox(
-                          height: context.h(20), // 👈 exact icon size
-                          width: context.w(20),
-                          child: SvgPicture.asset(
-                            AppAssets.calendarIcon,
-                            fit: BoxFit.contain,
+                    SizedBox(
+                      height: context.h(56),
+                      child: TextFormFieldWidget(
+                        label: AppText.date,
+                        hintText: AppText.dateHit,
+                        controller: model.dateController,
+                        readOnly: true,
+                        customSuffix: Padding(
+                          padding: EdgeInsets.all(context.w(12)),
+                          child: SizedBox(
+                            height: context.h(20),
+                            width: context.w(20),
+                            child: SvgPicture.asset(
+                              AppAssets.calendarIcon,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                          );
+                          if (date != null) {
+                            model.setDate(date);
+                          }
+                        },
                       ),
-                      onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (date != null) {
-                          model.setDate(date);
-                        }
-                      },
                     ),
                     SizedBox(height: context.h(16)),
 
-                    TextFormFieldWidget(
-                      label: AppText.time,
-                      hintText: AppText.dateHit,
-                      controller: model.timeController,
-                      readOnly: true,
-                      customSuffix: Padding(
-                        padding: EdgeInsets.all(
-                          context.w(12),
-                        ), // controls spacing
-                        child: SizedBox(
-                          height: context.h(20), // 👈 exact icon size
-                          width: context.w(20),
-                          child: SvgPicture.asset(
-                            AppAssets.homeTimeIcon,
-                            fit: BoxFit.contain,
+                    SizedBox(
+                      height: context.h(56),
+                      child: TextFormFieldWidget(
+                        label: AppText.time,
+                        hintText: AppText.dateHit,
+                        controller: model.timeController,
+                        readOnly: true,
+                        customSuffix: Padding(
+                          padding: EdgeInsets.all(context.w(12)),
+                          child: SizedBox(
+                            height: context.h(20),
+                            width: context.w(20),
+                            child: SvgPicture.asset(
+                              AppAssets.homeTimeIcon,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
+                        onTap: () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+                          if (time != null) {
+                            model.setTime(time, context);
+                          }
+                        },
                       ),
-                      onTap: () async {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.now(),
-                        );
-                        if (time != null) {
-                          model.setTime(time, context);
-                        }
-                      },
                     ),
                     SizedBox(height: context.h(16)),
                     SearchDropdownField(
@@ -211,11 +288,18 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       hintText: "Search location...",
                       controller: model.locationController,
                       items: [
-                        "Peshawar",
-                        "Islamabad",
-                        "Lahore",
-                        "Karachi",
-                        "Quetta",
+                        "Central Park",
+                        "Denmark Central Park",
+                        "Denmark Central Park Court",
+                        "Denmark Central Park Court 2",
+                        "Denmark Central Park Court 3",
+                        "Denmark Central Park Court 4",
+                        "Denmark Central Park Court 5",
+                        "Denmark Central Park Court 6",
+                        "Denmark Central Park Court 7",
+                        "Denmark Central Park Court 8",
+                        "Denmark Central Park Court 9",
+                        "Denmark Central Park Court 10",
                       ],
                     ),
                     SizedBox(height: context.h(12)),
@@ -267,9 +351,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                                     Icons.fullscreen,
                                                     size: 20,
                                                   ),
-                                                  onPressed: () {
-                                                    print('Fullscreen tapped');
-                                                  },
+                                                  onPressed: () {},
                                                 ),
                                               ),
                                             ),
@@ -291,29 +373,21 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     ),
                     SizedBox(height: context.h(12)),
 
-                    TextFormFieldWidget(
-                      label: AppText.matchDuration,
-                      controller: model.matchDurationController,
-                      readOnly: true,
-                      customSuffix: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            onPressed: model.decrementDuration,
-                            icon: Icon(
-                              Icons.remove,
-                              color: context.appColors.greyDark,
-                            ),
+                    SizedBox(
+                      height: context.h(56),
+                      child: TextFormFieldWidget(
+                        label: AppText.matchDuration,
+                        controller: model.matchDurationController,
+                        readOnly: true,
+                        customSuffix: Padding(
+                          padding: EdgeInsets.all(context.w(12)),
+                          child: Icon(
+                            Icons.timer_rounded,
+                            size: context.w(20),
+                            color: context.appColors.greyDark,
                           ),
-                          Text('${model.duration}'),
-                          IconButton(
-                            onPressed: model.incrementDuration,
-                            icon: Icon(
-                              Icons.add,
-                              color: context.appColors.greyDark,
-                            ),
-                          ),
-                        ],
+                        ),
+                        onTap: () => _showDurationPicker(context, model),
                       ),
                     ),
 

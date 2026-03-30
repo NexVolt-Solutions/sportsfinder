@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-// ── Model ─────────────────────────────────────────────────────────────────────
-
 class ChatMessage {
   final String text;
   final String time;
@@ -16,8 +14,6 @@ class ChatMessage {
     required this.isMe,
   });
 }
-
-// ── ViewModel ─────────────────────────────────────────────────────────────────
 
 class ChatScreenViewModel extends ChangeNotifier {
   final List<ChatMessage> _messages = [];

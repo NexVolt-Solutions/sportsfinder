@@ -11,8 +11,8 @@ import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/custom_slider_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
+import 'package:sport_finding/feature/model/match_filters.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final Function(FilterData) onApply;
@@ -27,10 +27,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   int? selectedSportIndex;
   int? selectedSkillIndex;
   double selectedDistance = 10.0;
-  /// Max distance (km). Default [kMaxFilterDistanceKm] = no distance cap when applying.
   double distance = kMaxFilterDistanceKm;
   final List<SportType> sports = [
     SportType(name: 'Football', icon: AppAssets.footBallIcon),
+    SportType(name: 'Basketball', icon: AppAssets.basketBallIcon),
     SportType(name: 'Volleyball', icon: AppAssets.volleyBallIcon),
     SportType(name: 'Tennis', icon: AppAssets.tableTennisIcon),
   ];
@@ -225,6 +225,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           });
                         },
                         child: CardWidget(
+                          isActive: isSelected,
+                          activeBorderColor: context.appColors.primary,
                           padding: context.padSym(h: 24, v: 8),
 
                           child: NormalText(
@@ -325,16 +327,28 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
+                            // Clear UI state + immediately apply "empty filter"
+                            // so the list resets without pressing "Apply" again.
                             setState(() {
                               selectedSportIndex = null;
                               selectedSkillIndex = null;
-                              selectedDistance = 10.0;
                               distance = kMaxFilterDistanceKm;
                               _selectedTime = null;
                               _selectedDate = null;
                               dateController.clear();
                               timeController.clear();
                             });
+
+                            widget.onApply(
+                              FilterData(
+                                sportIndex: null,
+                                skillLevel: null,
+                                distance: kMaxFilterDistanceKm,
+                                time: null,
+                                date: null,
+                              ),
+                            );
+                            Navigator.pop(context);
                           },
                           child: Card(
                             elevation: 2, // shadow
@@ -396,93 +410,4 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       ),
     );
   }
-}
-
-// Sport Type Model
-class SportType {
-  final String name;
-  final String icon;
-
-  SportType({required this.name, required this.icon});
-}
-
-/// Slider at max means “any distance” in [applyFilterDataToMatches].
-const double kMaxFilterDistanceKm = 100;
-
-// Filter Data Model
-class FilterData {
-  final int? sportIndex;
-  final String? skillLevel;
-  final double distance;
-  final TimeOfDay? time;
-  final DateTime? date;
-
-  FilterData({
-    this.sportIndex,
-    this.skillLevel,
-    required this.distance,
-    this.time,
-    this.date,
-  });
-
-  /// True when sheet choices impose no extra filtering (distance at max, etc.).
-  bool get isEffectivelyEmpty =>
-      sportIndex == null &&
-      (skillLevel == null || skillLevel!.trim().isEmpty) &&
-      date == null &&
-      time == null &&
-      distance >= kMaxFilterDistanceKm - 0.5;
-}
-
-/// Applies filter sheet criteria to [source] (AND). Used by list view models.
-List<DiscoveryMatch> applyFilterDataToMatches(
-  List<DiscoveryMatch> source,
-  FilterData data,
-) {
-  if (data.isEffectivelyEmpty) {
-    return List<DiscoveryMatch>.from(source);
-  }
-
-  const sheetSports = ['Football', 'Volleyball', 'Tennis'];
-  Iterable<DiscoveryMatch> q = source;
-
-  if (data.sportIndex != null) {
-    final i = data.sportIndex!.clamp(0, sheetSports.length - 1);
-    final name = sheetSports[i];
-    q = q.where((m) => m.sportType == name);
-  }
-
-  final skill = data.skillLevel?.trim();
-  if (skill != null && skill.isNotEmpty) {
-    final s = skill.toLowerCase();
-    q = q.where(
-      (m) => m.skillLevel.trim().toLowerCase() == s,
-    );
-  }
-
-  if (data.distance < kMaxFilterDistanceKm - 0.5) {
-    q = q.where((m) => m.distanceKm <= data.distance);
-  }
-
-  if (data.date != null) {
-    final d = data.date!;
-    q = q.where((m) {
-      final start = m.matchScheduledStart;
-      if (start == null) return true;
-      return start.year == d.year &&
-          start.month == d.month &&
-          start.day == d.day;
-    });
-  }
-
-  if (data.time != null) {
-    final t = data.time!;
-    q = q.where((m) {
-      final start = m.matchScheduledStart;
-      if (start == null) return true;
-      return start.hour == t.hour && start.minute == t.minute;
-    });
-  }
-
-  return q.toList();
 }
