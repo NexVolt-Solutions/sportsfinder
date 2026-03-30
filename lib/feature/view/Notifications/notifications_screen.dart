@@ -3,6 +3,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
@@ -15,22 +16,10 @@ class NotificationsScreen extends StatelessWidget {
       title: AppText.rimshaInvitedYouToJoinABasketballMatch,
       subtitle: AppText.twoMinutesAgo,
     ),
-    (
-      title: AppText.hinaJoinedYourMatch,
-      subtitle: AppText.fifteenMinutesAgo,
-    ),
-    (
-      title: AppText.taifLeftYourMatch,
-      subtitle: AppText.oneHourAgo,
-    ),
-    (
-      title: AppText.yourFinalTournamentIsNowFull,
-      subtitle: AppText.yesterday,
-    ),
-    (
-      title: AppText.alexStartedTheGame,
-      subtitle: AppText.yesterday,
-    ),
+    (title: AppText.hinaJoinedYourMatch, subtitle: AppText.fifteenMinutesAgo),
+    (title: AppText.taifLeftYourMatch, subtitle: AppText.oneHourAgo),
+    (title: AppText.yourFinalTournamentIsNowFull, subtitle: AppText.yesterday),
+    (title: AppText.alexStartedTheGame, subtitle: AppText.yesterday),
   ];
 
   @override
@@ -47,15 +36,12 @@ class NotificationsScreen extends StatelessWidget {
                 title: AppText.notifications,
               ),
               Expanded(
-                child: ListView.separated(
+                child: ListView.builder(
                   itemCount: _items.length,
-                  padding: EdgeInsets.only(top: context.h(8)),
-                  separatorBuilder: (context, _) =>
-                      Divider(height: 1, color: context.appColors.blue10),
+                  padding: context.padSym(v: 8),
                   itemBuilder: (context, index) {
                     final item = _items[index];
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: context.h(12)),
+                    return CardWidget(
                       child: NormalText(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         titleText: item.title,

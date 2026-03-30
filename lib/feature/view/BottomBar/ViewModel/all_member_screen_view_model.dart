@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/feature/model/discovery_match.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget.dart';
@@ -11,7 +10,7 @@ class FilterOption {
 
 class AllMemberScreenViewModel extends ChangeNotifier {
   List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
-  List<DiscoveryMatch> matches = [];
+  late List<DiscoveryMatch> matches = List<DiscoveryMatch>.from(allMatches);
 
   int selectedIndex = 0;
   FilterData? currentFilters;
@@ -20,96 +19,58 @@ class AllMemberScreenViewModel extends ChangeNotifier {
     FilterOption(text: 'All'),
     FilterOption(text: 'Football'),
     FilterOption(text: 'Volleyball'),
-    FilterOption(text: 'Cricket'),
+    FilterOption(text: 'Tennis'),
   ];
 
-  void AllUpcommingMatchesViewModel() {
-    matches = List.from(allMatches);
+  List<DiscoveryMatch> _baseListForChips() {
+    if (selectedIndex == 0) {
+      return List<DiscoveryMatch>.from(allMatches);
+    }
+    final filterType = upComingMatchesText[selectedIndex].text;
+    return allMatches
+        .where(
+          (match) => match.sportType.toLowerCase() == filterType.toLowerCase(),
+        )
+        .toList();
+  }
+
+  void _rebuildMatches() {
+    final base = _baseListForChips();
+    matches = currentFilters != null
+        ? applyFilterDataToMatches(base, currentFilters!)
+        : List<DiscoveryMatch>.from(base);
   }
 
   void filterMatches(int index) {
     selectedIndex = index;
-    if (index == 0) {
-      matches = List.from(allMatches);
-    } else {
-      final filterType = upComingMatchesText[index].text;
-      matches = allMatches
-          .where(
-            (match) =>
-                match.sportType.toLowerCase() == filterType.toLowerCase(),
-          )
-          .toList();
-    }
-
-    // Apply additional filters if they exist
-    if (currentFilters != null) {
-      _applyAdditionalFilters();
-    }
-
+    _rebuildMatches();
     notifyListeners();
   }
 
   void searchMatches(String query) {
     if (query.isEmpty) {
       filterMatches(selectedIndex);
-    } else {
-      matches = allMatches
-          .where(
-            (match) =>
-                match.title.toLowerCase().contains(query.toLowerCase()) ||
-                match.sportType.toLowerCase().contains(query.toLowerCase()) ||
-                match.location.toLowerCase().contains(query.toLowerCase()),
-          )
-          .toList();
-      notifyListeners();
+      return;
     }
-  }
-
-  void applyFilters(FilterData filterData) {
-    currentFilters = filterData;
-    matches = List.from(allMatches);
-
-    // Filter by sport type
-    if (filterData.sportIndex != null) {
-      final sports = ['Football', 'Volleyball', 'Cricket'];
-      final selectedSport = sports[filterData.sportIndex!];
-      matches = matches
-          .where((match) => match.sportType == selectedSport)
-          .toList();
-    }
-
-    // Filter by skill level
-    if (filterData.skillLevel != null) {
-      matches = matches
-          .where((match) => AppText.skillLevel == filterData.skillLevel)
-          .toList();
-    }
-
-    // Filter by distance (if you have location data)
-    // matches = matches
-    //     .where((match) => match.distance <= filterData.distance)
-    //     .toList();
-
-    // Filter by date
-    if (filterData.date != null) {
-      matches = matches
-          .where(
-            (match) =>
-                match.date == filterData.date!.year &&
-                match.date == filterData.date!.month &&
-                match.date == filterData.date!.day,
-          )
-          .toList();
-    }
-
+    final base = _baseListForChips();
+    final afterSheet = currentFilters != null
+        ? applyFilterDataToMatches(base, currentFilters!)
+        : List<DiscoveryMatch>.from(base);
+    final q = query.toLowerCase();
+    matches = afterSheet
+        .where(
+          (match) =>
+              match.title.toLowerCase().contains(q) ||
+              match.sportType.toLowerCase().contains(q) ||
+              match.location.toLowerCase().contains(q),
+        )
+        .toList();
     notifyListeners();
   }
 
-  void _applyAdditionalFilters() {
-    if (currentFilters != null) {
-      applyFilters(currentFilters!);
-    }
+  void applyFilters(FilterData filterData) {
+    currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
+    _rebuildMatches();
+    notifyListeners();
   }
-
-  // List<DiscoveryMatch> allMatches = DiscoveryMatchData.allMatches;
 }

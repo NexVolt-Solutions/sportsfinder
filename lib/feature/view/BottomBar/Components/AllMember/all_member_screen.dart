@@ -141,17 +141,7 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                       backgroundColor: Colors.transparent,
                       builder: (context) {
                         return FilterBottomSheet(
-                          onApply: (filterData) {
-                            // Handle filter application
-                            print('Sport Index: ${filterData.sportIndex}');
-                            print('Skill Level: ${filterData.skillLevel}');
-                            print('Distance: ${filterData.distance} km');
-                            print('Time: ${filterData.time?.format(context)}');
-                            print('Date: ${filterData.date}');
-
-                            // Apply filters to your ViewModel
-                            model.applyFilters(filterData);
-                          },
+                          onApply: model.applyFilters,
                         );
                       },
                     );
@@ -160,36 +150,38 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                 SizedBox(height: context.h(16)),
                 // ✅ Use Expanded to fill remaining space
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: 6, // Use actual players
-                    itemBuilder: (context, index) {
-                      return PersonInvitedCard(
-                        // cardOnTap: () {
-                        //   // Optional: Do something on card tap
-                        //   // print("Clicked Player: ${match.players[index]}");
-                        // },
-                        cardOnTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChangeNotifierProvider(
-                                create: (_) => ChatScreenViewModel(),
-                                child: const ChatScreen(),
-                              ),
-                            ),
-                          );
-                        },
-                        playerName: 'Khan',
-                        matchLevel: AppText.advanced,
-                        matchName: 'Football',
-                        destance:
-                            "10 km", // Replace with real data if available
-                        ontap: () {
-                          // Navigate to User Match Details
-                        },
-                      );
-                    },
-                  ),
+                  child: model.matches.isEmpty
+                      ? Center(
+                          child: Text(
+                            AppText.noMatchesFound,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: model.matches.length,
+                          itemBuilder: (context, index) {
+                            final m = model.matches[index];
+                            return PersonInvitedCard(
+                              cardOnTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ChangeNotifierProvider(
+                                      create: (_) => ChatScreenViewModel(),
+                                      child: const ChatScreen(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              playerName: m.title,
+                              matchLevel: m.skillLevel,
+                              matchName: m.sportType,
+                              destance: '${m.distanceKm} km',
+                              ontap: () {},
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

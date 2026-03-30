@@ -33,7 +33,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     allMatches = switch (scope) {
       UpcomingMatchesScope.myMatches =>
         raw.where((m) => m.isHostedByCurrentUser).toList(),
-      // Future starts only; includes your hosted matches and everyone else's.
       UpcomingMatchesScope.allUpcoming =>
         raw.where((m) => m.isUpcomingRelativeTo(now)).toList(),
     };
@@ -46,100 +45,56 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     matches = List.from(allMatches);
   }
 
+  List<DiscoveryMatch> _baseListForChips() {
+    if (selectedIndex == 0) {
+      return List<DiscoveryMatch>.from(allMatches);
+    }
+    final filterType = upComingMatchesText[selectedIndex].text;
+    return allMatches
+        .where(
+          (match) =>
+              match.sportType.toLowerCase() == filterType.toLowerCase(),
+        )
+        .toList();
+  }
+
+  void _rebuildMatches() {
+    final base = _baseListForChips();
+    matches = currentFilters != null
+        ? applyFilterDataToMatches(base, currentFilters!)
+        : List<DiscoveryMatch>.from(base);
+  }
+
   void filterMatches(int index) {
     selectedIndex = index;
-    if (index == 0) {
-      matches = List.from(allMatches);
-    } else {
-      final filterType = upComingMatchesText[index].text;
-      matches = allMatches
-          .where(
-            (match) =>
-                match.sportType.toLowerCase() == filterType.toLowerCase(),
-          )
-          .toList();
-    }
-
-    // Apply additional filters if they exist
-    if (currentFilters != null) {
-      _applyAdditionalFilters();
-    }
-
+    _rebuildMatches();
     notifyListeners();
   }
 
   void searchMatches(String query) {
     if (query.isEmpty) {
       filterMatches(selectedIndex);
-    } else {
-      final base = _baseListForFilters();
-      matches = base
-          .where(
-            (match) =>
-                match.title.toLowerCase().contains(query.toLowerCase()) ||
-                match.sportType.toLowerCase().contains(query.toLowerCase()) ||
-                match.location.toLowerCase().contains(query.toLowerCase()),
-          )
-          .toList();
-      notifyListeners();
+      return;
     }
-  }
-
-  List<DiscoveryMatch> _baseListForFilters() {
-    if (selectedIndex == 0) {
-      return List.from(allMatches);
-    }
-    final filterType = upComingMatchesText[selectedIndex].text;
-    return allMatches
+    final base = _baseListForChips();
+    final afterSheet = currentFilters != null
+        ? applyFilterDataToMatches(base, currentFilters!)
+        : List<DiscoveryMatch>.from(base);
+    final q = query.toLowerCase();
+    matches = afterSheet
         .where(
-          (match) => match.sportType.toLowerCase() == filterType.toLowerCase(),
+          (match) =>
+              match.title.toLowerCase().contains(q) ||
+              match.sportType.toLowerCase().contains(q) ||
+              match.location.toLowerCase().contains(q),
         )
         .toList();
-  }
-
-  void applyFilters(FilterData filterData) {
-    currentFilters = filterData;
-    matches = List.from(allMatches);
-
-    // Filter by sport type
-    if (filterData.sportIndex != null) {
-      final sports = ['Football', 'Volleyball', 'Cricket'];
-      final selectedSport = sports[filterData.sportIndex!];
-      matches = matches
-          .where((match) => match.sportType == selectedSport)
-          .toList();
-    }
-
-    // Filter by skill level
-    if (filterData.skillLevel != null) {
-      matches = matches
-          .where((match) => AppText.skillLevel == filterData.skillLevel)
-          .toList();
-    }
-
-    // Filter by distance (if you have location data)
-    // matches = matches
-    //     .where((match) => match.distance <= filterData.distance)
-    //     .toList();
-
-    // Filter by date
-    if (filterData.date != null) {
-      matches = matches
-          .where(
-            (match) =>
-                match.date == filterData.date!.year &&
-                match.date == filterData.date!.month &&
-                match.date == filterData.date!.day,
-          )
-          .toList();
-    }
-
     notifyListeners();
   }
 
-  void _applyAdditionalFilters() {
-    if (currentFilters != null) {
-      applyFilters(currentFilters!);
-    }
+  void applyFilters(FilterData filterData) {
+    currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
+    _rebuildMatches();
+    notifyListeners();
   }
 }
