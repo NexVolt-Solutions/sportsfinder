@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
-import 'package:sport_finding/feature/model/public_profile_args.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
 
 extension DiscoveryMatchNavigation on DiscoveryMatch {
   /// Hosted by the current user → [HostDetailsScreen]; otherwise → [UserMatchDetailsScreen].
@@ -24,11 +24,7 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
 
   /// Always opens [HostDetailsScreen] (e.g. “host dashboard” from match detail).
   void pushHostDetailsScreen(BuildContext context) {
-    Navigator.pushNamed(
-      context,
-      RoutesName.hostDetailsScreen,
-      arguments: this,
-    );
+    Navigator.pushNamed(context, RoutesName.hostDetailsScreen, arguments: this);
   }
 
   /// Opens [PublicProfileScreen] for a player name from host / match flows.

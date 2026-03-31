@@ -3,7 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/feature/model/match_filters.dart';
+import 'package:sport_finding/Data/model/match_filters.dart';
 import 'package:sport_finding/feature/viewModel/filter_bottom_sheet_view_model.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';

@@ -1,4 +1,4 @@
-import 'package:sport_finding/feature/model/app_user.dart';
+import 'package:sport_finding/Data/model/app_user.dart';
 
 /// Model for a single match (home, discover, lists, and detail flows).
 class DiscoveryMatch {

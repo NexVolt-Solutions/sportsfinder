@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 
 /// Slider at max means "any distance" (no distance filtering).
 const double kMaxFilterDistanceKm = 100;
@@ -89,4 +89,3 @@ List<DiscoveryMatch> applyFilterDataToMatches(
 
   return q.toList();
 }
-

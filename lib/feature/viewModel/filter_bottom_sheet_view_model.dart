@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/feature/model/match_filters.dart';
+import 'package:sport_finding/Data/model/match_filters.dart';
 
 /// ViewModel for [FilterBottomSheet].
 ///
@@ -17,7 +17,11 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
   double distance = 10.0;
   bool distanceEnabled = false;
 
-  final List<String> skillLevels = const ['Beginner', 'Intermediate', 'Advanced'];
+  final List<String> skillLevels = const [
+    'Beginner',
+    'Intermediate',
+    'Advanced',
+  ];
 
   final List<SportType> sports = [
     SportType(name: 'Football', icon: AppAssets.footBallIcon),
@@ -34,7 +38,8 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
 
   void setDate(DateTime date) {
     selectedDate = date;
-    dateController.text = '${date.day}/${_getMonthName(date.month)}/${date.year}';
+    dateController.text =
+        '${date.day}/${_getMonthName(date.month)}/${date.year}';
     notifyListeners();
   }
 
@@ -73,11 +78,12 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
   }
 
   FilterData buildFilterData() {
-    final effectiveDistance =
-        distanceEnabled ? distance : kMaxFilterDistanceKm;
+    final effectiveDistance = distanceEnabled ? distance : kMaxFilterDistanceKm;
     return FilterData(
       sportIndex: selectedSportIndex,
-      skillLevel: selectedSkillIndex != null ? skillLevels[selectedSkillIndex!] : null,
+      skillLevel: selectedSkillIndex != null
+          ? skillLevels[selectedSkillIndex!]
+          : null,
       distance: effectiveDistance,
       time: selectedTime,
       date: selectedDate,
@@ -109,4 +115,3 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
-

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/discovery_match_data.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
-import 'package:sport_finding/feature/model/match_filters.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/match_filters.dart';
 
 class FilterOption {
   final String text;

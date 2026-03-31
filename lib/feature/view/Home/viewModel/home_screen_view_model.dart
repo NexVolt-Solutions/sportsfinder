@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/discovery_match_data.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
-import 'package:sport_finding/feature/model/match.dart';
-import 'package:sport_finding/feature/model/sport.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/match.dart';
+import 'package:sport_finding/Data/model/sport.dart';
 
 class HomeScreenViewModel extends ChangeNotifier {
   bool isSelected = false;
@@ -28,13 +28,14 @@ class HomeScreenViewModel extends ChangeNotifier {
 
   List<DiscoveryMatch> _loadUpcomingMatches() {
     final now = DateTime.now();
-    final list = DiscoveryMatchData.allMatches
-        .where((m) => m.isUpcomingRelativeTo(now))
-        .toList()
-      ..sort((a, b) {
-        if (a.isHostedByCurrentUser == b.isHostedByCurrentUser) return 0;
-        return a.isHostedByCurrentUser ? -1 : 1;
-      });
+    final list =
+        DiscoveryMatchData.allMatches
+            .where((m) => m.isUpcomingRelativeTo(now))
+            .toList()
+          ..sort((a, b) {
+            if (a.isHostedByCurrentUser == b.isHostedByCurrentUser) return 0;
+            return a.isHostedByCurrentUser ? -1 : 1;
+          });
     return list;
   }
 }

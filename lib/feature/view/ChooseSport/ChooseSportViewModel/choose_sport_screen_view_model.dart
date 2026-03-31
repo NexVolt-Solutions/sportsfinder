@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/feature/model/sport.dart';
+import 'package:sport_finding/Data/model/sport.dart';
 
 class ChooseSportScreenViewModel extends ChangeNotifier {
   int selectedIndex = -1;

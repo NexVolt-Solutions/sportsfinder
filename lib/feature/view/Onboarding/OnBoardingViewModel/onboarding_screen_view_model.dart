@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/model/onboarding.dart';
+import 'package:sport_finding/Data/model/onboarding.dart';
 
 class OnboardingScreenViewModel extends ChangeNotifier {
   final PageController pageController = PageController();

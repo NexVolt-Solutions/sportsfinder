@@ -21,7 +21,7 @@ import 'package:sport_finding/feature/view/LocationAccess/location_access_screen
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/edit_profile_screen.dart';
-import 'package:sport_finding/feature/model/public_profile_args.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/private_profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/public_profile_screen.dart';
 import 'package:sport_finding/feature/view/Legal/privacy_policy_screen.dart';

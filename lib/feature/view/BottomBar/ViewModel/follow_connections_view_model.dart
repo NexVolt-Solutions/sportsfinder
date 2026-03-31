@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/feature/model/follow_connection_user.dart';
+import 'package:sport_finding/Data/model/follow_connection_user.dart';
 
 enum FollowConnectionsMode { followers, following }
 
@@ -64,9 +64,7 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       rows = rows.where((u) => _activeFollowingIds.contains(u.id));
     }
     if (q.isNotEmpty) {
-      rows = rows.where(
-        (u) => u.displayName.toLowerCase().contains(q),
-      );
+      rows = rows.where((u) => u.displayName.toLowerCase().contains(q));
     }
     _visible = rows.toList();
   }

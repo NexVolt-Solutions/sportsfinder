@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/model/follow_connection_user.dart';
+import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/follow_connections_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';

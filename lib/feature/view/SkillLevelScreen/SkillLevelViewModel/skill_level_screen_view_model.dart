@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/feature/model/skill_level.dart';
+import 'package:sport_finding/Data/model/skill_level.dart';
 
 class SkillLevelScreenViewModel extends ChangeNotifier {
   int selectedIndex = -1;

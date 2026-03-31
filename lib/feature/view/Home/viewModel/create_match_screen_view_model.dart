@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/feature/model/app_user.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/app_user.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 
 // class CreateMatchScreenViewModel extends ChangeNotifier {
 //   final _formKey = GlobalKey<FormState>();

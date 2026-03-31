@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/model/my_sport.dart';
-import 'package:sport_finding/feature/model/public_profile_args.dart';
+import 'package:sport_finding/Data/model/my_sport.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args;
@@ -17,6 +17,7 @@ class PublicProfileViewModel extends ChangeNotifier {
     if (n == null || n.isEmpty) return AppText.alexJohnson;
     return n;
   }
+
   String get locationLabel => AppText.losAngelesCa;
   String get bio => AppText.passionateAthleteBio;
   String get avatarUrl => kDemoAvatarUrl;

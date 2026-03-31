@@ -1,5 +1,5 @@
-import 'package:sport_finding/feature/model/app_user.dart';
-import 'package:sport_finding/feature/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/app_user.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 
 class DiscoveryMatchData {
   /// Seed ids treated as hosted by [AppUser.current] (demo data).

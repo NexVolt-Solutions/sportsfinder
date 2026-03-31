@@ -12,7 +12,7 @@ import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/custom_slider_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
-import 'package:sport_finding/feature/model/match_filters.dart';
+import 'package:sport_finding/Data/model/match_filters.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final Function(FilterData) onApply;

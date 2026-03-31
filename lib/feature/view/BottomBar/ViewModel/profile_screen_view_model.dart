@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/model/follow_connection_user.dart';
-import 'package:sport_finding/feature/model/my_sport.dart';
+import 'package:sport_finding/Data/model/follow_connection_user.dart';
+import 'package:sport_finding/Data/model/my_sport.dart';
 
 class ProfileScreenViewModel extends ChangeNotifier {
   int selectedSportIndex = -1;
