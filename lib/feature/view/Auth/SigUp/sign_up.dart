@@ -131,13 +131,41 @@ class SignUp extends StatelessWidget {
                   const TermsCheckbox(),
                   SizedBox(height: context.h(8)),
                   CustomButton(
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      RoutesName.skillLevelScreen,
-                    ),
-                    text: AppText.signIn,
+                    onTap: () async {
+                      final vm = context.read<SignUpViewModel>();
+
+                      final error = await vm.registerUser();
+
+                      if (!context.mounted) return;
+
+                      if (error == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Registration Successful"),
+                          ),
+                        );
+
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.skillLevelScreen,
+                        );
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(error)));
+                      }
+                    },
+                    text: model.isLoading ? "Loading..." : AppText.signIn,
                     color: context.appColors.primary,
                   ),
+                  // CustomButton(
+                  //   onTap: () => Navigator.pushNamed(
+                  //     context,
+                  //     RoutesName.skillLevelScreen,
+                  //   ),
+                  //   text: AppText.signIn,
+                  //   color: context.appColors.primary,
+                  // ),
                   SizedBox(height: context.h(12)),
                   SocialButtonWidget(
                     imagePath: AppAssets.gmailIcon,

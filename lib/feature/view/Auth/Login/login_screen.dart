@@ -69,10 +69,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: context.h(12)),
                 CustomButton(
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    RoutesName.otpVerificationScreen,
-                  ),
+                  onTap: () async {
+                    final error = await model.loginUser();
+
+                    if (error != null) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(error)));
+                    } else {
+                      // ✅ Navigate after successful login
+                      Navigator.pushReplacementNamed(
+                        context,
+                        RoutesName.bottomBarScreen, // or home screen
+                      );
+                    }
+                  },
                   text: AppText.signIn,
                   color: context.appColors.primary,
                 ),

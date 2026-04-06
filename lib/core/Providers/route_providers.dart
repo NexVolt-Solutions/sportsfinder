@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/Data/Repositories/registration_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/network/api_service.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_screen_view_model.dart';
@@ -37,12 +40,14 @@ class RouteProviders {
         );
       case RoutesName.LoginScreen:
         return ChangeNotifierProvider(
-          create: (_) => LoginScreenViewModel(),
+          create: (_) =>
+              LoginScreenViewModel(repository: LoginRepository(ApiService())),
           child: child,
         );
       case RoutesName.SignUp:
         return ChangeNotifierProvider(
-          create: (_) => SignUpViewModel(),
+          create: (_) =>
+              SignUpViewModel(repository: RegistrationRepository(ApiService())),
           child: child,
         );
       case RoutesName.skillLevelScreen:

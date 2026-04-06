@@ -103,7 +103,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: vm.sports.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               SizedBox(width: context.w(12)),
                           itemBuilder: (context, index) {
                             final sport = vm.sports[index];
