@@ -4,10 +4,19 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   final String baseUrl = "http://localhost:8000";
+  Map<String, String> getHeaders({String? token}) {
+    return {
+      "Content-Type": "application/json",
+      if (token != null) "Authorization": "Bearer $token",
+    };
+  }
 
   /// ✅ GET
-  Future<dynamic> get(String endpoint) async {
-    final response = await http.get(Uri.parse("$baseUrl$endpoint"));
+  Future<dynamic> get(String endpoint, {String? token}) async {
+    final response = await http.get(
+      Uri.parse("$baseUrl$endpoint"),
+      headers: getHeaders(token: token),
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -17,25 +26,25 @@ class ApiService {
   }
 
   /// ✅ POST (CREATE)
-  Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
+  Future<dynamic> post(String endpoint, {dynamic data, String? token}) async {
     final response = await http.post(
       Uri.parse("$baseUrl$endpoint"),
-      headers: {"Content-Type": "application/json"},
+      headers: getHeaders(token: token),
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      throw Exception(response.body);
+      throw Exception("Failed to create data");
     }
   }
 
   /// ✅ PUT (UPDATE)
-  Future<dynamic> put(String endpoint, {dynamic data}) async {
+  Future<dynamic> put(String endpoint, {dynamic data, String? token}) async {
     final response = await http.put(
       Uri.parse("$baseUrl$endpoint"),
-      headers: {"Content-Type": "application/json"},
+      headers: getHeaders(token: token),
       body: jsonEncode(data),
     );
 
@@ -47,8 +56,11 @@ class ApiService {
   }
 
   /// ✅ DELETE
-  Future<void> delete(String endpoint) async {
-    final response = await http.delete(Uri.parse("$baseUrl$endpoint"));
+  Future<void> delete(String endpoint, {String? token}) async {
+    final response = await http.delete(
+      Uri.parse("$baseUrl$endpoint"),
+      headers: getHeaders(token: token),
+    );
 
     if (response.statusCode != 200) {
       throw Exception("Failed to delete data");
@@ -56,20 +68,18 @@ class ApiService {
   }
 
   /// ✅ MULTIPART (Image Upload)
-  Future<void> postMultipart(
+  Future<dynamic> postMultipart(
     String endpoint, {
     required Map<String, String> fields,
     File? file,
-    String fileField = "avatar",
+    String fileField = "image",
   }) async {
-    var uri = Uri.parse("$baseUrl$endpoint");
+    var request = http.MultipartRequest("POST", Uri.parse("$baseUrl$endpoint"));
 
-    var request = http.MultipartRequest("POST", uri);
-
-    // Add fields
+    /// 🔥 Add fields (text data)
     request.fields.addAll(fields);
 
-    // Add file
+    /// 🔥 Add file
     if (file != null) {
       request.files.add(
         await http.MultipartFile.fromPath(fileField, file.path),
@@ -78,12 +88,12 @@ class ApiService {
 
     var response = await request.send();
 
-    var responseBody = await response.stream.bytesToString();
+    final resBody = await response.stream.bytesToString();
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      print("Success: $responseBody");
+      return jsonDecode(resBody);
     } else {
-      throw Exception("Error: $responseBody");
+      throw Exception("Image upload failed");
     }
   }
 }

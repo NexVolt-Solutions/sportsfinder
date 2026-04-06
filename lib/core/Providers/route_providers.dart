@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
-import 'package:sport_finding/Data/Repositories/registration_repository.dart';
+import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/network/api_service.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
@@ -47,7 +47,7 @@ class RouteProviders {
       case RoutesName.SignUp:
         return ChangeNotifierProvider(
           create: (_) =>
-              SignUpViewModel(repository: RegistrationRepository(ApiService())),
+              SignUpViewModel(repository: SignUpRepository(ApiService())),
           child: child,
         );
       case RoutesName.skillLevelScreen:
