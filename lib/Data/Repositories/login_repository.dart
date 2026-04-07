@@ -23,18 +23,18 @@
 //     );
 //   }
 // }
+import 'package:sport_finding/Data/model/login_model.dart';
 import 'package:sport_finding/core/network/api_service.dart';
 
 class LoginRepository {
   final ApiService apiService;
 
   LoginRepository(this.apiService);
-
-  Future<void> postLogin(String email, String password) async {
+  Future<LoginModel> postLogin(String email, String password) async {
     final response = await apiService.post(
       "/api/v1/auth/login",
       data: {"email": email, "password": password},
     );
-    print(response);
+    return LoginModel.fromJson(response);
   }
 }

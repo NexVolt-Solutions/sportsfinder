@@ -6,11 +6,11 @@ class LoginModel {
   String? tokenType;
 
   LoginModel({
-    this.email,
-    this.password,
-    this.accessToken,
-    this.refreshToken,
-    this.tokenType,
+    this.email = "",
+    this.password = "",
+    this.accessToken = "",
+    this.refreshToken = "",
+    this.tokenType = "",
   });
 
   LoginModel.fromJson(Map<String, dynamic> json) {
@@ -22,12 +22,12 @@ class LoginModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['email'] = this.email;
-    data['password'] = this.password;
-    data['access_token'] = this.accessToken;
-    data['refresh_token'] = this.refreshToken;
-    data['token_type'] = this.tokenType;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['email'] = email;
+    data['password'] = password;
+    data['access_token'] = accessToken;
+    data['refresh_token'] = refreshToken;
+    data['token_type'] = tokenType;
     return data;
   }
 }

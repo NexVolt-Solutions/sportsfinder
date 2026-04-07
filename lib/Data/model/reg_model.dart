@@ -7,12 +7,12 @@ class RegistrationModel {
   bool? acceptTerms;
   String? avatarUrl;
   RegistrationModel({
-    this.fullName,
-    this.email,
-    this.phoneNumber,
-    this.password,
-    this.confirmPassword,
-    this.acceptTerms,
+    this.fullName = "",
+    this.email = "",
+    this.phoneNumber = "",
+    this.password = "",
+    this.confirmPassword = "",
+    this.acceptTerms = false,
     this.avatarUrl,
   });
 
