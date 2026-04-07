@@ -378,23 +378,42 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     CustomButton(
                       text: AppText.createMatch,
                       color: context.appColors.primary,
-                      onTap: () {
-                        if (!model.validateForCreate()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Please enter match title, date, time, and location.',
-                              ),
-                            ),
+                      onTap: () async {
+                        final vm = context.read<CreateMatchScreenViewModel>();
+                        String token = '';
+
+                        bool success = await vm.createMatchApi(token);
+
+                        if (success) {
+                          final match = vm.toCreatedDiscoveryMatch();
+
+                          Navigator.pushNamed(
+                            context,
+                            RoutesName.matchCreatedDoneScreen,
+                            arguments: match,
                           );
-                          return;
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Failed to create match")),
+                          );
                         }
-                        final created = model.toCreatedDiscoveryMatch();
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.matchCreatedDoneScreen,
-                          arguments: created,
-                        );
+
+                        // if (!model.validateForCreate()) {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     const SnackBar(
+                        //       content: Text(
+                        //         'Please enter match title, date, time, and location.',
+                        //       ),
+                        //     ),
+                        //   );
+                        //   return;
+                        // }
+                        // final created = model.toCreatedDiscoveryMatch();
+                        // Navigator.pushNamed(
+                        //   context,
+                        //   RoutesName.matchCreatedDoneScreen,
+                        //   arguments: created,
+                        // );
                       },
                     ),
                   ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/Repositories/create_match_repository.dart';
+import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
@@ -92,7 +94,9 @@ class RouteProviders {
         );
       case RoutesName.createMatchScreen:
         return ChangeNotifierProvider(
-          create: (_) => CreateMatchScreenViewModel(),
+          create: (_) => CreateMatchScreenViewModel(
+            repository: CreateMatchRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.matchCreatedDoneScreen:
