@@ -82,7 +82,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       borderRadius: BorderRadius.circular(context.radiusR(12)),
                       boxShadow: [
                         BoxShadow(
-                          color: context.appColors.primary.withOpacity(0.35),
+                          color: context.appColors.primary.withValues(
+                            alpha: 0.35,
+                          ),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -240,7 +242,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: context.appColors.onSurface.withOpacity(0.06),
+                color: context.appColors.onSurface.withValues(alpha: 0.06),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -259,7 +261,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 sizeBoxheight: context.h(4),
                 subText: msg.time,
                 subColor: isMe
-                    ? context.appColors.onPrimary.withOpacity(0.7)
+                    ? context.appColors.onPrimary.withValues(alpha: 0.7)
                     : context.appColors.greylight,
                 subFontSize: context.text(12),
                 subFontWeight: FontWeight.w400,

@@ -326,7 +326,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                   color: Colors.white
-                                                      .withOpacity(0.8),
+                                                      .withValues(alpha: 0.8),
                                                   shape: BoxShape.circle,
                                                 ),
                                                 child: IconButton(
