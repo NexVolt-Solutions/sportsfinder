@@ -62,10 +62,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       : null,
                 ),
                 SizedBox(height: context.h(12)),
-                NormalText(
-                  titleText: AppText.forgotPassword,
-                  titleStyle: context.appText.text14W400,
-                  titleColor: context.appColors.greylight,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.forgotPasswordScreen,
+                    );
+                  },
+                  child: NormalText(
+                    titleText: AppText.forgotPassword,
+                    titleStyle: context.appText.text14W400,
+                    titleColor: context.appColors.greylight,
+                  ),
                 ),
                 SizedBox(height: context.h(12)),
                 CustomButton(

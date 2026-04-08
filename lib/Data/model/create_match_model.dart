@@ -31,15 +31,15 @@ class CreateMatchModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['title'] = this.title;
-    data['description'] = this.description;
-    data['sport'] = this.sport;
-    data['facility_address'] = this.facilityAddress;
-    data['scheduled_at'] = this.scheduledAt;
-    data['duration_minutes'] = this.durationMinutes;
-    data['max_players'] = this.maxPlayers;
-    data['skill_level'] = this.skillLevel;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['title'] = title;
+    data['description'] = description;
+    data['sport'] = sport;
+    data['facility_address'] = facilityAddress;
+    data['scheduled_at'] = scheduledAt;
+    data['duration_minutes'] = durationMinutes;
+    data['max_players'] = maxPlayers;
+    data['skill_level'] = skillLevel;
     return data;
   }
 }

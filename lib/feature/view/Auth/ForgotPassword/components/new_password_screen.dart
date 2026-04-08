@@ -4,24 +4,24 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/email_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+class NewPasswordScreen extends StatefulWidget {
+  const NewPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  State<NewPasswordScreen> createState() => _NewPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _NewPasswordScreenState extends State<NewPasswordScreen> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<ForgotPasswordScreenViewModel>(
+    return Consumer<NewPasswordScreenViewModel>(
       builder: (context, model, _) {
         return Scaffold(
           body: MainFrame(
@@ -45,12 +45,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   SizedBox(height: context.h(20)),
                   TextFormFieldWidget(
-                    label: AppText.email,
-                    hintText: AppText.emailHit,
-                    controller: model.emailController,
+                    label: AppText.newPassword,
+                    hintText: AppText.passwordNewHit,
+                    controller: model.passwordController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return AppText.emailValidation;
+                        return AppText.passwordValidation;
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: context.h(16)),
+                  TextFormFieldWidget(
+                    label: AppText.confirmPassword,
+                    hintText: AppText.passwordHit,
+                    controller: model.confirmPasswordController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return AppText.confirmPasswordValidation;
                       }
                       return null;
                     },
@@ -60,7 +72,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        RoutesName.verificationScreen,
+                        RoutesName.forgotPasswordScreen,
                       );
                     },
                     text: AppText.sendResetCode,

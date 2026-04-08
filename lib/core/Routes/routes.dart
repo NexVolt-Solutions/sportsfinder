@@ -4,6 +4,9 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Providers/route_providers.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/new_password_screen.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/verification_screen.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
@@ -181,6 +184,30 @@ class Routes {
             const NotificationsScreen(),
           ),
         );
+      case RoutesName.forgotPasswordScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.forgotPasswordScreen,
+            const ForgotPasswordScreen(),
+          ),
+        );
+      case RoutesName.verificationScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.verificationScreen,
+            const VerificationScreen(),
+          ),
+        );
+      case RoutesName.newPasswordScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.newPasswordScreen,
+            const NewPasswordScreen(),
+          ),
+        );
       case RoutesName.followersScreen:
         return MaterialPageRoute(
           settings: settings,
@@ -216,11 +243,6 @@ class Routes {
           builder: (_) => const PrivateProfileScreen(),
         );
       case RoutesName.editProfileRoute:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const EditProfileScreen(),
-        );
-      case RoutesName.forgotPasswordScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const EditProfileScreen(),
