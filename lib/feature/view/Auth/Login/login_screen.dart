@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: context.h(20)),
                 TextFormFieldWidget(
-                  label: AppText.createPassword,
+                  label: AppText.password,
                   hintText: AppText.passwordHit,
                   controller: model.passwordController,
                   validator: (value) => value == null || value.isEmpty

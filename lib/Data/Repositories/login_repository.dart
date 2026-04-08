@@ -1,40 +1,31 @@
-// import 'package:sport_finding/core/Network/api_service.dart';
-
-// class LoginRepository {
-//   final ApiService apiService;
-//   LoginRepository(this.apiService);
-
-//   Future<void> postLogin(
-//     String email,
-//     String password,
-//     String accessToken,
-//     String refreshToken,
-//     String tokenType,
-//   ) async {
-//     await apiService.post(
-//       '/api/v1/auth/login',
-//       data: {
-//         "email": email,
-//         "password": password,
-//         "access_token": accessToken,
-//         "refresh_token": refreshToken,
-//         "token_type": tokenType,
-//       },
-//     );
-//   }
-// }
-import 'package:sport_finding/Data/model/login_model.dart';
-import 'package:sport_finding/core/network/api_service.dart';
+import 'package:sport_finding/core/Network/api_service.dart';
 
 class LoginRepository {
   final ApiService apiService;
 
-  LoginRepository(this.apiService);
-  Future<LoginModel> postLogin(String email, String password) async {
-    final response = await apiService.post(
-      "/api/v1/auth/login",
-      data: {"email": email, "password": password},
-    );
-    return LoginModel.fromJson(response);
+  LoginRepository({required this.apiService});
+
+  Future<String?> loginUser(
+    String email,
+    String password,
+    String accessToken,
+    String refreshToken,
+    String tokentype,
+  ) async {
+    try {
+      final response = await apiService.post(
+        '/api/v1/auth/login',
+        data: {
+          'email': email,
+          'password': password,
+          'accessToken': accessToken,
+          'refreshToken': refreshToken,
+          'tokentype': tokentype,
+        },
+      );
+      return response['message'];
+    } catch (e) {
+      return e.toString();
+    }
   }
 }

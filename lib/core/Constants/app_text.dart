@@ -32,7 +32,7 @@ class AppText {
   static const String fullNameValidation = "Name required";
   static const String passwordValidation = "password required";
   static const String emailValidation = "email required";
-  static const String createPassword = 'Create Password';
+  static const String password = 'Password';
   static const String beginner = 'Beginner';
   static const String casualPlayer = 'Casual Player';
   static const String football = 'Football';

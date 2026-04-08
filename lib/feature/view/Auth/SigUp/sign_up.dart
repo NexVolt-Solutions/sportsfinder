@@ -92,20 +92,19 @@ class SignUp extends StatelessWidget {
                     },
                   ),
                   SizedBox(height: context.h(16)),
+                  // TextFormFieldWidget(
+                  //   label: AppText.phoneNumber,
+                  //   hintText: AppText.phoneNumberHit,
+                  //   controller: model.phoneNumberController,
+                  //   validator: (value) {
+                  //     if (value == null || value.isEmpty) {
+                  //       return AppText.phoneNumberValidation;
+                  //     }
+                  //     return null;
+                  //   },
+                  // ),
                   TextFormFieldWidget(
-                    label: AppText.phoneNumber,
-                    hintText: AppText.phoneNumberHit,
-                    controller: model.phoneNumberController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppText.phoneNumberValidation;
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: context.h(16)),
-                  TextFormFieldWidget(
-                    label: AppText.createPassword,
+                    label: AppText.password,
                     hintText: AppText.passwordHit,
                     controller: model.passwordController,
                     validator: (value) {
@@ -147,7 +146,7 @@ class SignUp extends StatelessWidget {
 
                         Navigator.pushNamed(
                           context,
-                          RoutesName.skillLevelScreen,
+                          RoutesName.otpVerificationScreen,
                         );
                       } else {
                         ScaffoldMessenger.of(
@@ -155,7 +154,7 @@ class SignUp extends StatelessWidget {
                         ).showSnackBar(SnackBar(content: Text(error)));
                       }
                     },
-                    text: model.isLoading ? "Loading..." : AppText.signIn,
+                    text: AppText.signIn,
                     color: context.appColors.primary,
                   ),
                   // CustomButton(

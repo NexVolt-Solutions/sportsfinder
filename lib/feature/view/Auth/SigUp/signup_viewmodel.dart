@@ -6,7 +6,7 @@ import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 class SignUpViewModel extends ChangeNotifier {
   final SignUpRepository repository;
 
-  SignUpViewModel({ImagePicker? imagePicker, required this.repository})
+  SignUpViewModel({required this.repository, ImagePicker? imagePicker})
     : _imagePicker = imagePicker ?? ImagePicker();
 
   final ImagePicker _imagePicker;
@@ -37,38 +37,7 @@ class SignUpViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  Future<String?> registerUser() async {
-    if (!_formKey.currentState!.validate()) {
-      return "Please fill all fields";
-    }
-
-    if (_passwordController.text != _confirmPasswordController.text) {
-      return "Passwords do not match";
-    }
-
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      await repository.registerWithImage(
-        fullName: _fullNameController.text.trim(),
-        email: _emailController.text.trim(),
-        phoneNumber: _phoneNumberController.text.trim(),
-        password: _passwordController.text.trim(),
-        confirmPassword: _confirmPasswordController.text.trim(),
-        acceptTerms: true,
-        image: _profileImagePath != null ? File(_profileImagePath!) : null,
-      );
-
-      return null;
-    } catch (e) {
-      return e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
+  /// 🔥 PICK IMAGE
   Future<String?> pickProfileImageFromGallery() async {
     try {
       final file = await _imagePicker.pickImage(
@@ -86,6 +55,39 @@ class SignUpViewModel extends ChangeNotifier {
       return null;
     } catch (e) {
       return "Failed to pick image";
+    }
+  }
+
+  /// 🔥 REGISTER USER (MULTIPART)
+  Future<String?> registerUser() async {
+    if (!_formKey.currentState!.validate()) {
+      return "Please fill all fields";
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      return "Passwords do not match";
+    }
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await repository.signUpUser(
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneNumberController.text.trim(),
+        password: _passwordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
+        acceptTerms: true,
+        image: _profileImagePath != null ? File(_profileImagePath!) : null,
+      );
+
+      return null; // success
+    } catch (e) {
+      return e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

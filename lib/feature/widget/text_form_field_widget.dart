@@ -110,22 +110,44 @@ class TextFormFieldWidget extends StatelessWidget {
         filled: true,
         fillColor: c.transparent,
 
-        // 👇 IMPORTANT PART
         suffixIcon:
             customSuffix ??
             (suffixIcon != null ? Icon(suffixIcon, color: c.greyDark) : null),
 
+        // ✅ DEFAULT BORDER
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.greylight, width: 1),
         ),
+
+        // ✅ ENABLED
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.greylight, width: 1),
         ),
+
+        // ✅ FOCUSED (Primary Color)
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: BorderSide(color: c.primary, width: 1.5),
+          borderSide: BorderSide(color: c.primary, width: 1),
+        ),
+
+        // ❌ ERROR (Red)
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(context.radius(12)),
+          borderSide: BorderSide(color: c.error, width: 1),
+        ),
+
+        // 🔥 FOCUSED + ERROR (Primary instead of red if you want)
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(context.radius(12)),
+          borderSide: BorderSide(color: c.primary, width: 1),
+        ),
+
+        // (Optional) disable white hover issue
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(context.radius(12)),
+          borderSide: BorderSide(color: c.greylight, width: 1),
         ),
       ),
     );

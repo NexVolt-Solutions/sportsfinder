@@ -69,9 +69,12 @@ class LoginScreenViewModel extends ChangeNotifier {
       notifyListeners();
 
       // ✅ Correct API call (NO fake tokens)
-      await repository.postLogin(
+      await repository.loginUser(
         _emailController.text.trim(),
         _passwordController.text.trim(),
+        'access token here',
+        'refreshToken',
+        'tokenType',
       );
 
       return null;
