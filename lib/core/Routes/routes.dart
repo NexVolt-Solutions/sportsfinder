@@ -220,6 +220,11 @@ class Routes {
           settings: settings,
           builder: (_) => const EditProfileScreen(),
         );
+      case RoutesName.forgotPasswordScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const EditProfileScreen(),
+        );
 
       default:
         return MaterialPageRoute(
