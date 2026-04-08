@@ -27,12 +27,14 @@ class AppText {
   static const String email = 'Email';
   static const String emailHit = 'Enter Email';
   static const String passwordHit = 'Enter password';
+  static const String passwordNewHit = 'Enter new password';
   static const String confirmPasswordHit = 'Enter confirm password';
   static const String fullNameHit = 'Enter your name';
   static const String fullNameValidation = "Name required";
   static const String passwordValidation = "password required";
   static const String emailValidation = "email required";
   static const String password = 'Password';
+  static const String newPassword = 'New Password';
   static const String beginner = 'Beginner';
   static const String casualPlayer = 'Casual Player';
   static const String football = 'Football';
@@ -40,6 +42,8 @@ class AppText {
   static const String intermediate = 'Intermediate';
   static const String regularPlayer = 'Regular Player';
   static const String forgotPassword = 'Forget password?';
+  static const String forgotPasswordSubText =
+      'Enter your email address and we will send a verification code to reset your password';
   static const String fullName = 'Full Name';
   static const String signIn = 'Sign In';
   static const String advanced = 'Advanced';
@@ -391,4 +395,5 @@ class AppText {
 
   static const String hostMatchDetails = 'Host Match Details';
   static const String matchDetails = 'Match Details';
+  static const String sendResetCode = 'Send reset code';
 }

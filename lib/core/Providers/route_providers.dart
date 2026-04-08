@@ -5,6 +5,9 @@ import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/email_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_screen_view_model.dart';
@@ -122,6 +125,21 @@ class RouteProviders {
         );
       case RoutesName.notificationsScreen:
         return child;
+      case RoutesName.forgotPasswordScreen:
+        return ChangeNotifierProvider(
+          create: (_) => ForgotPasswordScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.verificationScreen:
+        return ChangeNotifierProvider(
+          create: (_) => VerificationScreenViewModel(),
+          child: child,
+        );
+      case RoutesName.newPasswordScreen:
+        return ChangeNotifierProvider(
+          create: (_) => NewPasswordScreenViewModel(),
+          child: child,
+        );
 
       default:
         return child;

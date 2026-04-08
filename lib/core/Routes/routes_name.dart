@@ -29,4 +29,6 @@ class RoutesName {
   static const String privateProfileScreen = 'private_profile_screen';
   static const String editProfileRoute = 'edit_profile_screen';
   static const String forgotPasswordScreen = 'forgot_password_screen';
+  static const String verificationScreen = 'verification_screen';
+  static const String newPasswordScreen = 'new_password_screen';
 }
