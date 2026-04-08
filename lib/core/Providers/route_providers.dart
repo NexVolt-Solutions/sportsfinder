@@ -99,7 +99,9 @@ class RouteProviders {
         );
       case RoutesName.createMatchScreen:
         return ChangeNotifierProvider(
-          create: (_) => CreateMatchScreenViewModel(),
+          create: (_) => CreateMatchScreenViewModel(
+            repository: CreateMatchRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.matchCreatedDoneScreen:
