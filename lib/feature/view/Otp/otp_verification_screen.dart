@@ -21,10 +21,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
-      padding: EdgeInsets.zero,
+      // padding: context.padSym(h: 12, v: 16),
       width: context.h(45),
       height: context.h(45),
-
       textStyle: context.appText.text16W600.copyWith(
         color: context.appColors.onSurface,
       ),

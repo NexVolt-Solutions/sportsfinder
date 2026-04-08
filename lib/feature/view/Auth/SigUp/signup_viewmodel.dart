@@ -1,8 +1,12 @@
-import 'package:flutter/widgets.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 
 class SignUpViewModel extends ChangeNotifier {
-  SignUpViewModel({ImagePicker? imagePicker})
+  final SignUpRepository repository;
+
+  SignUpViewModel({required this.repository, ImagePicker? imagePicker})
     : _imagePicker = imagePicker ?? ImagePicker();
 
   final ImagePicker _imagePicker;
@@ -30,8 +34,10 @@ class SignUpViewModel extends ChangeNotifier {
   String? _profileImagePath;
   String? get profileImagePath => _profileImagePath;
 
-  /// Picks an image from the gallery. Returns `null` on success or if the user
-  /// cancels; returns a short error message on failure (show in UI).
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  /// 🔥 PICK IMAGE
   Future<String?> pickProfileImageFromGallery() async {
     try {
       final file = await _imagePicker.pickImage(
@@ -40,12 +46,48 @@ class SignUpViewModel extends ChangeNotifier {
         maxHeight: 1024,
         imageQuality: 85,
       );
+
       if (file == null) return null;
+
       _profileImagePath = file.path;
       notifyListeners();
+
       return null;
-    } catch (_) {
-      return 'Could not open gallery';
+    } catch (e) {
+      return "Failed to pick image";
+    }
+  }
+
+  /// 🔥 REGISTER USER (MULTIPART)
+  Future<String?> registerUser() async {
+    if (!_formKey.currentState!.validate()) {
+      return "Please fill all fields";
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      return "Passwords do not match";
+    }
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await repository.signUpUser(
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneNumberController.text.trim(),
+        password: _passwordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
+        acceptTerms: true,
+        image: _profileImagePath != null ? File(_profileImagePath!) : null,
+      );
+
+      return null; // success
+    } catch (e) {
+      return e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

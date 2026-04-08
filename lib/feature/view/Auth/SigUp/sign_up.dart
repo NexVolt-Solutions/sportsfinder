@@ -92,20 +92,19 @@ class SignUp extends StatelessWidget {
                     },
                   ),
                   SizedBox(height: context.h(16)),
+                  // TextFormFieldWidget(
+                  //   label: AppText.phoneNumber,
+                  //   hintText: AppText.phoneNumberHit,
+                  //   controller: model.phoneNumberController,
+                  //   validator: (value) {
+                  //     if (value == null || value.isEmpty) {
+                  //       return AppText.phoneNumberValidation;
+                  //     }
+                  //     return null;
+                  //   },
+                  // ),
                   TextFormFieldWidget(
-                    label: AppText.phoneNumber,
-                    hintText: AppText.phoneNumberHit,
-                    controller: model.phoneNumberController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppText.phoneNumberValidation;
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: context.h(16)),
-                  TextFormFieldWidget(
-                    label: AppText.createPassword,
+                    label: AppText.password,
                     hintText: AppText.passwordHit,
                     controller: model.passwordController,
                     validator: (value) {
@@ -131,13 +130,41 @@ class SignUp extends StatelessWidget {
                   const TermsCheckbox(),
                   SizedBox(height: context.h(8)),
                   CustomButton(
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      RoutesName.skillLevelScreen,
-                    ),
+                    onTap: () async {
+                      final vm = context.read<SignUpViewModel>();
+
+                      final error = await vm.registerUser();
+
+                      if (!context.mounted) return;
+
+                      if (error == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Registration Successful"),
+                          ),
+                        );
+
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.otpVerificationScreen,
+                        );
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(error)));
+                      }
+                    },
                     text: AppText.signIn,
                     color: context.appColors.primary,
                   ),
+                  // CustomButton(
+                  //   onTap: () => Navigator.pushNamed(
+                  //     context,
+                  //     RoutesName.skillLevelScreen,
+                  //   ),
+                  //   text: AppText.signIn,
+                  //   color: context.appColors.primary,
+                  // ),
                   SizedBox(height: context.h(12)),
                   SocialButtonWidget(
                     imagePath: AppAssets.gmailIcon,
