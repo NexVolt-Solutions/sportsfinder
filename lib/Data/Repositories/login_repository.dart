@@ -5,7 +5,7 @@ class LoginRepository {
 
   LoginRepository({required this.apiService});
 
-  Future<String?> loginUser(
+  Future<dynamic> loginUser(
     String email,
     String password,
     String accessToken,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/Repositories/create_match_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
@@ -78,7 +79,9 @@ class RouteProviders {
         );
       case RoutesName.otpVerificationScreen:
         return ChangeNotifierProvider(
-          create: (_) => OtpVerificationScreenViewModel(),
+          create: (_) => OtpVerificationScreenViewModel(
+            repository: OtpVerificationRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.allUpComingMatchesScreen:
