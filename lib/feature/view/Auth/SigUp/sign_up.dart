@@ -326,9 +326,10 @@ class SignUp extends StatelessWidget {
                         );
                         Navigator.pushNamed(
                           context,
-                          RoutesName.otpVerificationScreen,
+                          RoutesName
+                              .otpVerificationScreen, // ← check this route name
                           arguments: vm.emailController.text
-                              .trim(), // ✅ sends email
+                              .trim(), // ✅ must pass email
                         );
                       } else {
                         ScaffoldMessenger.of(

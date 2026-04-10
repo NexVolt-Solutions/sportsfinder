@@ -57,11 +57,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   SizedBox(height: context.h(20)),
                   CustomButton(
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        RoutesName.verificationScreen,
-                      );
+                    onTap: () async {
+                      final result = await model.forgotPassword();
+                      if (result == null) {
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.verificationScreen,
+                          arguments: model.emailController.text.trim(),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(result)));
+                      }
                     },
                     text: AppText.sendResetCode,
                     color: context.appColors.primary,

@@ -8,7 +8,7 @@ class AppText {
   static const String noRouteFound = 'no Route Found';
   static const String verifyYourAccount = 'Verify Your Account';
   static const String enterThe6DigitCodeWeHaveSentToYourEmail =
-      'Enter the 6-digit that we have sent to yahoo@gmail.com';
+      'Enter the 6-digit that we have sent to [EMAIL_ADDRESS]';
   static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
   static const String skip = 'Skip';
   static const String sportFinding = 'SportFinding';
