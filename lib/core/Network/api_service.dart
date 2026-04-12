@@ -98,6 +98,7 @@
 //   }
 // }
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
@@ -178,59 +179,68 @@ class ApiService {
   }
 
   /// ✅ MULTIPART (Image Upload) - FIXED
-  Future<dynamic> postMultipart(
+  Future<Map<String, dynamic>> postMultipart(
     String endpoint, {
     required Map<String, String> fields,
-    String? filePath, // 📱 Mobile only
-    List<int>? fileBytes, // 🌐 Web only
-    String? fileName, // 🌐 Web only
+    File? file,
+    List<int>? fileBytes,
+    String? fileName,
     String fileField = "image",
     String? token,
   }) async {
     try {
-      // ✅ Create proper URI
       final uri = Uri.parse("$baseUrl$endpoint");
 
       print("📤 Uploading to: $uri");
       print("📝 Fields: $fields");
-      print("🖼️ File: ${file?.path}");
 
-      // ✅ Create multipart request
       var request = http.MultipartRequest("POST", uri);
 
-      // ✅ Add headers
       request.headers.addAll({
         "Accept": "application/json",
         if (token != null) "Authorization": "Bearer $token",
       });
 
-      // ✅ Add fields
       request.fields.addAll(fields);
 
-      // ✅ Add file if exists
-      if (file != null && await file.exists()) {
-        final fileExtension = file.path.split('.').last.toLowerCase();
-        final mimeType = _getMimeType(fileExtension);
-
-        print("📎 Adding file: ${file.path}");
-        print("🎨 MIME type: $mimeType");
-
+      // ✅ Mobile: File object
+      if (!kIsWeb && file != null) {
+        if (await file.exists()) {
+          final ext = file.path.split('.').last.toLowerCase();
+          print("📎 Adding file (mobile): ${file.path}");
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              fileField,
+              file.path,
+              contentType: http.MediaType(
+                'image',
+                ext == 'jpg' ? 'jpeg' : ext,
+              ), // ✅ FIXED
+            ),
+          );
+        } else {
+          print("⚠️ File does not exist: ${file.path}");
+        }
+      }
+      // ✅ Web: bytes
+      else if (kIsWeb && fileBytes != null && fileName != null) {
+        final ext = fileName.split('.').last.toLowerCase();
+        print("📎 Adding file (web): $fileName");
         request.files.add(
-          await http.MultipartFile.fromPath(
+          http.MultipartFile.fromBytes(
             fileField,
-            file.path,
-            // contentType: http_parser.MediaType.parse(mimeType), // Optional
+            fileBytes,
+            filename: fileName,
+            contentType: http.MediaType(
+              'image',
+              ext == 'jpg' ? 'jpeg' : ext,
+            ), // ✅ FIXED
           ),
         );
-      } else if (file != null) {
-        print("⚠️ File does not exist: ${file.path}");
       }
 
-      // ✅ Send request
       print("🚀 Sending request...");
-      var streamedResponse = await request.send();
-
-      // ✅ Get response
+      final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
       print("📥 Status Code: ${response.statusCode}");
@@ -244,23 +254,6 @@ class ApiService {
     } catch (e) {
       print("❌ Error in postMultipart: $e");
       rethrow;
-    }
-  }
-
-  /// Helper: Get MIME type from file extension
-  String _getMimeType(String extension) {
-    switch (extension) {
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      default:
-        return 'application/octet-stream';
     }
   }
 }
