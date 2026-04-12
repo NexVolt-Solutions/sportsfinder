@@ -134,13 +134,19 @@ class SignUpViewModel extends ChangeNotifier {
   TextEditingController get confirmPasswordController =>
       _confirmPasswordController;
 
-  String? _profileImagePath;
-  String? get profileImagePath => _profileImagePath;
+  // ✅ Removed File — now works on Web + Mobile
+  String? _profileImagePath; // 📱 Mobile
+  List<int>? _profileImageBytes; // 🌐 Web
+  String? _profileImageName; // 🌐 Web
+
+  // ✅ For displaying image preview on both platforms
+  XFile? _pickedXFile;
+  XFile? get pickedXFile => _pickedXFile;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  /// 🔥 PICK IMAGE
+  /// ✅ PICK IMAGE - Works on Web and Mobile
   Future<String?> pickProfileImageFromGallery() async {
     try {
       final file = await _imagePicker.pickImage(
@@ -213,7 +219,9 @@ class SignUpViewModel extends ChangeNotifier {
         password: _passwordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),
         acceptTerms: true,
-        image: _profileImagePath != null ? File(_profileImagePath!) : null,
+        imagePath: kIsWeb ? null : _profileImagePath, // 📱 Mobile
+        imageBytes: kIsWeb ? _profileImageBytes : null, // 🌐 Web
+        imageName: kIsWeb ? _profileImageName : null, // 🌐 Web
       );
 
       print("✅ Registration successful!");

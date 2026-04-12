@@ -98,7 +98,7 @@
 //   }
 // }
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -114,8 +114,9 @@ class ApiService {
 
   /// ✅ GET
   Future<dynamic> get(String endpoint, {String? token}) async {
+    final url = "$baseUrl$endpoint";
     final response = await http.get(
-      Uri.parse("$baseUrl$endpoint"),
+      Uri.parse(url),
       headers: getHeaders(token: token),
     );
 
@@ -126,13 +127,19 @@ class ApiService {
     }
   }
 
-  /// ✅ POST (CREATE)
+  /// ✅ POST
   Future<dynamic> post(String endpoint, {dynamic data, String? token}) async {
+    final url = "$baseUrl$endpoint";
     final response = await http.post(
-      Uri.parse("$baseUrl$endpoint"),
+      Uri.parse(url),
       headers: getHeaders(token: token),
-      body: jsonEncode(data),
+      body: data != null ? jsonEncode(data) : null,
     );
+    print("Url: $url");
+    print("Headers: ${response.headers}");
+    print("Request: ${response.request}");
+    print("Status Code: ${response.statusCode}");
+    print("Body: ${response.body}");
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
@@ -141,12 +148,13 @@ class ApiService {
     }
   }
 
-  /// ✅ PUT (UPDATE)
+  /// ✅ PUT
   Future<dynamic> put(String endpoint, {dynamic data, String? token}) async {
+    final url = "$baseUrl$endpoint";
     final response = await http.put(
-      Uri.parse("$baseUrl$endpoint"),
+      Uri.parse(url),
       headers: getHeaders(token: token),
-      body: jsonEncode(data),
+      body: data != null ? jsonEncode(data) : null,
     );
 
     if (response.statusCode == 200) {
@@ -157,9 +165,10 @@ class ApiService {
   }
 
   /// ✅ DELETE
-  Future<void> delete(String endpoint, {String? token}) async {
+  Future<dynamic> delete(String endpoint, {String? token}) async {
+    final url = "$baseUrl$endpoint";
     final response = await http.delete(
-      Uri.parse("$baseUrl$endpoint"),
+      Uri.parse(url),
       headers: getHeaders(token: token),
     );
 
@@ -172,7 +181,9 @@ class ApiService {
   Future<dynamic> postMultipart(
     String endpoint, {
     required Map<String, String> fields,
-    File? file,
+    String? filePath, // 📱 Mobile only
+    List<int>? fileBytes, // 🌐 Web only
+    String? fileName, // 🌐 Web only
     String fileField = "image",
     String? token,
   }) async {

@@ -65,6 +65,9 @@ class LoginScreenViewModel extends ChangeNotifier {
     }
 
     try {
+      print(_emailController.text.trim());
+      print(_passwordController.text.trim());
+
       _isLoading = true;
       notifyListeners();
 

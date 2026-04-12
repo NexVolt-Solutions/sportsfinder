@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/Repositories/create_match_repository.dart';
+import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
-import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/email_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
@@ -20,7 +22,7 @@ import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choo
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboarding_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
@@ -78,7 +80,9 @@ class RouteProviders {
         );
       case RoutesName.otpVerificationScreen:
         return ChangeNotifierProvider(
-          create: (_) => OtpVerificationScreenViewModel(),
+          create: (_) => OtpVerificationScreenViewModel(
+            repository: OtpVerificationRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.allUpComingMatchesScreen:
@@ -127,20 +131,26 @@ class RouteProviders {
         return child;
       case RoutesName.forgotPasswordScreen:
         return ChangeNotifierProvider(
-          create: (_) => ForgotPasswordScreenViewModel(),
+          create: (_) => ForgotPasswordScreenViewModel(
+            repository: ForgotPasswordRepository(apiService: ApiService()),
+          ),
           child: child,
         );
+
+      // ✅ UNCOMMENTED AND FIXED
       case RoutesName.verificationScreen:
         return ChangeNotifierProvider(
-          create: (_) => VerificationScreenViewModel(),
+          create: (_) => ForgotPasswordScreenViewModel(
+            repository: ForgotPasswordRepository(apiService: ApiService()),
+          ),
           child: child,
         );
+
       case RoutesName.newPasswordScreen:
         return ChangeNotifierProvider(
           create: (_) => NewPasswordScreenViewModel(),
           child: child,
         );
-
       default:
         return child;
     }

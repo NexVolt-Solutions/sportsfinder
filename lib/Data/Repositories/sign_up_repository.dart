@@ -47,7 +47,9 @@ class SignUpRepository {
     required String password,
     required String confirmPassword,
     required bool acceptTerms,
-    File? image,
+    String? imagePath, // 📱 Mobile
+    List<int>? imageBytes, // 🌐 Web
+    String? imageName, // 🌐 Web
   }) async {
     try {
       print("🔵 SignUpRepository - Starting registration");
