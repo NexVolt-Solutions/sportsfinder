@@ -31,7 +31,7 @@ import 'package:sport_finding/feature/view/Legal/privacy_policy_screen.dart';
 import 'package:sport_finding/feature/view/Legal/terms_of_service_screen.dart';
 import 'package:sport_finding/feature/view/Notifications/notifications_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
-import 'package:sport_finding/feature/view/Otp/otp_verification_screen.dart';
+import 'package:sport_finding/feature/view/Auth/Otp/otp_verification_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
 import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 
