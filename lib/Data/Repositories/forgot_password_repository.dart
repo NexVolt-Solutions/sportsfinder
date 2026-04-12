@@ -46,7 +46,7 @@ class ForgotPasswordRepository {
   // ✅ FIXED: Resend OTP uses same forgot-password endpoint
   Future<dynamic> resendOtp({required String email}) async {
     final response = await apiService.post(
-      '/api/v1/auth/forgot-password', // ✅ Changed from resend-verification-otp
+      '/api/v1/auth/resend-verification-otp', // ✅ Changed from resend-verification-otp
       data: {'email': email},
     );
     print(response);
@@ -59,7 +59,7 @@ class ForgotPasswordRepository {
     required String otp,
   }) async {
     return await apiService.post(
-      '/api/v1/auth/verify-reset-otp', // ✅ check your API docs for correct endpoint
+      '/api/v1/auth/verify-email', // ✅ check your API docs for correct endpoint
       data: {'email': email, 'otp': otp},
     );
   }
