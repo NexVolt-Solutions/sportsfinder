@@ -1,212 +1,100 @@
-// // import 'dart:convert';
-// // import 'dart:io';
-// // import 'package:http/http.dart' as http;
-
-// // class ApiService {
-// //   final String baseUrl = " https://api.sportfinding.com";
-// //   Map<String, String> getHeaders({String? token}) {
-// //     return {
-// //       "Content-Type": "application/json",
-// //       if (token != null) "Authorization": "Bearer $token",
-// //     };
-// //   }
-
-// //   /// ✅ GET
-// //   Future<dynamic> get(String endpoint, {String? token}) async {
-// //     final response = await http.get(
-// //       Uri.parse("$baseUrl$endpoint"),
-// //       headers: getHeaders(token: token),
-// //     );
-
-// //     if (response.statusCode == 200) {
-// //       return jsonDecode(response.body);
-// //     } else {
-// //       throw Exception("Failed to load data");
-// //     }
-// //   }
-
-// //   /// ✅ POST (CREATE)
-// //   Future<dynamic> post(String endpoint, {dynamic data, String? token}) async {
-// //     final response = await http.post(
-// //       Uri.parse("$baseUrl$endpoint"),
-// //       headers: getHeaders(token: token),
-// //       body: jsonEncode(data),
-// //     );
-
-// //     if (response.statusCode == 201) {
-// //       return jsonDecode(response.body);
-// //     } else {
-// //       throw Exception("Failed to create data");
-// //     }
-// //   }
-
-// //   /// ✅ PUT (UPDATE)
-// //   Future<dynamic> put(String endpoint, {dynamic data, String? token}) async {
-// //     final response = await http.put(
-// //       Uri.parse("$baseUrl$endpoint"),
-// //       headers: getHeaders(token: token),
-// //       body: jsonEncode(data),
-// //     );
-
-// //     if (response.statusCode == 200) {
-// //       return jsonDecode(response.body);
-// //     } else {
-// //       throw Exception("Failed to update data");
-// //     }
-// //   }
-
-// //   /// ✅ DELETE
-// //   Future<void> delete(String endpoint, {String? token}) async {
-// //     final response = await http.delete(
-// //       Uri.parse("$baseUrl$endpoint"),
-// //       headers: getHeaders(token: token),
-// //     );
-
-// //     if (response.statusCode != 200) {
-// //       throw Exception("Failed to delete data");
-// //     }
-// //   }
-
-// //   /// ✅ MULTIPART (Image Upload)
-// //   Future<dynamic> postMultipart(
-// //     String endpoint, {
-// //     required Map<String, String> fields,
-// //     File? file,
-// //     String fileField = "image",
-// //   }) async {
-// //     var request = http.MultipartRequest("POST", Uri.parse("$baseUrl$endpoint"));
-
-// //     /// 🔥 Add fields (text data)
-// //     request.fields.addAll(fields);
-
-// //     /// 🔥 Add file
-// //     if (file != null) {
-// //       request.files.add(
-// //         await http.MultipartFile.fromPath(fileField, file.path),
-// //       );
-// //     }
-
-// //     var response = await request.send();
-
-// //     final resBody = await response.stream.bytesToString();
-
-// //     if (response.statusCode == 200 || response.statusCode == 201) {
-// //       return jsonDecode(resBody);
-// //     } else {
-// //       throw Exception("Image upload failed");
-// //     }
-// //   }
-// // }
 // import 'dart:convert';
 // import 'dart:io';
 // import 'package:http/http.dart' as http;
 
 // class ApiService {
-//   /// 🔗 Base URL (Fixed: removed extra space)
 //   final String baseUrl = "https://api.sportfinding.com";
-
-//   /// 📌 Common Headers
-//   Map<String, String> getHeaders({String? token, bool isMultipart = false}) {
-//     final headers = <String, String>{};
-
-//     // Do NOT set Content-Type for multipart
-//     if (!isMultipart) {
-//       headers["Content-Type"] = "application/json";
-//       headers["Accept"] = "application/json";
-//     }
-
-//     if (token != null && token.isNotEmpty) {
-//       headers["Authorization"] = "Bearer $token";
-//     }
-
-//     return headers;
+//   Map<String, String> getHeaders({String? token}) {
+//     return {
+//       "Content-Type": "application/json",
+//       if (token != null) "Authorization": "Bearer $token",
+//     };
 //   }
 
-//   /// 📌 Handle API Responses
-//   dynamic _handleResponse(http.Response response) {
-//     final statusCode = response.statusCode;
-//     final responseBody = response.body.isNotEmpty
-//         ? jsonDecode(response.body)
-//         : null;
-
-//     if (statusCode >= 200 && statusCode < 300) {
-//       return responseBody;
-//     } else {
-//       throw Exception("API Error: $statusCode\nResponse: ${response.body}");
-//     }
-//   }
-
-//   /// ✅ GET Request
+//   /// ✅ GET
 //   Future<dynamic> get(String endpoint, {String? token}) async {
 //     final response = await http.get(
 //       Uri.parse("$baseUrl$endpoint"),
 //       headers: getHeaders(token: token),
 //     );
 
-//     return _handleResponse(response);
+//     if (response.statusCode == 200) {
+//       return jsonDecode(response.body);
+//     } else {
+//       throw Exception("Failed to load data");
+//     }
 //   }
 
-//   /// ✅ POST Request (CREATE)
+//   /// ✅ POST (CREATE)
 //   Future<dynamic> post(String endpoint, {dynamic data, String? token}) async {
 //     final response = await http.post(
 //       Uri.parse("$baseUrl$endpoint"),
 //       headers: getHeaders(token: token),
-//       body: data != null ? jsonEncode(data) : null,
+//       body: jsonEncode(data),
 //     );
 
-//     return _handleResponse(response);
+//     if (response.statusCode == 201) {
+//       return jsonDecode(response.body);
+//     } else {
+//       throw Exception("Failed to create data");
+//     }
 //   }
 
-//   /// ✅ PUT Request (UPDATE)
+//   /// ✅ PUT (UPDATE)
 //   Future<dynamic> put(String endpoint, {dynamic data, String? token}) async {
 //     final response = await http.put(
 //       Uri.parse("$baseUrl$endpoint"),
 //       headers: getHeaders(token: token),
-//       body: data != null ? jsonEncode(data) : null,
+//       body: jsonEncode(data),
 //     );
 
-//     return _handleResponse(response);
+//     if (response.statusCode == 200) {
+//       return jsonDecode(response.body);
+//     } else {
+//       throw Exception("Failed to update data");
+//     }
 //   }
 
-//   /// ✅ DELETE Request
-//   Future<dynamic> delete(String endpoint, {String? token}) async {
+//   /// ✅ DELETE
+//   Future<void> delete(String endpoint, {String? token}) async {
 //     final response = await http.delete(
 //       Uri.parse("$baseUrl$endpoint"),
 //       headers: getHeaders(token: token),
 //     );
 
-//     return _handleResponse(response);
+//     if (response.statusCode != 200) {
+//       throw Exception("Failed to delete data");
+//     }
 //   }
 
-//   /// ✅ MULTIPART POST (Image/File Upload)
+//   /// ✅ MULTIPART (Image Upload)
 //   Future<dynamic> postMultipart(
 //     String endpoint, {
 //     required Map<String, String> fields,
 //     File? file,
 //     String fileField = "image",
-//     String? token,
 //   }) async {
-//     final uri = Uri.parse("$baseUrl$endpoint");
+//     var request = http.MultipartRequest("POST", Uri.parse("$baseUrl$endpoint"));
 
-//     final request = http.MultipartRequest("POST", uri);
-
-//     // Add headers (without Content-Type)
-//     request.headers.addAll(getHeaders(token: token, isMultipart: true));
-
-//     // Add text fields
+//     /// 🔥 Add fields (text data)
 //     request.fields.addAll(fields);
 
-//     // Add file
+//     /// 🔥 Add file
 //     if (file != null) {
 //       request.files.add(
 //         await http.MultipartFile.fromPath(fileField, file.path),
 //       );
 //     }
 
-//     final streamedResponse = await request.send();
-//     final response = await http.Response.fromStream(streamedResponse);
+//     var response = await request.send();
 
-//     return _handleResponse(response);
+//     final resBody = await response.stream.bytesToString();
+
+//     if (response.statusCode == 200 || response.statusCode == 201) {
+//       return jsonDecode(resBody);
+//     } else {
+//       throw Exception("Image upload failed");
+//     }
 //   }
 // }
 import 'dart:convert';
@@ -216,32 +104,12 @@ import 'package:http/http.dart' as http;
 class ApiService {
   final String baseUrl = "https://api.sportfinding.com";
 
-  Map<String, String> getHeaders({String? token, bool isMultipart = false}) {
-    final headers = <String, String>{};
-
-    if (!isMultipart) {
-      headers["Content-Type"] = "application/json";
-      headers["Accept"] = "application/json";
-    }
-
-    if (token != null && token.isNotEmpty) {
-      headers["Authorization"] = "Bearer $token";
-    }
-
-    return headers;
-  }
-
-  dynamic _handleResponse(http.Response response) {
-    final statusCode = response.statusCode;
-    final responseBody = response.body.isNotEmpty
-        ? jsonDecode(response.body)
-        : null;
-
-    if (statusCode >= 200 && statusCode < 300) {
-      return responseBody;
-    } else {
-      throw Exception("API Error: $statusCode\nResponse: ${response.body}");
-    }
+  Map<String, String> getHeaders({String? token}) {
+    return {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      if (token != null) "Authorization": "Bearer $token",
+    };
   }
 
   /// ✅ GET
@@ -251,12 +119,12 @@ class ApiService {
       Uri.parse(url),
       headers: getHeaders(token: token),
     );
-    print("Url: $url");
-    print("Headers: ${response.headers}");
-    print("Request: ${response.request}");
-    print("Status Code: ${response.statusCode}");
-    print("Body: ${response.body}");
-    return _handleResponse(response);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load data: ${response.body}");
+    }
   }
 
   /// ✅ POST
@@ -273,7 +141,11 @@ class ApiService {
     print("Status Code: ${response.statusCode}");
     print("Body: ${response.body}");
 
-    return _handleResponse(response);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to create data: ${response.body}");
+    }
   }
 
   /// ✅ PUT
@@ -284,12 +156,12 @@ class ApiService {
       headers: getHeaders(token: token),
       body: data != null ? jsonEncode(data) : null,
     );
-    print("Url: $url");
-    print("Headers: ${response.headers}");
-    print("Request: ${response.request}");
-    print("Status Code: ${response.statusCode}");
-    print("Body: ${response.body}");
-    return _handleResponse(response);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to update data: ${response.body}");
+    }
   }
 
   /// ✅ DELETE
@@ -299,15 +171,13 @@ class ApiService {
       Uri.parse(url),
       headers: getHeaders(token: token),
     );
-    print("Url: $url");
-    print("Headers: ${response.headers}");
-    print("Request: ${response.request}");
-    print("Status Code: ${response.statusCode}");
-    print("Body: ${response.body}");
-    return _handleResponse(response);
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to delete data: ${response.body}");
+    }
   }
 
-  /// ✅ MULTIPART - Works on Web (Chrome) AND Mobile
+  /// ✅ MULTIPART (Image Upload) - FIXED
   Future<dynamic> postMultipart(
     String endpoint, {
     required Map<String, String> fields,
@@ -317,41 +187,80 @@ class ApiService {
     String fileField = "image",
     String? token,
   }) async {
-    final url = "$baseUrl$endpoint";
-    final uri = Uri.parse(url);
-    final request = http.MultipartRequest("POST", uri);
+    try {
+      // ✅ Create proper URI
+      final uri = Uri.parse("$baseUrl$endpoint");
 
-    request.headers.addAll(getHeaders(token: token, isMultipart: true));
-    request.fields.addAll(fields);
+      print("📤 Uploading to: $uri");
+      print("📝 Fields: $fields");
+      print("🖼️ File: ${file?.path}");
 
-    if (kIsWeb) {
-      // 🌐 WEB - use bytes (no dart:io)
-      if (fileBytes != null && fileName != null) {
+      // ✅ Create multipart request
+      var request = http.MultipartRequest("POST", uri);
+
+      // ✅ Add headers
+      request.headers.addAll({
+        "Accept": "application/json",
+        if (token != null) "Authorization": "Bearer $token",
+      });
+
+      // ✅ Add fields
+      request.fields.addAll(fields);
+
+      // ✅ Add file if exists
+      if (file != null && await file.exists()) {
+        final fileExtension = file.path.split('.').last.toLowerCase();
+        final mimeType = _getMimeType(fileExtension);
+
+        print("📎 Adding file: ${file.path}");
+        print("🎨 MIME type: $mimeType");
+
         request.files.add(
-          http.MultipartFile.fromBytes(
+          await http.MultipartFile.fromPath(
             fileField,
-            fileBytes,
-            filename: fileName,
+            file.path,
+            // contentType: http_parser.MediaType.parse(mimeType), // Optional
           ),
         );
+      } else if (file != null) {
+        print("⚠️ File does not exist: ${file.path}");
       }
-    } else {
-      // 📱 MOBILE - use file path
-      if (filePath != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(fileField, filePath),
-        );
+
+      // ✅ Send request
+      print("🚀 Sending request...");
+      var streamedResponse = await request.send();
+
+      // ✅ Get response
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print("📥 Status Code: ${response.statusCode}");
+      print("📥 Response Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Upload failed: ${response.body}");
       }
+    } catch (e) {
+      print("❌ Error in postMultipart: $e");
+      rethrow;
     }
+  }
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    print("Url: $url");
-    print("Headers: ${request.headers}");
-    print("Request: ${request.files}");
-    print("Status Code: ${request.fields}");
-    print("Body: ${request.contentLength}");
-
-    return _handleResponse(response);
+  /// Helper: Get MIME type from file extension
+  String _getMimeType(String extension) {
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream';
+    }
   }
 }

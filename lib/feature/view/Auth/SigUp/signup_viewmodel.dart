@@ -58,6 +58,7 @@
 //     }
 //   }
 
+//   /// 🔥 REGISTER USER (MULTIPART)
 //   Future<String?> registerUser() async {
 //     if (!_formKey.currentState!.validate()) {
 //       return "Please fill all fields";
@@ -70,6 +71,7 @@
 //     try {
 //       _isLoading = true;
 //       notifyListeners();
+//       print(_profileImagePath);
 
 //       await repository.signUpUser(
 //         fullName: _fullNameController.text.trim(),
@@ -100,18 +102,17 @@
 //     super.dispose();
 //   }
 // }
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 
 class SignUpViewModel extends ChangeNotifier {
   final SignUpRepository repository;
+  final ImagePicker _imagePicker;
 
   SignUpViewModel({required this.repository, ImagePicker? imagePicker})
     : _imagePicker = imagePicker ?? ImagePicker();
-
-  final ImagePicker _imagePicker;
 
   final _formKey = GlobalKey<FormState>();
   GlobalKey<FormState> get formKey => _formKey;
@@ -155,54 +156,66 @@ class SignUpViewModel extends ChangeNotifier {
         imageQuality: 85,
       );
 
-      if (file == null) return null;
+      if (file == null) {
+        print("⚠️ No image selected");
+        return null;
+      }
 
-      _pickedXFile = file;
+      _profileImagePath = file.path;
+      print("✅ Image picked: $_profileImagePath");
 
-      if (kIsWeb) {
-        // 🌐 Web: read as bytes
-        _profileImageBytes = await file.readAsBytes().then((b) => b.toList());
-        _profileImageName = file.name;
-        _profileImagePath = null;
+      // Verify file exists
+      final imageFile = File(_profileImagePath!);
+      if (await imageFile.exists()) {
+        final fileSize = await imageFile.length();
+        print("📏 File size: ${(fileSize / 1024).toStringAsFixed(2)} KB");
       } else {
-        // 📱 Mobile: use path
-        _profileImagePath = file.path;
-        _profileImageBytes = null;
-        _profileImageName = null;
+        print("❌ File does not exist!");
+        _profileImagePath = null;
+        return "File does not exist";
       }
 
       notifyListeners();
       return null;
     } catch (e) {
+      print("❌ Error picking image: $e");
       return "Failed to pick image: $e";
     }
   }
 
-  /// ✅ REGISTER USER - Works on Web and Mobile
+  /// 🔥 REGISTER USER
   Future<String?> registerUser() async {
+    print("🔵 Starting registration...");
+
     if (!_formKey.currentState!.validate()) {
-      return "Please fill all fields";
+      print("❌ Form validation failed");
+      return "Please fill all fields correctly";
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
+      print("❌ Passwords don't match");
       return "Passwords do not match";
     }
+
+    // if (_profileImagePath == null) {
+    //   print("⚠️ No profile image");
+    //   return "Please select a profile picture";
+    // }
 
     try {
       _isLoading = true;
       notifyListeners();
 
-      print(_profileImagePath);
-      print(_profileImageBytes);
-      print(_profileImageName);
-      print(_fullNameController.text.trim());
-      print(_emailController.text.trim());
-      print(_passwordController.text.trim());
-      print(_confirmPasswordController.text.trim());
+      print("📤 Sending registration request...");
+      print("📧 Email: ${_emailController.text.trim()}");
+      print("👤 Name: ${_fullNameController.text.trim()}");
+      // print("📱 Phone: ${_phoneNumberController.text.trim()}");
+      print("🖼️ Image: $_profileImagePath");
 
       await repository.signUpUser(
         fullName: _fullNameController.text.trim(),
         email: _emailController.text.trim(),
+        // phone: _phoneNumberController.text.trim(),
         password: _passwordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),
         acceptTerms: true,
@@ -211,8 +224,10 @@ class SignUpViewModel extends ChangeNotifier {
         imageName: kIsWeb ? _profileImageName : null, // 🌐 Web
       );
 
-      return null; // ✅ success
+      print("✅ Registration successful!");
+      return null; // success
     } catch (e) {
+      print("❌ Registration error: $e");
       return e.toString();
     } finally {
       _isLoading = false;
