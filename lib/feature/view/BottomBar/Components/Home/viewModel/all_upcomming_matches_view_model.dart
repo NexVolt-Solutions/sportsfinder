@@ -4,7 +4,7 @@ import 'package:sport_finding/core/Constants/discovery_match_data.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
 import 'package:sport_finding/Data/model/up_coming.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
   final List<UpComing> upComingMatchesText = [

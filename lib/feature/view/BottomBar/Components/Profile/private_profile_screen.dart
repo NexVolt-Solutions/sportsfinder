@@ -40,8 +40,8 @@ class PrivateProfileScreen extends StatelessWidget {
                           .copyWith(bottom: context.h(32)),
                       children: [
                         ProfileDetailHeader(
-                          displayName: model.displayName,
-                          locationLabel: model.locationLabel,
+                          displayName: model.fullName,
+                          locationLabel: model.location,
                           bio: model.bio,
                           avatarUrl: model.avatarUrl,
                           showTrophyBadge: true,

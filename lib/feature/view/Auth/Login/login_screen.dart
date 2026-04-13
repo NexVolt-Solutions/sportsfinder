@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ).showSnackBar(SnackBar(content: Text(error)));
                     } else {
                       // ✅ Navigate after successful login
-                      Navigator.pushReplacementNamed(
+                      Navigator.pushNamed(
                         context,
                         RoutesName.bottomBarScreen, // or home screen
                       );

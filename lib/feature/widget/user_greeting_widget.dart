@@ -5,16 +5,16 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class UserGreetingWidget extends StatelessWidget {
   final String title;
-  final String? title2;
-  final String name;
+  final String? subTitle;
+  final String locName;
   final bool isShow;
   final String? imageUrl;
 
   const UserGreetingWidget({
     super.key,
     required this.title,
-    this.title2,
-    required this.name,
+    this.subTitle,
+    required this.locName,
     this.imageUrl,
     this.isShow = false,
   });
@@ -44,15 +44,15 @@ class UserGreetingWidget extends StatelessWidget {
             children: [
               NormalText(titleText: title),
               NormalText(
-                subText: name,
+                subText: locName,
                 maxLines: 2,
                 subStyle: context.appText.text14W500,
               ),
 
               // ✅ Conditional show here
-              if (isShow && title2 != null && title2!.isNotEmpty)
+              if (isShow && subTitle != null && subTitle!.isNotEmpty)
                 NormalText(
-                  titleText: title2!,
+                  titleText: subTitle!,
                   maxLines: 2,
                   titleStyle: context.appText.text12W400,
                 ),

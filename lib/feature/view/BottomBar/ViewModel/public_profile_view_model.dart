@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/my_sport.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
-  PublicProfileViewModel({PublicProfileArgs? args}) : _args = args;
+  PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
+    // ✅ Forward ProfileService rebuilds into this ViewModel
+    ProfileService().addListener(notifyListeners);
+    // ✅ Fetch — skips if already loaded by HomeScreen
+    ProfileService().fetchMyProfile();
+  }
+
+  ProfileService get _ps => ProfileService();
+  
+  String get fullName => _ps.fullName;
+  String get avatarUrl => _ps.avatarUrl;
+  String get email => _ps.email;
+  String get bio => _ps.bio;
+  String get location => _ps.location;
+  bool get isLoading => _ps.isLoading;
+  bool get showBioOnProfile => true;
 
   final PublicProfileArgs? _args;
 
@@ -18,9 +34,9 @@ class PublicProfileViewModel extends ChangeNotifier {
     return n;
   }
 
-  String get locationLabel => AppText.losAngelesCa;
-  String get bio => AppText.passionateAthleteBio;
-  String get avatarUrl => kDemoAvatarUrl;
+  // String get locationLabel => AppText.losAngelesCa;
+  // String get bio => AppText.passionateAthleteBio;
+  // String get avatarUrl => kDemoAvatarUrl;
 
   int get followersCount => 78;
   int get followingCount => 78;

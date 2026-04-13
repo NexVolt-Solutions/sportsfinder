@@ -13,13 +13,12 @@ import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_me
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
-import 'package:sport_finding/feature/view/Home/components/create_match_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/user_match_details_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
-import 'package:sport_finding/feature/view/Home/home_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/create_match_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/match_created_done_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/host_details_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/user_match_details_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
@@ -100,12 +99,24 @@ class Routes {
             const BottomBarScreen(),
           ),
         );
-      case RoutesName.homeScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) =>
-              RouteProviders.wrapIfNeeded(RoutesName.homeScreen, HomeScreen()),
-        );
+      // case RoutesName.bottomBarScreen:
+      //   return MultiProvider(
+      //     providers: [
+      //       Provider<MyProfileRepository>(
+      //         create: (_) => MyProfileRepository(apiService: ApiService()),
+      //       ),
+      //       ChangeNotifierProxyProvider<
+      //         MyProfileRepository,
+      //         BottomBarScreenViewModel
+      //       >(
+      //         create: (ctx) =>
+      //             BottomBarScreenViewModel(ctx.read<MyProfileRepository>()),
+      //         update: (ctx, repo, prev) =>
+      //             prev ?? BottomBarScreenViewModel(repo),
+      //       ),
+      //     ],
+      //   );
+
       case RoutesName.otpVerificationScreen:
         return MaterialPageRoute(
           settings: settings,

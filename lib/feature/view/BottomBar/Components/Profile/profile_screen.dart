@@ -16,7 +16,6 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 /// Light outline for profile secondary actions. [AppColors.greylight] is a translucent *dark* grey, so it disappears on [AppColors.blue10].
-const Color _kProfileActionOutline = Color(0xFFCCCCCC);
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
@@ -51,12 +50,28 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 NormalText(titleText: AppText.profile),
                 SizedBox(height: context.h(16)),
-                UserGreetingWidget(
-                  title: model.profileDisplayName,
-                  name: model.profileLocation,
-                  title2: model.profileBio,
-                  isShow: model.showBioOnProfile,
-                ),
+                if (model.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 16),
+                        Text("Loading profile..."),
+                      ],
+                    ),
+                  )
+                else
+                  UserGreetingWidget(
+                    imageUrl: model.avatarUrl,
+                    title: model.fullName,
+                    locName: model.location,
+                    subTitle: model.bio,
+                    isShow: model.showBioOnProfile,
+                  ),
                 SizedBox(height: context.h(16)),
                 Row(
                   children: [

@@ -117,8 +117,8 @@ class UserMatchDetailsScreen extends StatelessWidget {
                   SizedBox(height: context.h(16)),
                   UserGreetingWidget(
                     title: match.displayHostName,
-                    name: match.location,
-                    title2: match.resolvedHostBio,
+                    locName: match.location,
+                    subTitle: match.resolvedHostBio,
                     isShow: true,
                   ),
                   SizedBox(height: context.h(16)),
