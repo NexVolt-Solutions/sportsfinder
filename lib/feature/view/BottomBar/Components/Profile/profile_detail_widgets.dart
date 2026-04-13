@@ -121,7 +121,6 @@ class ProfileDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
     final size = context.w(avatarLogicalWidth);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

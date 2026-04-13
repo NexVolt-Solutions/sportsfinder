@@ -9,7 +9,6 @@ class RoutesName {
   static const String chooseSportScreen = 'choose_sport_screen';
   static const String locationAccessScreen = 'location_access_screen';
   static const String bottomBarScreen = 'bottom_bar_screen';
-  static const String homeScreen = 'home_screen';
   static const String otpVerificationScreen = 'otp_verification_screen';
   static const String allUpComingMatchesScreen = 'all_upcoing_matches_screen';
   static const String seeAllInvatedPlayerScreen =

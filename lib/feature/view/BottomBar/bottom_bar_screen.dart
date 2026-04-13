@@ -5,18 +5,23 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
-import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
-import 'package:sport_finding/feature/view/Home/home_screen.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/home_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+
+import '../../../Data/Repositories/my_profile_Repository.dart'
+    show MyProfileRepository;
 
 class BottomBarScreen extends StatelessWidget {
   const BottomBarScreen({super.key});
@@ -47,7 +52,7 @@ class _BottomBarContent extends StatelessWidget {
   const _BottomBarContent();
 
   static const double _barHeight = 64;
-  static const double _barBottomPadding = 20;
+  static const double _barBottomPadding = 4;
   static const double _barRadius = 12;
   static const double _homeButtonSize = 48;
   static const double _navIconSize = 22;
@@ -57,12 +62,19 @@ class _BottomBarContent extends StatelessWidget {
 
   /// Vertical room for the capsule plus the home control sitting slightly above it.
   static double _bottomChromeHeight(BuildContext context) =>
-      _barHeight + context.h(20);
+      _barHeight + context.h(4);
 
+  // bottom_bar_screen.dart
   static final List<Widget> _tabChildren = <Widget>[
     const _MyMatchesTabSlot(),
     const DiscoverTabScreen(embedInBottomBar: true),
-    const HomeScreen(showAppBar: false),
+    ChangeNotifierProvider(
+      create: (_) => HomeScreenViewModel(
+        // ✅ default constructor, no .withInit
+        repository: MyProfileRepository(apiService: ApiService()),
+      ),
+      child: const HomeScreen(showAppBar: false), // ✅ add const
+    ),
     const ChatListScreen(embedInBottomBar: true),
     const ProfileScreen(embedInBottomBar: true),
   ];

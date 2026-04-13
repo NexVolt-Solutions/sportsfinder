@@ -1,19 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/Data/model/my_sport.dart';
 
 class ProfileScreenViewModel extends ChangeNotifier {
-  int selectedSportIndex = -1;
+  ProfileScreenViewModel() {
+    // ✅ Forward ProfileService rebuilds into this ViewModel
+    ProfileService().addListener(notifyListeners);
+    // ✅ Fetch — skips if already loaded by HomeScreen
+    ProfileService().fetchMyProfile();
+  }
 
-  /// Profile header — swap for API user later.
-  String get profileDisplayName => 'Shehzad (Host)';
-  String get profileLocation => AppText.newYorkUsa;
-  String get profileBio => AppText.passionateAboutSportsAndFitness;
+  @override
+  void dispose() {
+    ProfileService().removeListener(notifyListeners); // ✅ prevent memory leak
+    super.dispose();
+  }
+
+  // ✅ All profile data comes from ProfileService singleton
+  ProfileService get _ps => ProfileService();
+
+  String get fullName => _ps.fullName;
+  String get avatarUrl => _ps.avatarUrl;
+  String get email => _ps.email;
+  String get bio => _ps.bio;
+  String get location => _ps.location;
+  bool get isLoading => _ps.isLoading;
   bool get showBioOnProfile => true;
 
+  // --- stats (hardcoded until stats API exists) ---
   int get followersCount => kDefaultFollowConnectionUsers.length;
   int get followingCount => kDefaultFollowConnectionUsers.length;
   int get matchesPlayedCount => 12;
@@ -21,6 +39,9 @@ class ProfileScreenViewModel extends ChangeNotifier {
   String get followersCountLabel => '$followersCount';
   String get followingCountLabel => '$followingCount';
   String get matchesPlayedLabel => '$matchesPlayedCount';
+
+  // --- unchanged below ---
+  int selectedSportIndex = -1;
 
   List<Map<String, dynamic>> profileData = [
     {
@@ -72,17 +93,14 @@ class ProfileScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void openFollowers(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.followersScreen);
-  }
+  void openFollowers(BuildContext context) =>
+      Navigator.pushNamed(context, RoutesName.followersScreen);
 
-  void openFollowing(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.followingScreen);
-  }
+  void openFollowing(BuildContext context) =>
+      Navigator.pushNamed(context, RoutesName.followingScreen);
 
-  void openNotifications(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.notificationsScreen);
-  }
+  void openNotifications(BuildContext context) =>
+      Navigator.pushNamed(context, RoutesName.notificationsScreen);
 
   void onTapFun(BuildContext context, int index) {
     switch (index) {
@@ -97,8 +115,6 @@ class ProfileScreenViewModel extends ChangeNotifier {
         break;
       case 4:
         Navigator.pushNamed(context, RoutesName.privacyPolicyScreen);
-        break;
-      case 2:
         break;
       default:
         break;

@@ -85,52 +85,6 @@ class _FollowConnectionsScaffold extends StatelessWidget {
   }
 }
 
-class _ConnectionsSearchField extends StatelessWidget {
-  const _ConnectionsSearchField();
-
-  @override
-  Widget build(BuildContext context) {
-    final vm = context.read<FollowConnectionsViewModel>();
-    final c = context.appColors;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Color.lerp(c.surface, c.blue10, 0.45) ?? c.blue10,
-        borderRadius: BorderRadius.circular(context.radiusR(28)),
-        border: Border.all(color: c.primary.withValues(alpha: 0.35), width: 1),
-      ),
-      padding: context.padSym(h: 14, v: 12),
-      child: Row(
-        children: [
-          Icon(Icons.search, size: context.w(22), color: c.greylight),
-          SizedBox(width: context.w(10)),
-          Expanded(
-            child: TextField(
-              controller: vm.searchController,
-              onChanged: vm.onSearchChanged,
-              style: context.appText.style(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: c.onSurface,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: AppText.search,
-                hintStyle: context.appText.style(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: c.greylight,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ConnectionUserRow extends StatelessWidget {
   const _ConnectionUserRow({required this.user});
 

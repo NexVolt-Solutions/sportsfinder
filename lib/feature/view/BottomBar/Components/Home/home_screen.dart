@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -7,7 +8,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
@@ -20,7 +21,6 @@ import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.showAppBar = true});
 
-  /// When false (e.g. inside [BottomBarScreen]), the shell provides [AppBarWidget].
   final bool showAppBar;
 
   @override
@@ -29,12 +29,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isSelected = false;
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => HomeScreenViewModel(),
-      child: Consumer<HomeScreenViewModel>(
-        builder: (context, model, child) => ListView(
+    return Consumer<HomeScreenViewModel>(
+      builder: (context, model, child) {
+        return ListView(
           padding: context.padSym(h: 20),
           children: [
             if (widget.showAppBar) ...[
@@ -46,12 +46,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTapLast: () {},
               ),
             ],
-            UserGreetingWidget(
-              title: "Hey, Good Evening",
-              name: "Shehzad Khan",
+            if (model.isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 16),
+                    Text("Loading profile..."),
+                  ],
+                ),
+              )
+            else
+              UserGreetingWidget(
+                title: "Hey, Good Evening",
+                locName: model.fullName.isNotEmpty ? model.fullName : "Friend",
+                imageUrl: model.avatarUrl,
+                isShow: false,
+              ),
+            // UserGreetingWidget(
+            //   imageUrl: ,
+            //   title: "Hey, Good Evening",
+            //   name: "Shehzad Khan",
 
-              isShow: false,
-            ),
+            //   isShow: false,
+            // ),
             SizedBox(height: context.h(24)),
             SearchBarWidget(isShow: false),
             SizedBox(height: context.h(16)),
@@ -173,8 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

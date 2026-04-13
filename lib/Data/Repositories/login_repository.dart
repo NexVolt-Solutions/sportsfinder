@@ -5,7 +5,7 @@ class LoginRepository {
 
   LoginRepository({required this.apiService});
 
-  Future<dynamic> loginUser(
+  Future<Map<String, dynamic>> loginUser(
     String email,
     String password,
     String accessToken,
@@ -23,9 +23,16 @@ class LoginRepository {
           'tokentype': tokentype,
         },
       );
-      return response['message'];
+      
+      // Extract tokens from response
+      return {
+        'accessToken': response['access_token'] ?? '',
+        'refreshToken': response['refresh_token'] ?? '',
+        'tokenType': response['token_type'] ?? 'Bearer',
+        'message': response['message'] ?? 'Login successful',
+      };
     } catch (e) {
-      return e.toString();
+      rethrow;
     }
   }
 }
