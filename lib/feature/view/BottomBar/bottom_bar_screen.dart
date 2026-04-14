@@ -38,8 +38,7 @@ class _MyMatchesTabSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) =>
-          AllUpcommingMatchesViewModel(scope: UpcomingMatchesScope.myMatches),
+      create: (_) => AllUpcommingMatchesViewModel()..fetchMatches(type: "all"),
       child: const AllUpcomingMatches(
         embedAsBottomTab: true,
         listTitle: AppText.myMatches,

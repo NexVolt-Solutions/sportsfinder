@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/host_detail_screen_view_model.dart';
@@ -219,7 +220,17 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                     if (model.selectedIndex == 1) ...[
                       SectionHeaderWidget(title: AppText.participatedPlayers),
                       SizedBox(height: context.h(8)),
-                      if (model.rosterCount == 0)
+
+                      // ── loading state ──────────────────────────────────────────
+                      if (model.isLoadingUsers)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      // ── empty state ────────────────────────────────────────────
+                      else if (model.allUsers.isEmpty)
                         Padding(
                           padding: context.padSym(v: 8),
                           child: Text(
@@ -229,30 +240,83 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             ),
                           ),
                         )
-                      else ...[
+                      // ── all users from API ─────────────────────────────────────
+                      else
                         ListView.builder(
-                          itemCount: model.rosterCount,
+                          itemCount: model.allUsers.length,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
+                            final user = model.allUsers[index];
+                            final sport = user.sports?.isNotEmpty == true
+                                ? user.sports!.first
+                                : null;
+
                             return PersonInvitedCard(
-                              playerName: model.rosterNameAt(index),
-                              matchName: match.sportType,
-                              matchLevel: model.rosterSkillAt(index),
-                              destance: '${match.distanceKm} km',
+                              playerName: user.fullName,
+                              matchName: sport?.sport ?? match.sportType,
+                              matchLevel:
+                                  sport?.skillLevel ??
+                                  model.rosterSkillAt(index),
+                              destance:
+                                  user.location ?? '${match.distanceKm} km',
                               isShow: true,
-                              ontap: () {},
-                              cardOnTap: () => match.pushPublicProfileForPlayer(
-                                context,
-                                displayName: model.rosterNameAt(index),
-                                userIdSuffix: 'invited_participated_$index',
-                              ),
+                              ontap: () {
+                                // TODO: send invite to user.id
+                              },
+                              cardOnTap: () {
+                                // ✅ record profile view for Recent Players
+                                ListOfAllUserService().recordProfileView(user);
+                                match.pushPublicProfileForPlayer(
+                                  context,
+                                  displayName: user.fullName ?? '',
+                                  userIdSuffix: user.id ?? 'user_$index',
+                                );
+                              },
                             );
                           },
                         ),
-                      ],
+
                       SizedBox(height: context.h(16)),
                     ],
+                    // if (model.selectedIndex == 1) ...[
+                    //   SectionHeaderWidget(title: AppText.participatedPlayers),
+                    //   SizedBox(height: context.h(8)),
+                    //   if (model.rosterCount == 0)
+                    //     Padding(
+                    //       padding: context.padSym(v: 8),
+                    //       child: Text(
+                    //         AppText.noPlayersOnRoster,
+                    //         style: context.appText.text14W400.copyWith(
+                    //           color: context.appColors.greyDark,
+                    //         ),
+                    //       ),
+                    //     )
+                    //   else ...[
+                    //     // PersonInvitedCard is similar to UserMatchCard but with a different layout and no action button, used here to show invited players in the host details screen.
+                    //     ListView.builder(
+                    //       itemCount: model.rosterCount,
+                    //       shrinkWrap: true,
+                    //       physics: const NeverScrollableScrollPhysics(),
+                    //       itemBuilder: (context, index) {
+                    //         return PersonInvitedCard(
+                    //           playerName: model.rosterNameAt(index),
+                    //           matchName: match.sportType,
+                    //           matchLevel: model.rosterSkillAt(index),
+                    //           destance: '${match.distanceKm} km',
+                    //           isShow: true,
+                    //           ontap: () {},
+                    //           cardOnTap: () => match.pushPublicProfileForPlayer(
+                    //             context,
+                    //             displayName: model.rosterNameAt(index),
+                    //             userIdSuffix: 'invited_participated_$index',
+                    //           ),
+                    //         );
+                    //       },
+                    //     ),
+                    //   ],
+                    //   SizedBox(height: context.h(16)),
+                    // ],
                     if (model.selectedIndex == 2) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),

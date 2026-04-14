@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/Repositories/create_match_repository.dart';
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
@@ -12,11 +11,10 @@ import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_pas
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/create_match_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/all_upcomming_matches_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
@@ -89,11 +87,11 @@ class RouteProviders {
         );
       case RoutesName.allUpComingMatchesScreen:
         return ChangeNotifierProvider(
-          create: (_) => AllUpcommingMatchesViewModel(
-            scope: UpcomingMatchesScope.allUpcoming,
-          ),
+          create: (_) =>
+              AllUpcommingMatchesViewModel()..fetchMatches(type: "all"),
           child: child,
         );
+
       case RoutesName.seeAllInvatedPlayerScreen:
         return ChangeNotifierProvider(
           create: (_) => SeeAllInvatedPlayerScreenViewModel(),
@@ -109,9 +107,7 @@ class RouteProviders {
         );
       case RoutesName.createMatchScreen:
         return ChangeNotifierProvider(
-          create: (_) => CreateMatchScreenViewModel(
-            repository: CreateMatchRepository(apiService: ApiService()),
-          ),
+          create: (_) => CreateMatchViewModel(),
           child: child,
         );
       case RoutesName.matchCreatedDoneScreen:

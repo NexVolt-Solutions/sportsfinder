@@ -7,7 +7,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/create_match_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -28,7 +28,7 @@ class CreateMatchScreen extends StatefulWidget {
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
   Future<void> _showDurationPicker(
     BuildContext context,
-    CreateMatchScreenViewModel model,
+    CreateMatchViewModel model,
   ) async {
     final initialIndex = model.durationOptions.indexOf(model.duration);
     final safeInitialIndex = initialIndex < 0 ? 0 : initialIndex;
@@ -94,7 +94,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CreateMatchScreenViewModel>(
+    return Consumer<CreateMatchViewModel>(
       builder: (context, model, child) => Scaffold(
         backgroundColor: context.appColors.surface,
         resizeToAvoidBottomInset: true,
@@ -375,45 +375,70 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     ),
 
                     SizedBox(height: context.h(16)),
+                    // CustomButton(
+                    //   text: AppText.createMatch,
+                    //   color: context.appColors.primary,
+                    //   onTap: () async {
+                    //     final vm = context.read<CreateMatchScreenViewModel>();
+                    //     String token = '';
+
+                    //     bool success = await vm.createMatchApi(token);
+
+                    //     if (success) {
+                    //       final match = vm.toCreatedDiscoveryMatch();
+
+                    //       Navigator.pushNamed(
+                    //         context,
+                    //         RoutesName.matchCreatedDoneScreen,
+                    //         arguments: match,
+                    //       );
+                    //     } else {
+                    //       ScaffoldMessenger.of(context).showSnackBar(
+                    //         SnackBar(content: Text("Failed to create match")),
+                    //       );
+                    //     }
+
+                    //     // if (!model.validateForCreate()) {
+                    //     //   ScaffoldMessenger.of(context).showSnackBar(
+                    //     //     const SnackBar(
+                    //     //       content: Text(
+                    //     //         'Please enter match title, date, time, and location.',
+                    //     //       ),
+                    //     //     ),
+                    //     //   );
+                    //     //   return;
+                    //     // }
+                    //     // final created = model.toCreatedDiscoveryMatch();
+                    //     // Navigator.pushNamed(
+                    //     //   context,
+                    //     //   RoutesName.matchCreatedDoneScreen,
+                    //     //   arguments: created,
+                    //     // );
+                    //   },
+                    // ),
                     CustomButton(
                       text: AppText.createMatch,
                       color: context.appColors.primary,
                       onTap: () async {
-                        final vm = context.read<CreateMatchScreenViewModel>();
-                        String token = '';
+                        final vm = context.read<CreateMatchViewModel>();
 
-                        bool success = await vm.createMatchApi(token);
+                        final success = await vm.createMatchApi();
 
-                        if (success) {
-                          final match = vm.toCreatedDiscoveryMatch();
-
+                        if (success && context.mounted) {
                           Navigator.pushNamed(
                             context,
                             RoutesName.matchCreatedDoneScreen,
-                            arguments: match,
+                            arguments: vm.createdMatch,
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Failed to create match")),
+                            SnackBar(
+                              content: Text(
+                                vm.error ?? "Failed to create match",
+                              ),
+                            ),
                           );
                         }
-
-                        // if (!model.validateForCreate()) {
-                        //   ScaffoldMessenger.of(context).showSnackBar(
-                        //     const SnackBar(
-                        //       content: Text(
-                        //         'Please enter match title, date, time, and location.',
-                        //       ),
-                        //     ),
-                        //   );
-                        //   return;
-                        // }
-                        // final created = model.toCreatedDiscoveryMatch();
-                        // Navigator.pushNamed(
-                        //   context,
-                        //   RoutesName.matchCreatedDoneScreen,
-                        //   arguments: created,
-                        // );
                       },
                     ),
                   ],
