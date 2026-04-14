@@ -1,157 +1,118 @@
-class ListOfAllMatchesModel {
-  List<Items>? items;
-  int? total;
-  int? page;
-  int? limit;
-  bool? hasNext;
-  bool? hasPrev;
+class MatchesResponse {
+  final List<MatchModel> items;
+  final int total;
+  final int page;
+  final int limit;
+  final bool hasNext;
+  final bool hasPrev;
 
-  ListOfAllMatchesModel({
-    this.items,
-    this.total,
-    this.page,
-    this.limit,
-    this.hasNext,
-    this.hasPrev,
+  MatchesResponse({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.hasNext,
+    required this.hasPrev,
   });
 
-  ListOfAllMatchesModel.fromJson(Map<String, dynamic> json) {
-    if (json['items'] != null) {
-      items = <Items>[];
-      json['items'].forEach((v) {
-        items!.add(new Items.fromJson(v));
-      });
-    }
-    total = json['total'];
-    page = json['page'];
-    limit = json['limit'];
-    hasNext = json['has_next'];
-    hasPrev = json['has_prev'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.items != null) {
-      data['items'] = this.items!.map((v) => v.toJson()).toList();
-    }
-    data['total'] = this.total;
-    data['page'] = this.page;
-    data['limit'] = this.limit;
-    data['has_next'] = this.hasNext;
-    data['has_prev'] = this.hasPrev;
-    return data;
+  factory MatchesResponse.fromJson(Map<String, dynamic> json) {
+    return MatchesResponse(
+      items: (json['items'] as List)
+          .map((e) => MatchModel.fromJson(e))
+          .toList(),
+      total: json['total'] ?? 0,
+      page: json['page'] ?? 1,
+      limit: json['limit'] ?? 20,
+      hasNext: json['has_next'] ?? false,
+      hasPrev: json['has_prev'] ?? false,
+    );
   }
 }
 
-class Items {
-  String? id;
-  String? title;
-  String? sport;
-  String? skillLevel;
-  String? status;
-  String? scheduledAt;
-  int? durationMinutes;
-  String? scheduledDate;
-  String? scheduledTime;
-  String? locationName;
-  String? location;
-  String? facilityAddress;
-  int? latitude;
-  int? longitude;
-  int? maxPlayers;
-  int? currentPlayers;
-  int? distanceKm;
-  Host? host;
+class MatchModel {
+  final String id;
+  final String title;
+  final String sport;
+  final String skillLevel;
+  final String status;
+  final DateTime scheduledAt;
+  final int durationMinutes;
+  final String scheduledDate;
+  final String scheduledTime;
+  final String locationName;
+  final String location;
+  final String facilityAddress;
+  final double latitude;
+  final double longitude;
+  final int maxPlayers;
+  final int currentPlayers;
+  final double distanceKm;
+  final Host host;
 
-  Items({
-    this.id,
-    this.title,
-    this.sport,
-    this.skillLevel,
-    this.status,
-    this.scheduledAt,
-    this.durationMinutes,
-    this.scheduledDate,
-    this.scheduledTime,
-    this.locationName,
-    this.location,
-    this.facilityAddress,
-    this.latitude,
-    this.longitude,
-    this.maxPlayers,
-    this.currentPlayers,
-    this.distanceKm,
-    this.host,
+  MatchModel({
+    required this.id,
+    required this.title,
+    required this.sport,
+    required this.skillLevel,
+    required this.status,
+    required this.scheduledAt,
+    required this.durationMinutes,
+    required this.scheduledDate,
+    required this.scheduledTime,
+    required this.locationName,
+    required this.location,
+    required this.facilityAddress,
+    required this.latitude,
+    required this.longitude,
+    required this.maxPlayers,
+    required this.currentPlayers,
+    required this.distanceKm,
+    required this.host,
   });
 
-  Items.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    title = json['title'];
-    sport = json['sport'];
-    skillLevel = json['skill_level'];
-    status = json['status'];
-    scheduledAt = json['scheduled_at'];
-    durationMinutes = json['duration_minutes'];
-    scheduledDate = json['scheduled_date'];
-    scheduledTime = json['scheduled_time'];
-    locationName = json['location_name'];
-    location = json['location'];
-    facilityAddress = json['facility_address'];
-    latitude = json['latitude'];
-    longitude = json['longitude'];
-    maxPlayers = json['max_players'];
-    currentPlayers = json['current_players'];
-    distanceKm = json['distance_km'];
-    host = json['host'] != null ? new Host.fromJson(json['host']) : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['title'] = this.title;
-    data['sport'] = this.sport;
-    data['skill_level'] = this.skillLevel;
-    data['status'] = this.status;
-    data['scheduled_at'] = this.scheduledAt;
-    data['duration_minutes'] = this.durationMinutes;
-    data['scheduled_date'] = this.scheduledDate;
-    data['scheduled_time'] = this.scheduledTime;
-    data['location_name'] = this.locationName;
-    data['location'] = this.location;
-    data['facility_address'] = this.facilityAddress;
-    data['latitude'] = this.latitude;
-    data['longitude'] = this.longitude;
-    data['max_players'] = this.maxPlayers;
-    data['current_players'] = this.currentPlayers;
-    data['distance_km'] = this.distanceKm;
-    if (this.host != null) {
-      data['host'] = this.host!.toJson();
-    }
-    return data;
+  factory MatchModel.fromJson(Map<String, dynamic> json) {
+    return MatchModel(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      sport: json['sport'] ?? '',
+      skillLevel: json['skill_level'] ?? '',
+      status: json['status'] ?? '',
+      scheduledAt: DateTime.parse(json['scheduled_at']),
+      durationMinutes: json['duration_minutes'] ?? 0,
+      scheduledDate: json['scheduled_date'] ?? '',
+      scheduledTime: json['scheduled_time'] ?? '',
+      locationName: json['location_name'] ?? '',
+      location: json['location'] ?? '',
+      facilityAddress: json['facility_address'] ?? '',
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
+      maxPlayers: json['max_players'] ?? 0,
+      currentPlayers: json['current_players'] ?? 0,
+      distanceKm: (json['distance_km'] ?? 0).toDouble(),
+      host: Host.fromJson(json['host'] ?? {}),
+    );
   }
 }
 
 class Host {
-  String? id;
-  String? fullName;
-  String? avatarUrl;
-  int? avgRating;
+  final String id;
+  final String fullName;
+  final String avatarUrl;
+  final double avgRating;
 
-  Host({this.id, this.fullName, this.avatarUrl, this.avgRating});
+  Host({
+    required this.id,
+    required this.fullName,
+    required this.avatarUrl,
+    required this.avgRating,
+  });
 
-  Host.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    fullName = json['full_name'];
-    avatarUrl = json['avatar_url'];
-    avgRating = json['avg_rating'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['full_name'] = this.fullName;
-    data['avatar_url'] = this.avatarUrl;
-    data['avg_rating'] = this.avgRating;
-    return data;
+  factory Host.fromJson(Map<String, dynamic> json) {
+    return Host(
+      id: json['id'] ?? '',
+      fullName: json['full_name'] ?? '',
+      avatarUrl: json['avatar_url'] ?? '',
+      avgRating: (json['avg_rating'] ?? 0).toDouble(),
+    );
   }
 }

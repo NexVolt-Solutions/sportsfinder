@@ -1,4 +1,3 @@
- 
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -17,7 +16,7 @@ class ApiService {
         print('⚠️  No token found in SharedPreferences');
         return null;
       }
-      print('✅ Token retrieved: ${token.substring(0, 20)}...');
+      print('✅ Token retrieved: ${token}');
       return token;
     } catch (e) {
       print('❌ Error retrieving stored token: $e');
@@ -40,14 +39,11 @@ class ApiService {
   Future<dynamic> get(String endpoint, {String? token}) async {
     final url = "$baseUrl$endpoint";
     final headers = await getHeaders(token: token);
-    
+
     print('📡 GET $endpoint');
     print('   Headers: $headers');
-    
-    final response = await http.get(
-      Uri.parse(url),
-      headers: headers,
-    );
+
+    final response = await http.get(Uri.parse(url), headers: headers);
 
     print('   Status: ${response.statusCode}');
     if (response.statusCode == 200) {
@@ -62,7 +58,7 @@ class ApiService {
   Future<dynamic> post(String endpoint, {dynamic data, String? token}) async {
     final url = "$baseUrl$endpoint";
     final headers = await getHeaders(token: token);
-    
+
     final response = await http.post(
       Uri.parse(url),
       headers: headers,
@@ -83,7 +79,7 @@ class ApiService {
   Future<dynamic> put(String endpoint, {dynamic data, String? token}) async {
     final url = "$baseUrl$endpoint";
     final headers = await getHeaders(token: token);
-    
+
     final response = await http.put(
       Uri.parse(url),
       headers: headers,
@@ -101,11 +97,8 @@ class ApiService {
   Future<dynamic> delete(String endpoint, {String? token}) async {
     final url = "$baseUrl$endpoint";
     final headers = await getHeaders(token: token);
-    
-    final response = await http.delete(
-      Uri.parse(url),
-      headers: headers,
-    );
+
+    final response = await http.delete(Uri.parse(url), headers: headers);
 
     if (response.statusCode != 200) {
       throw Exception("Failed to delete data: ${response.body}");

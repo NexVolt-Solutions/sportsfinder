@@ -1,99 +1,93 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Constants/discovery_match_data.dart';
-import 'package:sport_finding/Data/model/discovery_match.dart';
-import 'package:sport_finding/Data/model/match_filters.dart';
-import 'package:sport_finding/Data/model/up_coming.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/upcoming_matches_scope.dart';
+import 'package:sport_finding/Data/Repositories/matches_repo.dart';
+import 'package:sport_finding/Data/model/list_of_all_matches_model.dart';
+import 'upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
-  final List<UpComing> upComingMatchesText = [
-    UpComing(text: AppText.all),
-    UpComing(text: AppText.football),
-    UpComing(text: AppText.basketball),
-    UpComing(text: AppText.tennis),
-    UpComing(text: AppText.volleyball),
-  ];
+  final MatchesRepo _repository = MatchesRepo();
 
-  final UpcomingMatchesScope scope;
+  List<MatchModel> _matches = [];
+  List<MatchModel> _allMatches = [];
 
-  UpcomingMatchesScope get listScope => scope;
+  List<MatchModel> get matches => _matches;
 
-  List<DiscoveryMatch> allMatches = [];
-  List<DiscoveryMatch> matches = [];
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  int selectedIndex = 0;
-  FilterData? currentFilters;
+  String? _error;
+  String? get error => _error;
 
-  AllUpcommingMatchesViewModel({
-    this.scope = UpcomingMatchesScope.allUpcoming,
-  }) {
-    final raw = DiscoveryMatchData.allMatches;
-    final now = DateTime.now();
-    allMatches = switch (scope) {
-      UpcomingMatchesScope.myMatches =>
-        raw.where((m) => m.isHostedByCurrentUser).toList(),
-      UpcomingMatchesScope.allUpcoming =>
-        raw.where((m) => m.isUpcomingRelativeTo(now)).toList(),
-    };
-    if (scope == UpcomingMatchesScope.allUpcoming) {
-      allMatches.sort((a, b) {
-        if (a.isHostedByCurrentUser == b.isHostedByCurrentUser) return 0;
-        return a.isHostedByCurrentUser ? -1 : 1;
-      });
+  UpcomingMatchesScope listScope = UpcomingMatchesScope.allUpcoming;
+
+  int _page = 1;
+  bool _hasNext = true;
+
+  /// Fetch Matches
+  Future<void> fetchMatches({
+    String type = "all",
+    double? lat,
+    double? lng,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final response = await _repository.getMatches(
+        type: type,
+        page: _page,
+        lat: lat,
+        lng: lng,
+      );
+
+      _matches = response.items;
+      _allMatches = response.items;
+      _hasNext = response.hasNext;
+
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      debugPrint("❌ Error fetching matches: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    matches = List.from(allMatches);
   }
 
-  List<DiscoveryMatch> _baseListForChips() {
-    if (selectedIndex == 0) {
-      return List<DiscoveryMatch>.from(allMatches);
-    }
-    final filterType = upComingMatchesText[selectedIndex].text;
-    return allMatches
-        .where(
-          (match) => match.sportType.toLowerCase() == filterType.toLowerCase(),
-        )
-        .toList();
-  }
-
-  void _rebuildMatches() {
-    final base = _baseListForChips();
-    matches = currentFilters != null
-        ? applyFilterDataToMatches(base, currentFilters!)
-        : List<DiscoveryMatch>.from(base);
-  }
-
-  void filterMatches(int index) {
-    selectedIndex = index;
-    _rebuildMatches();
-    notifyListeners();
-  }
-
+  /// Search Matches
   void searchMatches(String query) {
     if (query.isEmpty) {
-      filterMatches(selectedIndex);
-      return;
+      _matches = _allMatches;
+    } else {
+      _matches = _allMatches
+          .where(
+            (match) =>
+                match.title.toLowerCase().contains(query.toLowerCase()) ||
+                match.sport.toLowerCase().contains(query.toLowerCase()) ||
+                match.locationName.toLowerCase().contains(query.toLowerCase()),
+          )
+          .toList();
     }
-    final base = _baseListForChips();
-    final afterSheet = currentFilters != null
-        ? applyFilterDataToMatches(base, currentFilters!)
-        : List<DiscoveryMatch>.from(base);
-    final q = query.toLowerCase();
-    matches = afterSheet
-        .where(
-          (match) =>
-              match.title.toLowerCase().contains(q) ||
-              match.sportType.toLowerCase().contains(q) ||
-              match.location.toLowerCase().contains(q),
-        )
-        .toList();
     notifyListeners();
   }
 
-  void applyFilters(FilterData filterData) {
-    currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
-    _rebuildMatches();
+  /// Apply Filters
+  Future<void> applyFilters(Map<String, dynamic> filters) async {
+    await fetchMatches(type: filters['type'] ?? "all");
+  }
+
+  /// Pagination (Optional)
+  Future<void> loadMore() async {
+    if (!_hasNext || _isLoading) return;
+
+    _page++;
     notifyListeners();
+
+    try {
+      final response = await _repository.getMatches(page: _page);
+      _matches.addAll(response.items);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("❌ Pagination Error: $e");
+    }
   }
 }
