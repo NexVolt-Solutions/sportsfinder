@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -62,18 +61,12 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             else
               UserGreetingWidget(
-                title: "Hey, Good Evening",
+                title: model.timeGreeting,
                 locName: model.fullName.isNotEmpty ? model.fullName : "Friend",
                 imageUrl: model.avatarUrl,
                 isShow: false,
               ),
-            // UserGreetingWidget(
-            //   imageUrl: ,
-            //   title: "Hey, Good Evening",
-            //   name: "Shehzad Khan",
 
-            //   isShow: false,
-            // ),
             SizedBox(height: context.h(24)),
             SearchBarWidget(isShow: false),
             SizedBox(height: context.h(16)),

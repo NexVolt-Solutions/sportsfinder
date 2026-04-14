@@ -20,6 +20,15 @@ class HomeScreenViewModel extends ChangeNotifier {
     service.addListener(_onProfileServiceChanged);
   }
 
+  // Add this getter anywhere — in the ViewModel or as a helper
+  String get timeGreeting {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return "Hey, Good Morning";
+    if (hour >= 12 && hour < 17) return "Hey, Good Afternoon";
+    if (hour >= 17 && hour < 21) return "Hey, Good Evening";
+    return "Hey, Good Night";
+  }
+
   void _onProfileServiceChanged() {
     notifyListeners();
   }

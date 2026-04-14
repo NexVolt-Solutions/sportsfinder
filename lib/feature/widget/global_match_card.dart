@@ -20,7 +20,7 @@ class GlobalMatchCard extends StatelessWidget {
 
   /// CardWidget margin (24) + vertical padding (36) + [contentHeight].
   static double listSlotHeight(BuildContext context) =>
-      contentHeight(context) + 50;
+      contentHeight(context) + 60;
 
   const GlobalMatchCard({
     super.key,
