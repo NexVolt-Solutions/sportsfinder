@@ -22,7 +22,6 @@
 //   }
 // }
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/sport.dart';

@@ -115,7 +115,7 @@ class RouteProviders {
           create: (_) => MatchCreatedDoneScreenViewModel(),
           child: child,
         );
-      case RoutesName.allMemeberScreen:
+      case RoutesName.allMemberScreen:
         return ChangeNotifierProvider(
           create: (_) => AllMemberScreenViewModel(),
           child: child,

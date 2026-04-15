@@ -6,11 +6,22 @@ import 'package:sport_finding/Data/model/my_sport.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
+  late final VoidCallback _listener;
+  final PublicProfileArgs? _args;
+
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
+    // ✅ Store listener reference so we can remove it properly
+    _listener = () => notifyListeners();
     // ✅ Forward ProfileService rebuilds into this ViewModel
-    ProfileService().addListener(notifyListeners);
+    ProfileService().addListener(_listener);
     // ✅ Fetch — skips if already loaded by HomeScreen
     ProfileService().fetchMyProfile();
+  }
+
+  @override
+  void dispose() {
+    ProfileService().removeListener(_listener);
+    super.dispose();
   }
 
   ProfileService get _ps => ProfileService();
@@ -22,8 +33,6 @@ class PublicProfileViewModel extends ChangeNotifier {
   String get location => _ps.location;
   bool get isLoading => _ps.isLoading;
   bool get showBioOnProfile => true;
-
-  final PublicProfileArgs? _args;
 
   static const String kDemoAvatarUrl =
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400';

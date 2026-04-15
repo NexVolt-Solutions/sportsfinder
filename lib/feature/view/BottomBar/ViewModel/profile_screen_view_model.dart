@@ -4,19 +4,23 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/follow_connection_user.dart';
-import 'package:sport_finding/Data/model/my_sport.dart';
+import 'package:sport_finding/Data/model/my_sport.dart'; // Added VoidCallback import
 
 class ProfileScreenViewModel extends ChangeNotifier {
+  late final VoidCallback _listener;
+
   ProfileScreenViewModel() {
+    // ✅ Store listener reference so we can remove it properly
+    _listener = () => notifyListeners();
     // ✅ Forward ProfileService rebuilds into this ViewModel
-    ProfileService().addListener(notifyListeners);
+    ProfileService().addListener(_listener);
     // ✅ Fetch — skips if already loaded by HomeScreen
     ProfileService().fetchMyProfile();
   }
 
   @override
   void dispose() {
-    ProfileService().removeListener(notifyListeners); // ✅ prevent memory leak
+    ProfileService().removeListener(_listener);
     super.dispose();
   }
 

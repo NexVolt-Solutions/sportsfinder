@@ -160,11 +160,11 @@ class Routes {
           ),
         );
 
-      case RoutesName.allMemeberScreen:
+      case RoutesName.allMemberScreen:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.allMemeberScreen,
+            RoutesName.allMemberScreen,
             AllMemberScreen(),
           ),
         );

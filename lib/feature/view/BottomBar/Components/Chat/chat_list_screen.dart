@@ -30,7 +30,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Future<void> _pickAndOpenUser() async {
     final selected = await Navigator.pushNamed(
       context,
-      RoutesName.allMemeberScreen,
+      RoutesName.allMemberScreen,
     );
     if (!mounted || selected is! String || selected.trim().isEmpty) return;
 

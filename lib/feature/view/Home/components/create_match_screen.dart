@@ -382,10 +382,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       controller: model.maxPlayersController,
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return 'Max players is required';
-                        if (int.tryParse(value) == null)
+                        }
+                        if (int.tryParse(value) == null) {
                           return 'Enter a valid number';
+                        }
                         return null;
                       },
                     ),
@@ -416,29 +418,58 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     //     }
                     //   },
                     // ),
+                    // CustomButton(
+                    //   text: AppText.createMatch,
+                    //   color: context.appColors.primary,
+                    //   onTap: () async {
+                    //     debugPrint("🟡 Create Match Button Clicked");
+
+                    //     final success = await model.createMatchApi();
+
+                    //     debugPrint("🟢 API Success: $success");
+
+                    //     if (success && context.mounted) {
+                    //       final matchId = model.createdMatch?.id;
+                    //       debugPrint("🆔 Match ID: $matchId");
+
+                    //       Navigator.pushNamed(
+                    //         context,
+                    //         RoutesName.matchCreatedDoneScreen,
+                    //         arguments:
+                    //             model.createdMatch, // pass the whole MatchModel
+                    //       );
+                    //     } else {
+                    //       debugPrint(
+                    //         "❌ Navigation blocked due to API failure.",
+                    //       );
+                    //     }
+                    //   },
+                    // ),
                     CustomButton(
-                      text: AppText.createMatch,
+                      text: model.isEditMode
+                          ? "Update Match"
+                          : AppText.createMatch,
                       color: context.appColors.primary,
                       onTap: () async {
-                        debugPrint("🟡 Create Match Button Clicked");
+                        debugPrint("🟡 Submit Match Button Clicked");
 
-                        final success = await model.createMatchApi();
+                        final success = await model.submitMatch();
 
                         debugPrint("🟢 API Success: $success");
 
                         if (success && context.mounted) {
-                          final matchId = model.createdMatch?.id;
-                          debugPrint("🆔 Match ID: $matchId");
-
                           Navigator.pushNamed(
                             context,
                             RoutesName.matchCreatedDoneScreen,
-                            arguments:
-                                model.createdMatch, // pass the whole MatchModel
+                            arguments: model.isEditMode
+                                ? model.updatedMatch
+                                : model.createdMatch,
                           );
                         } else {
-                          debugPrint(
-                            "❌ Navigation blocked due to API failure.",
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(model.error ?? "Operation failed"),
+                            ),
                           );
                         }
                       },

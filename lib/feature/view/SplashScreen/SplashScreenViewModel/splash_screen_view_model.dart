@@ -49,7 +49,7 @@ class SplashScreenViewModel extends ChangeNotifier {
       final isValid = accessToken != null && accessToken.isNotEmpty;
 
       debugPrint(
-        "Access token found: ${isValid ? 'YES (${accessToken?.substring(0, 10)}...)' : 'NO'}",
+        "Access token found: ${isValid ? 'YES (${accessToken.substring(0, 10)}...)' : 'NO'}",
       );
       return isValid;
     } catch (e) {

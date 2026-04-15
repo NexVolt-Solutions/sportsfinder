@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:sport_finding/core/Network/api_service.dart';
 import '../model/update_match_model.dart';
 
@@ -10,10 +11,13 @@ class UpdateMatchRepo {
   }) async {
     try {
       /// 📤 REQUEST LOG
-      print("========== UPDATE MATCH REPO REQUEST ==========");
-      print("Match ID: $matchId");
-      print("Endpoint: /api/v1/matches/$matchId");
-      print("Request Data: $data");
+      log(
+        "========== UPDATE MATCH REPO REQUEST ==========",
+        name: 'UpdateMatchRepo',
+      );
+      log("Match ID: $matchId", name: 'UpdateMatchRepo');
+      log("Endpoint: /api/v1/matches/$matchId", name: 'UpdateMatchRepo');
+      log("Request Data: $data", name: 'UpdateMatchRepo');
 
       final response = await _apiService.put(
         "/api/v1/matches/$matchId",
@@ -21,21 +25,48 @@ class UpdateMatchRepo {
       );
 
       /// 📥 RESPONSE LOG
-      print("========== UPDATE MATCH REPO RESPONSE ==========");
-      print(response);
-      print("========== UPDATE MATCH REPO END ==========");
+      log(
+        "========== UPDATE MATCH REPO RESPONSE ==========",
+        name: 'UpdateMatchRepo',
+      );
+      log("Response type: ${response.runtimeType}", name: 'UpdateMatchRepo');
+      log("$response", name: 'UpdateMatchRepo');
+      log(
+        "========== UPDATE MATCH REPO END ==========",
+        name: 'UpdateMatchRepo',
+      );
+
+      // ✅ Validate response
+      if (response == null) {
+        log("API Response is null", name: 'UpdateMatchRepo', level: 1000);
+        throw Exception("API returned null when updating match");
+      }
+
+      if (response is! Map<String, dynamic>) {
+        log(
+          "Unexpected response type: ${response.runtimeType}",
+          name: 'UpdateMatchRepo',
+          level: 1000,
+        );
+        throw Exception(
+          "Expected Map<String, dynamic> but got ${response.runtimeType}",
+        );
+      }
 
       final model = UpdateMatchModel.fromJson(response);
 
-      print("Parsed Model ID: ${model.id}");
-      print("Parsed Title: ${model.title}");
+      log("Parsed Model ID: ${model.id}", name: 'UpdateMatchRepo');
+      log("Parsed Title: ${model.title}", name: 'UpdateMatchRepo');
 
       return model;
     } catch (e, stackTrace) {
       /// ❌ ERROR LOG
-      print("========== UPDATE MATCH REPO ERROR ==========");
-      print("Error: $e");
-      print(stackTrace);
+      log(
+        "========== UPDATE MATCH REPO ERROR ==========\nError: $e",
+        name: 'UpdateMatchRepo',
+        level: 1000,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
-/// Searchable single-select: looks and behaves like [DropdownFormFieldWidget]
-/// (tap to open, no keyboard on the field). Search/filter only inside the sheet.
+/// Searchable dropdown field - FIXED VERSION
+/// Eliminates all lifecycle, layout, and color issues
 class SearchDropdownField extends StatefulWidget {
   final String? label;
   final String? hintText;
@@ -23,179 +23,42 @@ class SearchDropdownField extends StatefulWidget {
 }
 
 class _SearchDropdownFieldState extends State<SearchDropdownField> {
+  late TextEditingController _internalSearchController;
+
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_onController);
-  }
-
-  @override
-  void didUpdateWidget(SearchDropdownField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller.removeListener(_onController);
-      widget.controller.addListener(_onController);
-    }
+    _internalSearchController = TextEditingController();
+    widget.controller.addListener(_notifyChange);
   }
 
   @override
   void dispose() {
-    widget.controller.removeListener(_onController);
+    widget.controller.removeListener(_notifyChange);
+    _internalSearchController.dispose();
     super.dispose();
   }
 
-  void _onController() {
-    if (mounted) setState(() {});
+  void _notifyChange() {
+    setState(() {});
   }
 
-  Iterable<String> _optionsForQuery(String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return widget.items;
-    return widget.items
-        .where((e) => e.toLowerCase().contains(q))
-        .toList(growable: false);
-  }
+  void _openDropdown() async {
+    _internalSearchController.clear();
 
-  Future<void> _openSheet() async {
-    final searchController = TextEditingController();
-
-    await showModalBottomSheet<void>(
+    final result = await showModalBottomSheet<String?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final c = sheetContext.appColors;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            void bump() => setModalState(() {});
-
-            final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
-            final listMaxHeight = MediaQuery.sizeOf(sheetContext).height * 0.5;
-            final filtered = _optionsForQuery(searchController.text).toList();
-
-            return Padding(
-              padding: EdgeInsets.only(bottom: bottomInset),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: c.surface,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(context.radiusR(16)),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(height: context.h(8)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: context.w(20)),
-                      child: TextField(
-                        controller: searchController,
-                        onChanged: (_) => bump(),
-                        autofocus: true,
-                        style: context.appText.text14W400.copyWith(
-                          color: c.greyDark,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: widget.hintText,
-                          hintStyle: context.appText.text14W400.copyWith(
-                            color: c.greylight,
-                          ),
-                          prefixIcon: Icon(Icons.search, color: c.greyDark),
-                          filled: true,
-                          fillColor: c.transparent,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              context.radius(12),
-                            ),
-                            borderSide: BorderSide(
-                              color: c.greylight,
-                              width: 1,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              context.radius(12),
-                            ),
-                            borderSide: BorderSide(
-                              color: c.greylight,
-                              width: 1,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              context.radius(12),
-                            ),
-                            borderSide: BorderSide(
-                              color: c.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: context.w(12),
-                            vertical: context.h(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: context.h(8)),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: listMaxHeight),
-                      child: filtered.isEmpty
-                          ? Padding(
-                              padding: EdgeInsets.all(context.h(24)),
-                              child: Center(
-                                child: Text(
-                                  'No matches',
-                                  style: context.appText.text14W400.copyWith(
-                                    color: c.greylight,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: context.w(8),
-                              ),
-                              physics: const ClampingScrollPhysics(),
-                              itemCount: filtered.length,
-                              separatorBuilder: (context, index) => Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: c.greylight,
-                              ),
-                              itemBuilder: (ctx, i) {
-                                final item = filtered[i];
-                                return ListTile(
-                                  title: Text(
-                                    item,
-                                    style: context.appText.text14W400.copyWith(
-                                      color: c.greyDark,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    widget.controller.text = item;
-                                    widget.controller.selection =
-                                        TextSelection.collapsed(
-                                          offset: item.length,
-                                        );
-                                    Navigator.pop(sheetContext);
-                                  },
-                                );
-                              },
-                            ),
-                    ),
-                    SizedBox(height: context.h(16)),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (ctx) => _DropdownSheet(
+        searchController: _internalSearchController,
+        items: widget.items,
+      ),
     );
 
-    searchController.dispose();
+    if (result != null && mounted) {
+      widget.controller.text = result;
+    }
   }
 
   @override
@@ -232,7 +95,7 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
         ),
       ),
       child: InkWell(
-        onTap: _openSheet,
+        onTap: _openDropdown,
         borderRadius: BorderRadius.circular(context.radius(12)),
         child: Row(
           children: [
@@ -251,6 +114,139 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
             ),
             Icon(Icons.keyboard_arrow_down_rounded, color: c.greyDark),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Separate stateful widget for the dropdown sheet
+/// Prevents lifecycle issues with the main widget
+class _DropdownSheet extends StatefulWidget {
+  final TextEditingController searchController;
+  final List<String> items;
+
+  const _DropdownSheet({required this.searchController, required this.items});
+
+  @override
+  State<_DropdownSheet> createState() => _DropdownSheetState();
+}
+
+class _DropdownSheetState extends State<_DropdownSheet> {
+  late List<String> _filtered;
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.items;
+    widget.searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.searchController.removeListener(_onSearchChanged);
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (!mounted) return;
+    final query = widget.searchController.text.toLowerCase().trim();
+    setState(() {
+      _filtered = query.isEmpty
+          ? widget.items
+          : widget.items
+                .where((item) => item.toLowerCase().contains(query))
+                .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Search field
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: TextField(
+                  controller: widget.searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Search items...',
+                    prefixIcon: Icon(Icons.search, color: c.greyDark),
+                    filled: true,
+                    fillColor: c.transparent,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: c.greylight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: c.greylight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: c.primary, width: 1.5),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+              // List or empty state
+              Flexible(
+                child: _filtered.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text(
+                            'No items found',
+                            style: context.appText.text14W400.copyWith(
+                              color: c.greylight,
+                            ),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: _filtered.length,
+                        separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          thickness: 0.5,
+                          color: c.greylight,
+                        ),
+                        itemBuilder: (context, index) {
+                          final item = _filtered[index];
+                          return ListTile(
+                            tileColor: c.surface,
+                            title: Text(
+                              item,
+                              style: context.appText.text14W400.copyWith(
+                                color: c.greyDark,
+                              ),
+                            ),
+                            onTap: () => Navigator.pop(context, item),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

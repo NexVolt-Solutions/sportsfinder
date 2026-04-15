@@ -8,6 +8,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/app_svg_icon.dart';
@@ -71,7 +72,18 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         color: context.appColors.greyDark,
                         size: 20,
                       ),
-                      onTrailingTap: () {},
+                      onTrailingTap: () async {
+                        final updatedMatch = await Navigator.pushNamed(
+                          context,
+                          RoutesName.createMatchScreen,
+                          arguments: match, // Pass DiscoveryMatch
+                        );
+
+                        // Refresh UI with updated data
+                        if (updatedMatch != null && context.mounted) {
+                          setState(() {});
+                        }
+                      },
                     ),
                     NormalText(
                       titleText: match.title,
