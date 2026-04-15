@@ -15,24 +15,59 @@ class MatchesRepo {
     int limit = 20,
     int radiusKm = 20,
   }) async {
-    final queryParams = {
-      "type": type,
-      "sport": sport,
-      "skill_level": skillLevel,
-      "lat": lat,
-      "lng": lng,
-      "page": page,
-      "limit": limit,
-      "radius_km": radiusKm,
-    }..removeWhere((k, v) => v == null);
+    try {
+      print("========== GET MATCHES REQUEST ==========");
+      print("Endpoint: /api/v1/matches");
 
-    final uri = Uri(
-      path: "/api/v1/matches",
-      queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())),
-    );
+      final queryParams = {
+        "type": type,
+        "sport": sport,
+        "skill_level": skillLevel,
+        "lat": lat,
+        "lng": lng,
+        "page": page,
+        "limit": limit,
+        "radius_km": radiusKm,
+      }..removeWhere((k, v) => v == null);
 
-    final response = await _apiService.get(uri.toString());
+      print("Query Params: $queryParams");
 
-    return AllMatchesResponse.fromJson(response);
+      final uri = Uri(
+        path: "/api/v1/matches",
+        queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())),
+      );
+
+      print("Final URI: $uri");
+
+      final response = await _apiService.get(uri.toString());
+
+      print("========== GET MATCHES RESPONSE ==========");
+      print("Response Type: ${response.runtimeType}");
+      print(response);
+      print("========== GET MATCHES COMPLETED ==========");
+
+      if (response == null) {
+        print("❌ API Response is NULL");
+        throw Exception("API returned null when fetching matches");
+      }
+
+      if (response is! Map<String, dynamic>) {
+        print("❌ Unexpected response type: ${response.runtimeType}");
+        throw Exception(
+          "Expected Map<String, dynamic> but got ${response.runtimeType}",
+        );
+      }
+
+      final model = AllMatchesResponse.fromJson(response);
+
+      print("✅ Parsed Matches Model: $model");
+
+      return model;
+    } catch (e, stackTrace) {
+      print("========== GET MATCHES ERROR ==========");
+      print("Error: $e");
+      print("StackTrace: $stackTrace");
+      rethrow;
+    }
   }
 }

@@ -3,10 +3,26 @@ import 'package:sport_finding/core/Network/api_service.dart';
 
 class ListOfAllUserRepository {
   final ApiService apiService;
+
   ListOfAllUserRepository({required this.apiService});
 
   Future<ListOfAllUserModel> getAllUsers() async {
-    final response = await apiService.get('/api/v1/users');
-    return response;
+    try {
+      print("========== GET ALL USERS REQUEST ==========");
+      print("Endpoint: /api/v1/users");
+
+      final response = await apiService.get('/api/v1/users');
+
+      print("========== GET ALL USERS RESPONSE ==========");
+      print(response);
+      print("========== GET ALL USERS COMPLETED ==========");
+
+      return response;
+    } catch (e, stackTrace) {
+      print("========== GET ALL USERS ERROR ==========");
+      print("Error: $e");
+      print("StackTrace: $stackTrace");
+      rethrow;
+    }
   }
 }

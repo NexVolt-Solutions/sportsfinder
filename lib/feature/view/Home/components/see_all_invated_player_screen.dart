@@ -6,7 +6,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/see_all_invated_player_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';

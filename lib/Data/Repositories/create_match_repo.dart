@@ -1,54 +1,48 @@
-// import 'package:sport_finding/Data/model/create_match_request_model.dart';
-// import 'package:sport_finding/core/Network/api_service.dart';
-
-// class MatchRepository {
-//   final ApiService _api = ApiService();
-
-//   Future<MatchModel> createMatch(Map<String, dynamic> data) async {
-//     final response = await _api.post('/api/v1/matches', data: data);
-//     return MatchModel.fromJson(response);
-//   }
-// }
-import 'dart:developer';
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 
-class MatchRepository {
+class CreateMatchRepo {
   final ApiService _api = ApiService();
 
   Future<MatchModel> createMatch(Map<String, dynamic> data) async {
     try {
-      // 📤 Log Request Details
-      log('Creating Match...', name: 'MatchRepository');
+      // 📤 Request Logs
+      print("========== CREATE MATCH REQUEST ==========");
+      print("Endpoint: /api/v1/matches");
+      print("Request Data: $data");
 
-      log('API Endpoint: /api/v1/matches', name: 'MatchRepository');
-
-      log('Request Payload: $data', name: 'MatchRepository');
-
-      // 🌐 API Call
       final response = await _api.post('/api/v1/matches', data: data);
 
-      // 📥 Log Response
-      log('API Response: $response', name: 'MatchRepository');
+      // 📥 Response Logs
+      print("========== CREATE MATCH RESPONSE ==========");
+      print("Response: $response");
+
+      if (response == null) {
+        print("❌ API returned NULL response");
+        throw Exception('API returned null response');
+      }
+
+      if (response is! Map<String, dynamic>) {
+        print("❌ Unexpected response type: ${response.runtimeType}");
+        throw Exception(
+          'Unexpected API response type: ${response.runtimeType}',
+        );
+      }
 
       final match = MatchModel.fromJson(response);
 
-      // ✅ Log Parsed Data
-      log(
-        'Match Created Successfully! Match ID: ${match.id}',
-        name: 'MatchRepository',
-      );
+      // ✅ Parsed Data Log
+      print("========== MATCH PARSED SUCCESS ==========");
+      print("Match ID: ${match.id}");
+      print("Full Match Data: $match");
 
       return match;
     } catch (e, stackTrace) {
-      // ❌ Log Errors
-      log(
-        'Error Creating Match: $e',
-        name: 'MatchRepository',
-        error: e,
-        stackTrace: stackTrace,
-        level: 1000, // Severe error level
-      );
+      // ❌ Error Logs
+      print("========== CREATE MATCH ERROR ==========");
+      print("Error: $e");
+      print("StackTrace: $stackTrace");
+
       rethrow;
     }
   }
