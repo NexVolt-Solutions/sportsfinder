@@ -18,8 +18,6 @@ class OtpVerificationScreenViewModel extends ChangeNotifier {
       _errorMessage = "";
       notifyListeners();
       await repository.verifyOtp(email: email, otp: otp);
-      print(otp);
-      print(email);
       return null;
     } catch (e) {
       _errorMessage = e.toString();
@@ -38,8 +36,6 @@ class OtpVerificationScreenViewModel extends ChangeNotifier {
       notifyListeners();
 
       await repository.resendOtp(email: email);
-      print("OTP Resent Successfully!");
-      print(email);
 
       return null; // ✅ success
     } catch (e) {

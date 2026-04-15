@@ -102,11 +102,6 @@ class SignUpRepository {
     String? imageName, // 🌐 Web
   }) async {
     try {
-      print("🔵 SignUpRepository - Starting registration");
-      print("📧 Email: $email");
-      print("👤 Name: $fullName");
-      print("🖼️ ImagePath: ${imagePath ?? 'No image'}");
-
       // ✅ Convert imagePath to File for mobile
       final File? imageFile = (!kIsWeb && imagePath != null)
           ? File(imagePath)
@@ -127,10 +122,8 @@ class SignUpRepository {
         fileField: "profile_image",
       );
 
-      print("✅ Registration successful");
       return response;
     } catch (e) {
-      print("❌ Registration error: $e");
       rethrow;
     }
   }

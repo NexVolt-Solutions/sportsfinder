@@ -13,13 +13,10 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('access_token');
       if (token == null || token.isEmpty) {
-        print('⚠️  No token found in SharedPreferences');
         return null;
       }
-      print('✅ Token retrieved: ${token}');
       return token;
     } catch (e) {
-      print('❌ Error retrieving stored token: $e');
       return null;
     }
   }
@@ -40,16 +37,11 @@ class ApiService {
     final url = "$baseUrl$endpoint";
     final headers = await getHeaders(token: token);
 
-    print('📡 GET $endpoint');
-    print('   Headers: $headers');
-
     final response = await http.get(Uri.parse(url), headers: headers);
 
-    print('   Status: ${response.statusCode}');
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print('   Error: ${response.body}');
       throw Exception("Failed to load data: ${response.body}");
     }
   }
@@ -64,9 +56,6 @@ class ApiService {
       headers: headers,
       body: data != null ? jsonEncode(data) : null,
     );
-    print("🔗 URL: $url");
-    print("📋 Status Code: ${response.statusCode}");
-    print("📦 Response: ${response.body}");
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
@@ -119,9 +108,6 @@ class ApiService {
       final uri = Uri.parse("$baseUrl$endpoint");
       final headers = await getHeaders(token: token);
 
-      print("📤 Uploading to: $uri");
-      print("📝 Fields: $fields");
-
       var request = http.MultipartRequest("POST", uri);
 
       request.headers.addAll(headers);
@@ -132,7 +118,6 @@ class ApiService {
       if (!kIsWeb && file != null) {
         if (await file.exists()) {
           final ext = file.path.split('.').last.toLowerCase();
-          print("📎 Adding file (mobile): ${file.path}");
           request.files.add(
             await http.MultipartFile.fromPath(
               fileField,
@@ -143,14 +128,11 @@ class ApiService {
               ), // ✅ FIXED
             ),
           );
-        } else {
-          print("⚠️ File does not exist: ${file.path}");
         }
       }
       // ✅ Web: bytes
       else if (kIsWeb && fileBytes != null && fileName != null) {
         final ext = fileName.split('.').last.toLowerCase();
-        print("📎 Adding file (web): $fileName");
         request.files.add(
           http.MultipartFile.fromBytes(
             fileField,
@@ -164,12 +146,8 @@ class ApiService {
         );
       }
 
-      print("🚀 Sending request...");
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
-      print("📥 Status Code: ${response.statusCode}");
-      print("📥 Response Body: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
@@ -177,7 +155,6 @@ class ApiService {
         throw Exception("Upload failed: ${response.body}");
       }
     } catch (e) {
-      print("❌ Error in postMultipart: $e");
       rethrow;
     }
   }

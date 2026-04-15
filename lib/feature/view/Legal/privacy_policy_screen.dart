@@ -15,16 +15,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final c = context.appColors;
     final t = context.appText;
 
-    final docTitleStyle = t.style(
-      fontSize: 21,
-      fontWeight: FontWeight.w700,
-      color: c.onSurface,
-      height: 1.25,
-    );
-    final effectiveDateStyle = t.text14W500.copyWith(
-      color: c.greylight,
-      height: 1.35,
-    );
     final welcomeStyle = t.style(
       fontSize: 17,
       fontWeight: FontWeight.w700,

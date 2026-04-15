@@ -136,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             SizedBox(height: context.h(8)),
-            // Shared match row: GlobalMatchCard (same as Discover / All Upcoming).
             SizedBox(
               height: GlobalMatchCard.listSlotHeight(context),
               child: ListView.separated(

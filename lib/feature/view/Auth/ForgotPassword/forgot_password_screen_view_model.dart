@@ -115,7 +115,6 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
       notifyListeners();
 
       final response = await repository.forgotPassword(email);
-      print('response: $response');
 
       // ✅ API returns message on success
       if (response['message'] != null) {
@@ -124,7 +123,6 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
 
       return response['message'] ?? 'Something went wrong';
     } catch (e) {
-      print('❌ Forgot password error: $e');
       return e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoading = false;
@@ -142,11 +140,8 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      print('📤 Resending OTP to: $email');
-
       // ✅ Calls forgot-password again to resend OTP
       final response = await repository.resendOtp(email: email);
-      print('Resend response: $response');
 
       if (response['message'] != null) {
         return null; // success
@@ -154,7 +149,6 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
 
       return response['message'] ?? 'Failed to resend OTP';
     } catch (e) {
-      print('❌ Resend OTP error: $e');
       return e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoading = false;
@@ -174,11 +168,7 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      print('📤 Verifying OTP: $otp for email: $email');
-
       final response = await repository.verifyOtp(email: email, otp: otp);
-
-      print('Verify response: $response');
 
       if (response['message'] != null) {
         return null; // success
@@ -186,7 +176,6 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
 
       return response['message'] ?? 'Verification failed';
     } catch (e) {
-      print('❌ Verify OTP error: $e');
       return e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoading = false;

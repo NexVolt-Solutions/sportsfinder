@@ -13,7 +13,7 @@ class PersonInvitedCard extends StatelessWidget {
   final String? matchName;
   final String? matchLevel;
   final String? destance;
-  final ontap;
+  final VoidCallback ontap;
   final VoidCallback? cardOnTap; // whole card tap
   final bool isShow;
 
@@ -23,7 +23,7 @@ class PersonInvitedCard extends StatelessWidget {
     this.matchName,
     this.matchLevel,
     this.destance,
-    this.ontap,
+    required this.ontap,
     this.isShow = false,
     this.cardOnTap,
   });

@@ -375,68 +375,70 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     ),
 
                     SizedBox(height: context.h(16)),
+
+                    TextFormFieldWidget(
+                      label: 'Max Players',
+                      hintText: 'Enter max number of players',
+                      controller: model.maxPlayersController,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty)
+                          return 'Max players is required';
+                        if (int.tryParse(value) == null)
+                          return 'Enter a valid number';
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: context.h(16)),
+
                     // CustomButton(
                     //   text: AppText.createMatch,
                     //   color: context.appColors.primary,
                     //   onTap: () async {
-                    //     final vm = context.read<CreateMatchScreenViewModel>();
-                    //     String token = '';
+                    //     final vm = context.read<CreateMatchViewModel>();
 
-                    //     bool success = await vm.createMatchApi(token);
+                    //     final success = await vm.createMatchApi();
 
-                    //     if (success) {
-                    //       final match = vm.toCreatedDiscoveryMatch();
-
+                    //     if (success && context.mounted) {
                     //       Navigator.pushNamed(
                     //         context,
                     //         RoutesName.matchCreatedDoneScreen,
-                    //         arguments: match,
+                    //         arguments: vm.createdMatch,
                     //       );
                     //     } else {
                     //       ScaffoldMessenger.of(context).showSnackBar(
-                    //         SnackBar(content: Text("Failed to create match")),
+                    //         SnackBar(
+                    //           content: Text(
+                    //             vm.error ?? "Failed to create match",
+                    //           ),
+                    //         ),
                     //       );
                     //     }
-
-                    //     // if (!model.validateForCreate()) {
-                    //     //   ScaffoldMessenger.of(context).showSnackBar(
-                    //     //     const SnackBar(
-                    //     //       content: Text(
-                    //     //         'Please enter match title, date, time, and location.',
-                    //     //       ),
-                    //     //     ),
-                    //     //   );
-                    //     //   return;
-                    //     // }
-                    //     // final created = model.toCreatedDiscoveryMatch();
-                    //     // Navigator.pushNamed(
-                    //     //   context,
-                    //     //   RoutesName.matchCreatedDoneScreen,
-                    //     //   arguments: created,
-                    //     // );
                     //   },
                     // ),
                     CustomButton(
                       text: AppText.createMatch,
                       color: context.appColors.primary,
                       onTap: () async {
-                        final vm = context.read<CreateMatchViewModel>();
+                        debugPrint("🟡 Create Match Button Clicked");
 
-                        final success = await vm.createMatchApi();
+                        final success = await model.createMatchApi();
+
+                        debugPrint("🟢 API Success: $success");
 
                         if (success && context.mounted) {
+                          final matchId = model.createdMatch?.id;
+                          debugPrint("🆔 Match ID: $matchId");
+
                           Navigator.pushNamed(
                             context,
                             RoutesName.matchCreatedDoneScreen,
-                            arguments: vm.createdMatch,
+                            arguments:
+                                model.createdMatch, // pass the whole MatchModel
                           );
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                vm.error ?? "Failed to create match",
-                              ),
-                            ),
+                          debugPrint(
+                            "❌ Navigation blocked due to API failure.",
                           );
                         }
                       },

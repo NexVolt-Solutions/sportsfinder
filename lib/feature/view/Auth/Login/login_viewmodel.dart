@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
@@ -51,7 +50,6 @@ class LoginScreenViewModel extends ChangeNotifier {
       // Store tokens in SharedPreferences
       await _saveTokens(accessToken, refreshToken, tokenType);
 
-      print('✅ Login successful - Tokens saved to SharedPreferences');
       return null;
     } catch (e) {
       return "Login failed: ${e.toString()}";
@@ -69,7 +67,7 @@ class LoginScreenViewModel extends ChangeNotifier {
   ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       await prefs.setString('access_token', accessToken);
       if (refreshToken != null && refreshToken.isNotEmpty) {
         await prefs.setString('refresh_token', refreshToken);
@@ -77,13 +75,10 @@ class LoginScreenViewModel extends ChangeNotifier {
       if (tokenType != null && tokenType.isNotEmpty) {
         await prefs.setString('token_type', tokenType);
       }
-      
+
       // Store login timestamp
       await prefs.setInt('login_time', DateTime.now().millisecondsSinceEpoch);
-      
-      print('✅ Tokens saved: access_token, refresh_token, token_type');
     } catch (e) {
-      print('❌ Error saving tokens: $e');
       rethrow;
     }
   }
@@ -94,7 +89,6 @@ class LoginScreenViewModel extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('access_token');
     } catch (e) {
-      print('❌ Error retrieving token: $e');
       return null;
     }
   }
@@ -117,9 +111,8 @@ class LoginScreenViewModel extends ChangeNotifier {
       await prefs.remove('refresh_token');
       await prefs.remove('token_type');
       await prefs.remove('login_time');
-      print('✅ Logout successful - Tokens cleared');
     } catch (e) {
-      print('❌ Error during logout: $e');
+      // Handle logout error silently
     }
   }
 

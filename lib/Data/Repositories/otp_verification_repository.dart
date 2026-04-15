@@ -9,7 +9,6 @@ class OtpVerificationRepository {
       "/api/v1/auth/verify-email",
       data: {"email": email, "otp": otp},
     );
-    print(response);
     return response;
   }
 
@@ -18,7 +17,6 @@ class OtpVerificationRepository {
       "/api/v1/auth/resend-verification-otp",
       data: {"email": email},
     );
-    print(response);
     return response;
   }
 }

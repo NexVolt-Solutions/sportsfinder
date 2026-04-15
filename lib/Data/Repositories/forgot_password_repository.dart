@@ -1,4 +1,3 @@
-
 import 'package:sport_finding/core/Network/api_service.dart';
 
 class ForgotPasswordRepository {
@@ -19,7 +18,6 @@ class ForgotPasswordRepository {
       '/api/v1/auth/resend-verification-otp', // ✅ Changed from resend-verification-otp
       data: {'email': email},
     );
-    print(response);
     return response;
   }
 

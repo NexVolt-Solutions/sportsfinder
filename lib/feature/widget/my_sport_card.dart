@@ -9,14 +9,14 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 class MySportCard extends StatelessWidget {
   final String? matchName;
   final String? matchLevel;
-  final cardOnTap;
-  final buttonOnTap;
+  final VoidCallback? cardOnTap;
+  final VoidCallback buttonOnTap;
   const MySportCard({
     super.key,
     this.matchName,
     this.matchLevel,
     this.cardOnTap,
-    this.buttonOnTap,
+    required this.buttonOnTap,
   });
 
   @override

@@ -59,6 +59,7 @@ class _SeeAllInvatedPlayerScreenState extends State<SeeAllInvatedPlayerScreen> {
                     itemBuilder: (context, index) {
                       final playerName = match.players[index];
                       return PersonInvitedCard(
+                        ontap: () {},
                         cardOnTap: () {
                           Navigator.pushNamed(
                             context,

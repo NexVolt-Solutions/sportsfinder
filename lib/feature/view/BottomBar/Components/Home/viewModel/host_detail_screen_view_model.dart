@@ -77,6 +77,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   // ✅ All users from the global service
   List<Items> get allUsers => ListOfAllUserService().allUsers;
   bool get isLoadingUsers => ListOfAllUserService().isLoading;
+  String? get usersFetchError => ListOfAllUserService().errorMessage;
 
   HostDetailScreenViewModel() {
     // ✅ fetch once — skips if already loaded by HomeScreen
@@ -85,6 +86,12 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   }
 
   void _onUsersChanged() => notifyListeners();
+
+  /// ✅ Manual refresh to reload users from API
+  Future<void> refreshUsers() async {
+    await ListOfAllUserService().fetchAllUsers(forceRefresh: true);
+    notifyListeners();
+  }
 
   @override
   void dispose() {

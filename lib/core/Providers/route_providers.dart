@@ -9,19 +9,19 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/match_created_done_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/see_all_invated_player_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboarding_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/see_all_invated_player_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/splash_screen_view_model.dart';
@@ -87,8 +87,7 @@ class RouteProviders {
         );
       case RoutesName.allUpComingMatchesScreen:
         return ChangeNotifierProvider(
-          create: (_) =>
-              AllUpcommingMatchesViewModel()..fetchMatches(type: "all"),
+          create: (_) => AllUpcommingMatchesViewModel()..fetchMatches(),
           child: child,
         );
 
@@ -108,6 +107,7 @@ class RouteProviders {
       case RoutesName.createMatchScreen:
         return ChangeNotifierProvider(
           create: (_) => CreateMatchViewModel(),
+
           child: child,
         );
       case RoutesName.matchCreatedDoneScreen:

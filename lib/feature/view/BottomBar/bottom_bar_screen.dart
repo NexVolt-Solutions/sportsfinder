@@ -8,12 +8,11 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/all_upcoming_matches.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/home_screen.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/all_upcomming_matches_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -38,7 +37,7 @@ class _MyMatchesTabSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AllUpcommingMatchesViewModel()..fetchMatches(type: "all"),
+      create: (_) => AllUpcommingMatchesViewModel()..fetchMatches(),
       child: const AllUpcomingMatches(
         embedAsBottomTab: true,
         listTitle: AppText.myMatches,
@@ -69,7 +68,6 @@ class _BottomBarContent extends StatelessWidget {
     const DiscoverTabScreen(embedInBottomBar: true),
     ChangeNotifierProvider(
       create: (_) => HomeScreenViewModel(
-        // ✅ default constructor, no .withInit
         repository: MyProfileRepository(apiService: ApiService()),
       ),
       child: const HomeScreen(showAppBar: false), // ✅ add const

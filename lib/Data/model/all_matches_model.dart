@@ -1,12 +1,12 @@
-class AllUpcomingMatchesModel {
-  final List<UpcomingMatchModel> items;
+class AllMatchesResponse {
+  final List<AllMatches> items;
   final int total;
   final int page;
   final int limit;
   final bool hasNext;
   final bool hasPrev;
 
-  AllUpcomingMatchesModel({
+  AllMatchesResponse({
     required this.items,
     required this.total,
     required this.page,
@@ -15,10 +15,10 @@ class AllUpcomingMatchesModel {
     required this.hasPrev,
   });
 
-  factory AllUpcomingMatchesModel.fromJson(Map<String, dynamic> json) {
-    return AllUpcomingMatchesModel(
+  factory AllMatchesResponse.fromJson(Map<String, dynamic> json) {
+    return AllMatchesResponse(
       items: (json['items'] as List<dynamic>? ?? [])
-          .map((e) => UpcomingMatchModel.fromJson(e))
+          .map((e) => AllMatches.fromJson(e))
           .toList(),
       total: json['total'] ?? 0,
       page: json['page'] ?? 0,
@@ -29,13 +29,13 @@ class AllUpcomingMatchesModel {
   }
 }
 
-class UpcomingMatchModel {
+class AllMatches {
   final String id;
   final String title;
   final String sport;
   final String skillLevel;
   final String status;
-  final DateTime? scheduledAt;
+  final String scheduledAt;
   final int durationMinutes;
   final String scheduledDate;
   final String scheduledTime;
@@ -47,9 +47,10 @@ class UpcomingMatchModel {
   final int maxPlayers;
   final int currentPlayers;
   final double? distanceKm;
-  final MatchHostModel host;
 
-  UpcomingMatchModel({
+  final MatchHost host;
+
+  AllMatches({
     required this.id,
     required this.title,
     required this.sport,
@@ -70,16 +71,14 @@ class UpcomingMatchModel {
     required this.host,
   });
 
-  factory UpcomingMatchModel.fromJson(Map<String, dynamic> json) {
-    return UpcomingMatchModel(
+  factory AllMatches.fromJson(Map<String, dynamic> json) {
+    return AllMatches(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
       sport: json['sport'] ?? '',
       skillLevel: json['skill_level'] ?? '',
       status: json['status'] ?? '',
-      scheduledAt: json['scheduled_at'] != null
-          ? DateTime.tryParse(json['scheduled_at'])
-          : null,
+      scheduledAt: json['scheduled_at'] ?? '',
       durationMinutes: json['duration_minutes'] ?? 0,
       scheduledDate: json['scheduled_date'] ?? '',
       scheduledTime: json['scheduled_time'] ?? '',
@@ -91,26 +90,26 @@ class UpcomingMatchModel {
       maxPlayers: json['max_players'] ?? 0,
       currentPlayers: json['current_players'] ?? 0,
       distanceKm: (json['distance_km'] as num?)?.toDouble(),
-      host: MatchHostModel.fromJson(json['host'] ?? {}),
+      host: MatchHost.fromJson(json['host'] ?? {}),
     );
   }
 }
 
-class MatchHostModel {
+class MatchHost {
   final String id;
   final String fullName;
   final String? avatarUrl;
   final double avgRating;
 
-  MatchHostModel({
+  MatchHost({
     required this.id,
     required this.fullName,
     required this.avatarUrl,
     required this.avgRating,
   });
 
-  factory MatchHostModel.fromJson(Map<String, dynamic> json) {
-    return MatchHostModel(
+  factory MatchHost.fromJson(Map<String, dynamic> json) {
+    return MatchHost(
       id: json['id'] ?? '',
       fullName: json['full_name'] ?? '',
       avatarUrl: json['avatar_url'],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/model/list_of_all_matches_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -65,9 +64,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                     builder: (context) {
                       return FilterBottomSheet(
                         onApply: (filterData) {
-                          model.applyFilters(
-                            filterData as Map<String, dynamic>,
-                          );
+                          model.applyFilters(filterData);
                         },
                       );
                     },
@@ -97,28 +94,18 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         itemCount: model.matches.length,
                         padding: context.padSym(h: 0),
                         itemBuilder: (context, index) {
-                          // return GlobalMatchCard.fromDiscovery(
-                          //   model.matches[index] as MatchModel,
-                          //   onSeeAllTap: () {
-                          //     Navigator.pushNamed(
-                          //       context,
-                          //       RoutesName.seeAllInvatedPlayerScreen,
-                          //       arguments: model.matches[index],
-                          //     );
-                          //   },
-                          // );
-                          // final match = model.matches[index];
-                          // // Shared match row: GlobalMatchCard (same as Home / Discover).
-                          // return GlobalMatchCard.fromDiscovery(
-                          //   match,
-                          //   onSeeAllTap: () {
-                          //     Navigator.pushNamed(
-                          //       context,
-                          //       RoutesName.seeAllInvatedPlayerScreen,
-                          //       arguments: match,
-                          //     );
-                          //   },
-                          // );
+                          final match = model.matches[index];
+
+                          return GlobalMatchCard.fromAllMatches(
+                            match,
+                            onSeeAllTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                RoutesName.seeAllInvatedPlayerScreen,
+                                arguments: match,
+                              );
+                            },
+                          );
                         },
                         separatorBuilder: (context, index) =>
                             SizedBox(height: context.h(12)),

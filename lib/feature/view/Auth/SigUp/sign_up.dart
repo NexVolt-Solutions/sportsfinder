@@ -213,7 +213,6 @@ class SignUp extends StatelessWidget {
   const SignUp({super.key});
 
   Future<void> _onPickAvatar(BuildContext context) async {
-    final String? imagePath;
     final vm = context.read<SignUpViewModel>();
     final message = await vm.pickProfileImageFromGallery();
     if (!context.mounted || message == null) return;

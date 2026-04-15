@@ -96,7 +96,7 @@ class ListOfAllUserService extends ChangeNotifier {
       );
 
       // ── request ───────────────────────────────────────────────────
-      final url = '/api/v1/users';
+      final url = '/api/v1/users?page=1&limit=100';
       log('🌐 GET $url', name: 'ListOfAllUserService');
 
       final response = await _apiService.get(url);

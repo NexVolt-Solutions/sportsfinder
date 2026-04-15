@@ -218,7 +218,24 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       SizedBox(height: context.h(16)),
                     ],
                     if (model.selectedIndex == 1) ...[
-                      SectionHeaderWidget(title: AppText.participatedPlayers),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SectionHeaderWidget(
+                            title: AppText.participatedPlayers,
+                          ),
+                          // ✅ Refresh button
+                          if (!model.isLoadingUsers)
+                            GestureDetector(
+                              onTap: () => model.refreshUsers(),
+                              child: Icon(
+                                Icons.refresh,
+                                color: context.appColors.primary,
+                                size: 24,
+                              ),
+                            ),
+                        ],
+                      ),
                       SizedBox(height: context.h(8)),
 
                       // ── loading state ──────────────────────────────────────────
@@ -229,16 +246,71 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         )
+                      // ── error state ────────────────────────────────────────────
+                      else if (model.usersFetchError != null)
+                        Column(
+                          children: [
+                            Padding(
+                              padding: context.padSym(v: 8),
+                              child: Text(
+                                '❌ Error loading users:\n${model.usersFetchError}',
+                                style: context.appText.text14W400.copyWith(
+                                  color: context.appColors.onError,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            SizedBox(height: context.h(8)),
+                            GestureDetector(
+                              onTap: () => model.refreshUsers(),
+                              child: Container(
+                                padding: context.padSym(h: 16, v: 8),
+                                decoration: BoxDecoration(
+                                  color: context.appColors.primary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Retry',
+                                  style: context.appText.text14Bold.copyWith(
+                                    color: context.appColors.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
                       // ── empty state ────────────────────────────────────────────
                       else if (model.allUsers.isEmpty)
-                        Padding(
-                          padding: context.padSym(v: 8),
-                          child: Text(
-                            AppText.noPlayersOnRoster,
-                            style: context.appText.text14W400.copyWith(
-                              color: context.appColors.greyDark,
+                        Column(
+                          children: [
+                            Padding(
+                              padding: context.padSym(v: 8),
+                              child: Text(
+                                '📭 No users available yet\n(users are filtered to avoid showing yourself)',
+                                style: context.appText.text14W400.copyWith(
+                                  color: context.appColors.greyDark,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                          ),
+                            SizedBox(height: context.h(8)),
+                            GestureDetector(
+                              onTap: () => model.refreshUsers(),
+                              child: Container(
+                                padding: context.padSym(h: 16, v: 8),
+                                decoration: BoxDecoration(
+                                  color: context.appColors.primary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Refresh',
+                                  style: context.appText.text14Bold.copyWith(
+                                    color: context.appColors.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         )
                       // ── all users from API ─────────────────────────────────────
                       else

@@ -11,13 +11,13 @@ import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
-import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
-import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/create_match_screen.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/host_details_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/user_match_details_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
+import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
@@ -99,23 +99,6 @@ class Routes {
             const BottomBarScreen(),
           ),
         );
-      // case RoutesName.bottomBarScreen:
-      //   return MultiProvider(
-      //     providers: [
-      //       Provider<MyProfileRepository>(
-      //         create: (_) => MyProfileRepository(apiService: ApiService()),
-      //       ),
-      //       ChangeNotifierProxyProvider<
-      //         MyProfileRepository,
-      //         BottomBarScreenViewModel
-      //       >(
-      //         create: (ctx) =>
-      //             BottomBarScreenViewModel(ctx.read<MyProfileRepository>()),
-      //         update: (ctx, repo, prev) =>
-      //             prev ?? BottomBarScreenViewModel(repo),
-      //       ),
-      //     ],
-      //   );
 
       case RoutesName.otpVerificationScreen:
         return MaterialPageRoute(
@@ -141,6 +124,8 @@ class Routes {
             SeeAllInvatedPlayerScreen(),
           ),
         );
+
+      ////////////
       case RoutesName.userMatchDetailsScreen:
         return MaterialPageRoute(
           settings: settings,
@@ -162,6 +147,7 @@ class Routes {
           settings: settings,
           builder: (_) => RouteProviders.wrapIfNeeded(
             RoutesName.createMatchScreen,
+
             CreateMatchScreen(),
           ),
         );
@@ -173,6 +159,7 @@ class Routes {
             const MatchCreatedDoneScreen(),
           ),
         );
+
       case RoutesName.allMemeberScreen:
         return MaterialPageRoute(
           settings: settings,
