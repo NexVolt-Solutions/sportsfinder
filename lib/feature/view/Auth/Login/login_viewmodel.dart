@@ -5,7 +5,6 @@ import 'package:sport_finding/Data/Repositories/login_repository.dart';
 class LoginScreenViewModel extends ChangeNotifier {
   final LoginRepository repository;
 
-  // ✅ Make repository REQUIRED
   LoginScreenViewModel({required this.repository});
 
   final _formKey = GlobalKey<FormState>();
@@ -20,8 +19,13 @@ class LoginScreenViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  void _print(String msg) => debugPrint("🔵 $msg");
+
   Future<String?> loginUser() async {
-    if (!_formKey.currentState!.validate()) {
+    _print("========== LOGIN START ==========");
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _print("❌ Form validation failed");
       return "Please fill all the fields";
     }
 
@@ -29,95 +33,96 @@ class LoginScreenViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      // Call login API
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      _print("📧 Email: $email");
+      _print("🔑 Password: ${'*' * password.length}");
+
       final response = await repository.loginUser(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+        email,
+        password,
         'access_token',
         'refresh_token',
         'token_type',
       );
 
-      // Extract tokens from response
-      final accessToken = response['accessToken'] as String?;
-      final refreshToken = response['refreshToken'] as String?;
-      final tokenType = response['tokenType'] as String?;
+      _print("📦 API RESPONSE:");
+      _print("$response");
 
-      if (accessToken == null || accessToken.isEmpty) {
-        return "No access token received from server";
+      final accessToken = response['accessToken'];
+      final refreshToken = response['refreshToken'];
+      final tokenType = response['tokenType'];
+
+      _print("🔐 AccessToken: $accessToken");
+
+      if (accessToken == null || accessToken.toString().isEmpty) {
+        _print("❌ No access token received");
+        return "Login failed: No token received";
       }
 
-      // Store tokens in SharedPreferences
       await _saveTokens(accessToken, refreshToken, tokenType);
 
-      return null;
+      final prefs = await SharedPreferences.getInstance();
+      final isOnboardingCompleted =
+          prefs.getBool('is_onboarding_completed') ?? false;
+
+      _print("📲 Onboarding: $isOnboardingCompleted");
+
+      _print("========== LOGIN SUCCESS ==========");
+
+      return isOnboardingCompleted ? "HOME" : "SKILL_LEVEL";
     } catch (e) {
-      return "Login failed: ${e.toString()}";
+      _print("❌ ERROR: $e");
+      return e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
+      _print("========== LOGIN END ==========");
     }
   }
 
-  /// Store authentication tokens in SharedPreferences
   Future<void> _saveTokens(
     String accessToken,
     String? refreshToken,
     String? tokenType,
   ) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setString('access_token', accessToken);
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        await prefs.setString('refresh_token', refreshToken);
-      }
-      if (tokenType != null && tokenType.isNotEmpty) {
-        await prefs.setString('token_type', tokenType);
-      }
-
-      // Store login timestamp
-      await prefs.setInt('login_time', DateTime.now().millisecondsSinceEpoch);
-    } catch (e) {
-      rethrow;
+    await prefs.setString('access_token', accessToken);
+    if (refreshToken != null) {
+      await prefs.setString('refresh_token', refreshToken);
     }
+    if (tokenType != null) {
+      await prefs.setString('token_type', tokenType);
+    }
+
+    _print("💾 Tokens saved successfully");
   }
 
-  /// Retrieve access token from SharedPreferences
   static Future<String?> getAccessToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('access_token');
-    } catch (e) {
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    debugPrint("🔵 TOKEN: $token");
+    return token;
   }
 
-  /// Check if user is logged in
   static Future<bool> isLoggedIn() async {
-    try {
-      final token = await getAccessToken();
-      return token != null && token.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
+    final token = await getAccessToken();
+    final result = token != null && token.isNotEmpty;
+    debugPrint("🔵 IS LOGGED IN: $result");
+    return result;
   }
 
-  /// Logout - Clear all stored tokens
   static Future<void> logout() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('access_token');
-      await prefs.remove('refresh_token');
-      await prefs.remove('token_type');
-      await prefs.remove('login_time');
-    } catch (e) {
-      // Handle logout error silently
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    debugPrint("🔵 USER LOGGED OUT");
   }
 
   @override
   void dispose() {
+    _print("Dispose ViewModel");
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

@@ -1,87 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
-
-// class ForgotPasswordScreenViewModel extends ChangeNotifier {
-//   final ForgotPasswordRepository repository;
-//   ForgotPasswordScreenViewModel({required this.repository});
-//   final _formKey = GlobalKey<FormState>();
-//   GlobalKey<FormState> get formKey => _formKey;
-
-//   final TextEditingController _emailController = TextEditingController();
-//   TextEditingController get emailController => _emailController;
-
-//   bool _isLoading = false;
-//   bool get isLoading => _isLoading;
-
-//   String _errorMessage = "";
-//   String get errorMessage => _errorMessage;
-
-//   Future<String?> verfyOtp({required String email, required String otp}) async {
-//     try {
-//       _isLoading = true;
-//       _errorMessage = "";
-//       notifyListeners();
-//       await repository.verifyOtp(email: email, otp: otp);
-//       print(otp);
-//       print(email);
-//       return null;
-//     } catch (e) {
-//       _errorMessage = e.toString();
-//       return _errorMessage;
-//     } finally {
-//       _isLoading = false;
-//       notifyListeners();
-//     }
-//   }
-
-//   // ✅ Resend OTP
-//   Future<String?> resendOtp({required String email}) async {
-//     try {
-//       _isLoading = true;
-//       _errorMessage = '';
-//       notifyListeners();
-
-//       await repository.resendOtp(email: email);
-//       print("OTP Resent Successfully!");
-//       print(email);
-
-//       return null; // ✅ success
-//     } catch (e) {
-//       _errorMessage = e.toString();
-//       return _errorMessage;
-//     } finally {
-//       _isLoading = false;
-//       notifyListeners();
-//     }
-//   }
-
-//   Future<String?> forgotPassword() async {
-//     if (!_formKey.currentState!.validate()) {
-//       return "Please fill all the fields";
-//     }
-
-//     try {
-//       print(_emailController.text.trim());
-//       _isLoading = true;
-//       notifyListeners();
-//       final response = await repository.forgotPassword(
-//         _emailController.text.trim(),
-//       );
-//       print('response: $response');
-//       if (response['status'] == 'success') {
-//         print(response['data']['token']);
-//         return null;
-//       }
-//     } catch (e) {
-//       print('error: $e');
-//       return e.toString();
-//     } finally {
-//       _isLoading = false;
-//       notifyListeners();
-//     }
-//     return null;
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 
@@ -90,7 +6,7 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
 
   ForgotPasswordScreenViewModel({required this.repository});
 
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   GlobalKey<FormState> get formKey => _formKey;
 
   final TextEditingController _emailController = TextEditingController();
@@ -99,87 +15,91 @@ class ForgotPasswordScreenViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // ✅ Send forgot password OTP
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  String _extractMessage(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      return response['message']?.toString() ?? 'Something went wrong';
+    }
+    return 'Invalid response';
+  }
+
+  // ================= FORGOT PASSWORD =================
   Future<String?> forgotPassword() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return 'Please enter your email';
     }
 
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      return 'Please enter your email';
-    }
+
+    if (email.isEmpty) return 'Please enter your email';
 
     try {
-      _isLoading = true;
-      notifyListeners();
+      _setLoading(true);
 
       final response = await repository.forgotPassword(email);
 
-      // ✅ API returns message on success
-      if (response['message'] != null) {
-        return null; // success
-      }
+      print("FORGOT PASSWORD RESPONSE: $response");
 
-      return response['message'] ?? 'Something went wrong';
+      final message = _extractMessage(response);
+
+      return message.contains('success') ? null : message;
     } catch (e) {
-      return e.toString().replaceAll('Exception: ', '');
+      print("FORGOT PASSWORD ERROR: $e");
+      return e.toString().replaceAll('Exception:', '');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
     }
   }
 
-  // ✅ FIXED: Resend OTP — calls forgot-password endpoint again
+  // ================= RESEND OTP =================
   Future<String?> resendOtp({required String email}) async {
-    if (email.isEmpty) {
-      return 'Email is required';
-    }
+    if (email.isEmpty) return 'Email is required';
 
     try {
-      _isLoading = true;
-      notifyListeners();
+      _setLoading(true);
 
-      // ✅ Calls forgot-password again to resend OTP
       final response = await repository.resendOtp(email: email);
 
-      if (response['message'] != null) {
-        return null; // success
-      }
+      print("RESEND OTP RESPONSE: $response");
 
-      return response['message'] ?? 'Failed to resend OTP';
+      final message = _extractMessage(response);
+
+      return message.contains('success') ? null : message;
     } catch (e) {
-      return e.toString().replaceAll('Exception: ', '');
+      print("RESEND OTP ERROR: $e");
+      return e.toString().replaceAll('Exception:', '');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
     }
   }
 
-  // ✅ Verify OTP
+  // ================= VERIFY OTP =================
   Future<String?> verifyOtp({
     required String email,
     required String otp,
   }) async {
     if (email.isEmpty) return 'Email is required';
-    if (otp.isEmpty || otp.length != 6) return 'Please enter valid 6-digit OTP';
+    if (otp.isEmpty || otp.length != 6) return 'Enter valid 6-digit OTP';
 
     try {
-      _isLoading = true;
-      notifyListeners();
+      _setLoading(true);
 
       final response = await repository.verifyOtp(email: email, otp: otp);
 
-      if (response['message'] != null) {
-        return null; // success
-      }
+      print("VERIFY OTP RESPONSE: $response");
 
-      return response['message'] ?? 'Verification failed';
+      final message = _extractMessage(response);
+
+      return message.contains('success') ? null : message;
     } catch (e) {
-      return e.toString().replaceAll('Exception: ', '');
+      print("VERIFY OTP ERROR: $e");
+      return e.toString().replaceAll('Exception:', '');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
     }
   }
 

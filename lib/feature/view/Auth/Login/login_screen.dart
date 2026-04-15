@@ -76,24 +76,50 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: context.h(12)),
-                CustomButton(
-                  onTap: () async {
-                    final error = await model.loginUser();
 
-                    if (error != null) {
-                      ScaffoldMessenger.of(
+                // CustomButton(
+                //   onTap: () async {
+                //     final error = await model.loginUser();
+
+                //     if (error != null) {
+                //       ScaffoldMessenger.of(
+                //         context,
+                //       ).showSnackBar(SnackBar(content: Text(error)));
+                //     } else {
+                //       // ✅ Navigate after successful login
+                //       Navigator.pushNamed(context, RoutesName.skillLevelScreen);
+                //     }
+                //   },
+                //   text: AppText.signIn,
+                //   color: context.appColors.primary,
+                // ),
+                CustomButton(
+                  text: "Login",
+                  // isLoading: model.isLoading,
+                  onTap: () async {
+                    final result = await model.loginUser();
+
+                    if (!context.mounted) return;
+
+                    if (result == "SKILL_LEVEL") {
+                      Navigator.pushReplacementNamed(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(error)));
+                        RoutesName.skillLevelScreen,
+                      );
+                    } else if (result == "HOME") {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        RoutesName.bottomBarScreen,
+                      );
                     } else {
-                      // ✅ Navigate after successful login
-                      Navigator.pushNamed(
-                        context,
-                        RoutesName.bottomBarScreen, // or home screen
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result ?? "Login failed"),
+                          behavior: SnackBarBehavior.floating,
+                        ),
                       );
                     }
                   },
-                  text: AppText.signIn,
-                  color: context.appColors.primary,
                 ),
                 SizedBox(height: context.h(12)),
                 SocialButtonWidget(

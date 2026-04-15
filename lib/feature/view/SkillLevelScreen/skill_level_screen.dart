@@ -33,10 +33,10 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                   children: [
                     AppBarWidget(title: AppText.sportFinding),
                     NormalText(
-                      titleText: AppText.filters,
+                      titleText: AppText.whatsYourSkillLevel,
                       titleStyle: context.appText.text18W600,
                       titleColor: context.appColors.onSurface,
-                      subText: AppText.filters,
+                      subText: AppText.thisHelpsUsFindTheRightMatchesForYou,
                       subStyle: context.appText.text16W400,
                       subColor: context.appColors.greylight,
                     ),
@@ -44,9 +44,9 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: model.skillLevels.length,
+                      itemCount: model.skills.length,
                       itemBuilder: (context, index) {
-                        final skillLevel = model.skillLevels[index];
+                        final skill = model.skills[index];
                         final isSelected = model.selectedIndex == index;
 
                         return CardWidget(
@@ -58,15 +58,21 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                           child: Row(
                             children: [
                               CardIconWidget(
-                                imageAsset: skillLevel.imagePath,
+                                imageAsset: model.getImage(
+                                  skill,
+                                ), // STATIC IMAGE
                                 isSelected: isSelected,
                               ),
+
                               SizedBox(width: context.h(20)),
+
                               NormalText(
-                                titleText: skillLevel.title,
+                                titleText: skill, // API TEXT
                                 titleStyle: context.appText.text14W600,
                                 titleColor: context.appColors.onSurface,
-                                subText: skillLevel.subTitle,
+                                subText: model.getSubtitle(
+                                  skill,
+                                ), // STATIC SUBTITLE
                                 subStyle: context.appText.text12W400,
                                 subColor: context.appColors.greyDark,
                               ),

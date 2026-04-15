@@ -8,7 +8,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Home/viewModel/host_detail_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/app_svg_icon.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
@@ -66,6 +66,12 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                     AppBarWidget(
                       onLeadingTap: () => Navigator.pop(context),
                       title: AppText.hostMatchDetails,
+                      trailing: Icon(
+                        Icons.edit,
+                        color: context.appColors.greyDark,
+                        size: 20,
+                      ),
+                      onTrailingTap: () {},
                     ),
                     NormalText(
                       titleText: match.title,
