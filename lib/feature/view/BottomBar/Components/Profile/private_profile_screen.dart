@@ -61,13 +61,13 @@ class PrivateProfileScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: context.h(22)),
-                        ProfileDetailStatsRow(
-                          followersCount: model.followersCount,
-                          followingCount: model.followingCount,
-                          ratingValue: model.ratingValue,
-                          onFollowersTap: () => model.openFollowers(context),
-                          onFollowingTap: () => model.openFollowing(context),
-                        ),
+                        // ProfileDetailStatsRow(
+                        //   followersCount: model.followersCount,
+                        //   followingCount: model.followingCount,
+                        //   ratingValue: model.ratingValue,
+                        //   onFollowersTap: () => model.openFollowers(context),
+                        //   onFollowingTap: () => model.openFollowing(context),
+                        // ),
                         SizedBox(height: context.h(16)),
                         NormalText(
                           titleText: AppText.mySports,

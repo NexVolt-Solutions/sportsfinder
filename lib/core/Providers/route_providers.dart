@@ -8,6 +8,7 @@ import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
@@ -135,10 +136,9 @@ class RouteProviders {
           child: child,
         );
 
-      // ✅ UNCOMMENTED AND FIXED
       case RoutesName.verificationScreen:
         return ChangeNotifierProvider(
-          create: (_) => ForgotPasswordScreenViewModel(
+          create: (_) => VerificationScreenViewModel(
             repository: ForgotPasswordRepository(apiService: ApiService()),
           ),
           child: child,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
@@ -24,16 +25,23 @@ class PublicProfileViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  ProfileService get _ps => ProfileService();
-  
-  String get fullName => _ps.fullName;
-  String get avatarUrl => _ps.avatarUrl;
-  String get email => _ps.email;
-  String get bio => _ps.bio;
-  String get location => _ps.location;
-  bool get isLoading => _ps.isLoading;
-  bool get showBioOnProfile => true;
+  UserProfileModel? profile;
+  bool isLoading = false;
+  String? errorMessage;
 
+  // --- getters ---
+  String get id => profile?.id ?? 'default id';
+  String get fullName => profile?.fullName ?? 'default name';
+  String get email => profile?.email ?? 'default email';
+  String get bio => profile?.bio ?? 'default bio';
+  String get location => profile?.location ?? 'default location';
+  String get avatarUrl => profile?.avatarUrl ?? 'default avatar url';
+  bool get hasProfile => profile != null;
+  bool get isAdmin => profile?.isAdmin == true;
+  String get status => profile?.status ?? 'default status';
+  List<dynamic> get sports => profile?.sports ?? [];
+  int get totalReviews => profile?.totalReviews ?? 0;
+  List<dynamic> get reviews => profile?.reviews ?? [];
   static const String kDemoAvatarUrl =
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400';
 

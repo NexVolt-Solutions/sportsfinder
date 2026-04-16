@@ -17,17 +17,23 @@ class ProfileService extends ChangeNotifier {
   );
 
   // --- state ---
-  MyProfileModel? profile;
+  UserProfileModel? profile;
   bool isLoading = false;
   String? errorMessage;
 
   // --- getters ---
+  String get id => profile?.id ?? 'default id';
   String get fullName => profile?.fullName ?? 'default name';
-  String get avatarUrl => profile?.avatarUrl ?? 'default avatar url';
   String get email => profile?.email ?? 'default email';
   String get bio => profile?.bio ?? 'default bio';
   String get location => profile?.location ?? 'default location';
+  String get avatarUrl => profile?.avatarUrl ?? 'default avatar url';
   bool get hasProfile => profile != null;
+  bool get isAdmin => profile?.isAdmin == true;
+  String get status => profile?.status ?? 'default status';
+  List<dynamic> get sports => profile?.sports ?? [];
+  int get totalReviews => profile?.totalReviews ?? 0;
+  List<dynamic> get reviews => profile?.reviews ?? [];
 
   // --- fetch (safe to call multiple times — skips if already loaded) ---
   Future<void> fetchMyProfile({bool forceRefresh = false}) async {
@@ -45,7 +51,7 @@ class ProfileService extends ChangeNotifier {
       log('Profile API Response: $response', name: 'ProfileService');
 
       if (response != null) {
-        profile = MyProfileModel.fromJson(response);
+        profile = UserProfileModel.fromJson(response);
         log('✅ Profile loaded: ${profile?.fullName}', name: 'ProfileService');
         errorMessage = null;
       } else {
