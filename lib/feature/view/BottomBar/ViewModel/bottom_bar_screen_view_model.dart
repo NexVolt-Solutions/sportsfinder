@@ -21,7 +21,7 @@ class BottomBarScreenViewModel extends ChangeNotifier {
 
   bool get isHomeSelected => _selectedIndex == homeIndex;
 
-  MyProfileModel? profile;
+  UserProfileModel? profile;
   // ✅ easy getters for the view
   bool isLoading = false;
   String? errorMessage;
@@ -38,7 +38,7 @@ class BottomBarScreenViewModel extends ChangeNotifier {
     try {
       final response = await repository.getMyProfile();
       log(response.toString(), name: "response");
-      profile = MyProfileModel.fromJson(response);
+      profile = UserProfileModel.fromJson(response);
     } catch (e) {
       errorMessage = e.toString();
     } finally {

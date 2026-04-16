@@ -3,8 +3,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/core.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/edit_profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -15,13 +15,18 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
-/// Light outline for profile secondary actions. [AppColors.greylight] is a translucent *dark* grey, so it disappears on [AppColors.blue10].
-
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
 
-  /// When true, [BottomBarScreen] supplies the shared [AppBarWidget].
   final bool embedInBottomBar;
+
+  /// Returns a valid http URL or null — prevents passing placeholder
+  /// strings like "default avatar url" to Image.network.
+  static String? _safeAvatarUrl(String? raw) {
+    if (raw == null) return null;
+    final trimmed = raw.trim();
+    return trimmed.startsWith('http') ? trimmed : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +48,7 @@ class ProfileScreen extends StatelessWidget {
                     onTapFirst: () => Navigator.pop(context),
                     leading: NormalText(titleText: AppText.sportFinding),
                     trailing: GestureDetector(
-                      onTap: () => model.openNotifications(context),
+                      onTap: () {},
                       behavior: HitTestBehavior.opaque,
                       child: SvgPicture.asset(AppAssets.notificationIcon),
                     ),
@@ -66,11 +71,11 @@ class ProfileScreen extends StatelessWidget {
                   )
                 else
                   UserGreetingWidget(
-                    imageUrl: model.avatarUrl,
+                    imageUrl: _safeAvatarUrl(model.avatarUrl),
                     title: model.fullName,
                     locName: model.location,
                     subTitle: model.bio,
-                    isShow: model.showBioOnProfile,
+                    isShow: model.bio.isNotEmpty,
                   ),
                 SizedBox(height: context.h(16)),
                 Row(
@@ -126,7 +131,6 @@ class ProfileScreen extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     final item = model.profileData[index];
-
                     return CustomSettingCard(
                       icon: item['leading'],
                       title: item['title'],
@@ -160,7 +164,6 @@ class ProfileScreen extends StatelessWidget {
                     Expanded(
                       child: CustomButton(
                         color: context.appColors.transparent,
-
                         outlined: true,
                         titleStyle: context.appText.text16Bold.copyWith(
                           color: AppColors.bluecolor,
@@ -168,9 +171,17 @@ class ProfileScreen extends StatelessWidget {
                         leading: SvgPicture.asset(AppAssets.edit),
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),
-                        onTap: () => Navigator.pushNamed(
+                        onTap: () => Navigator.push(
                           context,
-                          RoutesName.editProfileRoute,
+                          MaterialPageRoute(
+                            builder: (_) => EditProfileScreen(
+                              initialName: model.fullName,
+                              initialBio: model.bio.isNotEmpty
+                                  ? model.bio
+                                  : null,
+                              initialAvatarUrl: _safeAvatarUrl(model.avatarUrl),
+                            ),
+                          ),
                         ),
                         text: AppText.editProfile,
                       ),
@@ -187,7 +198,6 @@ class ProfileScreen extends StatelessWidget {
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),
                         onTap: () {},
-
                         text: AppText.share,
                       ),
                     ),

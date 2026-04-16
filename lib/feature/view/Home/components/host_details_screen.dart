@@ -266,52 +266,27 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         )
                       // ── error state ────────────────────────────────────────────
                       else if (model.usersFetchError != null)
-                        Column(
-                          children: [
-                            Padding(
-                              padding: context.padSym(v: 8),
-                              child: Text(
-                                '❌ Error loading users:\n${model.usersFetchError}',
-                                style: context.appText.text14W400.copyWith(
-                                  color: context.appColors.onError,
-                                ),
-                                textAlign: TextAlign.center,
+                        GestureDetector(
+                          onTap: () => model.refreshUsers(),
+                          child: Container(
+                            padding: context.padSym(h: 16, v: 8),
+                            decoration: BoxDecoration(
+                              color: context.appColors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Retry',
+                              style: context.appText.text14Bold.copyWith(
+                                color: context.appColors.onPrimary,
                               ),
                             ),
-                            SizedBox(height: context.h(8)),
-                            GestureDetector(
-                              onTap: () => model.refreshUsers(),
-                              child: Container(
-                                padding: context.padSym(h: 16, v: 8),
-                                decoration: BoxDecoration(
-                                  color: context.appColors.primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Retry',
-                                  style: context.appText.text14Bold.copyWith(
-                                    color: context.appColors.onPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         )
                       // ── empty state ────────────────────────────────────────────
                       else if (model.allUsers.isEmpty)
                         Column(
                           children: [
-                            Padding(
-                              padding: context.padSym(v: 8),
-                              child: Text(
-                                '📭 No users available yet\n(users are filtered to avoid showing yourself)',
-                                style: context.appText.text14W400.copyWith(
-                                  color: context.appColors.greyDark,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            SizedBox(height: context.h(8)),
+                            SizedBox(height: context.h(20)),
                             GestureDetector(
                               onTap: () => model.refreshUsers(),
                               child: Container(

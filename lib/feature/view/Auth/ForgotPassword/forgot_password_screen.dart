@@ -56,22 +56,48 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     },
                   ),
                   SizedBox(height: context.h(20)),
+
+                  // CustomButton(
+                  //   onTap: () async {
+                  //     final result = await model.forgotPassword();
+                  //     if (result == null) {
+                  //       Navigator.pushNamed(
+                  //         context,
+                  //         RoutesName.verificationScreen,
+                  //         arguments: model.emailController.text.trim(),
+                  //       );
+                  //     } else {
+                  //       ScaffoldMessenger.of(
+                  //         context,
+                  //       ).showSnackBar(SnackBar(content: Text(result)));
+                  //     }
+                  //   },
+                  //   text: AppText.sendResetCode,
+                  //   color: context.appColors.primary,
+                  // ),
                   CustomButton(
-                    onTap: () async {
-                      final result = await model.forgotPassword();
-                      if (result == null) {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.verificationScreen,
-                          arguments: model.emailController.text.trim(),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(result)));
-                      }
-                    },
-                    text: AppText.sendResetCode,
+                    onTap: model.isLoading
+                        ? null
+                        : () async {
+                            final result = await model.forgotPassword();
+
+                            if (!context.mounted) return;
+
+                            if (result == null) {
+                              Navigator.pushNamed(
+                                context,
+                                RoutesName.verificationScreen,
+                                arguments: model.emailController.text.trim(),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text(result)));
+                            }
+                          },
+                    text: model.isLoading
+                        ? "Please wait..."
+                        : AppText.sendResetCode,
                     color: context.appColors.primary,
                   ),
                 ],
