@@ -523,7 +523,7 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/create_match_repo.dart';
 import 'package:sport_finding/Data/Repositories/update_match_repo.dart';
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
-import 'package:sport_finding/Data/model/update_match_model.dart';
+import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
   final CreateMatchRepo _createRepo = CreateMatchRepo();

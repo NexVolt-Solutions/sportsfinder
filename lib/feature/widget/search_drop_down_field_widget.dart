@@ -225,7 +225,7 @@ class _DropdownSheetState extends State<_DropdownSheet> {
                       )
                     : ListView.separated(
                         itemCount: _filtered.length,
-                        separatorBuilder: (_, __) => Divider(
+                        separatorBuilder: (_, _) => Divider(
                           height: 1,
                           thickness: 0.5,
                           color: c.greylight,

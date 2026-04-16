@@ -1,4 +1,4 @@
-import 'package:sport_finding/Data/model/options_model.dart';
+import 'package:sport_finding/Data/model/Option/options_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 
 class OptionsRepository {

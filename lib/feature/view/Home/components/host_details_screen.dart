@@ -369,44 +369,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
 
                       SizedBox(height: context.h(16)),
                     ],
-                    // if (model.selectedIndex == 1) ...[
-                    //   SectionHeaderWidget(title: AppText.participatedPlayers),
-                    //   SizedBox(height: context.h(8)),
-                    //   if (model.rosterCount == 0)
-                    //     Padding(
-                    //       padding: context.padSym(v: 8),
-                    //       child: Text(
-                    //         AppText.noPlayersOnRoster,
-                    //         style: context.appText.text14W400.copyWith(
-                    //           color: context.appColors.greyDark,
-                    //         ),
-                    //       ),
-                    //     )
-                    //   else ...[
-                    //     // PersonInvitedCard is similar to UserMatchCard but with a different layout and no action button, used here to show invited players in the host details screen.
-                    //     ListView.builder(
-                    //       itemCount: model.rosterCount,
-                    //       shrinkWrap: true,
-                    //       physics: const NeverScrollableScrollPhysics(),
-                    //       itemBuilder: (context, index) {
-                    //         return PersonInvitedCard(
-                    //           playerName: model.rosterNameAt(index),
-                    //           matchName: match.sportType,
-                    //           matchLevel: model.rosterSkillAt(index),
-                    //           destance: '${match.distanceKm} km',
-                    //           isShow: true,
-                    //           ontap: () {},
-                    //           cardOnTap: () => match.pushPublicProfileForPlayer(
-                    //             context,
-                    //             displayName: model.rosterNameAt(index),
-                    //             userIdSuffix: 'invited_participated_$index',
-                    //           ),
-                    //         );
-                    //       },
-                    //     ),
-                    //   ],
-                    //   SizedBox(height: context.h(16)),
-                    // ],
+
                     if (model.selectedIndex == 2) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),

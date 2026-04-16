@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:sport_finding/Data/model/Option/options_model.dart';
 import 'package:sport_finding/Data/repositories/options_repository.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/Data/model/options_model.dart';
 
 class SkillLevelScreenViewModel extends ChangeNotifier {
   final OptionsRepository _repository = OptionsRepository();
