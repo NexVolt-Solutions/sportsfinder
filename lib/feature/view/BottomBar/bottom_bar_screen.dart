@@ -32,24 +32,80 @@ class BottomBarScreen extends StatelessWidget {
   }
 }
 
+/// Tab order must match indices used by [BottomBarScreenViewModel] / nav bar.
+List<Widget> _bottomBarTabChildren() => <Widget>[
+  const _MyMatchesTabSlot(),
+  const DiscoverTabScreen(embedInBottomBar: true),
+  ChangeNotifierProvider(
+    create: (_) => HomeScreenViewModel(
+      repository: MyProfileRepository(apiService: ApiService()),
+    ),
+    child: const HomeScreen(showAppBar: false),
+  ),
+  const ChatListScreen(embedInBottomBar: true),
+  const ProfileScreen(embedInBottomBar: true),
+];
+
 class _MyMatchesTabSlot extends StatelessWidget {
   const _MyMatchesTabSlot();
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AllUpcommingMatchesViewModel()..fetchMatches(),
-      child: const AllUpcomingMatches(
-        embedAsBottomTab: true,
-        listTitle: AppText.myMatches,
-      ),
+      create: (_) => AllUpcommingMatchesViewModel(),
+      child: const _MyMatchesFetchWhenTabSelected(),
     );
   }
 }
 
-class _BottomBarContent extends StatelessWidget {
+/// [IndexedStack] builds every tab at once; defer GET /matches until the user
+/// opens the My Matches tab so startup does not duplicate Home's request.
+class _MyMatchesFetchWhenTabSelected extends StatefulWidget {
+  const _MyMatchesFetchWhenTabSelected();
+
+  @override
+  State<_MyMatchesFetchWhenTabSelected> createState() =>
+      _MyMatchesFetchWhenTabSelectedState();
+}
+
+class _MyMatchesFetchWhenTabSelectedState
+    extends State<_MyMatchesFetchWhenTabSelected> {
+  static const int _myMatchesTabIndex = 0;
+
+  bool _requestedFetch = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = context.select<BottomBarScreenViewModel, int>(
+      (vm) => vm.selectedIndex,
+    );
+
+    if (selected == _myMatchesTabIndex && !_requestedFetch) {
+      final vm = context.read<AllUpcommingMatchesViewModel>();
+      if (!vm.isLoading && vm.allMatches.isEmpty) {
+        _requestedFetch = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          context.read<AllUpcommingMatchesViewModel>().fetchMatches();
+        });
+      }
+    }
+
+    return const AllUpcomingMatches(
+      embedAsBottomTab: true,
+      listTitle: AppText.myMatches,
+    );
+  }
+}
+
+class _BottomBarContent extends StatefulWidget {
   const _BottomBarContent();
 
+  @override
+  State<_BottomBarContent> createState() => _BottomBarContentState();
+}
+
+class _BottomBarContentState extends State<_BottomBarContent> {
   static const double _barHeight = 64;
   static const double _barBottomPadding = 4;
   static const double _barRadius = 12;
@@ -59,23 +115,29 @@ class _BottomBarContent extends StatelessWidget {
   static const double _barShadowOffset = 4;
   static const double _navItemIconLabelGap = 2;
 
+  bool _appliedRouteTab = false;
+
+  late final List<Widget> _tabChildren = _bottomBarTabChildren();
+
   /// Vertical room for the capsule plus the home control sitting slightly above it.
   static double _bottomChromeHeight(BuildContext context) =>
       _barHeight + context.h(4);
 
-  // bottom_bar_screen.dart
-  static final List<Widget> _tabChildren = <Widget>[
-    const _MyMatchesTabSlot(),
-    const DiscoverTabScreen(embedInBottomBar: true),
-    ChangeNotifierProvider(
-      create: (_) => HomeScreenViewModel(
-        repository: MyProfileRepository(apiService: ApiService()),
-      ),
-      child: const HomeScreen(showAppBar: false), // ✅ add const
-    ),
-    const ChatListScreen(embedInBottomBar: true),
-    const ProfileScreen(embedInBottomBar: true),
-  ];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_appliedRouteTab) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is! int) return;
+    _appliedRouteTab = true;
+    final maxIndex = _tabChildren.length - 1;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<BottomBarScreenViewModel>().setSelectedIndex(
+            args.clamp(0, maxIndex),
+          );
+    });
+  }
 
   Widget _navItem({
     required BuildContext context,

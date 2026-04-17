@@ -22,6 +22,8 @@ import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
+import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
@@ -116,6 +118,7 @@ class Routes {
           builder: (_) => RouteProviders.wrapIfNeeded(
             RoutesName.allUpComingMatchesScreen,
             AllUpcomingMatches(),
+            routeArguments: settings.arguments,
           ),
         );
       case RoutesName.seeAllInvatedPlayerScreen:
@@ -124,6 +127,7 @@ class Routes {
           builder: (_) => RouteProviders.wrapIfNeeded(
             RoutesName.seeAllInvatedPlayerScreen,
             SeeAllInvatedPlayerScreen(),
+            routeArguments: settings.arguments,
           ),
         );
 
@@ -185,11 +189,21 @@ class Routes {
           ),
         );
       case RoutesName.editProfileRoute:
+        final editArgs = settings.arguments;
+        final a = editArgs is EditProfileRouteArgs
+            ? editArgs
+            : const EditProfileRouteArgs();
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => ChangeNotifierProvider(
             create: (_) => EditProfileScreenViewModel(UpdateProfileRepo()),
-            child: const EditProfileScreen(),
+            child: EditProfileScreen(
+              initialName: a.initialName,
+              initialBio: a.initialBio,
+              initialAvatarUrl: a.initialAvatarUrl,
+              initialSport: a.initialSport,
+              initialSkill: a.initialSkill,
+            ),
           ),
         );
       case RoutesName.forgotPasswordScreen:
@@ -243,9 +257,9 @@ class Routes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => PublicProfileScreen(
-            // args: settings.arguments is PublicProfileArgs
-            //     ? settings.arguments as PublicProfileArgs
-            //     : null,
+            args: settings.arguments is PublicProfileArgs
+                ? settings.arguments as PublicProfileArgs
+                : null,
           ),
         );
       case RoutesName.privateProfileScreen:

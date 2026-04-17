@@ -49,7 +49,7 @@ class Items {
   String? bio;
   String? location;
   String? avatarUrl;
-  int? avgRating;
+  double? avgRating;
   int? totalGamesPlayed;
   List<Sports>? sports;
   bool? isFollowing;
@@ -72,7 +72,7 @@ class Items {
     bio = json['bio'];
     location = json['location'];
     avatarUrl = json['avatar_url'];
-    avgRating = json['avg_rating'];
+    avgRating = (json['avg_rating'] as num?)?.toDouble();
     totalGamesPlayed = json['total_games_played'];
     if (json['sports'] != null) {
       sports = <Sports>[];

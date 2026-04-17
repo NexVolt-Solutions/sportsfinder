@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 
 class ApiService {
   final String baseUrl = "https://api.sportfinding.com";
@@ -10,12 +10,7 @@ class ApiService {
   /// Retrieve stored access token from SharedPreferences
   Future<String?> _getStoredToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-      if (token == null || token.isEmpty) {
-        return null;
-      }
-      return token;
+      return await AppPreferences.getAccessToken();
     } catch (e) {
       return null;
     }

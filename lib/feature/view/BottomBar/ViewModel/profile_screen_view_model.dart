@@ -3,6 +3,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/Data/model/my_sport.dart'; // Added VoidCallback import
 
@@ -109,7 +110,15 @@ class ProfileScreenViewModel extends ChangeNotifier {
   void onTapFun(BuildContext context, int index) {
     switch (index) {
       case 0:
-        Navigator.pushNamed(context, RoutesName.publicProfileScreen);
+        Navigator.pushNamed(
+          context,
+          RoutesName.publicProfileScreen,
+          arguments: PublicProfileArgs(
+            userId: _ps.profile?.id ?? '',
+            displayName: _ps.fullName,
+            forceRefreshProfile: true,
+          ),
+        );
         break;
       case 1:
         Navigator.pushNamed(context, RoutesName.privateProfileScreen);

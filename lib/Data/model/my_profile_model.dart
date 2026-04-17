@@ -1,3 +1,11 @@
+List<dynamic> _normalizeJsonListOfMaps(dynamic raw) {
+  if (raw is! List) return [];
+  return raw.map((e) {
+    if (e is Map) return Map<String, dynamic>.from(e);
+    return e;
+  }).toList();
+}
+
 class UserProfileModel {
   final String id;
   final String fullName;
@@ -38,24 +46,45 @@ class UserProfileModel {
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    final j = Map<String, dynamic>.from(json);
+    final createdRaw = j['created_at'];
+    final createdAt = createdRaw == null
+        ? DateTime.fromMillisecondsSinceEpoch(0)
+        : (DateTime.tryParse(createdRaw.toString()) ??
+            DateTime.fromMillisecondsSinceEpoch(0));
+
     return UserProfileModel(
-      id: json['id'] ?? '',
-      fullName: json['full_name'] ?? '',
-      email: json['email'] ?? '',
-      bio: json['bio'],
-      location: json['location'],
-      avatarUrl: json['avatar_url'],
-      isAdmin: json['is_admin'] ?? false,
-      status: json['status'] ?? '',
-      sports: json['sports'] ?? [],
-      totalReviews: json['total_reviews'] ?? 0,
-      reviews: json['reviews'] ?? [],
-      stats: Stats.fromJson(json['stats'] ?? {}),
-      actions: Actions.fromJson(json['actions'] ?? {}),
-      settings: Settings.fromJson(json['settings'] ?? {}),
-      navigation: Navigation.fromJson(json['navigation'] ?? {}),
-      cta: Cta.fromJson(json['cta'] ?? {}),
-      createdAt: DateTime.parse(json['created_at']),
+      id: j['id'] ?? '',
+      fullName: '${j['full_name'] ?? j['name'] ?? ''}',
+      email: j['email'] ?? '',
+      bio: j['bio'],
+      location: j['location'],
+      avatarUrl: j['avatar_url'],
+      isAdmin: j['is_admin'] ?? false,
+      status: j['status'] ?? '',
+      sports: _normalizeJsonListOfMaps(j['sports']),
+      totalReviews: j['total_reviews'] ?? 0,
+      reviews: _normalizeJsonListOfMaps(j['reviews']),
+      stats: Stats.fromJson(
+        j['stats'] is Map ? Map<String, dynamic>.from(j['stats'] as Map) : {},
+      ),
+      actions: Actions.fromJson(
+        j['actions'] is Map ? Map<String, dynamic>.from(j['actions'] as Map) : {},
+      ),
+      settings: Settings.fromJson(
+        j['settings'] is Map
+            ? Map<String, dynamic>.from(j['settings'] as Map)
+            : {},
+      ),
+      navigation: Navigation.fromJson(
+        j['navigation'] is Map
+            ? Map<String, dynamic>.from(j['navigation'] as Map)
+            : {},
+      ),
+      cta: Cta.fromJson(
+        j['cta'] is Map ? Map<String, dynamic>.from(j['cta'] as Map) : {},
+      ),
+      createdAt: createdAt,
     );
   }
 
@@ -96,10 +125,14 @@ class Stats {
   });
 
   factory Stats.fromJson(Map<String, dynamic> json) {
+    final m = json['matches'];
+    final matches = m == null
+        ? 0
+        : (m is num ? m.toInt() : int.tryParse(m.toString()) ?? 0);
     return Stats(
       followers: json['followers'] ?? 0,
       following: json['following'] ?? 0,
-      matches: json['matches'] ?? 0,
+      matches: matches,
       rating: (json['rating'] as num?)?.toDouble(),
     );
   }

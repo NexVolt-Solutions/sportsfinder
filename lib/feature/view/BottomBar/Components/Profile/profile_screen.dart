@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/core.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Profile/edit_profile_screen.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
+import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -171,18 +174,36 @@ class ProfileScreen extends StatelessWidget {
                         leading: SvgPicture.asset(AppAssets.edit),
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EditProfileScreen(
+                        onTap: () {
+                          final ps = ProfileService().profile;
+                          String? sportUi;
+                          String? skillUi;
+                          if (ps != null && ps.sports.isNotEmpty) {
+                            final raw = ps.sports.first;
+                            if (raw is Map) {
+                              final m = Map<String, dynamic>.from(raw);
+                              sportUi = apiSportToUiDropdown(
+                                m['sport']?.toString(),
+                              );
+                              skillUi = apiSkillToUiDropdown(
+                                (m['skill_level'] ?? m['skill'])?.toString(),
+                              );
+                            }
+                          }
+                          Navigator.pushNamed(
+                            context,
+                            RoutesName.editProfileRoute,
+                            arguments: EditProfileRouteArgs(
                               initialName: model.fullName,
                               initialBio: model.bio.isNotEmpty
                                   ? model.bio
                                   : null,
                               initialAvatarUrl: _safeAvatarUrl(model.avatarUrl),
+                              initialSport: sportUi,
+                              initialSkill: skillUi,
                             ),
-                          ),
-                        ),
+                          );
+                        },
                         text: AppText.editProfile,
                       ),
                     ),

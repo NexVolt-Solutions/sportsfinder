@@ -576,10 +576,17 @@
 // //     );
 // //   }
 // // }
+import 'dart:io' show File;
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -646,6 +653,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final vm = context.read<EditProfileScreenViewModel>();
+    final picker = ImagePicker();
+    final x = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      imageQuality: 88,
+    );
+    if (x == null) return;
+    if (kIsWeb) {
+      final b = await x.readAsBytes();
+      vm.setPickedImage(bytes: b, fileName: x.name);
+    } else {
+      vm.setPickedImage(file: File(x.path));
+    }
+  }
+
+  Future<void> _onSave() async {
+    final vm = context.read<EditProfileScreenViewModel>();
+    final ok = await vm.updateProfile(
+      fullName: _nameController.text.trim(),
+      bio: _bioController.text.trim(),
+      sport: _sportValue,
+      skillLevel: _skillValue,
+    );
+    if (!mounted) return;
+    if (ok) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile updated')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(vm.errorMessage ?? 'Could not update profile')),
+      );
+    }
+  }
+
   bool _isValidUrl(String? url) =>
       url != null && url.isNotEmpty && url.startsWith('http');
 
@@ -703,7 +749,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   children: [
                     GestureDetector(
-                      onTap: () {},
+                      onTap: _pickImage,
                       child: Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
@@ -712,8 +758,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: SizedBox(
                               width: avatarSize,
                               height: avatarSize,
-                              child: _isValidUrl(avatarUrl)
-                                  ? Image.network(
+                              child: Consumer<EditProfileScreenViewModel>(
+                                builder: (context, vm, _) {
+                                  if (kIsWeb &&
+                                      vm.pickedImageBytes != null &&
+                                      vm.pickedImageBytes!.isNotEmpty) {
+                                    return Image.memory(
+                                      Uint8List.fromList(vm.pickedImageBytes!),
+                                      fit: BoxFit.cover,
+                                      width: avatarSize,
+                                      height: avatarSize,
+                                    );
+                                  }
+                                  if (!kIsWeb && vm.pickedImageFile != null) {
+                                    return Image.file(
+                                      vm.pickedImageFile!,
+                                      fit: BoxFit.cover,
+                                      width: avatarSize,
+                                      height: avatarSize,
+                                    );
+                                  }
+                                  if (_isValidUrl(avatarUrl)) {
+                                    return Image.network(
                                       avatarUrl!,
                                       fit: BoxFit.cover,
                                       cacheWidth: 320,
@@ -743,15 +809,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                               color: c.primary,
                                             ),
                                           ),
-                                    )
-                                  : ColoredBox(
-                                      color: c.blue10,
-                                      child: Icon(
-                                        Icons.person_rounded,
-                                        size: context.w(40),
-                                        color: c.primary,
-                                      ),
+                                    );
+                                  }
+                                  return ColoredBox(
+                                    color: c.blue10,
+                                    child: Icon(
+                                      Icons.person_rounded,
+                                      size: context.w(40),
+                                      color: c.primary,
                                     ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           Positioned(
@@ -784,7 +853,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     SizedBox(height: context.h(12)),
                     Center(
                       child: InkWell(
-                        onTap: () {},
+                        onTap: _pickImage,
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
                           padding: context.padSym(h: 12, v: 6),
@@ -863,11 +932,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       },
                     ),
                     SizedBox(height: context.h(28)),
-                    CustomButton(
-                      text: AppText.saveChanges,
-                      color: c.primary,
-                      colorText: c.onPrimary,
-                      onTap: () => Navigator.pop(context),
+                    Consumer<EditProfileScreenViewModel>(
+                      builder: (context, vm, _) {
+                        return CustomButton(
+                          text: vm.isLoading
+                              ? 'Saving...'
+                              : AppText.saveChanges,
+                          color: c.primary,
+                          colorText: c.onPrimary,
+                          onTap: vm.isLoading ? () {} : _onSave,
+                        );
+                      },
                     ),
                   ],
                 ),

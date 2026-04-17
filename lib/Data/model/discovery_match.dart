@@ -1,4 +1,6 @@
+import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/app_user.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 
 /// Model for a single match (home, discover, lists, and detail flows).
 class DiscoveryMatch {
@@ -48,16 +50,83 @@ class DiscoveryMatch {
   /// Shown on host profile card; if 0, [resolvedHostMatchesPlayed] derives a value.
   final int hostMatchesPlayed;
 
+  /// Maps API match data into [DiscoveryMatch] (date/time formatted for [matchScheduledStart]).
+  factory DiscoveryMatch.fromAllMatches(AllMatches m) {
+    final start = _apiScheduledLocal(m);
+    final dateStr = start != null
+        ? _formatSlashDate(start)
+        : (m.scheduledDate.isNotEmpty ? m.scheduledDate : '—');
+    final timeStr = start != null
+        ? _formatTimeAmPm(start)
+        : (m.scheduledTime.isNotEmpty ? m.scheduledTime : '—');
+
+    final loc = m.locationName.isNotEmpty ? m.locationName : m.location;
+
+    return DiscoveryMatch(
+      id: m.id,
+      title: m.title,
+      distanceKm: m.distanceKm ?? 0.0,
+      sportType: m.sport,
+      location: loc,
+      date: dateStr,
+      time: timeStr,
+      participantsJoined: m.currentPlayers,
+      participantsTotal: m.maxPlayers,
+      players: const [],
+      hostUserId: m.host.id,
+      hostDisplayName: m.host.fullName,
+      skillLevel: m.skillLevel,
+      matchDescription: '',
+      hostBio: '',
+      playerSkills: const [],
+      hostMatchesPlayed: 0,
+    );
+  }
+
+  static DateTime? _apiScheduledLocal(AllMatches m) {
+    final utc = m.scheduledStartUtc;
+    if (utc != null) return utc.toLocal();
+    if (m.scheduledDate.isEmpty) return null;
+    final t = m.scheduledTime.isEmpty ? '00:00' : m.scheduledTime;
+    final normalized = t.length == 5 ? '$t:00' : t;
+    return DateTime.tryParse('${m.scheduledDate}T$normalized')?.toLocal();
+  }
+
+  static String _formatSlashDate(DateTime local) {
+    final d = local.day.toString().padLeft(2, '0');
+    final mo = local.month.toString().padLeft(2, '0');
+    return '$d/$mo/${local.year}';
+  }
+
+  static String _formatTimeAmPm(DateTime local) {
+    var hour = local.hour;
+    final minute = local.minute;
+    final isPm = hour >= 12;
+    var h12 = hour % 12;
+    if (h12 == 0) h12 = 12;
+    final ap = isPm ? 'PM' : 'AM';
+    return '$h12:${minute.toString().padLeft(2, '0')} $ap';
+  }
+
   String get participantsLabel => '$participantsJoined/$participantsTotal';
 
   bool isHostedBy(AppUser user) =>
       hostUserId.isNotEmpty && hostUserId == user.id;
 
-  bool get isHostedByCurrentUser => isHostedBy(AppUser.current);
+  /// Uses [ProfileService] (logged-in user id from `/users/me`).
+  bool get isHostedByCurrentUser {
+    final myId = ProfileService().profile?.id;
+    if (myId == null || myId.isEmpty) return false;
+    return hostUserId.isNotEmpty && hostUserId == myId;
+  }
 
   /// True if the signed-in user is in [players] (by display name) or listed as `'You'`.
   bool get isJoinedByCurrentUser {
-    final n = AppUser.current.displayName.trim().toLowerCase();
+    final raw = ProfileService().profile?.fullName.trim() ?? '';
+    var n = raw.toLowerCase();
+    if (n.isEmpty) {
+      n = AppUser.current.displayName.trim().toLowerCase();
+    }
     if (n.isEmpty) return false;
     for (final p in players) {
       final t = p.trim().toLowerCase();

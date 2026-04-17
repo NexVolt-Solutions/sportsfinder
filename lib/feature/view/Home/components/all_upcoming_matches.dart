@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
@@ -90,25 +93,35 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                           ),
                         ),
                       )
-                    : ListView.separated(
-                        itemCount: model.matches.length,
-                        padding: context.padSym(h: 0),
-                        itemBuilder: (context, index) {
-                          final match = model.matches[index];
+                    : ListenableBuilder(
+                        listenable: ProfileService(),
+                        builder: (context, _) {
+                          return ListView.separated(
+                            itemCount: model.matches.length,
+                            padding: context.padSym(h: 0),
+                            itemBuilder: (context, index) {
+                              final match = model.matches[index];
 
-                          return GlobalMatchCard.fromAllMatches(
-                            match,
-                            onSeeAllTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                RoutesName.seeAllInvatedPlayerScreen,
-                                arguments: match,
+                              return GlobalMatchCard.fromAllMatches(
+                                match,
+                                onCardTap: () {
+                                  DiscoveryMatch.fromAllMatches(
+                                    match,
+                                  ).pushMatchOrHostScreen(context);
+                                },
+                                onSeeAllTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.seeAllInvatedPlayerScreen,
+                                    arguments: match,
+                                  );
+                                },
                               );
                             },
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: context.h(12)),
                           );
                         },
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: context.h(12)),
                       ),
               ),
             ],

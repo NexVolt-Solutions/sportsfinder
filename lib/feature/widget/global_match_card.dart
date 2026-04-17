@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
@@ -15,6 +16,12 @@ import 'package:sport_finding/feature/widget/player_count_widget.dart';
 /// Single match card used across Home, All Upcoming, and Discover screens.
 /// Update the [build] method here to change match card appearance app-wide.
 class GlobalMatchCard extends StatelessWidget {
+  static bool _allMatchesHostedByCurrentUser(AllMatches match) {
+    final myId = ProfileService().profile?.id;
+    if (myId == null || myId.isEmpty) return false;
+    return match.host.id.isNotEmpty && match.host.id == myId;
+  }
+
   // ─────────────────────────── Sizing helpers ────────────────────────────
 
   /// Fixed inner content height so hosted/non-hosted cards stay aligned.
@@ -63,7 +70,7 @@ class GlobalMatchCard extends StatelessWidget {
       distance: match.distanceKm,
       takenPlayer: match.currentPlayers,
       totalPlayer: match.maxPlayers,
-      isHostedByCurrentUser: false, // not provided by this API
+      isHostedByCurrentUser: _allMatchesHostedByCurrentUser(match),
       showHostingBadge: showHostingBadge,
       showTrailingActions: showTrailingActions,
       cardOnTap: onCardTap,

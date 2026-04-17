@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_Repository.dart';
+import 'package:sport_finding/Data/Repositories/matches_repo.dart';
+import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Constants/discovery_match_data.dart';
-import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/match.dart';
 import 'package:sport_finding/Data/model/sport.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
@@ -18,7 +18,17 @@ class HomeScreenViewModel extends ChangeNotifier {
 
     // Listen to ProfileService changes and rebuild this ViewModel
     service.addListener(_onProfileServiceChanged);
+
+    Future.microtask(_loadUpcomingMatches);
   }
+
+  final MatchesRepo _matchesRepo = MatchesRepo();
+
+  /// Matches from GET /api/v1/matches with [scheduled_at] strictly after now (UTC).
+  List<AllMatches> matches = [];
+
+  bool matchesLoading = false;
+  String? matchesError;
 
   // Add this getter anywhere — in the ViewModel or as a helper
   String get timeGreeting {
@@ -30,6 +40,7 @@ class HomeScreenViewModel extends ChangeNotifier {
   }
 
   void _onProfileServiceChanged() {
+    _resortMatches();
     notifyListeners();
   }
 
@@ -54,21 +65,49 @@ class HomeScreenViewModel extends ChangeNotifier {
     Sport(imagePath: AppAssets.batIcon, title: AppText.cricket),
   ];
 
-  /// Future matches only; **your hosted rows first** so the hosting badge is visible
-  /// on the home carousel without scrolling past many other hosts’ games.
-  late final List<DiscoveryMatch> matches = _loadUpcomingMatches();
+  Future<void> _loadUpcomingMatches() async {
+    matchesLoading = true;
+    matchesError = null;
+    notifyListeners();
 
-  List<DiscoveryMatch> _loadUpcomingMatches() {
-    final now = DateTime.now();
-    final list =
-        DiscoveryMatchData.allMatches
-            .where((m) => m.isUpcomingRelativeTo(now))
-            .toList()
-          ..sort((a, b) {
-            if (a.isHostedByCurrentUser == b.isHostedByCurrentUser) return 0;
-            return a.isHostedByCurrentUser ? -1 : 1;
-          });
-    return list;
+    try {
+      final res = await _matchesRepo.getAllMatches(page: 1, limit: 20);
+      final nowUtc = DateTime.now().toUtc();
+
+      matches =
+          res.items.where((m) {
+            final start = m.scheduledStartUtc;
+            return start != null && start.isAfter(nowUtc);
+          }).toList();
+
+      _resortMatches();
+    } catch (e) {
+      matchesError = e.toString();
+      matches = [];
+    } finally {
+      matchesLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void _resortMatches() {
+    if (matches.isEmpty) return;
+
+    final myId = ProfileService().profile?.id;
+
+    matches.sort((a, b) {
+      if (myId != null && myId.isNotEmpty) {
+        final aMine = a.host.id == myId;
+        final bMine = b.host.id == myId;
+        if (aMine != bMine) return aMine ? -1 : 1;
+      }
+      final ta = a.scheduledStartUtc;
+      final tb = b.scheduledStartUtc;
+      if (ta == null && tb == null) return 0;
+      if (ta == null) return 1;
+      if (tb == null) return -1;
+      return ta.compareTo(tb);
+    });
   }
 
   ProfileService get profileService => ProfileService();
@@ -77,40 +116,4 @@ class HomeScreenViewModel extends ChangeNotifier {
   String get avatarUrl => profileService.avatarUrl;
   bool get isLoading => profileService.isLoading;
   String? get errorMessage => profileService.errorMessage;
-
-  // // --- profile ---
-  // MyProfileModel? profile;
-  // bool isLoading = false;
-  // String? errorMessage;
-
-  // HomeScreenViewModel.withInit({required this.repository}) {
-  //   _init();
-  // }
-
-  // void _init() {
-  //   fetchMyProfile();
-  // }
-
-  // Future<void> fetchMyProfile() async {
-  //   isLoading = true;
-  //   errorMessage = null;
-  //   notifyListeners();
-
-  //   try {
-  //           final  token = await SharedPreferences.getInstance().then((prefs) => prefs.getString('authToken'));
-  //     final response = await repository.getMyProfile(token: token);
-  //     log('Profile API Response: $response');
-
-  //     if (response != null) {
-  //       profile = MyProfileModel.fromJson(response);
-  //       log('Profile loaded: ${profile?.fullName}');
-  //     }
-  //   } catch (e) {
-  //     errorMessage = e.toString();
-  //     log('Error fetching profile: $errorMessage');
-  //   } finally {
-  //     isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
 }

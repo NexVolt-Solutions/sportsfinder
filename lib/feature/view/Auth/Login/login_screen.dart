@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -110,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushReplacementNamed(
                         context,
                         RoutesName.bottomBarScreen,
+                        arguments: BottomBarScreenViewModel.homeIndex,
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(

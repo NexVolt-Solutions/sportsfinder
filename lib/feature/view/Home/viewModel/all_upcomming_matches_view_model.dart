@@ -53,6 +53,17 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   AllUpcommingMatchesViewModel({this.scope = UpcomingMatchesScope.allUpcoming});
 
+  /// Seeds lists from Home (or another screen) so the initial GET is skipped.
+  void applyPrefetchedMatches(List<AllMatches> items) {
+    allMatches = List<AllMatches>.from(items);
+    matches = List<AllMatches>.from(items);
+    page = 1;
+    hasNext = items.length >= 20;
+    isLoading = false;
+    error = null;
+    notifyListeners();
+  }
+
   // ================= FETCH =================
   Future<void> fetchMatches({bool reset = false}) async {
     try {

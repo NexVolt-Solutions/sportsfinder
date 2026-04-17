@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 
 class SplashScreenViewModel extends ChangeNotifier {
   Future<void> loginto(BuildContext context) async {
@@ -8,20 +9,22 @@ class SplashScreenViewModel extends ChangeNotifier {
     if (!context.mounted) return;
 
     try {
-      // Check if user is already logged in
-      final isLoggedIn = await _checkLoginStatus();
+      final isLoggedIn = await AppPreferences.isLoggedIn();
+      if (!context.mounted) return;
 
       if (isLoggedIn) {
-        // Check if onboarding is completed
-        final prefs = await SharedPreferences.getInstance();
-        final isOnboardingCompleted =
-            prefs.getBool('is_onboarding_completed') ?? false;
+        final isOnboardingCompleted = await AppPreferences.isOnboardingCompleted();
+        if (!context.mounted) return;
 
         if (isOnboardingCompleted) {
           debugPrint(
             "User logged in and onboarding completed → Navigating to Home",
           );
-          Navigator.pushReplacementNamed(context, RoutesName.bottomBarScreen);
+          Navigator.pushReplacementNamed(
+            context,
+            RoutesName.bottomBarScreen,
+            arguments: BottomBarScreenViewModel.homeIndex,
+          );
         } else {
           debugPrint(
             "User logged in but onboarding not completed → Navigating to Skill Level",
@@ -41,20 +44,4 @@ class SplashScreenViewModel extends ChangeNotifier {
     }
   }
 
-  /// Check if user has a valid access token
-  Future<bool> _checkLoginStatus() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final accessToken = prefs.getString('access_token');
-      final isValid = accessToken != null && accessToken.isNotEmpty;
-
-      debugPrint(
-        "Access token found: ${isValid ? 'YES (${accessToken.substring(0, 10)}...)' : 'NO'}",
-      );
-      return isValid;
-    } catch (e) {
-      debugPrint("Error reading token: $e");
-      return false;
-    }
-  }
 }

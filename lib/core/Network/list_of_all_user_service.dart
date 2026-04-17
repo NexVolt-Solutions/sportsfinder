@@ -3,9 +3,9 @@
 import 'dart:developer';
 import 'dart:math' show asin, cos, pi, pow, sin, sqrt;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sport_finding/Data/model/llst_of_all_user_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 
 class ListOfAllUserService extends ChangeNotifier {
@@ -69,7 +69,13 @@ class ListOfAllUserService extends ChangeNotifier {
   // FETCH
   // ─────────────────────────────────────────────
 
-  Future<void> fetchAllUsers({bool forceRefresh = false}) async {
+  /// [search] is passed as the API `search` query (optional).
+  Future<void> fetchAllUsers({
+    bool forceRefresh = false,
+    String? search,
+    int page = 1,
+    int limit = 100,
+  }) async {
     if (isLoading) {
       log('⏳ Already loading — skipped', name: 'ListOfAllUserService');
       return;
@@ -88,18 +94,24 @@ class ListOfAllUserService extends ChangeNotifier {
 
     try {
       // ── token check ───────────────────────────────────────────────
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
+      final token = await AppPreferences.getAccessToken();
       log(
         '🔑 Token: ${token != null ? "FOUND (${token.substring(0, token.length.clamp(0, 20))}...)" : "NULL — request will be unauthenticated"}',
         name: 'ListOfAllUserService',
       );
 
-      // ── request ───────────────────────────────────────────────────
-      final url = '/api/v1/users?page=1&limit=100';
-      log('🌐 GET $url', name: 'ListOfAllUserService');
+      // ── request (browse public users; excludes current user per API) ──
+      final q = Uri(
+        path: '/api/v1/users',
+        queryParameters: <String, String>{
+          'page': '$page',
+          'limit': '${limit.clamp(1, 100)}',
+          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        },
+      ).toString();
+      log('🌐 GET $q', name: 'ListOfAllUserService');
 
-      final response = await _apiService.get(url);
+      final response = await _apiService.get(q);
 
       // ── raw response ──────────────────────────────────────────────
       log(

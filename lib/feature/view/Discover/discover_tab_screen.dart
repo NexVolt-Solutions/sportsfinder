@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -86,11 +87,29 @@ class _MatchesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (model.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (model.error != null) {
+      return Center(
+        child: Padding(
+          padding: context.padSym(h: 16),
+          child: Text(
+            model.error!,
+            textAlign: TextAlign.center,
+            style: context.appText.text14W400.copyWith(
+              color: context.appColors.greyDark,
+            ),
+          ),
+        ),
+      );
+    }
+
     final matches = model.filteredMatches;
     if (matches.isEmpty) {
       return Center(
         child: Text(
-          'No matches found',
+          AppText.noMatchesFound,
           style: context.appText.text14W400.copyWith(
             color: context.appColors.greyDark,
           ),
@@ -106,6 +125,7 @@ class _MatchesList extends StatelessWidget {
         // Global match row (same widget as Home / All Upcoming).
         return DiscoveryCard(
           match: match,
+          onCardTap: () => match.pushMatchOrHostScreen(context),
           onSeeAllTap: () {
             Navigator.pushNamed(
               context,

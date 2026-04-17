@@ -1,5 +1,6 @@
 import 'package:sport_finding/core/Network/api_service.dart';
 import '../model/all_matches_model.dart';
+import '../model/match_detail_model.dart';
 
 class MatchesRepo {
   final ApiService _apiService = ApiService();
@@ -69,5 +70,17 @@ class MatchesRepo {
       print("StackTrace: $stackTrace");
       rethrow;
     }
+  }
+
+  /// GET /api/v1/matches/{match_id} — full detail including [participants].
+  Future<MatchDetailResponse> getMatch(String matchId) async {
+    if (matchId.isEmpty) {
+      throw ArgumentError('matchId is empty');
+    }
+    final response = await _apiService.get('/api/v1/matches/$matchId');
+    if (response is! Map<String, dynamic>) {
+      throw Exception('Unexpected match detail response');
+    }
+    return MatchDetailResponse.fromJson(response);
   }
 }

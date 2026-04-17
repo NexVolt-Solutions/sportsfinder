@@ -266,27 +266,47 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         )
                       // ── error state ────────────────────────────────────────────
                       else if (model.usersFetchError != null)
-                        GestureDetector(
-                          onTap: () => model.refreshUsers(),
-                          child: Container(
-                            padding: context.padSym(h: 16, v: 8),
-                            decoration: BoxDecoration(
-                              color: context.appColors.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Retry',
-                              style: context.appText.text14Bold.copyWith(
-                                color: context.appColors.onPrimary,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: context.padSym(v: 8),
+                              child: Text(
+                                model.usersFetchError!,
+                                style: context.appText.text14W400.copyWith(
+                                  color: context.appColors.greyDark,
+                                ),
                               ),
                             ),
-                          ),
+                            GestureDetector(
+                              onTap: () => model.refreshUsers(),
+                              child: Container(
+                                padding: context.padSym(h: 16, v: 8),
+                                decoration: BoxDecoration(
+                                  color: context.appColors.primary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Retry',
+                                  style: context.appText.text14Bold.copyWith(
+                                    color: context.appColors.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         )
-                      // ── empty state ────────────────────────────────────────────
                       else if (model.allUsers.isEmpty)
                         Column(
                           children: [
-                            SizedBox(height: context.h(20)),
+                            SizedBox(height: context.h(12)),
+                            Text(
+                              AppText.noUsersFound,
+                              style: context.appText.text14W400.copyWith(
+                                color: context.appColors.greyDark,
+                              ),
+                            ),
+                            SizedBox(height: context.h(16)),
                             GestureDetector(
                               onTap: () => model.refreshUsers(),
                               child: Container(
@@ -320,22 +340,22 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             return PersonInvitedCard(
                               playerName: user.fullName,
                               matchName: sport?.sport ?? match.sportType,
-                              matchLevel:
-                                  sport?.skillLevel ??
-                                  model.rosterSkillAt(index),
-                              destance:
-                                  user.location ?? '${match.distanceKm} km',
+                              matchLevel: sport?.skillLevel ?? match.skillLevel,
+                              destance: user.location?.trim().isNotEmpty == true
+                                  ? user.location
+                                  : '${match.distanceKm.toStringAsFixed(1)} km',
                               isShow: true,
                               ontap: () {
                                 // TODO: send invite to user.id
                               },
                               cardOnTap: () {
-                                // ✅ record profile view for Recent Players
                                 ListOfAllUserService().recordProfileView(user);
-                                match.pushPublicProfileForPlayer(
+                                final uid = user.id?.trim() ?? '';
+                                if (uid.isEmpty) return;
+                                match.pushPublicProfileForUser(
                                   context,
+                                  userId: uid,
                                   displayName: user.fullName ?? '',
-                                  userIdSuffix: user.id ?? 'user_$index',
                                 );
                               },
                             );

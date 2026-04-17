@@ -393,6 +393,16 @@ class AppText {
   /// Label for the name field on the Edit Profile screen.
   static const String editProfileNameField = 'Name';
 
+  /// Public / private profile when API returns null or empty strings.
+  static const String profilePlaceholderName = 'Player';
+  static const String profilePlaceholderBio = 'No bio yet.';
+  static const String profilePlaceholderLocation = 'Location not set';
+  static const String profilePlaceholderSport = 'No sports listed yet';
+  static const String profilePlaceholderReview = 'No reviews yet.';
+
+  /// [GET /api/v1/users] returned an empty page.
+  static const String noUsersFound = 'No users found';
+
   static const String hostMatchDetails = 'Host Match Details';
   static const String matchDetails = 'Match Details';
   static const String sendResetCode = 'Send reset code';

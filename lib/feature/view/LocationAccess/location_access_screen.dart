@@ -6,6 +6,8 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -20,6 +22,16 @@ class LocationAccessScreen extends StatefulWidget {
 }
 
 class _LocationAccessScreenState extends State<LocationAccessScreen> {
+  Future<void> _finishOnboardingAndOpenHome(BuildContext context) async {
+    await AppPreferences.setOnboardingCompleted(true);
+    if (!context.mounted) return;
+    Navigator.pushReplacementNamed(
+      context,
+      RoutesName.bottomBarScreen,
+      arguments: BottomBarScreenViewModel.homeIndex,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
@@ -38,14 +50,11 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                 CustomButton(
                   text: AppText.allowLocation,
                   color: context.appColors.primary,
-                  onTap: () =>
-                      Navigator.pushNamed(context, RoutesName.bottomBarScreen),
+                  onTap: () => _finishOnboardingAndOpenHome(context),
                 ),
                 SizedBox(height: context.h(12)),
                 GestureDetector(
-                  onTap: () {
-                    // handle skip
-                  },
+                  onTap: () => _finishOnboardingAndOpenHome(context),
                   child: NormalText(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     titleText: AppText.skipForNow,

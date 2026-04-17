@@ -93,6 +93,12 @@ class AllMatches {
       host: MatchHost.fromJson(json['host'] ?? {}),
     );
   }
+
+  /// API `scheduled_at` (ISO-8601, usually with `Z`). Null if missing or invalid.
+  DateTime? get scheduledStartUtc {
+    if (scheduledAt.isEmpty) return null;
+    return DateTime.tryParse(scheduledAt);
+  }
 }
 
 class MatchHost {

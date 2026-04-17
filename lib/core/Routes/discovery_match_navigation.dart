@@ -44,4 +44,20 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
       ),
     );
   }
+
+  /// Opens [PublicProfileScreen] using a real user id from [GET /api/v1/users].
+  void pushPublicProfileForUser(
+    BuildContext context, {
+    required String userId,
+    required String displayName,
+  }) {
+    final uid = userId.trim();
+    final name = displayName.trim();
+    if (uid.isEmpty || name.isEmpty) return;
+    Navigator.pushNamed(
+      context,
+      RoutesName.publicProfileScreen,
+      arguments: PublicProfileArgs(userId: uid, displayName: name),
+    );
+  }
 }

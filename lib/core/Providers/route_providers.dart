@@ -8,12 +8,14 @@ import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
-import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
+import 'package:sport_finding/Data/model/all_matches_model.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
@@ -34,7 +36,11 @@ import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/sp
 class RouteProviders {
   RouteProviders._();
 
-  static Widget wrapIfNeeded(String routeName, Widget child) {
+  static Widget wrapIfNeeded(
+    String routeName,
+    Widget child, {
+    Object? routeArguments,
+  }) {
     switch (routeName) {
       case RoutesName.splashScreen:
         return ChangeNotifierProvider(
@@ -76,15 +82,10 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.bottomBarScreen:
-        return MultiProvider(
-          providers: [
-            ChangeNotifierProvider(
-              create: (_) => BottomBarScreenViewModel(
-                MyProfileRepository(apiService: ApiService()),
-              ),
-            ),
-            ChangeNotifierProvider(create: (_) => NotificationService()),
-          ],
+        return ChangeNotifierProvider(
+          create: (_) => BottomBarScreenViewModel(
+            MyProfileRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.otpVerificationScreen:
@@ -96,13 +97,15 @@ class RouteProviders {
         );
       case RoutesName.allUpComingMatchesScreen:
         return ChangeNotifierProvider(
-          create: (_) => AllUpcommingMatchesViewModel()..fetchMatches(),
+          create: (_) => _allUpcomingMatchesViewModelForRoute(routeArguments),
           child: child,
         );
 
       case RoutesName.seeAllInvatedPlayerScreen:
         return ChangeNotifierProvider(
-          create: (_) => SeeAllInvatedPlayerScreenViewModel(),
+          create: (_) => SeeAllInvatedPlayerScreenViewModel(
+            matchId: _seeAllInvitedMatchId(routeArguments),
+          ),
           child: child,
         );
       case RoutesName.userMatchDetailsScreen:
@@ -166,5 +169,33 @@ class RouteProviders {
       default:
         return child;
     }
+  }
+
+  static String _seeAllInvitedMatchId(Object? routeArguments) {
+    if (routeArguments is AllMatches) return routeArguments.id;
+    if (routeArguments is DiscoveryMatch) return routeArguments.id;
+    return '';
+  }
+
+  static AllUpcommingMatchesViewModel _allUpcomingMatchesViewModelForRoute(
+    Object? routeArguments,
+  ) {
+    var scope = UpcomingMatchesScope.allUpcoming;
+    List<AllMatches>? prefetched;
+
+    if (routeArguments is AllUpcomingMatchesRouteArgs) {
+      scope = routeArguments.scope;
+      prefetched = routeArguments.prefetchedMatches;
+    } else if (routeArguments is UpcomingMatchesScope) {
+      scope = routeArguments;
+    }
+
+    final vm = AllUpcommingMatchesViewModel(scope: scope);
+    if (prefetched != null) {
+      vm.applyPrefetchedMatches(prefetched);
+    } else {
+      Future.microtask(() => vm.fetchMatches());
+    }
+    return vm;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 
 class LoginScreenViewModel extends ChangeNotifier {
   final LoginRepository repository;
@@ -63,9 +64,8 @@ class LoginScreenViewModel extends ChangeNotifier {
 
       await _saveTokens(accessToken, refreshToken, tokenType);
 
-      final prefs = await SharedPreferences.getInstance();
       final isOnboardingCompleted =
-          prefs.getBool('is_onboarding_completed') ?? false;
+          await AppPreferences.isOnboardingCompleted();
 
       _print("📲 Onboarding: $isOnboardingCompleted");
 
@@ -87,37 +87,31 @@ class LoginScreenViewModel extends ChangeNotifier {
     String? refreshToken,
     String? tokenType,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString('access_token', accessToken);
-    if (refreshToken != null) {
-      await prefs.setString('refresh_token', refreshToken);
-    }
-    if (tokenType != null) {
-      await prefs.setString('token_type', tokenType);
-    }
+    await AppPreferences.saveAuthTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      tokenType: tokenType,
+    );
 
     _print("💾 Tokens saved successfully");
   }
 
   static Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
+    final token = await AppPreferences.getAccessToken();
     debugPrint("🔵 TOKEN: $token");
     return token;
   }
 
   static Future<bool> isLoggedIn() async {
-    final token = await getAccessToken();
-    final result = token != null && token.isNotEmpty;
+    final result = await AppPreferences.isLoggedIn();
     debugPrint("🔵 IS LOGGED IN: $result");
     return result;
   }
 
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    debugPrint("🔵 USER LOGGED OUT");
+    await AppPreferences.clearAuthSession();
+    ProfileService().clear();
+    debugPrint("🔵 USER LOGGED OUT (auth cleared; onboarding prefs kept)");
   }
 
   @override

@@ -26,6 +26,22 @@ class CreateMatchScreen extends StatefulWidget {
 }
 
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
+  /// Avoid allocating a new list on every frame (keyboard / MediaQuery rebuilds).
+  static const List<String> _demoLocationItems = [
+    'Central Park',
+    'Denmark Central Park',
+    'Denmark Central Park Court',
+    'Denmark Central Park Court 2',
+    'Denmark Central Park Court 3',
+    'Denmark Central Park Court 4',
+    'Denmark Central Park Court 5',
+    'Denmark Central Park Court 6',
+    'Denmark Central Park Court 7',
+    'Denmark Central Park Court 8',
+    'Denmark Central Park Court 9',
+    'Denmark Central Park Court 10',
+  ];
+
   Future<void> _showDurationPicker(
     BuildContext context,
     CreateMatchViewModel model,
@@ -94,15 +110,17 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CreateMatchViewModel>(
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: context.appColors.surface,
-        resizeToAvoidBottomInset: true,
-        body: MainFrame(
-          child: Form(
-            key: model.formKey,
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+    final model = context.read<CreateMatchViewModel>();
+
+    return Scaffold(
+      backgroundColor: context.appColors.surface,
+      resizeToAvoidBottomInset: true,
+      body: MainFrame(
+        child: Form(
+          key: model.formKey,
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: RepaintBoundary(
               child: Padding(
                 padding: context.padonly(
                   left: context.w(20),
@@ -111,12 +129,9 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-
                   children: [
-                    // Header Section
                     Column(
                       mainAxisSize: MainAxisSize.min,
-
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: context.h(20)),
@@ -141,7 +156,6 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     SizedBox(height: context.h(16)),
                     SectionHeaderWidget(title: AppText.basicInfo),
                     SizedBox(height: context.h(16)),
-
                     TextFormFieldWidget(
                       label: AppText.matchTitle,
                       hintText: AppText.matchTitleHit,
@@ -161,39 +175,50 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       maxLines: 5,
                     ),
                     SizedBox(height: context.h(16)),
-                    // Same height controls for consistency.
-                    SizedBox(
-                      height: context.h(56),
-                      child: DropdownFormFieldWidget(
-                        label: AppText.sportType,
-                        hintText: AppText.chooseYourSports,
-                        items: model.sportTypes,
-                        value: model.selectedSportType,
-                        onChanged: model.setSportType,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppText.sportTypeValidation;
-                          }
-                          return null;
-                        },
-                      ),
+                    Selector<CreateMatchViewModel, String?>(
+                      selector: (_, m) => m.selectedSportType,
+                      builder: (context, selectedSport, _) {
+                        final m = context.read<CreateMatchViewModel>();
+                        return SizedBox(
+                          height: context.h(56),
+                          child: DropdownFormFieldWidget(
+                            label: AppText.sportType,
+                            hintText: AppText.chooseYourSports,
+                            items: m.sportTypes,
+                            value: selectedSport,
+                            onChanged: m.setSportType,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppText.sportTypeValidation;
+                              }
+                              return null;
+                            },
+                          ),
+                        );
+                      },
                     ),
                     SizedBox(height: context.h(16)),
-                    SizedBox(
-                      height: context.h(56),
-                      child: DropdownFormFieldWidget(
-                        label: AppText.skillLevel,
-                        hintText: AppText.skillLevelHint,
-                        items: model.skillLevels,
-                        value: model.selectedSkillLevel,
-                        onChanged: model.setSkillLevel,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppText.skillLevelValidation;
-                          }
-                          return null;
-                        },
-                      ),
+                    Selector<CreateMatchViewModel, String?>(
+                      selector: (_, m) => m.selectedSkillLevel,
+                      builder: (context, selectedSkill, _) {
+                        final m = context.read<CreateMatchViewModel>();
+                        return SizedBox(
+                          height: context.h(56),
+                          child: DropdownFormFieldWidget(
+                            label: AppText.skillLevel,
+                            hintText: AppText.skillLevelHint,
+                            items: m.skillLevels,
+                            value: selectedSkill,
+                            onChanged: m.setSkillLevel,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppText.skillLevelValidation;
+                              }
+                              return null;
+                            },
+                          ),
+                        );
+                      },
                     ),
                     SizedBox(height: context.h(16)),
                     SectionHeaderWidget(title: AppText.schedule),
@@ -225,14 +250,13 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                               const Duration(days: 365),
                             ),
                           );
-                          if (date != null) {
+                          if (date != null && context.mounted) {
                             model.setDate(date);
                           }
                         },
                       ),
                     ),
                     SizedBox(height: context.h(16)),
-
                     SizedBox(
                       height: context.h(56),
                       child: TextFormFieldWidget(
@@ -256,7 +280,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                             context: context,
                             initialTime: TimeOfDay.now(),
                           );
-                          if (time != null) {
+                          if (time != null && context.mounted) {
                             model.setTime(time, context);
                           }
                         },
@@ -267,33 +291,19 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       height: context.h(56),
                       child: SearchDropdownField(
                         label: AppText.location,
-                        hintText: "Search location...",
+                        hintText: 'Search location...',
                         controller: model.locationController,
-                        items: [
-                          "Central Park",
-                          "Denmark Central Park",
-                          "Denmark Central Park Court",
-                          "Denmark Central Park Court 2",
-                          "Denmark Central Park Court 3",
-                          "Denmark Central Park Court 4",
-                          "Denmark Central Park Court 5",
-                          "Denmark Central Park Court 6",
-                          "Denmark Central Park Court 7",
-                          "Denmark Central Park Court 8",
-                          "Denmark Central Park Court 9",
-                          "Denmark Central Park Court 10",
-                        ],
+                        items: _demoLocationItems,
                       ),
                     ),
                     SizedBox(height: context.h(12)),
-
                     Align(
                       alignment: Alignment.topRight,
                       child: Padding(
                         padding: EdgeInsets.only(right: context.w(8)),
                         child: GestureDetector(
                           onTap: () {
-                            showDialog(
+                            showDialog<void>(
                               context: context,
                               barrierDismissible: true,
                               builder: (context) => CustomBottomSheetWidget(
@@ -302,12 +312,9 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                        12,
-                                      ), // rounded corners
+                                      borderRadius: BorderRadius.circular(12),
                                       child: Stack(
                                         children: [
-                                          // 1️⃣ Map Image
                                           Container(
                                             height: context.h(174),
                                             width: context.w(380),
@@ -315,8 +322,8 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                               color: context.appColors.blue10,
                                               borderRadius:
                                                   BorderRadius.circular(
-                                                    context.radiusR(12),
-                                                  ),
+                                                context.radiusR(12),
+                                              ),
                                             ),
                                           ),
                                           Align(
@@ -330,7 +337,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                                   shape: BoxShape.circle,
                                                 ),
                                                 child: IconButton(
-                                                  icon: Icon(
+                                                  icon: const Icon(
                                                     Icons.fullscreen,
                                                     size: 20,
                                                   ),
@@ -355,7 +362,6 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       ),
                     ),
                     SizedBox(height: context.h(12)),
-
                     SizedBox(
                       height: context.h(56),
                       child: TextFormFieldWidget(
@@ -373,9 +379,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         onTap: () => _showDurationPicker(context, model),
                       ),
                     ),
-
                     SizedBox(height: context.h(16)),
-
                     TextFormFieldWidget(
                       label: 'Max Players',
                       hintText: 'Enter max number of players',
@@ -392,86 +396,42 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       },
                     ),
                     SizedBox(height: context.h(16)),
+                    Selector<CreateMatchViewModel, bool>(
+                      selector: (_, m) => m.isEditMode,
+                      builder: (context, isEditMode, _) {
+                        return CustomButton(
+                          text: isEditMode
+                              ? 'Update Match'
+                              : AppText.createMatch,
+                          color: context.appColors.primary,
+                          onTap: () async {
+                            final vm = context.read<CreateMatchViewModel>();
+                            debugPrint('🟡 Submit Match Button Clicked');
 
-                    // CustomButton(
-                    //   text: AppText.createMatch,
-                    //   color: context.appColors.primary,
-                    //   onTap: () async {
-                    //     final vm = context.read<CreateMatchViewModel>();
+                            final success = await vm.submitMatch();
 
-                    //     final success = await vm.createMatchApi();
+                            debugPrint('🟢 API Success: $success');
 
-                    //     if (success && context.mounted) {
-                    //       Navigator.pushNamed(
-                    //         context,
-                    //         RoutesName.matchCreatedDoneScreen,
-                    //         arguments: vm.createdMatch,
-                    //       );
-                    //     } else {
-                    //       ScaffoldMessenger.of(context).showSnackBar(
-                    //         SnackBar(
-                    //           content: Text(
-                    //             vm.error ?? "Failed to create match",
-                    //           ),
-                    //         ),
-                    //       );
-                    //     }
-                    //   },
-                    // ),
-                    // CustomButton(
-                    //   text: AppText.createMatch,
-                    //   color: context.appColors.primary,
-                    //   onTap: () async {
-                    //     debugPrint("🟡 Create Match Button Clicked");
-
-                    //     final success = await model.createMatchApi();
-
-                    //     debugPrint("🟢 API Success: $success");
-
-                    //     if (success && context.mounted) {
-                    //       final matchId = model.createdMatch?.id;
-                    //       debugPrint("🆔 Match ID: $matchId");
-
-                    //       Navigator.pushNamed(
-                    //         context,
-                    //         RoutesName.matchCreatedDoneScreen,
-                    //         arguments:
-                    //             model.createdMatch, // pass the whole MatchModel
-                    //       );
-                    //     } else {
-                    //       debugPrint(
-                    //         "❌ Navigation blocked due to API failure.",
-                    //       );
-                    //     }
-                    //   },
-                    // ),
-                    CustomButton(
-                      text: model.isEditMode
-                          ? "Update Match"
-                          : AppText.createMatch,
-                      color: context.appColors.primary,
-                      onTap: () async {
-                        debugPrint("🟡 Submit Match Button Clicked");
-
-                        final success = await model.submitMatch();
-
-                        debugPrint("🟢 API Success: $success");
-
-                        if (success && context.mounted) {
-                          Navigator.pushNamed(
-                            context,
-                            RoutesName.matchCreatedDoneScreen,
-                            arguments: model.isEditMode
-                                ? model.updatedMatch
-                                : model.createdMatch,
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(model.error ?? "Operation failed"),
-                            ),
-                          );
-                        }
+                            if (!context.mounted) return;
+                            if (success) {
+                              Navigator.pushNamed(
+                                context,
+                                RoutesName.matchCreatedDoneScreen,
+                                arguments: vm.isEditMode
+                                    ? vm.updatedMatch
+                                    : vm.createdMatch,
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    vm.error ?? 'Operation failed',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        );
                       },
                     ),
                   ],

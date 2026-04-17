@@ -5,9 +5,14 @@ import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/Data/model/all_matches_model.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
@@ -131,27 +136,61 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushNamed(
                   context,
                   RoutesName.allUpComingMatchesScreen,
+                  arguments: AllUpcomingMatchesRouteArgs(
+                    scope: UpcomingMatchesScope.allUpcoming,
+                    prefetchedMatches: List<AllMatches>.from(model.matches),
+                  ),
                 );
               },
             ),
             SizedBox(height: context.h(8)),
             SizedBox(
               height: GlobalMatchCard.listSlotHeight(context),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: model.matches.length,
-                padding: context.padSym(h: 0),
-                itemBuilder: (context, index) {
-                  final match = model.matches[index];
+              child: model.matchesLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : model.matches.isEmpty
+                  ? Center(
+                      child: NormalText(
+                        titleText: AppText.noMatchesFound,
+                        titleStyle: context.appText.text14W500,
+                      ),
+                    )
+                  : ListenableBuilder(
+                      listenable: ProfileService(),
+                      builder: (context, _) {
+                        return ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: model.matches.length,
+                          padding: context.padSym(h: 0),
+                          itemBuilder: (context, index) {
+                            final match = model.matches[index];
 
-                  return SizedBox(
-                    width: context.w(300),
-                    child: GlobalMatchCard.fromDiscovery(match),
-                  );
-                },
-                separatorBuilder: (context, index) =>
-                    SizedBox(width: context.w(12)),
-              ),
+                            return SizedBox(
+                              width: context.w(300),
+                              child: GlobalMatchCard.fromAllMatches(
+                                key: ValueKey<String>('match-${match.id}'),
+                                match,
+
+                                onCardTap: () {
+                                  DiscoveryMatch.fromAllMatches(
+                                    match,
+                                  ).pushMatchOrHostScreen(context);
+                                },
+                                onSeeAllTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.seeAllInvatedPlayerScreen,
+                                    arguments: match,
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          separatorBuilder: (context, index) =>
+                              SizedBox(width: context.w(12)),
+                        );
+                      },
+                    ),
             ),
             SectionHeaderWidget(title: AppText.popularSports),
             SizedBox(height: context.h(8)),

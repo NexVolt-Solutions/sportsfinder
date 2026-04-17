@@ -16,16 +16,17 @@ class UpdateProfileModel {
   });
 
   factory UpdateProfileModel.fromJson(Map<String, dynamic> json) {
+    final j = Map<String, dynamic>.from(json);
     return UpdateProfileModel(
-      id: json['id'] ?? '',
-      fullName: json['full_name'] ?? '',
-      bio: json['bio'],
-      avatarUrl: json['avatar_url'],
-      sports: (json['sports'] as List? ?? [])
+      id: j['id'] ?? '',
+      fullName: j['full_name'] ?? '',
+      bio: j['bio'],
+      avatarUrl: j['avatar_url'],
+      sports: (j['sports'] as List? ?? [])
           .map((e) => Sport.fromJson(e))
           .toList(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+      updatedAt: j['updated_at'] != null
+          ? DateTime.parse(j['updated_at'].toString())
           : null,
     );
   }
@@ -48,10 +49,11 @@ class Sport {
 
   Sport({required this.sport, required this.skillLevel});
 
-  factory Sport.fromJson(Map<String, dynamic> json) {
+  factory Sport.fromJson(dynamic json) {
+    final m = json is Map ? Map<String, dynamic>.from(json) : <String, dynamic>{};
     return Sport(
-      sport: json['sport'] ?? '',
-      skillLevel: json['skill_level'] ?? '',
+      sport: '${m['sport'] ?? ''}',
+      skillLevel: '${m['skill_level'] ?? ''}',
     );
   }
 

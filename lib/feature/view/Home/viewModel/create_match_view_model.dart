@@ -634,21 +634,20 @@ class CreateMatchViewModel extends ChangeNotifier {
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year}';
     debugPrint("📅 Selected Date: ${dateController.text}");
-    notifyListeners();
+    // No notifyListeners — [dateController] drives the field; avoids rebuilding
+    // the whole create-match form (and jank with the keyboard).
   }
 
   void setTime(TimeOfDay time, BuildContext context) {
     _selectedTime = time;
     timeController.text = time.format(context);
     debugPrint("⏰ Selected Time: ${timeController.text}");
-    notifyListeners();
   }
 
   void setDuration(int minutes) {
     duration = minutes;
     matchDurationController.text = '$minutes minutes';
     debugPrint("⏳ Selected Duration: $minutes minutes");
-    notifyListeners();
   }
 
   // ================================

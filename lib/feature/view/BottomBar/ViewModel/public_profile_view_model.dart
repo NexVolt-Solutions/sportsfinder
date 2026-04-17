@@ -1,22 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Network/profile_service.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/Data/model/my_sport.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
+import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
+import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
-  late final VoidCallback _listener;
-  final PublicProfileArgs? _args;
-
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
-    // ✅ Store listener reference so we can remove it properly
-    _listener = () => notifyListeners();
-    // ✅ Forward ProfileService rebuilds into this ViewModel
+    _listener = () {
+      Future.microtask(notifyListeners);
+    };
     ProfileService().addListener(_listener);
-    // ✅ Fetch — skips if already loaded by HomeScreen
-    ProfileService().fetchMyProfile();
+    Future.microtask(_load);
+  }
+
+  final PublicProfileArgs? _args;
+  final MyProfileRepository _repo = MyProfileRepository(
+    apiService: ApiService(),
+  );
+
+  late final VoidCallback _listener;
+
+  UserProfileModel? _otherProfile;
+  bool _fetchOtherLoading = false;
+  String? _fetchOtherError;
+
+  /// True when opening from settings (no args) or empty [userId], or when the
+  /// selected user is the logged-in account.
+  bool get _viewingSelf {
+    if (_args == null) return true;
+    final uid = _args.userId.trim();
+    if (uid.isEmpty) return true;
+    final myId = ProfileService().profile?.id;
+    if (myId == null || myId.isEmpty) return false;
+    return uid == myId;
+  }
+
+  UserProfileModel? get _active {
+    if (_viewingSelf) return ProfileService().profile;
+    return _otherProfile;
+  }
+
+  bool get showSpinner {
+    if (_viewingSelf) {
+      final ps = ProfileService();
+      return ps.isLoading && ps.profile == null;
+    }
+    return _fetchOtherLoading && _otherProfile == null;
+  }
+
+  bool get showError {
+    if (_viewingSelf) {
+      final ps = ProfileService();
+      return !ps.isLoading && ps.profile == null && ps.errorMessage != null;
+    }
+    return !_fetchOtherLoading &&
+        _otherProfile == null &&
+        _fetchOtherError != null;
+  }
+
+  String get displayError {
+    if (_viewingSelf) {
+      return ProfileService().errorMessage ?? '';
+    }
+    return _fetchOtherError ?? '';
+  }
+
+  /// Hide follow / message / rate when viewing your own public profile.
+  bool get isOwnProfile =>
+      _viewingSelf || (_active?.actions.isOwnProfile ?? false);
+
+  Future<void> _load() async {
+    if (_viewingSelf) {
+      final refresh =
+          _args?.forceRefreshProfile ?? false;
+      try {
+        await ProfileService().fetchMyProfile(forceRefresh: refresh);
+      } catch (_) {}
+      notifyListeners();
+      return;
+    }
+
+    _fetchOtherLoading = true;
+    _fetchOtherError = null;
+    notifyListeners();
+
+    try {
+      final raw = await _repo.getUserById(_args!.userId.trim());
+      if (raw is Map) {
+        _otherProfile = UserProfileModel.fromJson(
+          Map<String, dynamic>.from(raw),
+        );
+        _fetchOtherError = null;
+      } else {
+        throw Exception('Invalid profile response');
+      }
+    } catch (e) {
+      _fetchOtherError = e.toString();
+      _otherProfile = null;
+    } finally {
+      _fetchOtherLoading = false;
+      notifyListeners();
+    }
   }
 
   @override
@@ -25,55 +113,125 @@ class PublicProfileViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  UserProfileModel? profile;
-  bool isLoading = false;
-  String? errorMessage;
-
-  // --- getters ---
-  String get id => profile?.id ?? 'default id';
-  String get fullName => profile?.fullName ?? 'default name';
-  String get email => profile?.email ?? 'default email';
-  String get bio => profile?.bio ?? 'default bio';
-  String get location => profile?.location ?? 'default location';
-  String get avatarUrl => profile?.avatarUrl ?? 'default avatar url';
-  bool get hasProfile => profile != null;
-  bool get isAdmin => profile?.isAdmin == true;
-  String get status => profile?.status ?? 'default status';
-  List<dynamic> get sports => profile?.sports ?? [];
-  int get totalReviews => profile?.totalReviews ?? 0;
-  List<dynamic> get reviews => profile?.reviews ?? [];
-  static const String kDemoAvatarUrl =
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400';
-
-  String get displayName {
-    final n = _args?.displayName.trim();
-    if (n == null || n.isEmpty) return AppText.alexJohnson;
-    return n;
+  String get fullName {
+    final p = _active;
+    if (p != null && p.fullName.trim().isNotEmpty) return p.fullName.trim();
+    final a = _args?.displayName.trim();
+    if (a != null && a.isNotEmpty) return a;
+    if (showSpinner || showError) return '';
+    return AppText.profilePlaceholderName;
   }
 
-  // String get locationLabel => AppText.losAngelesCa;
-  // String get bio => AppText.passionateAthleteBio;
-  // String get avatarUrl => kDemoAvatarUrl;
+  String get bio {
+    final b = _active?.bio?.trim() ?? '';
+    if (b.isNotEmpty) return b;
+    if (showSpinner || showError) return '';
+    return AppText.profilePlaceholderBio;
+  }
 
-  int get followersCount => 78;
-  int get followingCount => 78;
-  String get ratingValue => '4.5';
+  String get location {
+    final l = _active?.location?.trim() ?? '';
+    if (l.isNotEmpty) return l;
+    if (showSpinner || showError) return '';
+    return AppText.profilePlaceholderLocation;
+  }
 
-  List<MySport> get publicSports => [
-    MySport(name: AppText.basketball, skill: AppText.intermediate),
-    MySport(name: AppText.football, skill: AppText.advanced),
-    MySport(name: AppText.tennis, skill: AppText.beginner),
-  ];
+  String get avatarUrl => _active?.avatarUrl?.trim() ?? '';
 
-  String get reviewAuthor => AppText.davidGam;
-  String get reviewDate => AppText.oneDayAgo;
-  String get reviewBody => AppText.hadAGreatMatchReview;
+  int get followersCount => _active?.stats.followers ?? 0;
+  int get followingCount => _active?.stats.following ?? 0;
+
+  String get ratingValue {
+    final r = _active?.stats.rating;
+    if (r == null) return '—';
+    return r.toStringAsFixed(1);
+  }
+
+  List<MySport> get publicSports {
+    final raw = _active?.sports ?? [];
+    final out = <MySport>[];
+    for (final e in raw) {
+      if (e is Map) {
+        final m = Map<String, dynamic>.from(e);
+        final name = '${m['name'] ?? m['sport'] ?? ''}'.trim();
+        if (name.isEmpty) continue;
+        final skill = '${m['skill'] ?? m['skill_level'] ?? ''}'.trim();
+        out.add(MySport(name: name, skill: skill.isEmpty ? '—' : skill));
+      }
+    }
+    return out;
+  }
+
+  /// One placeholder row when the API returns no sports (after load).
+  List<MySport> get publicSportsForDisplay {
+    if (showSpinner || showError) return publicSports;
+    if (publicSports.isNotEmpty) return publicSports;
+    return [
+      MySport(name: AppText.profilePlaceholderSport, skill: ''),
+    ];
+  }
+
+  Map<String, dynamic>? get _firstReviewMap {
+    final list = _active?.reviews;
+    if (list == null || list.isEmpty) return null;
+    final first = list.first;
+    if (first is Map) return Map<String, dynamic>.from(first);
+    return null;
+  }
+
+  String get reviewAuthor {
+    final m = _firstReviewMap;
+    if (m == null) return '';
+    final name =
+        m['author_name'] ?? m['reviewer_name'] ?? m['author'] ?? m['user'];
+    if (name is Map) return '${name['full_name'] ?? name['name'] ?? ''}';
+    return name?.toString() ?? '';
+  }
+
+  String get reviewAuthorForDisplay {
+    final s = reviewAuthor.trim();
+    if (s.isNotEmpty) return s;
+    if (showSpinner || showError) return '';
+    return '—';
+  }
+
+  String get reviewDate {
+    final m = _firstReviewMap;
+    if (m == null) return '';
+    final d = m['created_at'] ?? m['date'] ?? m['reviewed_at'];
+    if (d == null) return '';
+    final parsed = DateTime.tryParse(d.toString());
+    if (parsed == null) return d.toString();
+    return '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+  }
+
+  String get reviewDateForDisplay {
+    final s = reviewDate.trim();
+    if (s.isNotEmpty) return s;
+    if (showSpinner || showError) return '';
+    return '';
+  }
+
+  String get reviewBody {
+    final m = _firstReviewMap;
+    if (m == null) return '';
+    return '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+  }
+
+  String get reviewBodyForDisplay {
+    final s = reviewBody.trim();
+    if (s.isNotEmpty) return s;
+    if (showSpinner || showError) return '';
+    return AppText.profilePlaceholderReview;
+  }
+
   String get reviewInitial {
-    if (_args == null) return 'D';
-    final n = displayName;
-    if (n.isEmpty) return '?';
-    return n[0].toUpperCase();
+    final author = reviewAuthorForDisplay.trim();
+    if (author.isEmpty || author == '—') return '?';
+    return author[0].toUpperCase();
   }
+
+  String get displayName => fullName;
 
   void openFollowers(BuildContext context) {
     Navigator.pushNamed(context, RoutesName.followersScreen);

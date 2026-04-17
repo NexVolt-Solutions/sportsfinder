@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -175,8 +176,11 @@ class UserMatchDetailsScreen extends StatelessWidget {
             child: CustomButton(
               text: AppText.startMatch,
               color: context.appColors.primary,
-              onTap: () =>
-                  Navigator.pushNamed(context, RoutesName.bottomBarScreen),
+              onTap: () => Navigator.pushNamed(
+                    context,
+                    RoutesName.bottomBarScreen,
+                    arguments: BottomBarScreenViewModel.homeIndex,
+                  ),
             ),
           ),
         ],
