@@ -46,8 +46,14 @@ class ListOfAllUserService extends ChangeNotifier {
     final currentSports = ProfileService().profile?.sports ?? [];
     if (currentSports.isEmpty) return _allUsers; // fallback: show all
 
+    /// Extract sport names from currentSports (which may be raw Maps or Sports objects)
     final currentSportNames = currentSports
-        .map((s) => s.sport?.toLowerCase().trim())
+        .map((s) {
+          if (s is Map) {
+            return (s['sport'] ?? s['name'])?.toString().toLowerCase().trim();
+          }
+          return s.sport?.toString().toLowerCase().trim();
+        })
         .whereType<String>()
         .toSet();
 
@@ -106,7 +112,8 @@ class ListOfAllUserService extends ChangeNotifier {
         queryParameters: <String, String>{
           'page': '$page',
           'limit': '${limit.clamp(1, 100)}',
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+          if (search != null && search.trim().isNotEmpty)
+            'search': search.trim(),
         },
       ).toString();
       log('🌐 GET $q', name: 'ListOfAllUserService');

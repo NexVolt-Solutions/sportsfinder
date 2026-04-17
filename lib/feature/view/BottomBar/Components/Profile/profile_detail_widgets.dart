@@ -425,7 +425,7 @@ class ProfileDetailAvatar extends StatelessWidget {
               child: Center(child: CircularProgressIndicator(color: c.primary)),
             );
           },
-          errorBuilder: (_, __, ___) => ColoredBox(
+          errorBuilder: (_, _, _) => ColoredBox(
             color: c.blue10,
             child: Icon(Icons.person, color: c.primary, size: 40),
           ),

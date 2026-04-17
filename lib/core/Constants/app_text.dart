@@ -415,4 +415,5 @@ class AppText {
   static const String matchDetails = 'Match Details';
   static const String sendResetCode = 'Send reset code';
   static const String badminton = 'badminton';
+  static const String leaveMatch = 'Leave Match';
 }
