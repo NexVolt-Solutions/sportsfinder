@@ -881,7 +881,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     DropdownButtonFormField<String>(
                       key: const ValueKey('sport_dropdown'),
                       isExpanded: true,
-                      value: _sportValue,
+                      initialValue: _sportValue,
                       icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: c.onSurface,
@@ -908,7 +908,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     DropdownButtonFormField<String>(
                       key: const ValueKey('skill_dropdown'),
                       isExpanded: true,
-                      value: _skillValue,
+                      initialValue: _skillValue,
                       icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: c.onSurface,

@@ -136,13 +136,28 @@ class ApiService {
   }
 
   /// ✅ DELETE
+  // Future<dynamic> delete(String endpoint, {String? token}) async {
+  //   final url = "$baseUrl$endpoint";
+  //   final headers = await getHeaders(token: token);
+
+  //   final response = await http.delete(Uri.parse(url), headers: headers);
+
+  //   if (response.statusCode != 200) {
+  //     throw Exception("Failed to delete data: ${response.body}");
+  //   }
+  // }
+
+  /// ✅ DELETE (updated to return body)
   Future<dynamic> delete(String endpoint, {String? token}) async {
     final url = "$baseUrl$endpoint";
     final headers = await getHeaders(token: token);
 
     final response = await http.delete(Uri.parse(url), headers: headers);
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
+    } else {
       throw Exception("Failed to delete data: ${response.body}");
     }
   }

@@ -22,6 +22,7 @@ import 'package:sport_finding/feature/widget/person_invited_card.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
+import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailsScreen extends StatefulWidget {
   const HostDetailsScreen({super.key});
@@ -345,8 +346,43 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   ? user.location
                                   : '${match.distanceKm.toStringAsFixed(1)} km',
                               isShow: true,
-                              ontap: () {
-                                // TODO: send invite to user.id
+                              ontap: () async {
+                                final userId = user.id?.trim() ?? '';
+                                AppLogger.info(
+                                  'Invite button tapped from HostDetailsScreen',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                AppLogger.debug(
+                                  'Tapped matchId: ${match.id}',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                AppLogger.debug(
+                                  'Tapped userId: $userId',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                if (userId.isEmpty) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('User id is missing'),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                final message = await model.inviteUserToMatch(
+                                  matchId: match.id,
+                                  userId: userId,
+                                );
+
+                                AppLogger.debug(
+                                  'Invite result message: $message',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                if (!context.mounted || message == null) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(message)),
+                                );
                               },
                               cardOnTap: () {
                                 ListOfAllUserService().recordProfileView(user);
@@ -435,40 +471,125 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                   right: context.w(20),
                   left: context.w(20),
                 ),
-                child: CustomButton(
-                  text: AppText.joinMatch,
-                  color: context.appColors.primary,
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: true,
-                      builder: (context) => CustomBottomSheetWidget(
-                        isCenter: true,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              AppAssets.joiningMatchPeopelIcon,
-                              fit: BoxFit.scaleDown,
-                            ),
-                            SizedBox(height: context.h(16)),
-                            NormalText(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              titleText: AppText.matchIsFull,
-                              maxLines: 5,
-                              subAlign: TextAlign.center,
-                              subText:
-                                  AppText.thisMatchHasReachedItsMaximumCapacity,
-                            ),
-                          ],
-                        ),
+                child: model.isJoinLeaveLoading
+                    // ── Loading state ─────────────────────────────────────────
+                    ? const Center(child: CircularProgressIndicator())
+                    // ── Join / Leave button ───────────────────────────────────
+                    : CustomButton(
+                        text: model.hasJoined
+                            ? AppText.leaveMatch
+                            : AppText.joinMatch,
+                        color: model.hasJoined
+                            ? context
+                                  .appColors
+                                  .error // red for Leave
+                            : context.appColors.primary, // primary for Join
+                        onTap: () async {
+                          final matchId = match.id ?? '';
+                          if (matchId.isEmpty) {
+                            print('❌ [Screen] match.id is null or empty');
+                            return;
+                          }
+
+                          // ── LEAVE flow ─────────────────────────────────────
+                          if (model.hasJoined) {
+                            print('🟡 [Screen] User tapping Leave Match');
+                            await model.leaveMatch(matchId);
+                            return;
+                          }
+
+                          // ── Check if match is full ─────────────────────────
+                          final int roster = model.rosterCount;
+                          final int total = match.participantsTotal ?? 0;
+                          final bool isFull = roster >= total;
+
+                          print('🟡 [Screen] rosterCount: $roster');
+                          print('🟡 [Screen] participantsTotal: $total');
+                          print('🟡 [Screen] isFull: $isFull');
+
+                          if (isFull) {
+                            print('🟡 [Screen] Showing Match is Full dialog');
+                            if (!context.mounted) return;
+                            showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (dialogContext) => CustomBottomSheetWidget(
+                                isCenter: true,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SvgPicture.asset(
+                                      AppAssets.joiningMatchPeopelIcon,
+                                      fit: BoxFit.scaleDown,
+                                    ),
+                                    SizedBox(height: context.h(16)),
+                                    NormalText(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      titleText: AppText.matchIsFull,
+                                      maxLines: 5,
+                                      subAlign: TextAlign.center,
+                                      subText: AppText
+                                          .thisMatchHasReachedItsMaximumCapacity,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // ── JOIN flow ──────────────────────────────────────
+                          print('🟡 [Screen] User tapping Join Match');
+                          await model.joinMatch(matchId);
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ),
+            // SafeArea(
+            //   top: false,
+            //   child: Padding(
+            //     padding: EdgeInsets.only(
+            //       top: context.h(5),
+            //       bottom: context.h(20),
+            //       right: context.w(20),
+            //       left: context.w(20),
+            //     ),
+            //     child: CustomButton(
+            //       text: AppText.joinMatch,
+            //       color: context.appColors.primary,
+            //       onTap: () {
+            //         showDialog(
+            //           context: context,
+            //           barrierDismissible: true,
+            //           builder: (context) => CustomBottomSheetWidget(
+            //             isCenter: true,
+            //             child: Column(
+            //               mainAxisSize: MainAxisSize.min,
+            //               mainAxisAlignment: MainAxisAlignment.center,
+            //               children: [
+            //                 SvgPicture.asset(
+            //                   AppAssets.joiningMatchPeopelIcon,
+            //                   fit: BoxFit.scaleDown,
+            //                 ),
+            //                 SizedBox(height: context.h(16)),
+            //                 NormalText(
+            //                   crossAxisAlignment: CrossAxisAlignment.center,
+            //                   titleText: AppText.matchIsFull,
+            //                   maxLines: 5,
+            //                   subAlign: TextAlign.center,
+            //                   subText:
+            //                       AppText.thisMatchHasReachedItsMaximumCapacity,
+            //                 ),
+            //               ],
+            //             ),
+            //           ),
+            //         );
+            //       },
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
