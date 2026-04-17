@@ -16,6 +16,7 @@ import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/Home/components/create_match_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/edit_match_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/user_match_details_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
@@ -155,6 +156,15 @@ class Routes {
             RoutesName.createMatchScreen,
 
             CreateMatchScreen(),
+          ),
+        );
+      case RoutesName.editMatchScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.editMatchScreen,
+            const EditMatchScreen(),
+            routeArguments: settings.arguments,
           ),
         );
       case RoutesName.matchCreatedDoneScreen:

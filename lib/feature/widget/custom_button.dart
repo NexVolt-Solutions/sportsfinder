@@ -16,6 +16,7 @@ class CustomButton extends StatelessWidget {
   final bool outlined;
   final Color? borderColor;
   final TextStyle? titleStyle;
+  final bool isLoading;
 
   const CustomButton({
     super.key,
@@ -30,6 +31,7 @@ class CustomButton extends StatelessWidget {
     this.outlined = false,
     this.borderColor,
     this.titleStyle,
+    this.isLoading = false,
   });
 
   @override
@@ -54,20 +56,29 @@ class CustomButton extends StatelessWidget {
       titleStyle: effectiveTitleStyle,
     );
 
-    final content = leading != null
-        ? Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              leading!,
-              SizedBox(width: context.w(8)),
-              label,
-            ],
+    final content = isLoading
+        ? SizedBox(
+            height: context.h(20),
+            width: context.h(20),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(labelColor),
+            ),
           )
-        : label;
+        : (leading != null
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    leading!,
+                    SizedBox(width: context.w(8)),
+                    label,
+                  ],
+                )
+              : label);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         width: double.infinity,
         padding: padding ?? context.padSym(v: 10),

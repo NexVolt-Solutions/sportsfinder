@@ -8,6 +8,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -36,563 +37,642 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is DiscoveryMatch) {
+    if (args is DiscoveryMatch &&
+        context.read<HostDetailScreenViewModel>().currentMatch == null) {
       context.read<HostDetailScreenViewModel>().bindMatch(args);
+    }
+  }
+
+  void _navigateToEditScreen() async {
+    final model = context.read<HostDetailScreenViewModel>();
+    final match = model.currentMatch;
+
+    if (match == null) {
+      debugPrint('❌ [HostDetailsScreen] No match to edit');
+      return;
+    }
+
+    final result = await Navigator.pushNamed(
+      context,
+      RoutesName.editMatchScreen,
+      arguments: match,
+    );
+
+    debugPrint(
+      '🔵 [HostDetailsScreen] Navigation returned with result: $result',
+    );
+    debugPrint('🔵 [HostDetailsScreen] Result type: ${result.runtimeType}');
+
+    // Handle returned updated data
+    if (result != null && result is UpdateMatchModel) {
+      debugPrint('✅ [HostDetailsScreen] UpdateMatchModel received');
+      debugPrint('📝 [HostDetailsScreen] Updated title: ${result.title}');
+      debugPrint('📝 [HostDetailsScreen] Updated sport: ${result.sport}');
+      debugPrint(
+        '📝 [HostDetailsScreen] Current match sport BEFORE: ${match.sportType}',
+      );
+
+      // Extract time from scheduledAt with AM/PM format
+      String timeStr = match.time;
+      if (result.scheduledAt != null && result.scheduledAt!.isNotEmpty) {
+        try {
+          final dt = DateTime.parse(result.scheduledAt!).toLocal();
+          final timeOfDay = TimeOfDay.fromDateTime(dt);
+          timeStr = timeOfDay.format(context);
+        } catch (e) {
+          timeStr = match.time;
+        }
+      }
+
+      // Convert UpdateMatchModel to updated DiscoveryMatch
+      final updatedMatch = DiscoveryMatch(
+        id: result.id ?? match.id,
+        title: result.title ?? match.title,
+        distanceKm: match.distanceKm,
+        sportType: result.sport ?? match.sportType,
+        location: result.location ?? match.location,
+        date: result.scheduledAt != null
+            ? DateTime.parse(
+                result.scheduledAt!,
+              ).toLocal().toString().split(' ')[0]
+            : match.date,
+        time: timeStr,
+        participantsJoined: match.participantsJoined,
+        participantsTotal: result.maxPlayers ?? match.participantsTotal,
+        players: match.players,
+        hostUserId: match.hostUserId,
+        hostDisplayName: match.hostDisplayName,
+        skillLevel: result.skillLevel ?? match.skillLevel,
+        matchDescription: result.description ?? match.matchDescription,
+        hostBio: match.hostBio,
+        playerSkills: match.playerSkills,
+        hostMatchesPlayed: match.hostMatchesPlayed,
+      );
+
+      debugPrint(
+        '📝 [HostDetailsScreen] New match title: ${updatedMatch.title}',
+      );
+      debugPrint(
+        '📝 [HostDetailsScreen] New match sport: ${updatedMatch.sportType}',
+      );
+      debugPrint('📝 [HostDetailsScreen] New match time: ${updatedMatch.time}');
+
+      if (mounted) {
+        model.updateMatchAfterEdit(updatedMatch);
+        debugPrint('✅ [HostDetailsScreen] updateMatchAfterEdit() called');
+        debugPrint(
+          '✅ [HostDetailsScreen] Model current match sport AFTER: ${model.currentMatch?.sportType}',
+        );
+      }
+    } else if (result != null && result is DiscoveryMatch) {
+      debugPrint('✅ [HostDetailsScreen] DiscoveryMatch received');
+      if (mounted) {
+        model.updateMatchAfterEdit(result);
+      }
+    } else {
+      debugPrint('⚠️ [HostDetailsScreen] Unexpected result type or null');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    final match = args is DiscoveryMatch ? args : null;
-
-    if (match == null) {
-      return Scaffold(
-        body: Center(
-          child: Text(AppText.noRouteFound, style: context.appText.text16W500),
-        ),
-      );
-    }
-
     return Consumer<HostDetailScreenViewModel>(
-      builder: (context, model, _) => Scaffold(
-        backgroundColor: context.appColors.surface,
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: MainFrame(
-                child: ListView(
-                  padding: context.padSym(h: 20),
-                  children: [
-                    AppBarWidget(
-                      onLeadingTap: () => Navigator.pop(context),
-                      title: AppText.hostMatchDetails,
-                      trailing: Icon(
-                        Icons.edit,
-                        color: context.appColors.greyDark,
-                        size: 20,
-                      ),
-                      onTrailingTap: () async {
-                        final updatedMatch = await Navigator.pushNamed(
-                          context,
-                          RoutesName.createMatchScreen,
-                          arguments: match, // Pass DiscoveryMatch
-                        );
+      builder: (context, model, _) {
+        final match = model.currentMatch;
 
-                        // Refresh UI with updated data
-                        if (updatedMatch != null && context.mounted) {
-                          setState(() {});
-                        }
-                      },
-                    ),
-                    NormalText(
-                      titleText: match.title,
-                      subText: match.sportType,
-                    ),
-                    SizedBox(height: context.h(20)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InfoItem(
-                          icon: AppAssets.calendarIcon,
-                          title: 'Date',
-                          value: match.date,
+        if (match == null) {
+          return Scaffold(
+            body: Center(
+              child: Text(
+                AppText.noRouteFound,
+                style: context.appText.text16W500,
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: context.appColors.surface,
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: MainFrame(
+                  child: ListView(
+                    padding: context.padSym(h: 20),
+                    children: [
+                      AppBarWidget(
+                        onLeadingTap: () => Navigator.pop(context),
+                        title: AppText.hostMatchDetails,
+                        trailing: Icon(
+                          Icons.edit,
+                          color: context.appColors.greyDark,
+                          size: 20,
                         ),
-                        InfoItem(
-                          icon: AppAssets.clockIcon,
-                          title: 'Time',
-                          value: match.time,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: context.h(16)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InfoItem(
-                          icon: AppAssets.matchesIcon,
-                          title: AppText.skillLevel,
-                          value: match.skillLevel,
-                        ),
-                        InfoItem(
-                          icon: AppAssets.playerIcon,
-                          title: AppText.players,
-                          value:
-                              '${model.rosterCount}/${match.participantsTotal}',
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: context.h(16)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InfoItem(
-                          icon: AppAssets.locationIcon,
-                          title: AppText.location,
-                          value: match.location,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: context.h(16)),
-                    Card(
-                      child: Padding(
-                        padding: context.padSym(h: 12),
-                        child: Row(
-                          children: List.generate(model.buttonName.length, (
-                            index,
-                          ) {
-                            final isSelected = model.selectedIndex == index;
-                            return Expanded(
-                              child: GestureDetector(
-                                onTap: () => model.changeIndex(index),
-                                behavior: HitTestBehavior.opaque,
-                                child: Center(
-                                  child: isSelected
-                                      ? CardWidget(
-                                          padding: context.padSym(h: 8, v: 8),
-                                          child: NormalText(
-                                            titleText: model.buttonName[index],
-                                            titleColor:
-                                                context.appColors.primary,
-                                            titleFontSize: 14,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        )
-                                      : Padding(
-                                          padding: context.padSym(h: 8, v: 8),
-                                          child: NormalText(
-                                            subText: model.buttonName[index],
-                                            subColor:
-                                                context.appColors.greylight,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
+                        onTrailingTap: _navigateToEditScreen,
                       ),
-                    ),
-                    SizedBox(height: context.h(16)),
-                    if (model.selectedIndex == 0) ...[
-                      UserGreetingWidget(
-                        title: match.displayHostName,
-                        locName: match.location,
-                        subTitle: match.resolvedHostBio,
-                        isShow: true,
-                      ),
-                      SizedBox(height: context.h(16)),
-                      CardWidget(
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: '${match.resolvedHostMatchesPlayed}',
-                          subText: AppText.matchesPlayed,
-                        ),
-                      ),
-                      SizedBox(height: context.h(16)),
                       NormalText(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        titleText: AppText.aboutThisMatch,
-                        sizeBoxheight: context.h(8),
-                        maxLines: 8,
-                        subText: match.aboutText,
-
-                        subAlign: TextAlign.start,
+                        titleText: match.title,
+                        subText: match.sportType,
                       ),
-                      SizedBox(height: context.h(16)),
-                      SectionHeaderWidget(title: AppText.participatedPlayers),
-                      if (model.rosterCount == 0)
-                        Padding(
-                          padding: context.padSym(v: 12),
-                          child: Text(
-                            AppText.noPlayersOnRoster,
-                            style: context.appText.text14W400.copyWith(
-                              color: context.appColors.greyDark,
-                            ),
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          itemCount: model.rosterCount,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            return UserMatchCard(
-                              onActionTap: () => model.removePlayerAt(index),
-                              onCardTap: () => match.pushPublicProfileForPlayer(
-                                context,
-                                displayName: model.rosterNameAt(index),
-                                userIdSuffix: 'roster_$index',
-                              ),
-                              title: model.rosterNameAt(index),
-                              subTitle: model.rosterSkillAt(index),
-                              showActionIcon: true,
-                            );
-                          },
-                        ),
-                      SizedBox(height: context.h(16)),
-                    ],
-                    if (model.selectedIndex == 1) ...[
+                      SizedBox(height: context.h(20)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          SectionHeaderWidget(
-                            title: AppText.participatedPlayers,
+                          InfoItem(
+                            icon: AppAssets.calendarIcon,
+                            title: 'Date',
+                            value: match.date,
                           ),
-                          // ✅ Refresh button
-                          if (!model.isLoadingUsers)
-                            GestureDetector(
-                              onTap: () => model.refreshUsers(),
-                              child: Icon(
-                                Icons.refresh,
-                                color: context.appColors.primary,
-                                size: 24,
-                              ),
-                            ),
+                          InfoItem(
+                            icon: AppAssets.clockIcon,
+                            title: 'Time',
+                            value: match.time,
+                          ),
                         ],
                       ),
-                      SizedBox(height: context.h(8)),
-
-                      // ── loading state ──────────────────────────────────────────
-                      if (model.isLoadingUsers)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                      SizedBox(height: context.h(16)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          InfoItem(
+                            icon: AppAssets.matchesIcon,
+                            title: AppText.skillLevel,
+                            value: match.skillLevel,
                           ),
-                        )
-                      // ── error state ────────────────────────────────────────────
-                      else if (model.usersFetchError != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Padding(
-                              padding: context.padSym(v: 8),
-                              child: Text(
-                                model.usersFetchError!,
-                                style: context.appText.text14W400.copyWith(
-                                  color: context.appColors.greyDark,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => model.refreshUsers(),
-                              child: Container(
-                                padding: context.padSym(h: 16, v: 8),
-                                decoration: BoxDecoration(
-                                  color: context.appColors.primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Retry',
-                                  style: context.appText.text14Bold.copyWith(
-                                    color: context.appColors.onPrimary,
+                          InfoItem(
+                            icon: AppAssets.playerIcon,
+                            title: AppText.players,
+                            value:
+                                '${model.rosterCount}/${match.participantsTotal}',
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: context.h(16)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          InfoItem(
+                            icon: AppAssets.locationIcon,
+                            title: AppText.location,
+                            value: match.location,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: context.h(16)),
+                      Card(
+                        child: Padding(
+                          padding: context.padSym(h: 12),
+                          child: Row(
+                            children: List.generate(model.buttonName.length, (
+                              index,
+                            ) {
+                              final isSelected = model.selectedIndex == index;
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: () => model.changeIndex(index),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Center(
+                                    child: isSelected
+                                        ? CardWidget(
+                                            padding: context.padSym(h: 8, v: 8),
+                                            child: NormalText(
+                                              titleText:
+                                                  model.buttonName[index],
+                                              titleColor:
+                                                  context.appColors.primary,
+                                              titleFontSize: 14,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
+                                        : Padding(
+                                            padding: context.padSym(h: 8, v: 8),
+                                            child: NormalText(
+                                              subText: model.buttonName[index],
+                                              subColor:
+                                                  context.appColors.greylight,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        )
-                      else if (model.allUsers.isEmpty)
-                        Column(
-                          children: [
-                            SizedBox(height: context.h(12)),
-                            Text(
-                              AppText.noUsersFound,
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: context.h(16)),
+                      if (model.selectedIndex == 0) ...[
+                        UserGreetingWidget(
+                          title: match.displayHostName,
+                          locName: match.location,
+                          subTitle: match.resolvedHostBio,
+                          isShow: true,
+                        ),
+                        SizedBox(height: context.h(16)),
+                        CardWidget(
+                          child: NormalText(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            titleText: '${match.resolvedHostMatchesPlayed}',
+                            subText: AppText.matchesPlayed,
+                          ),
+                        ),
+                        SizedBox(height: context.h(16)),
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          titleText: AppText.aboutThisMatch,
+                          sizeBoxheight: context.h(8),
+                          maxLines: 8,
+                          subText: match.aboutText,
+
+                          subAlign: TextAlign.start,
+                        ),
+                        SizedBox(height: context.h(16)),
+                        SectionHeaderWidget(title: AppText.participatedPlayers),
+                        if (model.rosterCount == 0)
+                          Padding(
+                            padding: context.padSym(v: 12),
+                            child: Text(
+                              AppText.noPlayersOnRoster,
                               style: context.appText.text14W400.copyWith(
                                 color: context.appColors.greyDark,
                               ),
                             ),
-                            SizedBox(height: context.h(16)),
-                            GestureDetector(
-                              onTap: () => model.refreshUsers(),
-                              child: Container(
-                                padding: context.padSym(h: 16, v: 8),
-                                decoration: BoxDecoration(
+                          )
+                        else
+                          ListView.builder(
+                            itemCount: model.rosterCount,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              return UserMatchCard(
+                                onActionTap: () => model.removePlayerAt(index),
+                                onCardTap: () =>
+                                    match.pushPublicProfileForPlayer(
+                                      context,
+                                      displayName: model.rosterNameAt(index),
+                                      userIdSuffix: 'roster_$index',
+                                    ),
+                                title: model.rosterNameAt(index),
+                                subTitle: model.rosterSkillAt(index),
+                                showActionIcon: true,
+                              );
+                            },
+                          ),
+                        SizedBox(height: context.h(16)),
+                      ],
+                      if (model.selectedIndex == 1) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SectionHeaderWidget(
+                              title: AppText.participatedPlayers,
+                            ),
+                            // ✅ Refresh button
+                            if (!model.isLoadingUsers)
+                              GestureDetector(
+                                onTap: () => model.refreshUsers(),
+                                child: Icon(
+                                  Icons.refresh,
                                   color: context.appColors.primary,
-                                  borderRadius: BorderRadius.circular(8),
+                                  size: 24,
                                 ),
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: context.h(8)),
+
+                        // ── loading state ──────────────────────────────────────────
+                        if (model.isLoadingUsers)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        // ── error state ────────────────────────────────────────────
+                        else if (model.usersFetchError != null)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: context.padSym(v: 8),
                                 child: Text(
-                                  'Refresh',
-                                  style: context.appText.text14Bold.copyWith(
-                                    color: context.appColors.onPrimary,
+                                  model.usersFetchError!,
+                                  style: context.appText.text14W400.copyWith(
+                                    color: context.appColors.greyDark,
                                   ),
                                 ),
                               ),
+                              GestureDetector(
+                                onTap: () => model.refreshUsers(),
+                                child: Container(
+                                  padding: context.padSym(h: 16, v: 8),
+                                  decoration: BoxDecoration(
+                                    color: context.appColors.primary,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Retry',
+                                    style: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (model.allUsers.isEmpty)
+                          Column(
+                            children: [
+                              SizedBox(height: context.h(12)),
+                              Text(
+                                AppText.noUsersFound,
+                                style: context.appText.text14W400.copyWith(
+                                  color: context.appColors.greyDark,
+                                ),
+                              ),
+                              SizedBox(height: context.h(16)),
+                              GestureDetector(
+                                onTap: () => model.refreshUsers(),
+                                child: Container(
+                                  padding: context.padSym(h: 16, v: 8),
+                                  decoration: BoxDecoration(
+                                    color: context.appColors.primary,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Refresh',
+                                    style: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        // ── all users from API ─────────────────────────────────────
+                        else
+                          ListView.builder(
+                            itemCount: model.allUsers.length,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              final user = model.allUsers[index];
+                              final sport = user.sports?.isNotEmpty == true
+                                  ? user.sports!.first
+                                  : null;
+
+                              return PersonInvitedCard(
+                                playerName: user.fullName,
+                                matchName: sport?.sport ?? match.sportType,
+                                matchLevel:
+                                    sport?.skillLevel ?? match.skillLevel,
+                                destance:
+                                    user.location?.trim().isNotEmpty == true
+                                    ? user.location
+                                    : '${match.distanceKm.toStringAsFixed(1)} km',
+                                isShow: true,
+                                ontap: () async {
+                                  final userId = user.id?.trim() ?? '';
+                                  AppLogger.info(
+                                    'Invite button tapped from HostDetailsScreen',
+                                    tag: 'HostDetailsScreen',
+                                  );
+                                  AppLogger.debug(
+                                    'Tapped matchId: ${match.id}',
+                                    tag: 'HostDetailsScreen',
+                                  );
+                                  AppLogger.debug(
+                                    'Tapped userId: $userId',
+                                    tag: 'HostDetailsScreen',
+                                  );
+                                  if (userId.isEmpty) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('User id is missing'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  final message = await model.inviteUserToMatch(
+                                    matchId: match.id,
+                                    userId: userId,
+                                  );
+
+                                  AppLogger.debug(
+                                    'Invite result message: $message',
+                                    tag: 'HostDetailsScreen',
+                                  );
+                                  if (!context.mounted || message == null)
+                                    return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(message)),
+                                  );
+                                },
+                                cardOnTap: () {
+                                  ListOfAllUserService().recordProfileView(
+                                    user,
+                                  );
+                                  final uid = user.id?.trim() ?? '';
+                                  if (uid.isEmpty) return;
+                                  match.pushPublicProfileForUser(
+                                    context,
+                                    userId: uid,
+                                    displayName: user.fullName ?? '',
+                                  );
+                                },
+                              );
+                            },
+                          ),
+
+                        SizedBox(height: context.h(16)),
+                      ],
+
+                      if (model.selectedIndex == 2) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: context.h(174),
+                                width: context.w(380),
+                                decoration: BoxDecoration(
+                                  color: context.appColors.blue10,
+                                  borderRadius: BorderRadius.circular(
+                                    context.radiusR(12),
+                                  ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.topRight,
+                                child: Padding(
+                                  padding: context.padAll(12),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.fullscreen,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {},
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: context.h(16)),
+                        SectionHeaderWidget(title: match.location),
+                        SizedBox(height: context.h(8)),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppSvgIcon(
+                              icon: AppAssets.locationIcon,
+                              color: context.appColors.greylight,
+                            ),
+                            SizedBox(width: context.w(4)),
+                            Expanded(
+                              child: NormalText(
+                                subText: match.location,
+                                subColor: context.appColors.greylight,
+                              ),
                             ),
                           ],
-                        )
-                      // ── all users from API ─────────────────────────────────────
-                      else
-                        ListView.builder(
-                          itemCount: model.allUsers.length,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            final user = model.allUsers[index];
-                            final sport = user.sports?.isNotEmpty == true
-                                ? user.sports!.first
-                                : null;
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: context.h(5),
+                    bottom: context.h(20),
+                    right: context.w(20),
+                    left: context.w(20),
+                  ),
+                  child: model.isJoinLeaveLoading
+                      // ── Loading state ─────────────────────────────────────────
+                      ? const Center(child: CircularProgressIndicator())
+                      // ── Join / Leave button ───────────────────────────────────
+                      : CustomButton(
+                          text: model.hasJoined
+                              ? AppText.leaveMatch
+                              : AppText.joinMatch,
+                          color: model.hasJoined
+                              ? context
+                                    .appColors
+                                    .error // red for Leave
+                              : context.appColors.primary, // primary for Join
+                          onTap: () async {
+                            final matchId = match.id;
+                            if (matchId.isEmpty) {
+                              return;
+                            }
 
-                            return PersonInvitedCard(
-                              playerName: user.fullName,
-                              matchName: sport?.sport ?? match.sportType,
-                              matchLevel: sport?.skillLevel ?? match.skillLevel,
-                              destance: user.location?.trim().isNotEmpty == true
-                                  ? user.location
-                                  : '${match.distanceKm.toStringAsFixed(1)} km',
-                              isShow: true,
-                              ontap: () async {
-                                final userId = user.id?.trim() ?? '';
-                                AppLogger.info(
-                                  'Invite button tapped from HostDetailsScreen',
-                                  tag: 'HostDetailsScreen',
-                                );
-                                AppLogger.debug(
-                                  'Tapped matchId: ${match.id}',
-                                  tag: 'HostDetailsScreen',
-                                );
-                                AppLogger.debug(
-                                  'Tapped userId: $userId',
-                                  tag: 'HostDetailsScreen',
-                                );
-                                if (userId.isEmpty) {
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('User id is missing'),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final message = await model.inviteUserToMatch(
-                                  matchId: match.id,
-                                  userId: userId,
-                                );
-
-                                AppLogger.debug(
-                                  'Invite result message: $message',
-                                  tag: 'HostDetailsScreen',
-                                );
-                                if (!context.mounted || message == null) return;
+                            // ── LEAVE flow ─────────────────────────────────────
+                            if (model.hasJoined) {
+                              final result = await model.leaveMatch(matchId);
+                              if (!context.mounted) return;
+                              if (!result && model.joinLeaveError != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(message)),
+                                  SnackBar(
+                                    content: Text(model.joinLeaveError!),
+                                    backgroundColor: context.appColors.error,
+                                  ),
                                 );
-                              },
-                              cardOnTap: () {
-                                ListOfAllUserService().recordProfileView(user);
-                                final uid = user.id?.trim() ?? '';
-                                if (uid.isEmpty) return;
-                                match.pushPublicProfileForUser(
-                                  context,
-                                  userId: uid,
-                                  displayName: user.fullName ?? '',
+                              } else if (result) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Left match successfully',
+                                    ),
+                                    backgroundColor: context.appColors.primary,
+                                  ),
                                 );
-                              },
-                            );
+                              }
+                              return;
+                            }
+
+                            // ── Check if match is full ─────────────────────────
+                            final int roster = model.rosterCount;
+                            final int total = match.participantsTotal;
+                            final bool isFull = roster >= total;
+
+                            if (isFull) {
+                              if (!context.mounted) return;
+                              showDialog(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (dialogContext) => CustomBottomSheetWidget(
+                                  isCenter: true,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SvgPicture.asset(
+                                        AppAssets.joiningMatchPeopelIcon,
+                                        fit: BoxFit.scaleDown,
+                                      ),
+                                      SizedBox(height: context.h(16)),
+                                      NormalText(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        titleText: AppText.matchIsFull,
+                                        maxLines: 5,
+                                        subAlign: TextAlign.center,
+                                        subText: AppText
+                                            .thisMatchHasReachedItsMaximumCapacity,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            // ── JOIN flow ──────────────────────────────────────
+                            final result = await model.joinMatch(matchId);
+                            if (!context.mounted) return;
+
+                            if (!result && model.joinLeaveError != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(model.joinLeaveError!),
+                                  backgroundColor: context.appColors.error,
+                                ),
+                              );
+                            } else if (result) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    'Joined match successfully!',
+                                  ),
+                                  backgroundColor: context.appColors.primary,
+                                ),
+                              );
+                            }
                           },
                         ),
-
-                      SizedBox(height: context.h(16)),
-                    ],
-
-                    if (model.selectedIndex == 2) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: context.h(174),
-                              width: context.w(380),
-                              decoration: BoxDecoration(
-                                color: context.appColors.blue10,
-                                borderRadius: BorderRadius.circular(
-                                  context.radiusR(12),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: Padding(
-                                padding: context.padAll(12),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.fullscreen,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: context.h(16)),
-                      SectionHeaderWidget(title: match.location),
-                      SizedBox(height: context.h(8)),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppSvgIcon(
-                            icon: AppAssets.locationIcon,
-                            color: context.appColors.greylight,
-                          ),
-                          SizedBox(width: context.w(4)),
-                          Expanded(
-                            child: NormalText(
-                              subText: match.location,
-                              subColor: context.appColors.greylight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
                 ),
               ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  top: context.h(5),
-                  bottom: context.h(20),
-                  right: context.w(20),
-                  left: context.w(20),
-                ),
-                child: model.isJoinLeaveLoading
-                    // ── Loading state ─────────────────────────────────────────
-                    ? const Center(child: CircularProgressIndicator())
-                    // ── Join / Leave button ───────────────────────────────────
-                    : CustomButton(
-                        text: model.hasJoined
-                            ? AppText.leaveMatch
-                            : AppText.joinMatch,
-                        color: model.hasJoined
-                            ? context
-                                  .appColors
-                                  .error // red for Leave
-                            : context.appColors.primary, // primary for Join
-                        onTap: () async {
-                          final matchId = match.id ?? '';
-                          if (matchId.isEmpty) {
-                            print('❌ [Screen] match.id is null or empty');
-                            return;
-                          }
-
-                          // ── LEAVE flow ─────────────────────────────────────
-                          if (model.hasJoined) {
-                            print('🟡 [Screen] User tapping Leave Match');
-                            await model.leaveMatch(matchId);
-                            return;
-                          }
-
-                          // ── Check if match is full ─────────────────────────
-                          final int roster = model.rosterCount;
-                          final int total = match.participantsTotal ?? 0;
-                          final bool isFull = roster >= total;
-
-                          print('🟡 [Screen] rosterCount: $roster');
-                          print('🟡 [Screen] participantsTotal: $total');
-                          print('🟡 [Screen] isFull: $isFull');
-
-                          if (isFull) {
-                            print('🟡 [Screen] Showing Match is Full dialog');
-                            if (!context.mounted) return;
-                            showDialog(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (dialogContext) => CustomBottomSheetWidget(
-                                isCenter: true,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SvgPicture.asset(
-                                      AppAssets.joiningMatchPeopelIcon,
-                                      fit: BoxFit.scaleDown,
-                                    ),
-                                    SizedBox(height: context.h(16)),
-                                    NormalText(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      titleText: AppText.matchIsFull,
-                                      maxLines: 5,
-                                      subAlign: TextAlign.center,
-                                      subText: AppText
-                                          .thisMatchHasReachedItsMaximumCapacity,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-
-                          // ── JOIN flow ──────────────────────────────────────
-                          print('🟡 [Screen] User tapping Join Match');
-                          await model.joinMatch(matchId);
-                        },
-                      ),
-              ),
-            ),
-            // SafeArea(
-            //   top: false,
-            //   child: Padding(
-            //     padding: EdgeInsets.only(
-            //       top: context.h(5),
-            //       bottom: context.h(20),
-            //       right: context.w(20),
-            //       left: context.w(20),
-            //     ),
-            //     child: CustomButton(
-            //       text: AppText.joinMatch,
-            //       color: context.appColors.primary,
-            //       onTap: () {
-            //         showDialog(
-            //           context: context,
-            //           barrierDismissible: true,
-            //           builder: (context) => CustomBottomSheetWidget(
-            //             isCenter: true,
-            //             child: Column(
-            //               mainAxisSize: MainAxisSize.min,
-            //               mainAxisAlignment: MainAxisAlignment.center,
-            //               children: [
-            //                 SvgPicture.asset(
-            //                   AppAssets.joiningMatchPeopelIcon,
-            //                   fit: BoxFit.scaleDown,
-            //                 ),
-            //                 SizedBox(height: context.h(16)),
-            //                 NormalText(
-            //                   crossAxisAlignment: CrossAxisAlignment.center,
-            //                   titleText: AppText.matchIsFull,
-            //                   maxLines: 5,
-            //                   subAlign: TextAlign.center,
-            //                   subText:
-            //                       AppText.thisMatchHasReachedItsMaximumCapacity,
-            //                 ),
-            //               ],
-            //             ),
-            //           ),
-            //         );
-            //       },
-            //     ),
-            //   ),
-            // ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

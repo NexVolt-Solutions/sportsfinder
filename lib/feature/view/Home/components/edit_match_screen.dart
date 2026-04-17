@@ -8,8 +8,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/edit_match_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -20,14 +19,14 @@ import 'package:sport_finding/feature/widget/search_drop_down_field_widget.dart'
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
-class CreateMatchScreen extends StatefulWidget {
-  const CreateMatchScreen({super.key});
+class EditMatchScreen extends StatefulWidget {
+  const EditMatchScreen({super.key});
 
   @override
-  State<CreateMatchScreen> createState() => _CreateMatchScreenState();
+  State<EditMatchScreen> createState() => _EditMatchScreenState();
 }
 
-class _CreateMatchScreenState extends State<CreateMatchScreen> {
+class _EditMatchScreenState extends State<EditMatchScreen> {
   bool _didPopulateEditState = false;
 
   static const List<String> _demoLocationItems = [
@@ -51,23 +50,27 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
     if (_didPopulateEditState) return;
 
     final args = ModalRoute.of(context)?.settings.arguments;
-    final model = context.read<CreateMatchViewModel>();
+    final model = context.read<EditMatchViewModel>();
 
     if (args is UpdateMatchModel) {
-      model.populateForEdit(args, context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        model.populateForEdit(args, context);
+      });
       _didPopulateEditState = true;
       return;
     }
 
     if (args is DiscoveryMatch) {
-      model.populateForEditFromDiscoveryMatch(args, context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        model.populateForEditFromDiscoveryMatch(args, context);
+      });
       _didPopulateEditState = true;
     }
   }
 
   Future<void> _showDurationPicker(
     BuildContext context,
-    CreateMatchViewModel model,
+    EditMatchViewModel model,
   ) async {
     final initialIndex = model.durationOptions.indexOf(model.duration);
     final safeInitialIndex = initialIndex < 0 ? 0 : initialIndex;
@@ -132,7 +135,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final model = context.read<CreateMatchViewModel>();
+    final model = context.read<EditMatchViewModel>();
 
     return Scaffold(
       backgroundColor: context.appColors.surface,
@@ -162,25 +165,17 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           title: AppText.sportFinding,
                         ),
                         SizedBox(height: context.h(20)),
-                        Selector<CreateMatchViewModel, bool>(
-                          selector: (_, m) => m.isEditMode,
-                          builder: (context, isEditMode, _) {
-                            return NormalText(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              titleText: isEditMode
-                                  ? 'Edit Match'
-                                  : AppText.createMatch,
-                              titleStyle: context.appText.text18W600.copyWith(
-                                color: context.appColors.onSurface,
-                              ),
-                              subText: isEditMode
-                                  ? 'Update your match details and save changes.'
-                                  : AppText.setUpANewGameForOthersToJoin,
-                              subStyle: context.appText.text14W400.copyWith(
-                                color: context.appColors.greyDark,
-                              ),
-                            );
-                          },
+                        NormalText(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          titleText: 'Edit Match',
+                          titleStyle: context.appText.text18W600.copyWith(
+                            color: context.appColors.onSurface,
+                          ),
+                          subText:
+                              'Update your match details and save changes.',
+                          subStyle: context.appText.text14W400.copyWith(
+                            color: context.appColors.greyDark,
+                          ),
                         ),
                       ],
                     ),
@@ -206,10 +201,13 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       maxLines: 5,
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<CreateMatchViewModel, String?>(
+                    Selector<EditMatchViewModel, String?>(
                       selector: (_, m) => m.selectedSportType,
                       builder: (context, selectedSport, _) {
-                        final vm = context.read<CreateMatchViewModel>();
+                        debugPrint(
+                          '🎾 [EditMatchScreen] Selector rebuild - selectedSport: $selectedSport',
+                        );
+                        final vm = context.read<EditMatchViewModel>();
                         return SizedBox(
                           height: context.h(56),
                           child: DropdownFormFieldWidget(
@@ -217,7 +215,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                             hintText: AppText.chooseYourSports,
                             items: vm.sportTypes,
                             value: selectedSport,
-                            onChanged: vm.setSportType,
+                            onChanged: (newValue) {
+                              debugPrint(
+                                '🎾 [EditMatchScreen] Sport changed to: $newValue',
+                              );
+                              vm.setSportType(newValue);
+                            },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return AppText.sportTypeValidation;
@@ -229,10 +232,10 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       },
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<CreateMatchViewModel, String?>(
+                    Selector<EditMatchViewModel, String?>(
                       selector: (_, m) => m.selectedSkillLevel,
                       builder: (context, selectedSkill, _) {
-                        final vm = context.read<CreateMatchViewModel>();
+                        final vm = context.read<EditMatchViewModel>();
                         return SizedBox(
                           height: context.h(56),
                           child: DropdownFormFieldWidget(
@@ -353,8 +356,8 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                               color: context.appColors.blue10,
                                               borderRadius:
                                                   BorderRadius.circular(
-                                                context.radiusR(12),
-                                              ),
+                                                    context.radiusR(12),
+                                                  ),
                                             ),
                                           ),
                                           Align(
@@ -427,35 +430,37 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       },
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<CreateMatchViewModel, bool>(
-                      selector: (_, m) => m.isEditMode,
-                      builder: (context, isEditMode, _) {
+                    Selector<EditMatchViewModel, bool>(
+                      selector: (_, model) => model.isLoading,
+                      builder: (context, isLoading, _) {
                         return CustomButton(
-                          text: isEditMode ? 'Save' : AppText.createMatch,
+                          text: isLoading ? 'Saving...' : 'Save Changes',
                           color: context.appColors.primary,
-                          onTap: () async {
-                            final vm = context.read<CreateMatchViewModel>();
-                            final success = await vm.submitMatch();
+                          isLoading: isLoading,
+                          onTap: isLoading
+                              ? null
+                              : () async {
+                                  final vm = context.read<EditMatchViewModel>();
+                                  final success = await vm.saveChanges();
 
-                            if (!context.mounted) return;
-                            if (success) {
-                              if (vm.isEditMode) {
-                                Navigator.pop(context, vm.updatedMatch);
-                              } else {
-                                Navigator.pushNamed(
-                                  context,
-                                  RoutesName.matchCreatedDoneScreen,
-                                  arguments: vm.createdMatch,
-                                );
-                              }
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(vm.error ?? 'Operation failed'),
-                                ),
-                              );
-                            }
-                          },
+                                  if (!context.mounted) return;
+
+                                  if (success) {
+                                    if (context.mounted) {
+                                      Navigator.pop(context, vm.updatedMatch);
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          vm.error ?? 'Failed to save changes',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                        duration: const Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                },
                         );
                       },
                     ),

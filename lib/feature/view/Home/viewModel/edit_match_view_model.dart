@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
-import 'package:sport_finding/Data/Repositories/create_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
-import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 
-class CreateMatchViewModel extends ChangeNotifier {
-  final CreateMatchRepo _createRepo = CreateMatchRepo();
+class EditMatchViewModel extends ChangeNotifier {
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
 
   final formKey = GlobalKey<FormState>();
@@ -26,12 +23,9 @@ class CreateMatchViewModel extends ChangeNotifier {
   TimeOfDay? _selectedTime;
   int duration = 60;
 
-  MatchModel? createdMatch;
   UpdateMatchModel? updatedMatch;
   String? error;
   bool isLoading = false;
-
-  bool isEditMode = false;
   String? matchId;
 
   final List<String> sportTypes = [
@@ -48,7 +42,6 @@ class CreateMatchViewModel extends ChangeNotifier {
   final List<int> durationOptions = [30, 45, 60, 90, 120, 150, 180];
 
   void populateForEdit(UpdateMatchModel match, BuildContext context) {
-    isEditMode = true;
     matchId = match.id;
 
     matchTitleController.text = match.title ?? '';
@@ -79,7 +72,6 @@ class CreateMatchViewModel extends ChangeNotifier {
     DiscoveryMatch match,
     BuildContext context,
   ) {
-    isEditMode = true;
     matchId = match.id;
 
     matchTitleController.text = match.title;
@@ -89,6 +81,14 @@ class CreateMatchViewModel extends ChangeNotifier {
     selectedSportType = match.sportType;
     selectedSkillLevel = match.skillLevel;
     matchDurationController.text = '$duration minutes';
+
+    debugPrint('📋 [EditMatchViewModel] Populated from DiscoveryMatch:');
+    debugPrint('📋 Title: ${match.title}');
+    debugPrint(
+      '📋 Sport: ${match.sportType} (selected as: $selectedSportType)',
+    );
+    debugPrint('📋 Skill Level: ${match.skillLevel}');
+    debugPrint('📋 Location: ${match.location}');
 
     final dt = match.matchScheduledStart;
     if (dt != null) {
@@ -108,7 +108,11 @@ class CreateMatchViewModel extends ChangeNotifier {
   }
 
   void setSportType(String? value) {
+    debugPrint('🎾 [EditMatchViewModel] setSportType called with: $value');
     selectedSportType = value;
+    debugPrint(
+      '🎾 [EditMatchViewModel] selectedSportType now = $selectedSportType',
+    );
     notifyListeners();
   }
 
@@ -151,44 +155,16 @@ class CreateMatchViewModel extends ChangeNotifier {
     return dt.toUtc().toIso8601String();
   }
 
-  Future<bool> createMatchApi() async {
-    if (!formKey.currentState!.validate()) return false;
-
-    error = null;
-    isLoading = true;
-    notifyListeners();
-
-    try {
-      final data = MatchModel(
-        id: '',
-        title: matchTitleController.text.trim(),
-        description: descriptionController.text.trim(),
-        sport: selectedSportType ?? '',
-        skillLevel: selectedSkillLevel ?? '',
-        status: '',
-        scheduledAt: _buildScheduledAt(),
-        scheduledDate: dateController.text,
-        scheduledTime: timeController.text,
-        durationMinutes: duration,
-        location: locationController.text.trim(),
-        maxPlayers: int.tryParse(maxPlayersController.text.trim()) ?? 0,
-      ).toJson();
-
-      createdMatch = await _createRepo.createMatch(data);
-      return true;
-    } catch (e) {
-      error = e.toString();
-      return false;
-    } finally {
-      isLoading = false;
+  Future<bool> saveChanges() async {
+    if (!formKey.currentState!.validate()) {
+      error = 'Please fill all required fields correctly';
       notifyListeners();
+      return false;
     }
-  }
 
-  Future<bool> updateMatchApi() async {
-    if (!formKey.currentState!.validate()) return false;
     if (matchId == null || matchId!.isEmpty) {
       error = 'Match ID is missing';
+      notifyListeners();
       return false;
     }
 
@@ -208,22 +184,32 @@ class CreateMatchViewModel extends ChangeNotifier {
         'max_players': int.tryParse(maxPlayersController.text.trim()) ?? 0,
       };
 
+      debugPrint('💾 [EditMatchViewModel] Saving match with data:');
+      debugPrint('💾 Title: ${data['title']}');
+      debugPrint(
+        '💾 Sport: ${data['sport']} (selectedSportType = $selectedSportType)',
+      );
+      debugPrint('💾 Skill Level: ${data['skill_level']}');
+      debugPrint('💾 Location: ${data['location']}');
+      debugPrint('💾 Max Players: ${data['max_players']}');
+      debugPrint('💾 Duration: ${data['duration_minutes']}');
+
       updatedMatch = await _updateRepo.updateMatch(
         matchId: matchId!,
         data: data,
       );
+
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ API Error updating match: $e');
+      debugPrint('📋 StackTrace: $stackTrace');
       error = e.toString();
+      notifyListeners();
       return false;
     } finally {
       isLoading = false;
       notifyListeners();
     }
-  }
-
-  Future<bool> submitMatch() {
-    return isEditMode ? updateMatchApi() : createMatchApi();
   }
 
   @override

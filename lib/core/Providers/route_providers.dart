@@ -17,6 +17,7 @@ import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/edit_match_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/match_created_done_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/see_all_invated_player_screen_view_model.dart';
@@ -120,6 +121,11 @@ class RouteProviders {
         return ChangeNotifierProvider(
           create: (_) => CreateMatchViewModel(),
 
+          child: child,
+        );
+      case RoutesName.editMatchScreen:
+        return ChangeNotifierProvider(
+          create: (_) => EditMatchViewModel(),
           child: child,
         );
       case RoutesName.matchCreatedDoneScreen:
