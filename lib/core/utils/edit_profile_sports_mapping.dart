@@ -26,11 +26,7 @@ String? apiSkillToUiDropdown(String? raw) {
   if (s.contains('BEGIN')) return AppText.beginner;
   if (s.contains('INTER')) return AppText.intermediate;
   if (s.contains('ADV')) return AppText.advanced;
-  for (final o in [
-    AppText.beginner,
-    AppText.intermediate,
-    AppText.advanced,
-  ]) {
+  for (final o in [AppText.beginner, AppText.intermediate, AppText.advanced]) {
     if (o.toLowerCase() == raw.trim().toLowerCase()) return o;
   }
   return null;
@@ -40,27 +36,27 @@ String? apiSkillToUiDropdown(String? raw) {
 String uiSportToApiToken(String ui) {
   switch (ui) {
     case AppText.basketball:
-      return 'BASKETBALL';
+      return 'Basketball';
     case AppText.football:
-      return 'FOOTBALL';
+      return 'Football';
     case AppText.tennis:
-      return 'TENNIS';
+      return 'Tennis';
     case AppText.volleyball:
-      return 'VOLLEYBALL';
+      return 'Volleyball';
     default:
-      return ui.toUpperCase().replaceAll(' ', '_');
+      return ui.trim();
   }
 }
 
 String uiSkillToApiToken(String ui) {
   switch (ui) {
     case AppText.beginner:
-      return 'BEGINNER';
+      return 'Beginner';
     case AppText.intermediate:
-      return 'INTERMEDIATE';
+      return 'Intermediate';
     case AppText.advanced:
-      return 'ADVANCED';
+      return 'Advanced';
     default:
-      return ui.toUpperCase().replaceAll(' ', '_');
+      return ui.trim();
   }
 }

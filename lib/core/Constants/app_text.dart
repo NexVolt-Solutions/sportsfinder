@@ -218,6 +218,14 @@ class AppText {
   static const String rating = 'Rating';
   static const String ratingUserPrefix = 'Rating ';
   static const String writeYourExperience = 'Write your experience...';
+  static const String matchId = 'Match ID';
+  static const String matchIdHint = 'Paste match id';
+  static const String reviewValidationMatchId = 'Match ID is required';
+  static const String reviewValidationRating = 'Please select a rating';
+  static const String reviewValidationComment = 'Please write a comment';
+  static const String reviewSubmitSuccess = 'Review submitted successfully';
+  static const String cannotRateOwnProfile = 'You cannot rate your own profile';
+  static const String invalidUserProfile = 'Invalid user profile';
   static const String submitReview = 'Submit Review';
   static const String davidGam = 'David gam';
   static const String oneDayAgo = '1 day ago';

@@ -539,6 +539,7 @@ class ProfileDetailStatsRow extends StatelessWidget {
     required this.ratingValue,
     this.onFollowersTap,
     this.onFollowingTap,
+    this.onRatingTap,
   });
 
   final int followersCount;
@@ -546,6 +547,7 @@ class ProfileDetailStatsRow extends StatelessWidget {
   final String ratingValue;
   final VoidCallback? onFollowersTap;
   final VoidCallback? onFollowingTap;
+  final VoidCallback? onRatingTap;
 
   @override
   Widget build(BuildContext context) {
@@ -602,7 +604,7 @@ class ProfileDetailStatsRow extends StatelessWidget {
           Icon(Icons.star, color: c.greyDark),
           ratingValue,
           AppText.rating,
-          null,
+          onRatingTap,
         ),
       ],
     );

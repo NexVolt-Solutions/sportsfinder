@@ -4,6 +4,7 @@ class PublicProfileArgs {
     required this.userId,
     required this.displayName,
     this.forceRefreshProfile = false,
+    this.initialMatchId,
   });
 
   final String userId;
@@ -12,11 +13,12 @@ class PublicProfileArgs {
   /// When true and the screen shows **your** profile, [ProfileService] runs
   /// `GET /api/v1/users/me` again so Settings → preview matches the API.
   final bool forceRefreshProfile;
+  final String? initialMatchId;
 
   /// Settings → Private profile: same user as `/users/me`, always refresh.
   factory PublicProfileArgs.privateProfilePreview() => const PublicProfileArgs(
-        userId: '',
-        displayName: '',
-        forceRefreshProfile: true,
-      );
+    userId: '',
+    displayName: '',
+    forceRefreshProfile: true,
+  );
 }

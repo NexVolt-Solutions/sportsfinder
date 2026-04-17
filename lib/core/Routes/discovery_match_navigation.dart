@@ -41,6 +41,7 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
       arguments: PublicProfileArgs(
         userId: '${id}_$userIdSuffix',
         displayName: name,
+        initialMatchId: id,
       ),
     );
   }
@@ -57,7 +58,11 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
     Navigator.pushNamed(
       context,
       RoutesName.publicProfileScreen,
-      arguments: PublicProfileArgs(userId: uid, displayName: name),
+      arguments: PublicProfileArgs(
+        userId: uid,
+        displayName: name,
+        initialMatchId: id,
+      ),
     );
   }
 }

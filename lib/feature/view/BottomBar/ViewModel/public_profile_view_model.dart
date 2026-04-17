@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/Data/model/CreateReviewRequest/create_review_request_model.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/Data/model/my_sport.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
+import 'package:sport_finding/Data/Repositories/CreateReviewRequest/create_review_repo.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
@@ -21,12 +23,15 @@ class PublicProfileViewModel extends ChangeNotifier {
   final MyProfileRepository _repo = MyProfileRepository(
     apiService: ApiService(),
   );
+  final CreateReviewRepo _createReviewRepo = CreateReviewRepo();
 
   late final VoidCallback _listener;
 
   UserProfileModel? _otherProfile;
   bool _fetchOtherLoading = false;
   String? _fetchOtherError;
+  bool _submitReviewLoading = false;
+  String? _submitReviewError;
 
   /// True when opening from settings (no args) or empty [userId], or when the
   /// selected user is the logged-in account.
@@ -68,6 +73,10 @@ class PublicProfileViewModel extends ChangeNotifier {
     }
     return _fetchOtherError ?? '';
   }
+
+  bool get isSubmittingReview => _submitReviewLoading;
+  String? get submitReviewError => _submitReviewError;
+  String get selectedUserId => _args?.userId.trim() ?? '';
 
   /// Hide follow / message / rate when viewing your own public profile.
   bool get isOwnProfile =>
@@ -247,5 +256,50 @@ class PublicProfileViewModel extends ChangeNotifier {
 
   void onFollowTap(BuildContext context) {}
 
-  void onRateTap(BuildContext context) {}
+  Future<bool> submitReview({
+    required String matchId,
+    required int rating,
+    required String comment,
+  }) async {
+    if (isOwnProfile) {
+      _submitReviewError = AppText.cannotRateOwnProfile;
+      notifyListeners();
+      return false;
+    }
+    if (selectedUserId.isEmpty) {
+      _submitReviewError = AppText.invalidUserProfile;
+      notifyListeners();
+      return false;
+    }
+
+    _submitReviewLoading = true;
+    _submitReviewError = null;
+    notifyListeners();
+
+    try {
+      await _createReviewRepo.createReview(
+        userId: selectedUserId,
+        data: CreateReviewRequestModel(
+          matchId: matchId.trim(),
+          rating: rating,
+          comment: comment.trim(),
+        ),
+      );
+
+      final raw = await _repo.getUserById(selectedUserId);
+      if (raw is Map) {
+        _otherProfile = UserProfileModel.fromJson(Map<String, dynamic>.from(raw));
+      }
+
+      _submitReviewLoading = false;
+      _submitReviewError = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _submitReviewLoading = false;
+      _submitReviewError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
 }

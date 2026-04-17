@@ -61,96 +61,94 @@ class PublicProfileScreen extends StatelessWidget {
                             child: CircularProgressIndicator(color: c.primary),
                           )
                         : model.showError
-                            ? Padding(
-                                padding: context.padSym(h: 20),
-                                child: Center(
-                                  child: Text(
-                                    model.displayError,
-                                    textAlign: TextAlign.center,
-                                    style: t.text14W400.copyWith(
-                                      color: c.greyDark,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : ListView(
-                                padding: context
-                                    .padSym(h: 20)
-                                    .copyWith(bottom: context.h(32)),
-                                children: [
-                                  ProfileDetailHeader(
-                                    displayName: model.fullName,
-                                    locationLabel: model.location,
-                                    bio: model.bio,
-                                    avatarUrl: model.avatarUrl,
-                                    showTrophyBadge: true,
-                                    nameStyle: t.style(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                      color: c.onSurface,
-                                      height: 1.2,
-                                    ),
-                                    bioStyle: t.text14W400.copyWith(
-                                      color: c.greyDark,
-                                      height: 1.45,
-                                    ),
-                                    locationStyle: t.text14W500.copyWith(
-                                      color: c.greylight,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                  SizedBox(height: context.h(20)),
-                                  if (!model.isOwnProfile) ...[
-                                    _FollowMessageRow(
-                                      onFollow: () =>
-                                          model.onFollowTap(context),
-                                      onMessage: () =>
-                                          model.onMessageTap(context),
-                                    ),
-                                    SizedBox(height: context.h(12)),
-                                    _RatePlayerButton(
-                                      onTap: () =>
-                                          _showRateSheet(context, model),
-                                    ),
-                                    SizedBox(height: context.h(20)),
-                                  ],
-                                  ProfileDetailStatsRow(
-                                    followersCount: model.followersCount,
-                                    followingCount: model.followingCount,
-                                    ratingValue: model.ratingValue,
-                                    onFollowersTap: () =>
-                                        model.openFollowers(context),
-                                    onFollowingTap: () =>
-                                        model.openFollowing(context),
-                                  ),
-                                  SizedBox(height: context.h(16)),
-                                  NormalText(
-                                    titleText: AppText.mySports,
-                                    titleStyle: t.text16Bold.copyWith(
-                                      color: c.greyDark,
-                                    ),
-                                  ),
-                                  ...model.publicSportsForDisplay.map(
-                                    (s) => ProfilePrivateSportRow(
-                                      sportName: s.name,
-                                      skillLabel: s.skill,
-                                    ),
-                                  ),
-                                  SizedBox(height: context.h(8)),
-                                  NormalText(
-                                    titleText: AppText.reviews,
-                                    titleStyle: t.text16Bold.copyWith(
-                                      color: c.greyDark,
-                                    ),
-                                  ),
-                                  ProfileDetailReviewCard(
-                                    reviewAuthor: model.reviewAuthorForDisplay,
-                                    reviewDate: model.reviewDateForDisplay,
-                                    reviewBody: model.reviewBodyForDisplay,
-                                    reviewInitial: model.reviewInitial,
-                                  ),
-                                ],
+                        ? Padding(
+                            padding: context.padSym(h: 20),
+                            child: Center(
+                              child: Text(
+                                model.displayError,
+                                textAlign: TextAlign.center,
+                                style: t.text14W400.copyWith(color: c.greyDark),
                               ),
+                            ),
+                          )
+                        : ListView(
+                            padding: context
+                                .padSym(h: 20)
+                                .copyWith(bottom: context.h(32)),
+                            children: [
+                              ProfileDetailHeader(
+                                displayName: model.fullName,
+                                locationLabel: model.location,
+                                bio: model.bio,
+                                avatarUrl: model.avatarUrl,
+                                showTrophyBadge: true,
+                                nameStyle: t.style(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: c.onSurface,
+                                  height: 1.2,
+                                ),
+                                bioStyle: t.text14W400.copyWith(
+                                  color: c.greyDark,
+                                  height: 1.45,
+                                ),
+                                locationStyle: t.text14W500.copyWith(
+                                  color: c.greylight,
+                                  height: 1.3,
+                                ),
+                              ),
+                              SizedBox(height: context.h(20)),
+                              if (!model.isOwnProfile) ...[
+                                _FollowMessageRow(
+                                  onFollow: () => model.onFollowTap(context),
+                                  onMessage: () => model.onMessageTap(context),
+                                ),
+                                SizedBox(height: context.h(12)),
+                                _RatePlayerButton(
+                                  onTap: () => _showRateSheet(context, model),
+                                ),
+                                SizedBox(height: context.h(20)),
+                              ],
+                              ProfileDetailStatsRow(
+                                followersCount: model.followersCount,
+                                followingCount: model.followingCount,
+                                ratingValue: model.ratingValue,
+                                onFollowersTap: () =>
+                                    model.openFollowers(context),
+                                onFollowingTap: () =>
+                                    model.openFollowing(context),
+                                onRatingTap: model.isOwnProfile
+                                    ? null
+                                    : () => _showRateSheet(context, model),
+                              ),
+                              SizedBox(height: context.h(16)),
+                              NormalText(
+                                titleText: AppText.mySports,
+                                titleStyle: t.text16Bold.copyWith(
+                                  color: c.greyDark,
+                                ),
+                              ),
+                              ...model.publicSportsForDisplay.map(
+                                (s) => ProfilePrivateSportRow(
+                                  sportName: s.name,
+                                  skillLabel: s.skill,
+                                ),
+                              ),
+                              SizedBox(height: context.h(8)),
+                              NormalText(
+                                titleText: AppText.reviews,
+                                titleStyle: t.text16Bold.copyWith(
+                                  color: c.greyDark,
+                                ),
+                              ),
+                              ProfileDetailReviewCard(
+                                reviewAuthor: model.reviewAuthorForDisplay,
+                                reviewDate: model.reviewDateForDisplay,
+                                reviewBody: model.reviewBodyForDisplay,
+                                reviewInitial: model.reviewInitial,
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               );
@@ -172,13 +170,63 @@ class _RatePlayerSheet extends StatefulWidget {
 }
 
 class _RatePlayerSheetState extends State<_RatePlayerSheet> {
+  final TextEditingController _matchIdController = TextEditingController();
   final TextEditingController _controller = TextEditingController();
   int _selectedStars = 0;
 
   @override
   void dispose() {
+    _matchIdController.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final context = this.context;
+    final messenger = ScaffoldMessenger.of(context);
+    final matchId = _matchIdController.text.trim();
+    final comment = _controller.text.trim();
+    if (matchId.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text(AppText.reviewValidationMatchId)),
+      );
+      return;
+    }
+    if (_selectedStars <= 0) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text(AppText.reviewValidationRating)),
+      );
+      return;
+    }
+    if (comment.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text(AppText.reviewValidationComment)),
+      );
+      return;
+    }
+
+    final ok = await widget.model.submitReview(
+      matchId: matchId,
+      rating: _selectedStars,
+      comment: comment,
+    );
+    if (!mounted) return;
+
+    if (ok) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text(AppText.reviewSubmitSuccess)),
+      );
+      Navigator.of(this.context).pop();
+      return;
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          widget.model.submitReviewError ?? 'Failed to submit review',
+        ),
+      ),
+    );
   }
 
   @override
@@ -238,6 +286,24 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(20)),
             Container(
+              padding: context.padSym(h: 14, v: 4),
+              decoration: BoxDecoration(
+                color: c.blue10,
+                borderRadius: BorderRadius.circular(context.radiusR(12)),
+              ),
+              child: TextField(
+                controller: _matchIdController,
+                style: t.text16W500.copyWith(color: c.onSurface),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  labelText: AppText.matchId,
+                  hintText: AppText.matchIdHint,
+                  hintStyle: t.text14W400.copyWith(color: c.greylight),
+                ),
+              ),
+            ),
+            SizedBox(height: context.h(12)),
+            Container(
               height: context.h(120),
               padding: context.padAll(16),
               decoration: BoxDecoration(
@@ -260,10 +326,12 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(18)),
             CustomButton(
-              text: AppText.submitReview,
+              text: widget.model.isSubmittingReview
+                  ? '${AppText.submitReview}...'
+                  : AppText.submitReview,
               color: c.primary,
               colorText: c.onPrimary,
-              onTap: () => Navigator.pop(context),
+              onTap: widget.model.isSubmittingReview ? null : _submit,
             ),
           ],
         ),
