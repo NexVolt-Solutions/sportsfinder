@@ -77,6 +77,7 @@ class PublicProfileViewModel extends ChangeNotifier {
   bool get isSubmittingReview => _submitReviewLoading;
   String? get submitReviewError => _submitReviewError;
   String get selectedUserId => _args?.userId.trim() ?? '';
+  String get initialMatchId => _args?.initialMatchId?.trim() ?? '';
 
   /// Hide follow / message / rate when viewing your own public profile.
   bool get isOwnProfile =>

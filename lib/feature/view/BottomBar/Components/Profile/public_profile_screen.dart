@@ -175,6 +175,15 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
   int _selectedStars = 0;
 
   @override
+  void initState() {
+    super.initState();
+    final initialMatchId = widget.model.initialMatchId;
+    if (initialMatchId.isNotEmpty) {
+      _matchIdController.text = initialMatchId;
+    }
+  }
+
+  @override
   void dispose() {
     _matchIdController.dispose();
     _controller.dispose();
