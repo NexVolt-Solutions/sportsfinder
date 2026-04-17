@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:sport_finding/core/Network/api_service.dart';
-import '../model/UpdateMatch/update_match_model.dart';
+import '../../model/UpdateMatch/update_match_model.dart';
 
 class UpdateMatchRepo {
   final ApiService _apiService = ApiService();

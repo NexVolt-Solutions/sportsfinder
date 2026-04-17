@@ -68,8 +68,20 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildTrailing(BuildContext context) {
-    if (trailing != null) return trailing!;
     final trailingTap = onTrailingTap ?? onTapLast;
+
+    if (trailing != null) {
+      // If custom trailing widget is provided with a tap callback, wrap it
+      if (trailingTap != null) {
+        return GestureDetector(
+          onTap: trailingTap,
+          behavior: HitTestBehavior.opaque,
+          child: trailing!,
+        );
+      }
+      return trailing!;
+    }
+
     if (trailingTap != null) {
       return GestureDetector(
         onTap: trailingTap,

@@ -100,6 +100,10 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   List<String> _rosterNames = [];
   List<String> _rosterSkills = [];
 
+  // ── Current match being displayed ──────────────────────────────────────────
+  DiscoveryMatch? _currentMatch;
+  DiscoveryMatch? get currentMatch => _currentMatch;
+
   int get rosterCount => _rosterNames.length;
   String rosterNameAt(int i) =>
       i >= 0 && i < _rosterNames.length ? _rosterNames[i] : '';
@@ -133,7 +137,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   Set<String> get _safeInvitedUserIds => _invitedUserIds ??= <String>{};
 
   bool isInvitingUser(String userId) => _safeInvitingUserIds.contains(userId);
-  bool isUserAlreadyInvited(String userId) => _safeInvitedUserIds.contains(userId);
+  bool isUserAlreadyInvited(String userId) =>
+      _safeInvitedUserIds.contains(userId);
   String? get inviteErrorMessage => _inviteErrorMessage;
 
   // ── Constructor ────────────────────────────────────────────────────────────
@@ -156,6 +161,22 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update match data when edited
+  void updateMatchAfterEdit(DiscoveryMatch updatedMatch) {
+    debugPrint('🔄 [ViewModel] updateMatchAfterEdit called');
+    debugPrint('🔄 Title: ${updatedMatch.title}');
+    debugPrint('🔄 Sport: ${updatedMatch.sportType}');
+    debugPrint('🔄 Time: ${updatedMatch.time}');
+    _currentMatch = updatedMatch;
+    debugPrint('🔄 _currentMatch set to: ${_currentMatch?.sportType}');
+    bindMatch(updatedMatch);
+    debugPrint('🔄 bindMatch completed');
+    notifyListeners();
+    debugPrint(
+      '🔄 notifyListeners() called - currentMatch sport now: ${_currentMatch?.sportType}',
+    );
+  }
+
   Future<String?> inviteUserToMatch({
     required String matchId,
     required String userId,
@@ -163,10 +184,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     final trimmedMatchId = matchId.trim();
     final trimmedUserId = userId.trim();
 
-    AppLogger.info(
-      'inviteUserToMatch called',
-      tag: 'HostDetailVM',
-    );
+    AppLogger.info('inviteUserToMatch called', tag: 'HostDetailVM');
     AppLogger.debug('matchId: $trimmedMatchId', tag: 'HostDetailVM');
     AppLogger.debug('userId: $trimmedUserId', tag: 'HostDetailVM');
 
@@ -185,10 +203,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       'Currently inviting ids: $invitingIds',
       tag: 'HostDetailVM',
     );
-    AppLogger.debug(
-      'Already invited ids: $invitedIds',
-      tag: 'HostDetailVM',
-    );
+    AppLogger.debug('Already invited ids: $invitedIds', tag: 'HostDetailVM');
 
     if (invitingIds.contains(trimmedUserId)) {
       AppLogger.warning(
@@ -226,11 +241,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       return response.message;
     } catch (e) {
       _inviteErrorMessage = e.toString();
-      AppLogger.error(
-        'Invite API call failed',
-        tag: 'HostDetailVM',
-        error: e,
-      );
+      AppLogger.error('Invite API call failed', tag: 'HostDetailVM', error: e);
       return _inviteErrorMessage;
     } finally {
       invitingIds.remove(trimmedUserId);
@@ -266,7 +277,16 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] joinMatch failed — error: $e');
       log('📍 [ViewModel] joinMatch stacktrace: $stack');
 
-      _joinLeaveError = e.toString();
+      final errorStr = e.toString();
+      _joinLeaveError = errorStr;
+
+      // If user already joined, still show Leave button
+      if (errorStr.contains('already joined')) {
+        log('ℹ️ [ViewModel] User already joined - setting hasJoined = true');
+        _hasJoined = true;
+        return true; // Treat as success for UI purposes
+      }
+
       return false;
     } finally {
       _isJoinLeaveLoading = false;
@@ -298,7 +318,16 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] leaveMatch failed — error: $e');
       log('📍 [ViewModel] leaveMatch stacktrace: $stack');
 
-      _joinLeaveError = e.toString();
+      final errorStr = e.toString();
+      _joinLeaveError = errorStr;
+
+      // If user not joined, still show Join button
+      if (errorStr.contains('not joined') || errorStr.contains('not found')) {
+        log('ℹ️ [ViewModel] User not joined - setting hasJoined = false');
+        _hasJoined = false;
+        return true; // Treat as success for UI purposes
+      }
+
       return false;
     } finally {
       _isJoinLeaveLoading = false;
@@ -319,6 +348,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   void bindMatch(DiscoveryMatch match) {
     if (_boundMatchId == match.id) return;
     _boundMatchId = match.id;
+    _currentMatch = match;
     _rosterNames = List<String>.from(match.players);
     _rosterSkills = List.generate(
       match.players.length,
