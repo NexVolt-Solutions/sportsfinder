@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
+import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Providers/route_providers.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/new_password_screen.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/verification_screen.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen.dart';
-import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/Home/components/create_match_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/host_details_screen.dart';
@@ -29,7 +26,6 @@ import 'package:sport_finding/feature/view/LocationAccess/location_access_screen
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/edit_profile_screen.dart';
-import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/private_profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/public_profile_screen.dart';
 import 'package:sport_finding/feature/view/Legal/privacy_policy_screen.dart';
@@ -188,6 +184,14 @@ class Routes {
             const NotificationsScreen(),
           ),
         );
+      case RoutesName.editProfileRoute:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => EditProfileScreenViewModel(UpdateProfileRepo()),
+            child: const EditProfileScreen(),
+          ),
+        );
       case RoutesName.forgotPasswordScreen:
         return MaterialPageRoute(
           settings: settings,
@@ -248,11 +252,6 @@ class Routes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const PrivateProfileScreen(),
-        );
-      case RoutesName.editProfileRoute:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const EditProfileScreen(),
         );
 
       default:
