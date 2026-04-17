@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
@@ -131,10 +132,20 @@ class _BottomBarContent extends StatelessWidget {
                     titleFontSize: 18,
                   ),
 
-                  onTrailingTap: () => Navigator.pushNamed(
-                    context,
-                    RoutesName.notificationsScreen,
-                  ),
+                  onTrailingTap: () async {
+                    final service = Provider.of<NotificationService>(
+                      context,
+                      listen: false,
+                    );
+                    await service.fetchNotifications();
+
+                    if (context.mounted) {
+                      Navigator.pushNamed(
+                        context,
+                        RoutesName.notificationsScreen,
+                      );
+                    }
+                  },
                 ),
               ),
               Expanded(

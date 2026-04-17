@@ -82,6 +82,64 @@ class ApiService {
     }
   }
 
+  /// ✅ PUT MULTIPART (Profile Update with optional image)
+  Future<Map<String, dynamic>> putMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    File? file,
+    List<int>? fileBytes,
+    String? fileName,
+    String fileField = "avatar",
+    String? token,
+  }) async {
+    try {
+      final uri = Uri.parse("$baseUrl$endpoint");
+      final headers = await getHeaders(token: token);
+
+      headers.remove("Content-Type");
+
+      var request = http.MultipartRequest("PUT", uri);
+      request.headers.addAll(headers);
+      request.fields.addAll(fields);
+
+      if (!kIsWeb && file != null) {
+        if (await file.exists()) {
+          final ext = file.path.split('.').last.toLowerCase();
+          final mimeType = ext == 'jpg' ? 'jpeg' : ext;
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              fileField,
+              file.path,
+              contentType: http.MediaType('image', mimeType),
+            ),
+          );
+        }
+      } else if (kIsWeb && fileBytes != null && fileName != null) {
+        final ext = fileName.split('.').last.toLowerCase();
+        final mimeType = ext == 'jpg' ? 'jpeg' : ext;
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            fileField,
+            fileBytes,
+            filename: fileName,
+            contentType: http.MediaType('image', mimeType),
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Failed to update: ${response.body}");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// ✅ DELETE
   Future<dynamic> delete(String endpoint, {String? token}) async {
     final url = "$baseUrl$endpoint";

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
@@ -7,9 +8,11 @@ import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
@@ -73,10 +76,15 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.bottomBarScreen:
-        return ChangeNotifierProvider(
-          create: (_) => BottomBarScreenViewModel(
-            MyProfileRepository(apiService: ApiService()),
-          ),
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (_) => BottomBarScreenViewModel(
+                MyProfileRepository(apiService: ApiService()),
+              ),
+            ),
+            ChangeNotifierProvider(create: (_) => NotificationService()),
+          ],
           child: child,
         );
       case RoutesName.otpVerificationScreen:
@@ -133,6 +141,12 @@ class RouteProviders {
           create: (_) => ForgotPasswordScreenViewModel(
             repository: ForgotPasswordRepository(apiService: ApiService()),
           ),
+          child: child,
+        );
+
+      case RoutesName.editProfileRoute:
+        return ChangeNotifierProvider(
+          create: (_) => EditProfileScreenViewModel(UpdateProfileRepo()),
           child: child,
         );
 

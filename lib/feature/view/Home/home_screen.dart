@@ -42,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   titleText: AppText.sportFinding,
                   titleFontSize: 18,
                 ),
-                onTapLast: () {},
               ),
             ],
             if (model.isLoading)
