@@ -182,7 +182,7 @@ class GlobalMatchCard extends StatelessWidget {
                   // Time row
                   _IconLabelRow(icon: AppAssets.homeTimeIcon, label: time),
 
-                  const Spacer(),
+                  SizedBox(height: context.sh(8)),
 
                   // Player count
                   PlayerCountWidget(

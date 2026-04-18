@@ -110,7 +110,10 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.userMatchDetailsScreen:
-        return child;
+        return ChangeNotifierProvider(
+          create: (_) => HostDetailScreenViewModel(),
+          child: child,
+        );
 
       case RoutesName.hostDetailsScreen:
         return ChangeNotifierProvider(

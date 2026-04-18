@@ -321,6 +321,15 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       final errorStr = e.toString();
       _joinLeaveError = errorStr;
 
+      // If user is the host, they cannot leave
+      if (errorStr.contains('host') || errorStr.contains('cannot leave')) {
+        log('ℹ️ [ViewModel] User is host - cannot leave');
+        _hasJoined = true; // Keep them "joined" (as host)
+        _joinLeaveError =
+            'As the host, you cannot leave this match. Delete it instead.';
+        return false; // This is an error, show message
+      }
+
       // If user not joined, still show Join button
       if (errorStr.contains('not joined') || errorStr.contains('not found')) {
         log('ℹ️ [ViewModel] User not joined - setting hasJoined = false');
@@ -335,16 +344,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Tab switching ──────────────────────────────────────────────────────────
-  void changeIndex(int index) {
-    selectedIndex = index;
-    if (index == 1) {
-      ensureUsersLoadedForPlayersTab();
-    }
-    notifyListeners();
-  }
-
-  // ── Match binding ──────────────────────────────────────────────────────────
+  // ── Bind Match ─────────────────────────────────────────────────────────────
   void bindMatch(DiscoveryMatch match) {
     if (_boundMatchId == match.id) return;
     _boundMatchId = match.id;
@@ -365,6 +365,15 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _safeInvitingUserIds.clear();
     _safeInvitedUserIds.clear();
     _inviteErrorMessage = null;
+  }
+
+  // ── Tab navigation ────────────────────────────────────────────────────────
+  void changeIndex(int index) {
+    selectedIndex = index;
+    if (index == 1) {
+      ensureUsersLoadedForPlayersTab();
+    }
+    notifyListeners();
   }
 
   // ── Roster management ──────────────────────────────────────────────────────
