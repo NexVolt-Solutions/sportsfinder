@@ -98,6 +98,15 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: context.h(20)),
+                              _FollowMessageRow(
+                                onFollow: () => model.onFollowTap(context),
+                                onMessage: () => model.onMessageTap(context),
+                              ),
+                              SizedBox(height: context.h(12)),
+                              _RatePlayerButton(
+                                onTap: () => _showRateSheet(context, model),
+                              ),
+                              SizedBox(height: context.h(20)),
                               if (!model.isOwnProfile) ...[
                                 _FollowMessageRow(
                                   onFollow: () => model.onFollowTap(context),
