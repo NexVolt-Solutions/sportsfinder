@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: context.h(16)),
             SectionHeaderWidget(
               title: AppText.allUpcomingMatches,
-              actionText: AppText.viewMatch,
+              actionText: AppText.seeAll,
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -160,7 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       builder: (context, _) {
                         return ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: model.matches.length,
+                          itemCount: model.matches.length > 4
+                              ? 4
+                              : model.matches.length,
                           padding: context.padSym(h: 0),
                           itemBuilder: (context, index) {
                             final match = model.matches[index];

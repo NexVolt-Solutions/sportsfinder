@@ -3,10 +3,12 @@ class FollowConnectionUser {
   const FollowConnectionUser({
     required this.id,
     required this.displayName,
+    this.isFollowing = false,
   });
 
   final String id;
   final String displayName;
+  final bool isFollowing;
 
   String get initial {
     final t = displayName.trim();
@@ -31,5 +33,6 @@ final List<FollowConnectionUser> kDefaultFollowConnectionUsers =
       (i) => FollowConnectionUser(
         id: 'u$i',
         displayName: kFollowConnectionSeedNames[i],
+        isFollowing: false,
       ),
     );

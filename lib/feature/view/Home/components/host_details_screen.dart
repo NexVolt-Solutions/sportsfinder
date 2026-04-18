@@ -570,10 +570,14 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       // ── Join / Leave button ───────────────────────────────────
                       : CustomButton(
-                          text: model.hasJoined
+                          text: match.isHostedByCurrentUser
+                              ? AppText.startMatching
+                              : model.hasJoined
                               ? AppText.leaveMatch
                               : AppText.joinMatch,
-                          color: model.hasJoined
+                          color: match.isHostedByCurrentUser
+                              ? context.appColors.primary
+                              : model.hasJoined
                               ? context
                                     .appColors
                                     .error // red for Leave
@@ -585,6 +589,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             }
 
                             // ── LEAVE flow ─────────────────────────────────────
+                            if (match.isHostedByCurrentUser) {
+                              return;
+                            }
                             if (model.hasJoined) {
                               final result = await model.leaveMatch(matchId);
                               if (!context.mounted) return;

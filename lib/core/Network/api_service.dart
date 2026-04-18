@@ -77,6 +77,24 @@ class ApiService {
     }
   }
 
+  /// ✅ PATCH
+  Future<dynamic> patch(String endpoint, {dynamic data, String? token}) async {
+    final url = "$baseUrl$endpoint";
+    final headers = await getHeaders(token: token);
+
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: headers,
+      body: data != null ? jsonEncode(data) : null,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to update data: ${response.body}");
+    }
+  }
+
   /// ✅ PUT MULTIPART (Profile Update with optional image)
   Future<Map<String, dynamic>> putMultipart(
     String endpoint, {

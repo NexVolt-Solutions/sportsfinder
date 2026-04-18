@@ -3,6 +3,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/Data/model/my_sport.dart'; // Added VoidCallback import
@@ -36,10 +37,9 @@ class ProfileScreenViewModel extends ChangeNotifier {
   bool get isLoading => _ps.isLoading;
   bool get showBioOnProfile => true;
 
-  // --- stats (hardcoded until stats API exists) ---
-  int get followersCount => kDefaultFollowConnectionUsers.length;
-  int get followingCount => kDefaultFollowConnectionUsers.length;
-  int get matchesPlayedCount => 12;
+  int get followersCount => _ps.profile?.stats.followers ?? 0;
+  int get followingCount => _ps.profile?.stats.following ?? 0;
+  int get matchesPlayedCount => _ps.profile?.stats.matches ?? 0;
 
   String get followersCountLabel => '$followersCount';
   String get followingCountLabel => '$followingCount';
@@ -99,10 +99,18 @@ class ProfileScreenViewModel extends ChangeNotifier {
   }
 
   void openFollowers(BuildContext context) =>
-      Navigator.pushNamed(context, RoutesName.followersScreen);
+      Navigator.pushNamed(
+        context,
+        RoutesName.followersScreen,
+        arguments: FollowConnectionsArgs(userId: _ps.profile?.id),
+      );
 
   void openFollowing(BuildContext context) =>
-      Navigator.pushNamed(context, RoutesName.followingScreen);
+      Navigator.pushNamed(
+        context,
+        RoutesName.followingScreen,
+        arguments: FollowConnectionsArgs(userId: _ps.profile?.id),
+      );
 
   void openNotifications(BuildContext context) =>
       Navigator.pushNamed(context, RoutesName.notificationsScreen);

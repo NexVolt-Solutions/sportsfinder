@@ -94,6 +94,7 @@ class AppText {
   static const String today = 'Today';
   static const String heyGoodEvening = 'Hey, Good Evening!';
   static const String allUpcomingMatches = 'All Upcoming Matches';
+  static const String upcomingMatches = 'Upcoming Matches';
   static const String myMatches = 'My Matches';
   static const String noHostedMatchesYet =
       'No matches you host yet. Create a match from Home.';
@@ -146,6 +147,7 @@ class AppText {
       'Basketball Court #3, Central Park, New York';
   static const String nearbyPlayers = 'Nearby Players';
   static const String startMatch = 'Start Match';
+  static const String startMatching = 'Start Matching';
   static const String joinMatch = 'Join Match';
   static const String filters = 'Filters';
   static const String sportType = 'Sport Type';

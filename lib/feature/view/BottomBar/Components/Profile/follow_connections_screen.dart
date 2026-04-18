@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -11,14 +12,15 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 
 /// Followers or Following list — pixel-aligned with design (search, rows, actions).
 class FollowConnectionsScreen extends StatelessWidget {
-  const FollowConnectionsScreen({super.key, required this.mode});
+  const FollowConnectionsScreen({super.key, required this.mode, this.args});
 
   final FollowConnectionsMode mode;
+  final FollowConnectionsArgs? args;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => FollowConnectionsViewModel(mode),
+      create: (_) => FollowConnectionsViewModel(mode, args: args),
       child: const _FollowConnectionsScaffold(),
     );
   }
@@ -72,7 +74,7 @@ class _FollowConnectionsScaffold extends StatelessWidget {
                       child: Padding(
                         padding: context.padSym(h: 20),
                         child: NormalText(
-                          titleText: AppText.noConnectionsMatchSearch,
+                          titleText: vm.emptyStateMessage,
                           titleAlign: TextAlign.center,
                           titleStyle: context.appText.style(
                             fontSize: 14,

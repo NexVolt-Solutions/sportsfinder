@@ -24,6 +24,7 @@ import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart'
 import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
+import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/feature/view/LocationAccess/location_access_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
@@ -246,12 +247,20 @@ class Routes {
       case RoutesName.followersScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const FollowersScreen(),
+          builder: (_) => FollowersScreen(
+            args: settings.arguments is FollowConnectionsArgs
+                ? settings.arguments as FollowConnectionsArgs
+                : null,
+          ),
         );
       case RoutesName.followingScreen:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const FollowingScreen(),
+          builder: (_) => FollowingScreen(
+            args: settings.arguments is FollowConnectionsArgs
+                ? settings.arguments as FollowConnectionsArgs
+                : null,
+          ),
         );
       case RoutesName.privacyPolicyScreen:
         return MaterialPageRoute(

@@ -101,23 +101,14 @@ class PublicProfileScreen extends StatelessWidget {
                               _FollowMessageRow(
                                 onFollow: () => model.onFollowTap(context),
                                 onMessage: () => model.onMessageTap(context),
+                                isFollowing: model.isFollowing,
+                                isFollowLoading: model.isFollowLoading,
                               ),
                               SizedBox(height: context.h(12)),
                               _RatePlayerButton(
                                 onTap: () => _showRateSheet(context, model),
                               ),
                               SizedBox(height: context.h(20)),
-                              if (!model.isOwnProfile) ...[
-                                _FollowMessageRow(
-                                  onFollow: () => model.onFollowTap(context),
-                                  onMessage: () => model.onMessageTap(context),
-                                ),
-                                SizedBox(height: context.h(12)),
-                                _RatePlayerButton(
-                                  onTap: () => _showRateSheet(context, model),
-                                ),
-                                SizedBox(height: context.h(20)),
-                              ],
                               ProfileDetailStatsRow(
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
@@ -359,10 +350,17 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
 }
 
 class _FollowMessageRow extends StatelessWidget {
-  const _FollowMessageRow({required this.onFollow, required this.onMessage});
+  const _FollowMessageRow({
+    required this.onFollow,
+    required this.onMessage,
+    required this.isFollowing,
+    required this.isFollowLoading,
+  });
 
-  final VoidCallback onFollow;
+  final Future<void> Function() onFollow;
   final VoidCallback onMessage;
+  final bool isFollowing;
+  final bool isFollowLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -372,21 +370,41 @@ class _FollowMessageRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: onFollow,
+          onTap: isFollowing || isFollowLoading ? null : () => onFollow(),
           child: Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadiusGeometry.circular(30),
             ),
-            color: c.primary,
+            color: isFollowing ? Colors.white : c.primary,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
-                  SvgPicture.asset(AppAssets.follow, width: 22, height: 22),
+                  if (isFollowLoading)
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(
+                          isFollowing ? c.primary : c.onPrimary,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      isFollowing ? Icons.check : Icons.person_add_alt_1,
+                      size: 22,
+                      color: isFollowing ? c.primary : c.onPrimary,
+                    ),
                   SizedBox(width: context.w(4)),
                   NormalText(
-                    titleText: AppText.follow,
-                    titleColor: c.onPrimary,
+                    titleText: isFollowLoading
+                        ? '${AppText.following}...'
+                        : isFollowing
+                        ? AppText.following
+                        : AppText.follow,
+                    titleColor: isFollowing ? c.primary : c.onPrimary,
                   ),
                 ],
               ),
