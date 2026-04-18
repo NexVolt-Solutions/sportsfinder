@@ -197,15 +197,29 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                 child: model.isJoinLeaveLoading
                     ? const Center(child: CircularProgressIndicator())
                     : CustomButton(
-                        text: model.hasJoined
+                        text: match.isHostedByCurrentUser
+                            ? AppText.startMatch
+                            : model.hasJoined
                             ? AppText.leaveMatch
                             : AppText.joinMatch,
-                        color: model.hasJoined
+                        color: match.isHostedByCurrentUser
+                            ? context.appColors.primary
+                            : model.hasJoined
                             ? context.appColors.error
                             : context.appColors.primary,
                         onTap: () async {
                           final matchId = match.id;
                           if (matchId.isEmpty) {
+                            return;
+                          }
+
+                          if (match.isHostedByCurrentUser) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('You are hosting this match.'),
+                              ),
+                            );
                             return;
                           }
 

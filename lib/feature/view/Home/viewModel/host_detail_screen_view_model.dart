@@ -89,6 +89,7 @@ import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailScreenViewModel extends ChangeNotifier {
+  static final Map<String, bool> _sessionJoinStateByMatchId = <String, bool>{};
   int selectedIndex = 0;
   final List<String> buttonName = [
     AppText.overview,
@@ -272,6 +273,10 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('✅ [ViewModel] joinMatch success — message: ${result.message}');
 
       _hasJoined = true;
+      _sessionJoinStateByMatchId[matchId] = true;
+      log(
+        '[ViewModel] joinMatch cached state -> joined for matchId: $matchId',
+      );
       return true;
     } catch (e, stack) {
       log('❌ [ViewModel] joinMatch failed — error: $e');
@@ -284,6 +289,10 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       if (errorStr.contains('already joined')) {
         log('ℹ️ [ViewModel] User already joined - setting hasJoined = true');
         _hasJoined = true;
+        _sessionJoinStateByMatchId[matchId] = true;
+        log(
+          '[ViewModel] joinMatch cached state -> joined for matchId: $matchId',
+        );
         return true; // Treat as success for UI purposes
       }
 
@@ -313,6 +322,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('✅ [ViewModel] leaveMatch success — message: ${result.message}');
 
       _hasJoined = false;
+      _sessionJoinStateByMatchId[matchId] = false;
+      log('[ViewModel] leaveMatch cached state -> left for matchId: $matchId');
       return true;
     } catch (e, stack) {
       log('❌ [ViewModel] leaveMatch failed — error: $e');
@@ -325,6 +336,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       if (errorStr.contains('host') || errorStr.contains('cannot leave')) {
         log('ℹ️ [ViewModel] User is host - cannot leave');
         _hasJoined = true; // Keep them "joined" (as host)
+        _sessionJoinStateByMatchId[matchId] = true;
         _joinLeaveError =
             'As the host, you cannot leave this match. Delete it instead.';
         return false; // This is an error, show message
@@ -334,6 +346,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       if (errorStr.contains('not joined') || errorStr.contains('not found')) {
         log('ℹ️ [ViewModel] User not joined - setting hasJoined = false');
         _hasJoined = false;
+        _sessionJoinStateByMatchId[matchId] = false;
+        log('[ViewModel] leaveMatch cached state -> left for matchId: $matchId');
         return true; // Treat as success for UI purposes
       }
 
@@ -359,7 +373,15 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     log(
       '🔄 [ViewModel] bindMatch — resetting join state for matchId: ${match.id}',
     );
-    _hasJoined = false;
+    final cachedJoinState = _sessionJoinStateByMatchId[match.id];
+    final resolvedJoinState = cachedJoinState ?? match.isJoinedByCurrentUser;
+    log('[ViewModel] bindMatch for matchId: ${match.id}');
+    log(
+      '[ViewModel] bindMatch resolved join state: $resolvedJoinState '
+      '(cached: $cachedJoinState, joinedFromMatch: ${match.isJoinedByCurrentUser}, '
+      'hosted: ${match.isHostedByCurrentUser})',
+    );
+    _hasJoined = resolvedJoinState;
     _joinLeaveError = null;
     _isJoinLeaveLoading = false;
     _safeInvitingUserIds.clear();

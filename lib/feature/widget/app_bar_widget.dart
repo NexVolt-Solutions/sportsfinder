@@ -21,6 +21,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onTapLast;
 
   final Color? iconColor;
+  final bool showBackButton;
 
   static const double _kToolbarHeight = 56;
   static const double _kIconSize = 24;
@@ -36,6 +37,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.iconColor,
     this.onTrailingTap,
     this.onTapLast,
+    this.showBackButton = false,
   });
 
   @override
@@ -44,9 +46,9 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildLeading(BuildContext context) {
     if (leading != null) return leading!;
     final leadingTap = onLeadingTap ?? onTapFirst;
-    if (leadingTap != null) {
+    if (showBackButton || leadingTap != null) {
       return GestureDetector(
-        onTap: leadingTap,
+        onTap: leadingTap ?? () => Navigator.maybePop(context),
         behavior: HitTestBehavior.opaque,
         child: SvgPicture.asset(AppAssets.backIcon, fit: BoxFit.contain),
       );

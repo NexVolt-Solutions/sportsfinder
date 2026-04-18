@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/Data/Repositories/GetFollower/followers_repo.dart';
+import 'package:sport_finding/Data/Repositories/GetFollowing/following_repo.dart';
 import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
 import 'package:sport_finding/Data/Repositories/UnFollowUser/unfollow_user_repo.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
@@ -9,21 +11,20 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 enum FollowConnectionsMode { followers, following }
 
 class FollowConnectionsViewModel extends ChangeNotifier {
-  FollowConnectionsViewModel(this.mode) {
+  FollowConnectionsViewModel(this.mode, {FollowConnectionsArgs? args})
+    : _args = args {
     _allUsers = List<FollowConnectionUser>.from(kDefaultFollowConnectionUsers);
-    if (mode == FollowConnectionsMode.following) {
-      _activeFollowingIds
-        ..clear()
-        ..addAll(_allUsers.map((e) => e.id));
-    }
     if (mode == FollowConnectionsMode.followers) {
       _followedBackIds.clear();
       _fetchFollowers(); // Fetch followers data when initialized
+    } else {
+      _fetchFollowing();
     }
     _rebuildVisible();
   }
 
   final FollowConnectionsMode mode;
+  final FollowConnectionsArgs? _args;
   final TextEditingController searchController = TextEditingController();
 
   late List<FollowConnectionUser> _allUsers;
@@ -54,6 +55,15 @@ class FollowConnectionsViewModel extends ChangeNotifier {
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+  String get emptyStateMessage => mode == FollowConnectionsMode.followers
+      ? 'No followers yet'
+      : 'No following yet';
+
+  String get _targetUserId {
+    final routeId = _args?.userId?.trim() ?? '';
+    if (routeId.isNotEmpty) return routeId;
+    return ProfileService().profile?.id ?? '';
+  }
 
   // ── Getters ────────────────────────────────────────────────────────────────
   List<FollowConnectionUser> get visibleUsers => List.unmodifiable(_visible);
@@ -79,8 +89,8 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      final userId = ProfileService().profile?.id;
-      if (userId == null || userId.isEmpty) {
+      final userId = _targetUserId;
+      if (userId.isEmpty) {
         _errorMessage = 'User ID not found';
         _isLoading = false;
         notifyListeners();
@@ -99,6 +109,17 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       log(
         '✅ [FollowConnectionsVM] Fetched ${followersModel.items.length} followers',
       );
+      if (followersModel.items.isEmpty) {
+        log('ℹ️ [FollowConnectionsVM] No followers found for userId: $userId');
+      }
+
+      _followedBackIds
+        ..clear()
+        ..addAll(
+          followersModel.items
+              .where((follower) => follower.isFollowing)
+              .map((follower) => follower.id),
+        );
 
       // Convert FollowerItem to FollowConnectionUser
       _allUsers = followersModel.items
@@ -106,6 +127,7 @@ class FollowConnectionsViewModel extends ChangeNotifier {
             (follower) => FollowConnectionUser(
               id: follower.id,
               displayName: follower.fullName,
+              isFollowing: follower.isFollowing,
             ),
           )
           .toList();
@@ -116,7 +138,72 @@ class FollowConnectionsViewModel extends ChangeNotifier {
     } catch (e, stack) {
       log('❌ [FollowConnectionsVM] Error fetching followers: $e');
       log('📍 [FollowConnectionsVM] Stacktrace: $stack');
-      _errorMessage = 'Failed to load followers';
+      final errorText = e.toString();
+      if (errorText.contains('Invalid or expired token')) {
+        _errorMessage = 'Your session has expired. Please log in again.';
+      } else {
+        _errorMessage = 'Failed to load followers';
+      }
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetchFollowing() async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final userId = _targetUserId;
+      if (userId.isEmpty) {
+        _errorMessage = 'User ID not found';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      log('🚀 [FollowConnectionsVM] Fetching following for userId: $userId');
+
+      final repo = FollowingRepo();
+      final followingModel = await repo.getFollowing(
+        userId: userId,
+        page: 1,
+        limit: 50,
+      );
+
+      log(
+        '✅ [FollowConnectionsVM] Fetched ${followingModel.items.length} following users',
+      );
+      if (followingModel.items.isEmpty) {
+        log('ℹ️ [FollowConnectionsVM] No following found for userId: $userId');
+      }
+
+      _allUsers = followingModel.items
+          .map(
+            (user) => FollowConnectionUser(
+              id: user.id,
+              displayName: user.fullName,
+            ),
+          )
+          .toList();
+
+      _activeFollowingIds
+        ..clear()
+        ..addAll(_allUsers.map((e) => e.id));
+
+      _rebuildVisible();
+      _isLoading = false;
+      notifyListeners();
+    } catch (e, stack) {
+      log('❌ [FollowConnectionsVM] Error fetching following: $e');
+      log('📍 [FollowConnectionsVM] Stacktrace: $stack');
+      final errorText = e.toString();
+      if (errorText.contains('Invalid or expired token')) {
+        _errorMessage = 'Your session has expired. Please log in again.';
+      } else {
+        _errorMessage = 'Failed to load following';
+      }
       _isLoading = false;
       notifyListeners();
     }
@@ -139,13 +226,19 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       _userFollowErrors.remove(userId);
       notifyListeners();
 
-      log('🟡 [FollowConnectionsVM] Following user: $userId');
+      log(
+        '🟡 [FollowConnectionsVM] Follow-back API hit for follower: '
+        '${user.displayName} ($userId)',
+      );
 
       final repo = FollowUserRepo();
       final result = await repo.followUser(userId: userId);
 
-      log('✅ [FollowConnectionsVM] Successfully followed user: $userId');
-      log('📝 [FollowConnectionsVM] Message: ${result.message}');
+      log(
+        '✅ [FollowConnectionsVM] You followed back ${user.displayName} '
+        '($userId)',
+      );
+      log('📝 [FollowConnectionsVM] Follow-back response: ${result.message}');
 
       _followedBackIds.add(userId);
       _followingUserIds.remove(userId);

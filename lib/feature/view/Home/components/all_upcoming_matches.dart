@@ -43,15 +43,12 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
             children: [
               if (!widget.embedAsBottomTab)
                 AppBarWidget(
-                  leading: NormalText(
-                    titleText: AppText.sportFinding,
-                    titleFontSize: 18,
-                  ),
-                  onTapLast: () {},
+                  title: AppText.upcomingMatches,
+                  showBackButton: true,
                 ),
               NormalText(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                titleText: widget.listTitle ?? AppText.allUpcomingMatches,
+                titleText: widget.listTitle ?? AppText.sportFinding,
               ),
               SizedBox(height: context.h(16)),
               SearchBarWidget(

@@ -1,6 +1,9 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/CreateReviewRequest/create_review_request_model.dart';
+import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
+import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/Data/model/my_sport.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
@@ -24,6 +27,7 @@ class PublicProfileViewModel extends ChangeNotifier {
     apiService: ApiService(),
   );
   final CreateReviewRepo _createReviewRepo = CreateReviewRepo();
+  final FollowUserRepo _followUserRepo = FollowUserRepo();
 
   late final VoidCallback _listener;
 
@@ -32,6 +36,10 @@ class PublicProfileViewModel extends ChangeNotifier {
   String? _fetchOtherError;
   bool _submitReviewLoading = false;
   String? _submitReviewError;
+  bool _followLoading = false;
+  String? _followError;
+  bool? _isFollowingOverride;
+  int? _followersCountOverride;
 
   /// True when opening from settings (no args) or empty [userId], or when the
   /// selected user is the logged-in account.
@@ -76,6 +84,8 @@ class PublicProfileViewModel extends ChangeNotifier {
 
   bool get isSubmittingReview => _submitReviewLoading;
   String? get submitReviewError => _submitReviewError;
+  bool get isFollowLoading => _followLoading;
+  String? get followError => _followError;
   String get selectedUserId => _args?.userId.trim() ?? '';
   String get initialMatchId => _args?.initialMatchId?.trim() ?? '';
 
@@ -85,8 +95,7 @@ class PublicProfileViewModel extends ChangeNotifier {
 
   Future<void> _load() async {
     if (_viewingSelf) {
-      final refresh =
-          _args?.forceRefreshProfile ?? false;
+      final refresh = _args?.forceRefreshProfile ?? false;
       try {
         await ProfileService().fetchMyProfile(forceRefresh: refresh);
       } catch (_) {}
@@ -148,8 +157,11 @@ class PublicProfileViewModel extends ChangeNotifier {
 
   String get avatarUrl => _active?.avatarUrl?.trim() ?? '';
 
-  int get followersCount => _active?.stats.followers ?? 0;
+  int get followersCount =>
+      _followersCountOverride ?? (_active?.stats.followers ?? 0);
   int get followingCount => _active?.stats.following ?? 0;
+  bool get isFollowing =>
+      _isFollowingOverride ?? (_active?.actions.isFollowing ?? false);
 
   String get ratingValue {
     final r = _active?.stats.rating;
@@ -176,9 +188,7 @@ class PublicProfileViewModel extends ChangeNotifier {
   List<MySport> get publicSportsForDisplay {
     if (showSpinner || showError) return publicSports;
     if (publicSports.isNotEmpty) return publicSports;
-    return [
-      MySport(name: AppText.profilePlaceholderSport, skill: ''),
-    ];
+    return [MySport(name: AppText.profilePlaceholderSport, skill: '')];
   }
 
   Map<String, dynamic>? get _firstReviewMap {
@@ -244,18 +254,70 @@ class PublicProfileViewModel extends ChangeNotifier {
   String get displayName => fullName;
 
   void openFollowers(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.followersScreen);
+    Navigator.pushNamed(
+      context,
+      RoutesName.followersScreen,
+      arguments: FollowConnectionsArgs(userId: selectedUserId),
+    );
   }
 
   void openFollowing(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.followingScreen);
+    Navigator.pushNamed(
+      context,
+      RoutesName.followingScreen,
+      arguments: FollowConnectionsArgs(userId: selectedUserId),
+    );
   }
 
   void onMessageTap(BuildContext context) {
     Navigator.pushNamed(context, RoutesName.chatScreen);
   }
 
-  void onFollowTap(BuildContext context) {}
+  Future<void> onFollowTap(BuildContext context) async {
+    if (isOwnProfile ||
+        selectedUserId.isEmpty ||
+        _followLoading ||
+        isFollowing) {
+      log(
+        'ℹ️ [PublicProfileVM] Follow tap ignored '
+        '(isOwnProfile: $isOwnProfile, selectedUserId: $selectedUserId, '
+        'isLoading: $_followLoading, isFollowing: $isFollowing)',
+      );
+      return;
+    }
+
+    _followLoading = true;
+    _followError = null;
+    notifyListeners();
+
+    try {
+      log('🚀 [PublicProfileVM] Follow API hit for userId: $selectedUserId');
+      await _followUserRepo.followUser(userId: selectedUserId);
+      log('✅ [PublicProfileVM] Follow API success for userId: $selectedUserId');
+      _isFollowingOverride = true;
+      _followersCountOverride = followersCount + 1;
+      _followError = null;
+      notifyListeners();
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User followed successfully')),
+      );
+    } catch (e) {
+      log('❌ [PublicProfileVM] Follow API failed for userId: $selectedUserId');
+      log('📍 [PublicProfileVM] Follow error: $e');
+      _followError = e.toString();
+      notifyListeners();
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_followError ?? 'Failed to follow user')),
+      );
+    } finally {
+      _followLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> submitReview({
     required String matchId,
@@ -289,7 +351,9 @@ class PublicProfileViewModel extends ChangeNotifier {
 
       final raw = await _repo.getUserById(selectedUserId);
       if (raw is Map) {
-        _otherProfile = UserProfileModel.fromJson(Map<String, dynamic>.from(raw));
+        _otherProfile = UserProfileModel.fromJson(
+          Map<String, dynamic>.from(raw),
+        );
       }
 
       _submitReviewLoading = false;
