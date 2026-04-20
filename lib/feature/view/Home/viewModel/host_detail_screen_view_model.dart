@@ -90,6 +90,9 @@ import 'package:sport_finding/Data/model/llst_of_all_user_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/Data/model/match_detail_model.dart';
+import 'package:sport_finding/Data/Repositories/matches_repo.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailScreenViewModel extends ChangeNotifier {
@@ -125,6 +128,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   final MatchInvitationRepository _matchInvitationRepository =
       MatchInvitationRepository();
   final DeleteMatchRepo _deleteMatchRepo = DeleteMatchRepo();
+  final MatchesRepo _matchesRepo = MatchesRepo();
 
   bool _hasJoined = false;
   bool get hasJoined => _hasJoined;
@@ -164,6 +168,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   String? _matchStatusError;
   String? get matchStatusError => _matchStatusError;
 
+  bool _isRefreshingRoster = false;
+  bool get isRefreshingRoster => _isRefreshingRoster;
+
   // ── Constructor ────────────────────────────────────────────────────────────
   HostDetailScreenViewModel() {
     ListOfAllUserService().addListener(_onUsersChanged);
@@ -199,6 +206,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       '🔄 notifyListeners() called - currentMatch sport now: ${_currentMatch?.sportType}',
     );
   }
+
+  List<String> get rosterPlayers => List.unmodifiable(_rosterNames);
 
   Future<String?> inviteUserToMatch({
     required String matchId,
@@ -337,6 +346,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
       _hasJoined = true;
       _sessionJoinStateByMatchId[matchId] = true;
+      _addCurrentUserToRoster();
       log('[ViewModel] joinMatch cached state -> joined for matchId: $matchId');
       return true;
     } catch (e, stack) {
@@ -351,6 +361,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         log('ℹ️ [ViewModel] User already joined - setting hasJoined = true');
         _hasJoined = true;
         _sessionJoinStateByMatchId[matchId] = true;
+        _addCurrentUserToRoster();
         log(
           '[ViewModel] joinMatch cached state -> joined for matchId: $matchId',
         );
@@ -384,6 +395,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
       _hasJoined = false;
       _sessionJoinStateByMatchId[matchId] = false;
+      _removeCurrentUserFromRoster();
       log('[ViewModel] leaveMatch cached state -> left for matchId: $matchId');
       return true;
     } catch (e, stack) {
@@ -408,6 +420,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         log('ℹ️ [ViewModel] User not joined - setting hasJoined = false');
         _hasJoined = false;
         _sessionJoinStateByMatchId[matchId] = false;
+        _removeCurrentUserFromRoster();
         log(
           '[ViewModel] leaveMatch cached state -> left for matchId: $matchId',
         );
@@ -423,14 +436,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
   // ── Bind Match ─────────────────────────────────────────────────────────────
   void bindMatch(DiscoveryMatch match) {
-    if (_boundMatchId == match.id) return;
     _boundMatchId = match.id;
     _currentMatch = match;
-    _rosterNames = List<String>.from(match.players);
-    _rosterSkills = List.generate(
-      match.players.length,
-      (i) => match.playerSkillAt(i),
-    );
+    _seedRosterFromMatch(match);
 
     // Reset join/leave state when a new match is bound
     log(
@@ -450,6 +458,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _safeInvitingUserIds.clear();
     _safeInvitedUserIds.clear();
     _inviteErrorMessage = null;
+    if (match.id.trim().isNotEmpty) {
+      unawaited(refreshRoster());
+    }
   }
 
   // ── Tab navigation ────────────────────────────────────────────────────────
@@ -466,7 +477,152 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     if (index < 0 || index >= _rosterNames.length) return;
     _rosterNames.removeAt(index);
     _rosterSkills.removeAt(index);
+    _syncCurrentMatchRoster();
     notifyListeners();
+  }
+
+  Future<void> refreshRoster() async {
+    final matchId = _currentMatch?.id.trim() ?? '';
+    if (matchId.isEmpty || _isRefreshingRoster) return;
+
+    _isRefreshingRoster = true;
+    notifyListeners();
+
+    try {
+      final detail = await _matchesRepo.getMatch(matchId);
+      _applyRosterFromDetail(detail);
+      AppLogger.success(
+        'Roster refreshed for matchId: $matchId',
+        tag: 'HostDetailVM',
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to refresh roster for matchId: $matchId',
+        tag: 'HostDetailVM',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _isRefreshingRoster = false;
+      notifyListeners();
+    }
+  }
+
+  void _seedRosterFromMatch(DiscoveryMatch match) {
+    final hostName = match.displayHostName.trim().toLowerCase();
+    final names = <String>[];
+    final skills = <String>[];
+
+    for (var i = 0; i < match.players.length; i++) {
+      final playerName = match.players[i].trim();
+      if (playerName.isEmpty) continue;
+      if (hostName.isNotEmpty && playerName.toLowerCase() == hostName) {
+        continue;
+      }
+      names.add(playerName);
+      skills.add(match.playerSkillAt(i));
+    }
+
+    _rosterNames = names;
+    _rosterSkills = skills;
+    AppLogger.debug(
+      'Seeded participated roster from route for matchId=${match.id}: '
+      'players=$_rosterNames',
+      tag: 'HostDetailVM',
+    );
+    _syncCurrentMatchRoster();
+  }
+
+  void _applyRosterFromDetail(MatchDetailResponse detail) {
+    final hostId = detail.host.id.trim();
+    final hostName = detail.host.fullName.trim().toLowerCase();
+    final names = <String>[];
+    final skills = <String>[];
+
+    for (final participant in detail.participants) {
+      if (!participant.countsAsJoinedPlayer) continue;
+      final userId = participant.user.id.trim();
+      final fullName = participant.user.fullName.trim();
+      if (fullName.isEmpty) continue;
+      if (hostId.isNotEmpty && userId == hostId) continue;
+      if (hostName.isNotEmpty && fullName.toLowerCase() == hostName) continue;
+
+      names.add(fullName);
+      skills.add(
+        detail.skillLevel.trim().isNotEmpty ? detail.skillLevel : 'Intermediate',
+      );
+    }
+
+    _rosterNames = names;
+    _rosterSkills = skills;
+    AppLogger.info(
+      'Stored participated players from backend for matchId=${detail.id}: '
+      'players=$_rosterNames',
+      tag: 'HostDetailVM',
+    );
+    _syncCurrentMatchRoster();
+  }
+
+  void _syncCurrentMatchRoster() {
+    final match = _currentMatch;
+    if (match == null) return;
+    _currentMatch = match.copyWith(
+      players: List<String>.from(_rosterNames),
+      playerSkills: List<String>.from(_rosterSkills),
+      participantsJoined: _rosterNames.length,
+    );
+    AppLogger.debug(
+      'Current match roster synced for matchId=${match.id}: '
+      'count=${_rosterNames.length}, players=$_rosterNames',
+      tag: 'HostDetailVM',
+    );
+  }
+
+  void _addCurrentUserToRoster() {
+    final rawName = ProfileService().profile?.fullName.trim() ?? '';
+    if (rawName.isEmpty) return;
+    final normalized = rawName.toLowerCase();
+    if (_rosterNames.any((name) => name.trim().toLowerCase() == normalized)) {
+      AppLogger.debug(
+        'Accepted user already exists in participated list: $rawName',
+        tag: 'HostDetailVM',
+      );
+      _syncCurrentMatchRoster();
+      return;
+    }
+    _rosterNames.add(rawName);
+    _rosterSkills.add(_currentMatch?.skillLevel ?? 'Intermediate');
+    AppLogger.success(
+      'Accepted user stored in participated list: $rawName',
+      tag: 'HostDetailVM',
+    );
+    _syncCurrentMatchRoster();
+  }
+
+  void _removeCurrentUserFromRoster() {
+    final rawName = ProfileService().profile?.fullName.trim() ?? '';
+    if (rawName.isEmpty) return;
+    final normalized = rawName.toLowerCase();
+    final index = _rosterNames.indexWhere(
+      (name) => name.trim().toLowerCase() == normalized,
+    );
+    if (index == -1) {
+      AppLogger.debug(
+        'User not found in participated list while removing: $rawName',
+        tag: 'HostDetailVM',
+      );
+      _syncCurrentMatchRoster();
+      return;
+    }
+    _rosterNames.removeAt(index);
+    if (index < _rosterSkills.length) {
+      _rosterSkills.removeAt(index);
+    }
+    AppLogger.info(
+      'User removed from participated list: $rawName',
+      tag: 'HostDetailVM',
+    );
+    _syncCurrentMatchRoster();
   }
 
   // ── Update Match Status ───────────────────────────────────────────────────

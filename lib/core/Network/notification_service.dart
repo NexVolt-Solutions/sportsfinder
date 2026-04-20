@@ -41,4 +41,22 @@ class NotificationService extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
+  void removeNotificationById(String notificationId) {
+    final next = notifications.withoutNotificationId(notificationId);
+    if (next.length == notifications.length) {
+      AppLogger.debug(
+        'No notification removed because id was not found: $notificationId',
+        tag: 'NotificationService',
+      );
+      return;
+    }
+
+    notifications = next;
+    AppLogger.info(
+      'Notification removed from local UI state: $notificationId',
+      tag: 'NotificationService',
+    );
+    notifyListeners();
+  }
 }

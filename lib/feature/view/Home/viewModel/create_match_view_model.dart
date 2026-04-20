@@ -4,6 +4,8 @@ import 'package:sport_finding/Data/Repositories/create_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/logger.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
   final CreateMatchRepo _createRepo = CreateMatchRepo();
@@ -33,6 +35,10 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   bool isEditMode = false;
   String? matchId;
+
+  CreateMatchViewModel() {
+    _hydrateSavedLocation();
+  }
 
   final List<String> sportTypes = [
     'Football',
@@ -135,6 +141,52 @@ class CreateMatchViewModel extends ChangeNotifier {
     matchDurationController.text = '$minutes minutes';
   }
 
+  Future<void> _hydrateSavedLocation() async {
+    if (locationController.text.trim().isNotEmpty) return;
+    final savedLocation = await AppPreferences.getCurrentLocationText();
+    if (savedLocation == null || savedLocation.trim().isEmpty) {
+      AppLogger.warning(
+        'No saved exact location found for create match form.',
+        tag: 'CreateMatchVM',
+      );
+      return;
+    }
+
+    locationController.text = savedLocation;
+    AppLogger.info(
+      'Loaded saved exact location into create match form: $savedLocation',
+      tag: 'CreateMatchVM',
+    );
+    notifyListeners();
+  }
+
+  Future<String> _resolveLocationForRequest() async {
+    final typedLocation = locationController.text.trim();
+    if (typedLocation.isNotEmpty) {
+      AppLogger.debug(
+        'Using location from form field: $typedLocation',
+        tag: 'CreateMatchVM',
+      );
+      return typedLocation;
+    }
+
+    final savedLocation = await AppPreferences.getCurrentLocationText();
+    if (savedLocation != null && savedLocation.trim().isNotEmpty) {
+      locationController.text = savedLocation;
+      AppLogger.info(
+        'Location field was empty, using saved exact location: $savedLocation',
+        tag: 'CreateMatchVM',
+      );
+      return savedLocation;
+    }
+
+    AppLogger.warning(
+      'Create match request still has no location available.',
+      tag: 'CreateMatchVM',
+    );
+    return '';
+  }
+
   String? _buildScheduledAt() {
     if (_selectedDate == null || _selectedTime == null) {
       return null;
@@ -159,6 +211,13 @@ class CreateMatchViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final resolvedLocation = await _resolveLocationForRequest();
+      if (resolvedLocation.isEmpty) {
+        error =
+            'Location is required. Please allow location access or enter a location.';
+        AppLogger.warning(error!, tag: 'CreateMatchVM');
+        return false;
+      }
       final data = MatchModel(
         id: '',
         title: matchTitleController.text.trim(),
@@ -170,7 +229,7 @@ class CreateMatchViewModel extends ChangeNotifier {
         scheduledDate: dateController.text,
         scheduledTime: timeController.text,
         durationMinutes: duration,
-        location: locationController.text.trim(),
+        location: resolvedLocation,
         maxPlayers: int.tryParse(maxPlayersController.text.trim()) ?? 0,
       ).toJson();
 
@@ -197,6 +256,13 @@ class CreateMatchViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final resolvedLocation = await _resolveLocationForRequest();
+      if (resolvedLocation.isEmpty) {
+        error =
+            'Location is required. Please allow location access or enter a location.';
+        AppLogger.warning(error!, tag: 'CreateMatchVM');
+        return false;
+      }
       final data = {
         'title': matchTitleController.text.trim(),
         'description': descriptionController.text.trim(),
@@ -204,7 +270,7 @@ class CreateMatchViewModel extends ChangeNotifier {
         'skill_level': selectedSkillLevel,
         'scheduled_at': _buildScheduledAt(),
         'duration_minutes': duration,
-        'location': locationController.text.trim(),
+        'location': resolvedLocation,
         'max_players': int.tryParse(maxPlayersController.text.trim()) ?? 0,
       };
 

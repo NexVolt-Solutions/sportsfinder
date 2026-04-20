@@ -167,85 +167,95 @@ class _DropdownSheetState extends State<_DropdownSheet> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: keyboardHeight),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Search field
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: TextField(
-                  controller: widget.searchController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Search items...',
-                    prefixIcon: Icon(Icons.search, color: c.greyDark),
-                    filled: true,
-                    fillColor: c.transparent,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: c.greylight),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: c.greylight),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: c.primary, width: 1.5),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+      child: Material(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(16),
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Search field
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: TextField(
+                    controller: widget.searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Search items...',
+                      prefixIcon: Icon(Icons.search, color: c.greyDark),
+                      filled: true,
+                      fillColor: c.transparent,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: c.greylight),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: c.greylight),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: c.primary, width: 1.5),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // List or empty state
-              Flexible(
-                child: _filtered.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text(
-                            'No items found',
-                            style: context.appText.text14W400.copyWith(
-                              color: c.greylight,
-                            ),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: _filtered.length,
-                        separatorBuilder: (_, _) => Divider(
-                          height: 1,
-                          thickness: 0.5,
-                          color: c.greylight,
-                        ),
-                        itemBuilder: (context, index) {
-                          final item = _filtered[index];
-                          return ListTile(
-                            tileColor: c.surface,
-                            title: Text(
-                              item,
+                // List or empty state
+                Flexible(
+                  child: _filtered.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text(
+                              'No items found',
                               style: context.appText.text14W400.copyWith(
-                                color: c.greyDark,
+                                color: c.greylight,
                               ),
                             ),
-                            onTap: () => Navigator.pop(context, item),
-                          );
-                        },
-                      ),
-              ),
-            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: _filtered.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            color: c.greylight,
+                          ),
+                          itemBuilder: (context, index) {
+                            final item = _filtered[index];
+                            return Material(
+                              color: c.surface,
+                              child: ListTile(
+                                tileColor: c.surface,
+                                title: Text(
+                                  item,
+                                  style: context.appText.text14W400.copyWith(
+                                    color: c.greyDark,
+                                  ),
+                                ),
+                                onTap: () => Navigator.pop(context, item),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

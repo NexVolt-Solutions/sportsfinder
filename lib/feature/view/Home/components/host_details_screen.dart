@@ -569,6 +569,12 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     ? user.location
                                     : '${match.distanceKm.toStringAsFixed(1)} km',
                                 isShow: true,
+                                isInvited: model.isUserAlreadyInvited(
+                                  user.id?.trim() ?? '',
+                                ),
+                                isLoading: model.isInvitingUser(
+                                  user.id?.trim() ?? '',
+                                ),
                                 ontap: () async {
                                   final userId = user.id?.trim() ?? '';
                                   AppLogger.info(

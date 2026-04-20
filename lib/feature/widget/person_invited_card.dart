@@ -16,6 +16,8 @@ class PersonInvitedCard extends StatelessWidget {
   final VoidCallback ontap;
   final VoidCallback? cardOnTap; // whole card tap
   final bool isShow;
+  final bool isInvited;
+  final bool isLoading;
 
   const PersonInvitedCard({
     super.key,
@@ -26,6 +28,8 @@ class PersonInvitedCard extends StatelessWidget {
     required this.ontap,
     this.isShow = false,
     this.cardOnTap,
+    this.isInvited = false,
+    this.isLoading = false,
   });
 
   // function to get initials from player name
@@ -99,10 +103,18 @@ class PersonInvitedCard extends StatelessWidget {
           ),
           if (isShow)
             MatchCardButton(
-              ontap: ontap,
-              text: AppText.invite,
-              color: context.appColors.surface,
-              textColor: context.appColors.primary,
+              ontap: isInvited || isLoading ? null : ontap,
+              text: isLoading
+                  ? 'Inviting...'
+                  : isInvited
+                  ? 'Invited'
+                  : AppText.invite,
+              color: isInvited || isLoading
+                  ? context.appColors.blue10
+                  : context.appColors.surface,
+              textColor: isInvited || isLoading
+                  ? context.appColors.greylight
+                  : context.appColors.primary,
             ),
         ],
       ),

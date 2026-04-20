@@ -155,3 +155,11 @@ class NotificationResponseModel {
     );
   }
 }
+
+extension NotificationModelListX on List<NotificationModel> {
+  List<NotificationModel> withoutNotificationId(String notificationId) {
+    final trimmedId = notificationId.trim();
+    if (trimmedId.isEmpty) return List<NotificationModel>.from(this);
+    return where((item) => item.id.trim() != trimmedId).toList();
+  }
+}

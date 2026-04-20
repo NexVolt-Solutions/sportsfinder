@@ -7,14 +7,14 @@ class MatchCardButton extends StatelessWidget {
   final String text;
   final Color color;
   final Color textColor;
-  final VoidCallback ontap;
+  final VoidCallback? ontap;
 
   const MatchCardButton({
     super.key,
     required this.text,
     required this.color,
     required this.textColor,
-    required this.ontap,
+    this.ontap,
   });
 
   @override

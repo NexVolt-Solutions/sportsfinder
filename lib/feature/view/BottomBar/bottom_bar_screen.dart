@@ -119,6 +119,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   static const double _navItemIconLabelGap = 2;
 
   bool _appliedRouteTab = false;
+  bool _requestedInitialNotifications = false;
 
   late final List<Widget> _tabChildren = _bottomBarTabChildren();
 
@@ -129,6 +130,16 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_requestedInitialNotifications) {
+      _requestedInitialNotifications = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final service = context.read<NotificationService>();
+        if (!service.isLoading && service.notifications.isEmpty) {
+          service.fetchNotifications();
+        }
+      });
+    }
     if (_appliedRouteTab) return;
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! int) return;
@@ -179,6 +190,44 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     );
   }
 
+  Widget _buildNotificationBell(BuildContext context) {
+    final c = context.appColors;
+    final unreadCount = context.select<NotificationService, int>(
+      (service) => service.notifications.where((item) => !item.isRead).length,
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        SvgPicture.asset(
+          AppAssets.notificationIcon,
+          fit: BoxFit.contain,
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            right: -6,
+            top: -6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: c.error,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                textAlign: TextAlign.center,
+                style: context.appText.text12W500.copyWith(
+                  color: c.onPrimary,
+                  fontSize: 9,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,7 +245,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
                     titleText: AppText.sportFinding,
                     titleFontSize: 18,
                   ),
-
+                  trailing: _buildNotificationBell(context),
                   onTrailingTap: () async {
                     final service = Provider.of<NotificationService>(
                       context,

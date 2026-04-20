@@ -32,6 +32,44 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
     );
   }
 
+  Future<void> _handleAllowLocationTap(BuildContext context) async {
+    final model = context.read<LocationAccessScreenViewModel>();
+    final success = await model.requestCurrentLocation();
+
+    if (!context.mounted) return;
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            model.errorMessage ?? 'Unable to get your current location.',
+          ),
+          backgroundColor: context.appColors.error,
+        ),
+      );
+      return;
+    }
+
+    final position = model.currentPosition;
+    if (position != null) {
+      await AppPreferences.saveCurrentLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Location captured: ${model.currentPosition?.latitude}, ${model.currentPosition?.longitude}',
+        ),
+        backgroundColor: context.appColors.primary,
+      ),
+    );
+
+    await _finishOnboardingAndOpenHome(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LocationAccessScreenViewModel>(
@@ -48,9 +86,13 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
               mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
               children: [
                 CustomButton(
-                  text: AppText.allowLocation,
+                  text: model.isRequestingLocation
+                      ? 'Getting location...'
+                      : AppText.allowLocation,
                   color: context.appColors.primary,
-                  onTap: () => _finishOnboardingAndOpenHome(context),
+                  onTap: model.isRequestingLocation
+                      ? null
+                      : () => _handleAllowLocationTap(context),
                 ),
                 SizedBox(height: context.h(12)),
                 GestureDetector(
@@ -108,6 +150,21 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                               maxLines: 4,
                               subColor: context.appColors.greyDark,
                             ),
+                            if (model.currentPosition != null) ...[
+                              SizedBox(height: context.h(16)),
+                              NormalText(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.center,
+                                titleText:
+                                    'Lat: ${model.currentPosition!.latitude}',
+                                subText:
+                                    'Lng: ${model.currentPosition!.longitude}',
+                                titleStyle: context.appText.text14W600,
+                                subStyle: context.appText.text14W400,
+                                titleAlign: TextAlign.center,
+                                subAlign: TextAlign.center,
+                              ),
+                            ],
                           ],
                         ),
                       ),

@@ -10,6 +10,8 @@ class AppPreferences {
   static const String _keyRefreshToken = 'refresh_token';
   static const String _keyTokenType = 'token_type';
   static const String _keyOnboardingCompleted = 'is_onboarding_completed';
+  static const String _keyCurrentLatitude = 'current_latitude';
+  static const String _keyCurrentLongitude = 'current_longitude';
 
   static Future<void> saveAuthTokens({
     required String accessToken,
@@ -46,6 +48,30 @@ class AppPreferences {
   static Future<void> setOnboardingCompleted(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyOnboardingCompleted, value);
+  }
+
+  static Future<void> saveCurrentLocation({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyCurrentLatitude, latitude);
+    await prefs.setDouble(_keyCurrentLongitude, longitude);
+  }
+
+  static Future<(double latitude, double longitude)?> getCurrentLocation()
+  async {
+    final prefs = await SharedPreferences.getInstance();
+    final latitude = prefs.getDouble(_keyCurrentLatitude);
+    final longitude = prefs.getDouble(_keyCurrentLongitude);
+    if (latitude == null || longitude == null) return null;
+    return (latitude, longitude);
+  }
+
+  static Future<String?> getCurrentLocationText() async {
+    final coords = await getCurrentLocation();
+    if (coords == null) return null;
+    return '${coords.$1},${coords.$2}';
   }
 
   /// Removes auth tokens only. Keeps onboarding and other preferences.

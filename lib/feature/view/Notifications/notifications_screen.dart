@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/Repositories/JoinMatch/match_join_leave_repository.dart';
+import 'package:sport_finding/Data/Repositories/MatchInvitation/invite_action_repository.dart';
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
+import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -20,8 +21,8 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final MatchJoinLeaveRepository _joinLeaveRepository =
-      MatchJoinLeaveRepository();
+  final InviteActionRepository _inviteActionRepository =
+      InviteActionRepository();
   final Map<String, bool> _actionLoading = <String, bool>{};
   final Set<String> _resolvedNotifications = <String>{};
 
@@ -71,6 +72,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     bool accept,
   ) async {
     final matchId = item.matchId;
+    final actionLabel = accept ? 'accept' : 'decline';
+    AppLogger.info(
+      'Notification action tapped: $actionLabel '
+      'for notificationId=${item.id}, matchId=$matchId',
+      tag: 'NotificationsScreen',
+    );
     if (matchId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -84,23 +91,68 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
 
     try {
+      AppLogger.debug(
+        'Hitting $actionLabel invite API for matchId=$matchId',
+        tag: 'NotificationsScreen',
+      );
+      final response = accept
+          ? await _inviteActionRepository.acceptInvite(matchId: matchId)
+          : await _inviteActionRepository.declineInvite(matchId: matchId);
+
+      AppLogger.success(
+        '${accept ? 'Accept' : 'Decline'} invite API hit succeeded for '
+        'notificationId=${item.id}, matchId=$matchId',
+        tag: 'NotificationsScreen',
+      );
+      AppLogger.debug(
+        'Notification action response: ${response.message}',
+        tag: 'NotificationsScreen',
+      );
+
       if (accept) {
-        await _joinLeaveRepository.joinMatch(matchId);
+        AppLogger.info(
+          'Accepted invitation will appear in participated players after '
+          'the roster is refreshed for matchId=$matchId',
+          tag: 'NotificationsScreen',
+        );
       } else {
-        await _joinLeaveRepository.leaveMatch(matchId);
+        AppLogger.info(
+          'Declined invitation completed for matchId=$matchId; '
+          'no participant will be stored',
+          tag: 'NotificationsScreen',
+        );
       }
+
+      final notificationService = context.read<NotificationService>();
+      notificationService.removeNotificationById(item.id);
 
       if (!mounted) return;
       setState(() {
         _resolvedNotifications.add(item.id);
       });
 
+      AppLogger.info(
+        'Notification removed from NotificationsScreen UI after '
+        '$actionLabel action: notificationId=${item.id}',
+        tag: 'NotificationsScreen',
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(accept ? 'Invitation accepted' : 'Invitation declined'),
+          content: Text(
+            response.message.isNotEmpty
+                ? response.message
+                : (accept ? 'Invitation accepted' : 'Invitation declined'),
+          ),
         ),
       );
     } catch (e) {
+      AppLogger.error(
+        '$actionLabel invite API failed for notificationId=${item.id}, '
+        'matchId=$matchId',
+        tag: 'NotificationsScreen',
+        error: e,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
