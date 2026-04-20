@@ -81,7 +81,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/MatchInvitation/match_invitation_repository.dart';
 import 'package:sport_finding/Data/Repositories/JoinMatch/match_join_leave_repository.dart';
+import 'package:sport_finding/Data/Repositories/UpdateMatchStatus/update_match_status_repo.dart';
 import 'package:sport_finding/Data/model/JoinMatch/join_leave_match_response.dart';
+import 'package:sport_finding/Data/model/UpdateMatchStatus/update_match_status_model.dart';
 import 'package:sport_finding/Data/model/llst_of_all_user_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
@@ -141,6 +143,17 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   bool isUserAlreadyInvited(String userId) =>
       _safeInvitedUserIds.contains(userId);
   String? get inviteErrorMessage => _inviteErrorMessage;
+
+  // ── Match Status state ─────────────────────────────────────────────────────
+  final UpdateMatchStatusRepo _updateMatchStatusRepo = UpdateMatchStatusRepo();
+  bool _isUpdatingMatchStatus = false;
+  bool get isUpdatingMatchStatus => _isUpdatingMatchStatus;
+
+  String _matchStatus = 'pending'; // pending, ongoing, completed
+  String get matchStatus => _matchStatus;
+
+  String? _matchStatusError;
+  String? get matchStatusError => _matchStatusError;
 
   // ── Constructor ────────────────────────────────────────────────────────────
   HostDetailScreenViewModel() {
@@ -274,9 +287,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
       _hasJoined = true;
       _sessionJoinStateByMatchId[matchId] = true;
-      log(
-        '[ViewModel] joinMatch cached state -> joined for matchId: $matchId',
-      );
+      log('[ViewModel] joinMatch cached state -> joined for matchId: $matchId');
       return true;
     } catch (e, stack) {
       log('❌ [ViewModel] joinMatch failed — error: $e');
@@ -347,7 +358,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         log('ℹ️ [ViewModel] User not joined - setting hasJoined = false');
         _hasJoined = false;
         _sessionJoinStateByMatchId[matchId] = false;
-        log('[ViewModel] leaveMatch cached state -> left for matchId: $matchId');
+        log(
+          '[ViewModel] leaveMatch cached state -> left for matchId: $matchId',
+        );
         return true; // Treat as success for UI purposes
       }
 
@@ -404,6 +417,51 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _rosterNames.removeAt(index);
     _rosterSkills.removeAt(index);
     notifyListeners();
+  }
+
+  // ── Update Match Status ───────────────────────────────────────────────────
+  /// Updates match status to "Ongoing" when the host starts the match.
+  /// Returns [true] on success, [false] on failure.
+  Future<bool> startMatch(String matchId) async {
+    log('🟡 [ViewModel] startMatch called — matchId: $matchId');
+    log('🟡 [ViewModel] Current match status: $_matchStatus');
+
+    _isUpdatingMatchStatus = true;
+    _matchStatusError = null;
+    _matchStatus = 'ongoing';
+    notifyListeners();
+
+    try {
+      log('🚀 [ViewModel] Calling UpdateMatchStatusRepo.updateMatchStatus...');
+      log('🚀 [ViewModel] Endpoint: /api/v1/matches/$matchId/status');
+      log('🚀 [ViewModel] New status: Ongoing (capitalized)');
+
+      final UpdateMatchStatusRequestModel requestData =
+          UpdateMatchStatusRequestModel(status: 'Ongoing');
+
+      final UpdateMatchStatusModel result = await _updateMatchStatusRepo
+          .updateMatchStatus(matchId: matchId, data: requestData);
+
+      log('✅ [ViewModel] Match status updated successfully');
+      log('✅ [ViewModel] Response status: ${result.status}');
+      log('✅ [ViewModel] Match ID: ${result.id}');
+
+      _matchStatus = result.status ?? 'ongoing';
+      _isUpdatingMatchStatus = false;
+      notifyListeners();
+
+      return true;
+    } catch (e, stack) {
+      log('❌ [ViewModel] Failed to update match status — error: $e');
+      log('📍 [ViewModel] Stacktrace: $stack');
+
+      _matchStatusError = e.toString();
+      _matchStatus = 'pending'; // Revert to pending on error
+      _isUpdatingMatchStatus = false;
+      notifyListeners();
+
+      return false;
+    }
   }
 
   // ── Dispose ────────────────────────────────────────────────────────────────

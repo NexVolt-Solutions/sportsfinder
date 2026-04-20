@@ -5,7 +5,6 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
-import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/Data/model/my_sport.dart'; // Added VoidCallback import
 
 class ProfileScreenViewModel extends ChangeNotifier {
@@ -98,19 +97,17 @@ class ProfileScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void openFollowers(BuildContext context) =>
-      Navigator.pushNamed(
-        context,
-        RoutesName.followersScreen,
-        arguments: FollowConnectionsArgs(userId: _ps.profile?.id),
-      );
+  void openFollowers(BuildContext context) => Navigator.pushNamed(
+    context,
+    RoutesName.followersScreen,
+    arguments: FollowConnectionsArgs(userId: _ps.profile?.id),
+  );
 
-  void openFollowing(BuildContext context) =>
-      Navigator.pushNamed(
-        context,
-        RoutesName.followingScreen,
-        arguments: FollowConnectionsArgs(userId: _ps.profile?.id),
-      );
+  void openFollowing(BuildContext context) => Navigator.pushNamed(
+    context,
+    RoutesName.followingScreen,
+    arguments: FollowConnectionsArgs(userId: _ps.profile?.id),
+  );
 
   void openNotifications(BuildContext context) =>
       Navigator.pushNamed(context, RoutesName.notificationsScreen);
