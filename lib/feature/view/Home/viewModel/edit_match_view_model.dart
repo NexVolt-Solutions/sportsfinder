@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
+import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
+  final DeleteMatchRepo _deleteRepo = DeleteMatchRepo();
 
   final formKey = GlobalKey<FormState>();
 
@@ -24,8 +27,10 @@ class EditMatchViewModel extends ChangeNotifier {
   int duration = 60;
 
   UpdateMatchModel? updatedMatch;
+  DeleteMatchModel? deletedMatch;
   String? error;
   bool isLoading = false;
+  bool isDeleting = false;
   String? matchId;
 
   final List<String> sportTypes = [
@@ -208,6 +213,31 @@ class EditMatchViewModel extends ChangeNotifier {
       return false;
     } finally {
       isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteMatch() async {
+    if (matchId == null || matchId!.trim().isEmpty) {
+      error = 'Match ID is missing';
+      notifyListeners();
+      return false;
+    }
+
+    error = null;
+    isDeleting = true;
+    notifyListeners();
+
+    try {
+      deletedMatch = await _deleteRepo.deleteMatch(matchId: matchId!);
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('Delete match failed: $e');
+      debugPrint('$stackTrace');
+      error = e.toString();
+      return false;
+    } finally {
+      isDeleting = false;
       notifyListeners();
     }
   }

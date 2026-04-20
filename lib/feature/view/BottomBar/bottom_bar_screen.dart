@@ -12,6 +12,7 @@ import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_s
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
@@ -52,7 +53,9 @@ class _MyMatchesTabSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AllUpcommingMatchesViewModel(),
+      create: (_) => AllUpcommingMatchesViewModel(
+        scope: UpcomingMatchesScope.myMatches,
+      ),
       child: const _MyMatchesFetchWhenTabSelected(),
     );
   }

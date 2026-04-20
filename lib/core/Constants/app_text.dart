@@ -418,4 +418,12 @@ class AppText {
   static const String sendResetCode = 'Send reset code';
   static const String badminton = 'badminton';
   static const String leaveMatch = 'Leave Match';
+  static const String deleteMatch = 'Delete Match';
+  static const String deleting = 'Deleting...';
+  static const String deleteMatchConfirmationTitle = 'Delete this match?';
+  static const String deleteMatchConfirmationMessage =
+      'This action cannot be undone. Only the host can delete a match.';
+  static const String matchDeletedSuccessfully = 'Match deleted successfully';
+  static const String cancel = 'Cancel';
+  static const String failedToDeleteMatch = 'Failed to delete match';
 }

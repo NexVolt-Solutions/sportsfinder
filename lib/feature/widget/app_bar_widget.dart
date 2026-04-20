@@ -13,6 +13,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
 
   final Widget? trailing;
+  final List<Widget>? trailingActions;
 
   final VoidCallback? onLeadingTap;
   final VoidCallback? onTrailingTap;
@@ -32,6 +33,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.centerWidget,
     this.leading,
     this.trailing,
+    this.trailingActions,
     this.onLeadingTap,
     this.onTapFirst,
     this.iconColor,
@@ -71,6 +73,20 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildTrailing(BuildContext context) {
     final trailingTap = onTrailingTap ?? onTapLast;
+
+    if (trailingActions != null && trailingActions!.isNotEmpty) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: trailingActions!
+            .map(
+              (widget) => Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: widget,
+              ),
+            )
+            .toList(),
+      );
+    }
 
     if (trailing != null) {
       // If custom trailing widget is provided with a tap callback, wrap it
