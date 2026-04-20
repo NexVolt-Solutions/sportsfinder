@@ -468,8 +468,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     'Invite result message: $message',
                                     tag: 'HostDetailsScreen',
                                   );
-                                  if (!context.mounted || message == null)
+                                  if (!context.mounted || message == null) {
                                     return;
+                                  }
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text(message)),
                                   );
@@ -565,114 +566,193 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                     right: context.w(20),
                     left: context.w(20),
                   ),
-                  child: model.isJoinLeaveLoading
+                  child:
+                      model.isJoinLeaveLoading ||
+                          (model.isUpdatingMatchStatus &&
+                              match.isHostedByCurrentUser)
                       // ── Loading state ─────────────────────────────────────────
                       ? const Center(child: CircularProgressIndicator())
                       // ── Join / Leave button ───────────────────────────────────
                       : CustomButton(
                           text: match.isHostedByCurrentUser
-                              ? AppText.startMatching
+                              ? model.matchStatus == 'ongoing'
+                                    ? 'Ongoing'
+                                    : model.matchStatus == 'completed'
+                                    ? 'Completed'
+                                    : AppText.startMatching
                               : model.hasJoined
                               ? AppText.leaveMatch
                               : AppText.joinMatch,
                           color: match.isHostedByCurrentUser
-                              ? context.appColors.primary
+                              ? model.matchStatus == 'completed'
+                                    ? context.appColors.greyDark
+                                    : context.appColors.primary
                               : model.hasJoined
                               ? context
                                     .appColors
                                     .error // red for Leave
                               : context.appColors.primary, // primary for Join
-                          onTap: () async {
-                            final matchId = match.id;
-                            if (matchId.isEmpty) {
-                              return;
-                            }
+                          onTap:
+                              model.matchStatus == 'completed' &&
+                                  match.isHostedByCurrentUser
+                              ? null
+                              : () async {
+                                  final matchId = match.id;
+                                  if (matchId.isEmpty) {
+                                    return;
+                                  }
 
-                            // ── LEAVE flow ─────────────────────────────────────
-                            if (match.isHostedByCurrentUser) {
-                              return;
-                            }
-                            if (model.hasJoined) {
-                              final result = await model.leaveMatch(matchId);
-                              if (!context.mounted) return;
-                              if (!result && model.joinLeaveError != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(model.joinLeaveError!),
-                                    backgroundColor: context.appColors.error,
-                                  ),
-                                );
-                              } else if (result) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'Left match successfully',
-                                    ),
-                                    backgroundColor: context.appColors.primary,
-                                  ),
-                                );
-                              }
-                              return;
-                            }
+                                  // ── START MATCH flow (host) ────────────────────────
+                                  if (match.isHostedByCurrentUser) {
+                                    debugPrint(
+                                      '🟡 [HostDetailsScreen] Start Match button tapped',
+                                    );
+                                    debugPrint(
+                                      '🟡 [HostDetailsScreen] Match ID: $matchId',
+                                    );
+                                    debugPrint(
+                                      '🟡 [HostDetailsScreen] Current match status: ${model.matchStatus}',
+                                    );
 
-                            // ── Check if match is full ─────────────────────────
-                            final int roster = model.rosterCount;
-                            final int total = match.participantsTotal;
-                            final bool isFull = roster >= total;
+                                    final success = await model.startMatch(
+                                      matchId,
+                                    );
 
-                            if (isFull) {
-                              if (!context.mounted) return;
-                              showDialog(
-                                context: context,
-                                barrierDismissible: true,
-                                builder: (dialogContext) => CustomBottomSheetWidget(
-                                  isCenter: true,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SvgPicture.asset(
-                                        AppAssets.joiningMatchPeopelIcon,
-                                        fit: BoxFit.scaleDown,
+                                    if (!context.mounted) return;
+
+                                    if (success) {
+                                      debugPrint(
+                                        '✅ [HostDetailsScreen] Match status updated to ongoing',
+                                      );
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            'Match started successfully!',
+                                          ),
+                                          backgroundColor:
+                                              context.appColors.primary,
+                                        ),
+                                      );
+                                    } else {
+                                      debugPrint(
+                                        '❌ [HostDetailsScreen] Failed to start match',
+                                      );
+                                      debugPrint(
+                                        '❌ [HostDetailsScreen] Error: ${model.matchStatusError}',
+                                      );
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            model.matchStatusError ??
+                                                'Failed to start match',
+                                          ),
+                                          backgroundColor:
+                                              context.appColors.error,
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+                                  if (model.hasJoined) {
+                                    final result = await model.leaveMatch(
+                                      matchId,
+                                    );
+                                    if (!context.mounted) return;
+                                    if (!result &&
+                                        model.joinLeaveError != null) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(model.joinLeaveError!),
+                                          backgroundColor:
+                                              context.appColors.error,
+                                        ),
+                                      );
+                                    } else if (result) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            'Left match successfully',
+                                          ),
+                                          backgroundColor:
+                                              context.appColors.primary,
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  // ── Check if match is full ─────────────────────────
+                                  final int roster = model.rosterCount;
+                                  final int total = match.participantsTotal;
+                                  final bool isFull = roster >= total;
+
+                                  if (isFull) {
+                                    if (!context.mounted) return;
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (dialogContext) =>
+                                          CustomBottomSheetWidget(
+                                            isCenter: true,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  AppAssets
+                                                      .joiningMatchPeopelIcon,
+                                                  fit: BoxFit.scaleDown,
+                                                ),
+                                                SizedBox(height: context.h(16)),
+                                                NormalText(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  titleText:
+                                                      AppText.matchIsFull,
+                                                  maxLines: 5,
+                                                  subAlign: TextAlign.center,
+                                                  subText: AppText
+                                                      .thisMatchHasReachedItsMaximumCapacity,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                    );
+                                    return;
+                                  }
+                                  // ── JOIN flow ──────────────────────────────────────
+                                  final result = await model.joinMatch(matchId);
+                                  if (!context.mounted) return;
+
+                                  if (!result && model.joinLeaveError != null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(model.joinLeaveError!),
+                                        backgroundColor:
+                                            context.appColors.error,
                                       ),
-                                      SizedBox(height: context.h(16)),
-                                      NormalText(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        titleText: AppText.matchIsFull,
-                                        maxLines: 5,
-                                        subAlign: TextAlign.center,
-                                        subText: AppText
-                                            .thisMatchHasReachedItsMaximumCapacity,
+                                    );
+                                  } else if (result) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          'Joined match successfully!',
+                                        ),
+                                        backgroundColor:
+                                            context.appColors.primary,
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            // ── JOIN flow ──────────────────────────────────────
-                            final result = await model.joinMatch(matchId);
-                            if (!context.mounted) return;
-
-                            if (!result && model.joinLeaveError != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(model.joinLeaveError!),
-                                  backgroundColor: context.appColors.error,
-                                ),
-                              );
-                            } else if (result) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Joined match successfully!',
-                                  ),
-                                  backgroundColor: context.appColors.primary,
-                                ),
-                              );
-                            }
-                          },
+                                    );
+                                  }
+                                },
                         ),
                 ),
               ),
