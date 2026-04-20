@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -33,6 +34,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isSelected = false;
+
+  Future<void> _openMatchDetails(
+    BuildContext context,
+    HomeScreenViewModel model,
+    DiscoveryMatch match,
+  ) async {
+    final result = await Navigator.pushNamed(
+      context,
+      match.isHostedByCurrentUser
+          ? RoutesName.hostDetailsScreen
+          : RoutesName.userMatchDetailsScreen,
+      arguments: match,
+    );
+
+    if (!context.mounted) return;
+    if (result is DeleteMatchModel) {
+      model.removeMatchById(result.matchId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,11 +193,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 key: ValueKey<String>('match-${match.id}'),
                                 match,
 
-                                onCardTap: () {
-                                  DiscoveryMatch.fromAllMatches(
-                                    match,
-                                  ).pushMatchOrHostScreen(context);
-                                },
+                                onCardTap: () => _openMatchDetails(
+                                  context,
+                                  model,
+                                  DiscoveryMatch.fromAllMatches(match),
+                                ),
                                 onSeeAllTap: () {
                                   Navigator.pushNamed(
                                     context,

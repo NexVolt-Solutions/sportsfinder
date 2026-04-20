@@ -28,6 +28,13 @@ class NotificationModel {
     return normalized.contains('INVITE');
   }
 
+  bool get isMatchDeleted {
+    final normalized = type.trim().toUpperCase();
+    return normalized.contains('DELETE') ||
+        normalized.contains('CANCEL') ||
+        normalized.contains('REMOVED');
+  }
+
   String get matchId => _readString([
     payload['match_id'],
     payload['matchId'],
@@ -77,6 +84,10 @@ class NotificationModel {
 
   String get displayTitle {
     if (message.isNotEmpty) return message;
+    if (isMatchDeleted) {
+      final sport = sportName.isNotEmpty ? sportName : 'match';
+      return 'A $sport match you joined was deleted';
+    }
     if (isInvitation) {
       final who = inviterName.isNotEmpty ? inviterName : 'Someone';
       final sport = sportName.isNotEmpty ? sportName : 'a match';

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Network/deleted_matches_service.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
+import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
@@ -124,6 +127,18 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
           '✅ [HostDetailsScreen] Model current match sport AFTER: ${model.currentMatch?.sportType}',
         );
       }
+    } else if (result != null && result is DeleteMatchModel) {
+      debugPrint(
+        '[HostDetailsScreen] DeleteMatchModel received: ${result.matchId}',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(AppText.matchDeletedSuccessfully),
+          backgroundColor: context.appColors.primary,
+        ),
+      );
+      Navigator.pop(context, result);
     } else if (result != null && result is DiscoveryMatch) {
       debugPrint('✅ [HostDetailsScreen] DiscoveryMatch received');
       if (mounted) {
@@ -134,6 +149,95 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
     }
   }
 
+  Future<void> _deleteMatchFromAppBar() async {
+    final model = context.read<HostDetailScreenViewModel>();
+    final match = model.currentMatch;
+    if (match == null) {
+      AppLogger.warning(
+        'Delete icon tapped but no match is currently bound',
+        tag: 'HostDetailsScreen',
+      );
+      return;
+    }
+
+    AppLogger.info(
+      'Delete icon tapped for matchId: ${match.id}',
+      tag: 'HostDetailsScreen',
+    );
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(AppText.deleteMatchConfirmationTitle),
+        content: const Text(AppText.deleteMatchConfirmationMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(AppText.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(AppText.deleteMatch),
+          ),
+        ],
+      ),
+    );
+
+    AppLogger.debug(
+      'Delete confirmation result: $shouldDelete',
+      tag: 'HostDetailsScreen',
+    );
+    if (shouldDelete != true || !mounted) {
+      AppLogger.info(
+        'Delete flow cancelled by user or widget was unmounted',
+        tag: 'HostDetailsScreen',
+      );
+      return;
+    }
+
+    final result = await model.deleteCurrentMatch();
+    if (!mounted) return;
+
+    if (result == null) {
+      AppLogger.warning(
+        'Delete API returned null result. Error: ${model.deleteMatchError}',
+        tag: 'HostDetailsScreen',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(model.deleteMatchError ?? AppText.failedToDeleteMatch),
+          backgroundColor: context.appColors.error,
+        ),
+      );
+      return;
+    }
+
+    AppLogger.info(
+      'Delete API succeeded. Refreshing notifications for current user.',
+      tag: 'HostDetailsScreen',
+    );
+    await context.read<NotificationService>().fetchNotifications();
+    if (!mounted) return;
+
+    AppLogger.info(
+      'Notification refresh completed after deleting matchId: ${result.matchId}',
+      tag: 'HostDetailsScreen',
+    );
+    AppLogger.warning(
+      'Participant notifications depend on backend support. The app can only show notifications already created by the server.',
+      tag: 'HostDetailsScreen',
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(AppText.matchDeletedSuccessfully),
+        backgroundColor: context.appColors.primary,
+      ),
+    );
+    DeletedMatchesService().markDeleted(result.matchId);
+    Navigator.pop(context, result);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<HostDetailScreenViewModel>(
@@ -141,6 +245,10 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         final match = model.currentMatch;
 
         if (match == null) {
+          AppLogger.warning(
+            'No match found while building HostDetailsScreen',
+            tag: 'HostDetailsScreen',
+          );
           return Scaffold(
             body: Center(
               child: Text(
@@ -164,12 +272,38 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       AppBarWidget(
                         onLeadingTap: () => Navigator.pop(context),
                         title: AppText.hostMatchDetails,
-                        trailing: Icon(
-                          Icons.edit,
-                          color: context.appColors.greyDark,
-                          size: 20,
-                        ),
-                        onTrailingTap: _navigateToEditScreen,
+                        trailingActions: [
+                          GestureDetector(
+                            onTap: model.isDeletingMatch
+                                ? null
+                                : _deleteMatchFromAppBar,
+                            behavior: HitTestBehavior.opaque,
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: model.isDeletingMatch
+                                  ? CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: context.appColors.error,
+                                    )
+                                  : Icon(
+                                      Icons.delete,
+                                      color: context.appColors.error,
+                                      size: 20,
+                                    ),
+                            ),
+                          ),
+
+                          GestureDetector(
+                            onTap: _navigateToEditScreen,
+                            behavior: HitTestBehavior.opaque,
+                            child: Icon(
+                              Icons.edit,
+                              color: context.appColors.greyDark,
+                              size: 20,
+                            ),
+                          ),
+                        ],
                       ),
                       NormalText(
                         titleText: match.title,

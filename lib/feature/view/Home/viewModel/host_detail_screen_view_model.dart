@@ -79,6 +79,8 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
+import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/Data/Repositories/MatchInvitation/match_invitation_repository.dart';
 import 'package:sport_finding/Data/Repositories/JoinMatch/match_join_leave_repository.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatchStatus/update_match_status_repo.dart';
@@ -122,6 +124,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   final MatchJoinLeaveRepository _joinLeaveRepo = MatchJoinLeaveRepository();
   final MatchInvitationRepository _matchInvitationRepository =
       MatchInvitationRepository();
+  final DeleteMatchRepo _deleteMatchRepo = DeleteMatchRepo();
 
   bool _hasJoined = false;
   bool get hasJoined => _hasJoined;
@@ -143,6 +146,12 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   bool isUserAlreadyInvited(String userId) =>
       _safeInvitedUserIds.contains(userId);
   String? get inviteErrorMessage => _inviteErrorMessage;
+
+  bool _isDeletingMatch = false;
+  bool get isDeletingMatch => _isDeletingMatch;
+
+  String? _deleteMatchError;
+  String? get deleteMatchError => _deleteMatchError;
 
   // ── Match Status state ─────────────────────────────────────────────────────
   final UpdateMatchStatusRepo _updateMatchStatusRepo = UpdateMatchStatusRepo();
@@ -263,6 +272,47 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         'Invite flow finished for userId: $trimmedUserId',
         tag: 'HostDetailVM',
       );
+      notifyListeners();
+    }
+  }
+
+  Future<DeleteMatchModel?> deleteCurrentMatch() async {
+    final matchId = _currentMatch?.id.trim() ?? '';
+    if (matchId.isEmpty) {
+      _deleteMatchError = 'Match ID is missing';
+      AppLogger.warning(
+        'Delete match aborted because no current match id was found',
+        tag: 'HostDetailVM',
+      );
+      notifyListeners();
+      return null;
+    }
+
+    AppLogger.info(
+      'Delete current match requested for matchId: $matchId',
+      tag: 'HostDetailVM',
+    );
+    _isDeletingMatch = true;
+    _deleteMatchError = null;
+    notifyListeners();
+
+    try {
+      final result = await _deleteMatchRepo.deleteMatch(matchId: matchId);
+      AppLogger.success(
+        'Delete match completed for matchId: ${result.matchId}',
+        tag: 'HostDetailVM',
+      );
+      return result;
+    } catch (e) {
+      _deleteMatchError = e.toString();
+      AppLogger.error(
+        'Delete match failed for matchId: $matchId',
+        tag: 'HostDetailVM',
+        error: e,
+      );
+      return null;
+    } finally {
+      _isDeletingMatch = false;
       notifyListeners();
     }
   }

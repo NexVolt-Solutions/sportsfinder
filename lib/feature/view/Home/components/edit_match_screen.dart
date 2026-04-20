@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -130,6 +131,46 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _confirmDeleteMatch(
+    BuildContext context,
+    EditMatchViewModel model,
+  ) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(AppText.deleteMatchConfirmationTitle),
+        content: const Text(AppText.deleteMatchConfirmationMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(AppText.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(AppText.deleteMatch),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !context.mounted) return;
+
+    final success = await model.deleteMatch();
+    if (!context.mounted) return;
+
+    if (success && model.deletedMatch != null) {
+      Navigator.pop<DeleteMatchModel>(context, model.deletedMatch);
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(model.error ?? 'Failed to delete match'),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
@@ -430,37 +471,67 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                       },
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<EditMatchViewModel, bool>(
-                      selector: (_, model) => model.isLoading,
-                      builder: (context, isLoading, _) {
-                        return CustomButton(
-                          text: isLoading ? 'Saving...' : 'Save Changes',
-                          color: context.appColors.primary,
-                          isLoading: isLoading,
-                          onTap: isLoading
-                              ? null
-                              : () async {
-                                  final vm = context.read<EditMatchViewModel>();
-                                  final success = await vm.saveChanges();
+                    Selector<
+                      EditMatchViewModel,
+                      ({bool isLoading, bool isDeleting})
+                    >(
+                      selector: (_, m) => (
+                        isLoading: m.isLoading,
+                        isDeleting: m.isDeleting,
+                      ),
+                      builder: (context, state, _) {
+                        final vm = context.read<EditMatchViewModel>();
+                        final busy = state.isLoading || state.isDeleting;
+                        return Column(
+                          children: [
+                            CustomButton(
+                              text: state.isLoading
+                                  ? 'Saving...'
+                                  : AppText.saveChanges,
+                              color: context.appColors.primary,
+                              isLoading: state.isLoading,
+                              onTap: busy
+                                  ? null
+                                  : () async {
+                                      final success = await vm.saveChanges();
 
-                                  if (!context.mounted) return;
+                                      if (!context.mounted) return;
 
-                                  if (success) {
-                                    if (context.mounted) {
-                                      Navigator.pop(context, vm.updatedMatch);
-                                    }
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          vm.error ?? 'Failed to save changes',
-                                        ),
-                                        backgroundColor: Colors.red,
-                                        duration: const Duration(seconds: 3),
-                                      ),
-                                    );
-                                  }
-                                },
+                                      if (success) {
+                                        Navigator.pop(context, vm.updatedMatch);
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              vm.error ??
+                                                  'Failed to save changes',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                            duration: const Duration(
+                                              seconds: 3,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                            ),
+                            SizedBox(height: context.h(12)),
+                            CustomButton(
+                              text: state.isDeleting
+                                  ? AppText.deleting
+                                  : AppText.deleteMatch,
+                              color: context.appColors.transparent,
+                              colorText: context.appColors.error,
+                              borderColor: context.appColors.error,
+                              outlined: true,
+                              isLoading: state.isDeleting,
+                              onTap: busy
+                                  ? null
+                                  : () => _confirmDeleteMatch(context, vm),
+                            ),
+                          ],
                         );
                       },
                     ),

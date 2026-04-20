@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -32,6 +33,25 @@ class AllUpcomingMatches extends StatefulWidget {
 }
 
 class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
+  Future<void> _openMatchDetails(
+    BuildContext context,
+    AllUpcommingMatchesViewModel model,
+    DiscoveryMatch match,
+  ) async {
+    final result = await Navigator.pushNamed(
+      context,
+      match.isHostedByCurrentUser
+          ? RoutesName.hostDetailsScreen
+          : RoutesName.userMatchDetailsScreen,
+      arguments: match,
+    );
+
+    if (!context.mounted) return;
+    if (result is DeleteMatchModel) {
+      model.removeMatchById(result.matchId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AllUpcommingMatchesViewModel>(
@@ -101,11 +121,11 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
 
                               return GlobalMatchCard.fromAllMatches(
                                 match,
-                                onCardTap: () {
-                                  DiscoveryMatch.fromAllMatches(
-                                    match,
-                                  ).pushMatchOrHostScreen(context);
-                                },
+                                onCardTap: () => _openMatchDetails(
+                                  context,
+                                  model,
+                                  DiscoveryMatch.fromAllMatches(match),
+                                ),
                                 onSeeAllTap: () {
                                   Navigator.pushNamed(
                                     context,

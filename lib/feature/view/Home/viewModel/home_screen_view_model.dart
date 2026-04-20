@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/match.dart';
 import 'package:sport_finding/Data/model/sport.dart';
+import 'package:sport_finding/core/Network/deleted_matches_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 
 class HomeScreenViewModel extends ChangeNotifier {
@@ -18,6 +19,7 @@ class HomeScreenViewModel extends ChangeNotifier {
 
     // Listen to ProfileService changes and rebuild this ViewModel
     service.addListener(_onProfileServiceChanged);
+    DeletedMatchesService().addListener(_onDeletedMatchesChanged);
 
     Future.microtask(_loadUpcomingMatches);
   }
@@ -44,9 +46,15 @@ class HomeScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _onDeletedMatchesChanged() {
+    matches.removeWhere((m) => DeletedMatchesService().isDeleted(m.id));
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     ProfileService().removeListener(_onProfileServiceChanged);
+    DeletedMatchesService().removeListener(_onDeletedMatchesChanged);
     super.dispose();
   }
 
@@ -77,7 +85,9 @@ class HomeScreenViewModel extends ChangeNotifier {
       matches =
           res.items.where((m) {
             final start = m.scheduledStartUtc;
-            return start != null && start.isAfter(nowUtc);
+            return start != null &&
+                start.isAfter(nowUtc) &&
+                !DeletedMatchesService().isDeleted(m.id);
           }).toList();
 
       _resortMatches();
@@ -108,6 +118,15 @@ class HomeScreenViewModel extends ChangeNotifier {
       if (tb == null) return -1;
       return ta.compareTo(tb);
     });
+  }
+
+  void removeMatchById(String matchId) {
+    final trimmedId = matchId.trim();
+    if (trimmedId.isEmpty) return;
+
+    matches.removeWhere((m) => m.id == trimmedId);
+    DeletedMatchesService().markDeleted(trimmedId);
+    notifyListeners();
   }
 
   ProfileService get profileService => ProfileService();

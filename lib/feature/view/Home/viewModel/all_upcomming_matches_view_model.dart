@@ -26,6 +26,8 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
+import 'package:sport_finding/core/Network/deleted_matches_service.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
@@ -51,12 +53,26 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   int page = 1;
   bool hasNext = true;
 
-  AllUpcommingMatchesViewModel({this.scope = UpcomingMatchesScope.allUpcoming});
+  AllUpcommingMatchesViewModel({this.scope = UpcomingMatchesScope.allUpcoming}) {
+    DeletedMatchesService().addListener(_onDeletedMatchesChanged);
+    ProfileService().addListener(_onProfileChanged);
+  }
+
+  void _onDeletedMatchesChanged() {
+    _rebuildVisibleMatches();
+    notifyListeners();
+  }
+
+  void _onProfileChanged() {
+    if (scope != UpcomingMatchesScope.myMatches) return;
+    _rebuildVisibleMatches();
+    notifyListeners();
+  }
 
   /// Seeds lists from Home (or another screen) so the initial GET is skipped.
   void applyPrefetchedMatches(List<AllMatches> items) {
     allMatches = List<AllMatches>.from(items);
-    matches = List<AllMatches>.from(items);
+    _rebuildVisibleMatches();
     page = 1;
     hasNext = items.length >= 20;
     isLoading = false;
@@ -80,8 +96,10 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
       final res = await _repo.getAllMatches(page: page);
 
-      allMatches.addAll(res.items);
-      matches = List.from(allMatches);
+      allMatches.addAll(
+        res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
+      );
+      _rebuildVisibleMatches();
 
       hasNext = res.hasNext;
     } catch (e) {
@@ -95,11 +113,11 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   // ================= SEARCH =================
   void searchMatches(String query) {
     if (query.isEmpty) {
-      matches = List.from(allMatches);
+      _rebuildVisibleMatches();
     } else {
       final q = query.toLowerCase();
 
-      matches = allMatches.where((m) {
+      matches = _scopedBaseMatches().where((m) {
         return m.title.toLowerCase().contains(q) ||
             m.sport.toLowerCase().contains(q) ||
             m.locationName.toLowerCase().contains(q);
@@ -111,15 +129,16 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   // ================= FILTER (SPORT CHIPS) =================
   List<AllMatches> _baseListForChips() {
-    if (selectedIndex == 0) return List.from(allMatches);
+    final scoped = _scopedBaseMatches();
+    if (selectedIndex == 0) return List.from(scoped);
 
     final sports = ["Football", "Basketball", "Tennis", "Volleyball"];
 
-    if (selectedIndex - 1 >= sports.length) return allMatches;
+    if (selectedIndex - 1 >= sports.length) return scoped;
 
     final sport = sports[selectedIndex - 1];
 
-    return allMatches.where((m) {
+    return scoped.where((m) {
       return m.sport.toLowerCase() == sport.toLowerCase();
     }).toList();
   }
@@ -165,8 +184,10 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
       final res = await _repo.getAllMatches(page: page);
 
-      allMatches.addAll(res.items);
-      matches = List.from(allMatches);
+      allMatches.addAll(
+        res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
+      );
+      _rebuildVisibleMatches();
 
       hasNext = res.hasNext;
     } catch (e) {
@@ -174,5 +195,44 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  void removeMatchById(String matchId) {
+    final trimmedId = matchId.trim();
+    if (trimmedId.isEmpty) return;
+
+    allMatches.removeWhere((m) => m.id == trimmedId);
+    matches.removeWhere((m) => m.id == trimmedId);
+    DeletedMatchesService().markDeleted(trimmedId);
+    notifyListeners();
+  }
+
+  List<AllMatches> _scopedBaseMatches() {
+    final visible = allMatches.where(
+      (m) => !DeletedMatchesService().isDeleted(m.id),
+    );
+
+    if (scope != UpcomingMatchesScope.myMatches) {
+      return visible.toList();
+    }
+
+    final myId = ProfileService().profile?.id.trim();
+    if (myId == null || myId.isEmpty) {
+      return visible.toList();
+    }
+
+    return visible.where((m) => m.host.id == myId).toList();
+  }
+
+  void _rebuildVisibleMatches() {
+    final base = _baseListForChips();
+    matches = currentFilters != null ? _applyFilters(base) : List.from(base);
+  }
+
+  @override
+  void dispose() {
+    DeletedMatchesService().removeListener(_onDeletedMatchesChanged);
+    ProfileService().removeListener(_onProfileChanged);
+    super.dispose();
   }
 }
