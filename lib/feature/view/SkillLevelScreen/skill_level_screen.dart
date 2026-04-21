@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -96,13 +97,9 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                   color: context.appColors.primary,
                   onTap: () {
                     if (!model.hasSelection) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'Please select a skill level to continue.',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                      AppSnackBar.show(
+                        'Please select a skill level to continue.',
+                        behavior: SnackBarBehavior.floating,
                       );
                       return;
                     }

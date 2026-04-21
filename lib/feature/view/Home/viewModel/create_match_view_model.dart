@@ -4,12 +4,14 @@ import 'package:sport_finding/Data/Repositories/create_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/google_places_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
   final CreateMatchRepo _createRepo = CreateMatchRepo();
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
+  final GooglePlacesService _googlePlacesService = GooglePlacesService();
 
   final formKey = GlobalKey<FormState>();
 
@@ -143,7 +145,8 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   Future<void> _hydrateSavedLocation() async {
     if (locationController.text.trim().isNotEmpty) return;
-    final savedLocation = await AppPreferences.getCurrentLocationText();
+    final savedLocation = await AppPreferences.getCurrentLocationName() ??
+        await AppPreferences.getCurrentLocationText();
     if (savedLocation == null || savedLocation.trim().isEmpty) {
       AppLogger.warning(
         'No saved exact location found for create match form.',
@@ -170,7 +173,8 @@ class CreateMatchViewModel extends ChangeNotifier {
       return typedLocation;
     }
 
-    final savedLocation = await AppPreferences.getCurrentLocationText();
+    final savedLocation = await AppPreferences.getCurrentLocationName() ??
+        await AppPreferences.getCurrentLocationText();
     if (savedLocation != null && savedLocation.trim().isNotEmpty) {
       locationController.text = savedLocation;
       AppLogger.info(
@@ -290,6 +294,10 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   Future<bool> submitMatch() {
     return isEditMode ? updateMatchApi() : createMatchApi();
+  }
+
+  Future<List<String>> searchLocationSuggestions(String query) {
+    return _googlePlacesService.searchPlaceSuggestions(query);
   }
 
   @override

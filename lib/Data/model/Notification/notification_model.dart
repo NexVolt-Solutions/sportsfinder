@@ -23,6 +23,22 @@ class NotificationModel {
     );
   }
 
+  NotificationModel copyWith({
+    String? id,
+    String? type,
+    Map<String, dynamic>? payload,
+    bool? isRead,
+    DateTime? createdAt,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      payload: payload ?? this.payload,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   bool get isInvitation {
     final normalized = type.trim().toUpperCase();
     return normalized.contains('INVITE');
@@ -161,5 +177,20 @@ extension NotificationModelListX on List<NotificationModel> {
     final trimmedId = notificationId.trim();
     if (trimmedId.isEmpty) return List<NotificationModel>.from(this);
     return where((item) => item.id.trim() != trimmedId).toList();
+  }
+
+  List<NotificationModel> withNotificationMarkedRead(String notificationId) {
+    final trimmedId = notificationId.trim();
+    if (trimmedId.isEmpty) return List<NotificationModel>.from(this);
+    return map((item) {
+      if (item.id.trim() != trimmedId) return item;
+      if (item.isRead) return item;
+      return item.copyWith(isRead: true);
+    }).toList();
+  }
+
+  List<NotificationModel> allMarkedRead() {
+    return map((item) => item.isRead ? item : item.copyWith(isRead: true))
+        .toList();
   }
 }

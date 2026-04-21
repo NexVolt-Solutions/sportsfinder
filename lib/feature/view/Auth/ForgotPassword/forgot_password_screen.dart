@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -90,9 +91,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 arguments: model.emailController.text.trim(),
                               );
                             } else {
-                              ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(SnackBar(content: Text(result)));
+                              AppSnackBar.show(result);
                             }
                           },
                     text: model.isLoading

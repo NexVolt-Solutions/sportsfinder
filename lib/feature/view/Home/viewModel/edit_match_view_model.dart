@@ -4,10 +4,12 @@ import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/google_places_service.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
   final DeleteMatchRepo _deleteRepo = DeleteMatchRepo();
+  final GooglePlacesService _googlePlacesService = GooglePlacesService();
 
   final formKey = GlobalKey<FormState>();
 
@@ -240,6 +242,10 @@ class EditMatchViewModel extends ChangeNotifier {
       isDeleting = false;
       notifyListeners();
     }
+  }
+
+  Future<List<String>> searchLocationSuggestions(String query) {
+    return _googlePlacesService.searchPlaceSuggestions(query);
   }
 
   @override

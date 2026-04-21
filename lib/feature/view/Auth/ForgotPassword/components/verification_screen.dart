@@ -217,6 +217,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
@@ -353,11 +354,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   debugPrint("🔐 Entered OTP: $pin");
 
                   if (_email.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Email not found. Please try again."),
-                      ),
-                    );
+                    AppSnackBar.show('Email not found. Please try again.');
                     return;
                   }
 
@@ -368,23 +365,24 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   debugPrint("🔎 Verification Result: $error");
 
                   if (error == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("OTP Verified Successfully!"),
-                      ),
-                    );
+                    if (vm.resetToken.trim().isEmpty) {
+                      _pinController.clear();
+                      AppSnackBar.show(
+                        'Reset token missing. Please try again.',
+                      );
+                      return;
+                    }
+                    AppSnackBar.show('OTP Verified Successfully!');
 
                     /// ✅ Navigate to New Password Screen
                     Navigator.pushReplacementNamed(
                       context,
                       RoutesName.newPasswordScreen,
-                      arguments: _email,
+                      arguments: vm.resetToken.trim(),
                     );
                   } else {
                     _pinController.clear();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error)));
+                    AppSnackBar.show(error);
                   }
                 },
               ),
@@ -419,13 +417,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   if (error == null) {
                     _pinController.clear();
                     _startTimer();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("OTP Resent!")),
-                    );
+                    AppSnackBar.show('OTP Resent!');
                   } else {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error)));
+                    AppSnackBar.show(error);
                   }
                 },
               ),

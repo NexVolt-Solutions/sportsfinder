@@ -190,6 +190,8 @@ class VerificationScreenViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  String _resetToken = '';
+  String get resetToken => _resetToken;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -201,6 +203,20 @@ class VerificationScreenViewModel extends ChangeNotifier {
       return response['message']?.toString() ?? 'Something went wrong';
     }
     return 'Invalid response';
+  }
+
+  String _extractResetToken(dynamic response) {
+    if (response is! Map<String, dynamic>) return '';
+    final direct = response['reset_token']?.toString() ?? '';
+    if (direct.isNotEmpty) return direct;
+
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return data['reset_token']?.toString() ??
+          data['token']?.toString() ??
+          '';
+    }
+    return '';
   }
 
   bool _isSuccess(dynamic response) {
@@ -228,6 +244,10 @@ class VerificationScreenViewModel extends ChangeNotifier {
       final response = await repository.verifyOtp(email: email, otp: otp);
 
       debugPrint("VERIFY OTP RESPONSE: $response");
+      _resetToken = _extractResetToken(response);
+      debugPrint(
+        "VERIFY OTP RESET TOKEN PRESENT: ${_resetToken.isNotEmpty}",
+      );
 
       return _isSuccess(response) ? null : _extractMessage(response);
     } catch (e) {

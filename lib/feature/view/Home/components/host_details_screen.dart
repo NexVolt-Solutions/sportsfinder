@@ -13,6 +13,7 @@ import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/app_svg_icon.dart';
@@ -36,13 +37,20 @@ class HostDetailsScreen extends StatefulWidget {
 }
 
 class _HostDetailsScreenState extends State<HostDetailsScreen> {
+  bool _scheduledInitialBind = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_scheduledInitialBind) return;
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is DiscoveryMatch &&
         context.read<HostDetailScreenViewModel>().currentMatch == null) {
-      context.read<HostDetailScreenViewModel>().bindMatch(args);
+      _scheduledInitialBind = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<HostDetailScreenViewModel>().bindMatch(args);
+      });
     }
   }
 
@@ -132,12 +140,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         '[HostDetailsScreen] DeleteMatchModel received: ${result.matchId}',
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(AppText.matchDeletedSuccessfully),
-          backgroundColor: context.appColors.primary,
-        ),
-      );
       Navigator.pop(context, result);
     } else if (result != null && result is DiscoveryMatch) {
       debugPrint('✅ [HostDetailsScreen] DiscoveryMatch received');
@@ -203,11 +205,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         'Delete API returned null result. Error: ${model.deleteMatchError}',
         tag: 'HostDetailsScreen',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(model.deleteMatchError ?? AppText.failedToDeleteMatch),
-          backgroundColor: context.appColors.error,
-        ),
+      AppSnackBar.show(
+        model.deleteMatchError ?? AppText.failedToDeleteMatch,
+        backgroundColor: context.appColors.error,
       );
       return;
     }
@@ -228,12 +228,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       tag: 'HostDetailsScreen',
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(AppText.matchDeletedSuccessfully),
-        backgroundColor: context.appColors.primary,
-      ),
-    );
     DeletedMatchesService().markDeleted(result.matchId);
     Navigator.pop(context, result);
   }
@@ -591,11 +585,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   );
                                   if (userId.isEmpty) {
                                     if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('User id is missing'),
-                                      ),
-                                    );
+                                    AppSnackBar.show('User id is missing');
                                     return;
                                   }
 
@@ -611,9 +601,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   if (!context.mounted || message == null) {
                                     return;
                                   }
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(message)),
-                                  );
+                                  AppSnackBar.show(message);
                                 },
                                 cardOnTap: () {
                                   ListOfAllUserService().recordProfileView(
@@ -764,16 +752,10 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       debugPrint(
                                         '✅ [HostDetailsScreen] Match status updated to ongoing',
                                       );
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            'Match started successfully!',
-                                          ),
-                                          backgroundColor:
-                                              context.appColors.primary,
-                                        ),
+                                      AppSnackBar.show(
+                                        'Match started successfully!',
+                                        backgroundColor:
+                                            context.appColors.primary,
                                       );
                                     } else {
                                       debugPrint(
@@ -782,17 +764,11 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       debugPrint(
                                         '❌ [HostDetailsScreen] Error: ${model.matchStatusError}',
                                       );
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            model.matchStatusError ??
-                                                'Failed to start match',
-                                          ),
-                                          backgroundColor:
-                                              context.appColors.error,
-                                        ),
+                                      AppSnackBar.show(
+                                        model.matchStatusError ??
+                                            'Failed to start match',
+                                        backgroundColor:
+                                            context.appColors.error,
                                       );
                                     }
                                     return;
@@ -804,26 +780,16 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     if (!context.mounted) return;
                                     if (!result &&
                                         model.joinLeaveError != null) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(model.joinLeaveError!),
-                                          backgroundColor:
-                                              context.appColors.error,
-                                        ),
+                                      AppSnackBar.show(
+                                        model.joinLeaveError!,
+                                        backgroundColor:
+                                            context.appColors.error,
                                       );
                                     } else if (result) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            'Left match successfully',
-                                          ),
-                                          backgroundColor:
-                                              context.appColors.primary,
-                                        ),
+                                      AppSnackBar.show(
+                                        'Left match successfully',
+                                        backgroundColor:
+                                            context.appColors.primary,
                                       );
                                     }
                                     return;
@@ -874,22 +840,16 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   if (!context.mounted) return;
 
                                   if (!result && model.joinLeaveError != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(model.joinLeaveError!),
-                                        backgroundColor:
-                                            context.appColors.error,
-                                      ),
+                                    AppSnackBar.show(
+                                      model.joinLeaveError!,
+                                      backgroundColor:
+                                          context.appColors.error,
                                     );
                                   } else if (result) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text(
-                                          'Joined match successfully!',
-                                        ),
-                                        backgroundColor:
-                                            context.appColors.primary,
-                                      ),
+                                    AppSnackBar.show(
+                                      'Joined match successfully!',
+                                      backgroundColor:
+                                          context.appColors.primary,
                                     );
                                   }
                                 },

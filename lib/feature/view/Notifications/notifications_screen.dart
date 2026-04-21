@@ -8,6 +8,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -24,7 +25,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final InviteActionRepository _inviteActionRepository =
       InviteActionRepository();
   final Map<String, bool> _actionLoading = <String, bool>{};
-  final Set<String> _resolvedNotifications = <String>{};
+  final Map<String, _ResolvedInviteAction> _resolvedInviteActions =
+      <String, _ResolvedInviteAction>{};
 
   @override
   void initState() {
@@ -52,6 +54,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         local.day == yesterday.day;
   }
 
+  bool _isEarlier(DateTime date) => !_isToday(date) && !_isYesterday(date);
+
   String _relativeLabel(DateTime date) {
     final local = date.toLocal();
     final diff = DateTime.now().difference(local);
@@ -64,7 +68,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final hours = diff.inHours;
       return '$hours hour${hours == 1 ? '' : 's'} ago';
     }
-    return 'Yesterday';
+    final days = diff.inDays;
+    if (days <= 1) return AppText.yesterday;
+    return '$days day${days == 1 ? '' : 's'} ago';
   }
 
   Future<void> _handleInvitationAction(
@@ -80,9 +86,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
     if (matchId.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Match id is missing')));
+      AppSnackBar.show('Match id is missing');
       return;
     }
 
@@ -124,27 +128,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
 
       final notificationService = context.read<NotificationService>();
-      notificationService.removeNotificationById(item.id);
+      await notificationService.markAsRead(item.id);
 
       if (!mounted) return;
       setState(() {
-        _resolvedNotifications.add(item.id);
+        _resolvedInviteActions[item.id] = accept
+            ? _ResolvedInviteAction.accepted
+            : _ResolvedInviteAction.declined;
       });
 
       AppLogger.info(
-        'Notification removed from NotificationsScreen UI after '
-        '$actionLabel action: notificationId=${item.id}',
+        'Notification invite actions hidden after $actionLabel action: '
+        'notificationId=${item.id}',
         tag: 'NotificationsScreen',
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            response.message.isNotEmpty
-                ? response.message
-                : (accept ? 'Invitation accepted' : 'Invitation declined'),
-          ),
-        ),
+      AppSnackBar.show(
+        response.message.isNotEmpty
+            ? response.message
+            : (accept ? 'Invitation accepted' : 'Invitation declined'),
       );
     } catch (e) {
       AppLogger.error(
@@ -154,9 +156,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         error: e,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      AppSnackBar.show(e.toString());
     } finally {
       if (!mounted) return;
       setState(() {
@@ -165,18 +165,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Future<void> _handleNotificationTap(NotificationModel item) async {
+    if (item.isRead || item.id.trim().isEmpty) return;
+
+    try {
+      await context.read<NotificationService>().markAsRead(item.id);
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(e.toString());
+    }
+  }
+
+  Future<void> _handleReadAll() async {
+    final service = context.read<NotificationService>();
+    if (!service.hasUnread) return;
+
+    try {
+      final message = await service.markAllAsRead();
+      if (!mounted) return;
+      AppSnackBar.show(
+        message != null && message.isNotEmpty
+            ? message
+            : AppText.allNotificationsMarkedRead,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
     final service = context.watch<NotificationService>();
-    final visibleNotifications = service.notifications
-        .where((n) => !_resolvedNotifications.contains(n.id))
-        .toList();
+    final visibleNotifications = service.notifications;
     final todayItems = visibleNotifications
         .where(_isTodayNotification)
         .toList();
     final yesterdayItems = visibleNotifications
         .where(_isYesterdayNotification)
+        .toList();
+    final earlierItems = visibleNotifications
+        .where(_isEarlierNotification)
         .toList();
 
     return Scaffold(
@@ -214,9 +244,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                       ),
                       SizedBox(width: context.w(28)),
+                      GestureDetector(
+                        onTap: service.hasUnread && !service.isMarkingAllRead
+                            ? _handleReadAll
+                            : null,
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          service.isMarkingAllRead
+                              ? '${AppText.readAll}...'
+                              : AppText.readAll,
+                          style: context.appText.text14W600.copyWith(
+                            color: service.hasUnread ? c.primary : c.greylight,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  SizedBox(height: context.h(22)),
+
+                  SizedBox(height: context.h(12)),
                   if (todayItems.isNotEmpty) ...[
                     NormalText(
                       titleText: AppText.today,
@@ -228,8 +273,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         item: _NotificationItem.fromModel(
                           n,
                           rightLabel: _relativeLabel(n.createdAt),
+                          resolvedInviteAction: _resolvedInviteActions[n.id],
                         ),
                         isActionLoading: _actionLoading[n.id] == true,
+                        onTap: () => _handleNotificationTap(n),
                         onPrimaryTap: n.isInvitation
                             ? () => _handleInvitationAction(n, true)
                             : null,
@@ -251,8 +298,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         item: _NotificationItem.fromModel(
                           n,
                           rightLabel: _relativeLabel(n.createdAt),
+                          resolvedInviteAction: _resolvedInviteActions[n.id],
                         ),
                         isActionLoading: _actionLoading[n.id] == true,
+                        onTap: () => _handleNotificationTap(n),
                         onPrimaryTap: n.isInvitation
                             ? () => _handleInvitationAction(n, true)
                             : null,
@@ -262,7 +311,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                     ),
                   ],
-                  if (todayItems.isEmpty && yesterdayItems.isEmpty)
+                  if (earlierItems.isNotEmpty) ...[
+                    SizedBox(height: context.h(8)),
+                    NormalText(
+                      titleText: AppText.earlier,
+                      titleStyle: context.appText.text16W600,
+                    ),
+                    SizedBox(height: context.h(10)),
+                    ...earlierItems.map(
+                      (n) => _NotificationCard(
+                        item: _NotificationItem.fromModel(
+                          n,
+                          rightLabel: _relativeLabel(n.createdAt),
+                          resolvedInviteAction: _resolvedInviteActions[n.id],
+                        ),
+                        isActionLoading: _actionLoading[n.id] == true,
+                        onTap: () => _handleNotificationTap(n),
+                        onPrimaryTap: n.isInvitation
+                            ? () => _handleInvitationAction(n, true)
+                            : null,
+                        onSecondaryTap: n.isInvitation
+                            ? () => _handleInvitationAction(n, false)
+                            : null,
+                      ),
+                    ),
+                  ],
+                  if (visibleNotifications.isEmpty)
                     Padding(
                       padding: context.padSym(v: 40),
                       child: Center(
@@ -283,6 +357,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _isTodayNotification(NotificationModel item) => _isToday(item.createdAt);
   bool _isYesterdayNotification(NotificationModel item) =>
       _isYesterday(item.createdAt);
+  bool _isEarlierNotification(NotificationModel item) =>
+      _isEarlier(item.createdAt);
 }
 
 class _NotificationItem {
@@ -290,6 +366,8 @@ class _NotificationItem {
     required this.avatarLetter,
     required this.title,
     required this.rightLabel,
+    required this.isRead,
+    required this.showActions,
     this.subtitle,
     this.showLocationIcon = false,
     this.primaryActionText,
@@ -300,6 +378,8 @@ class _NotificationItem {
   final String avatarLetter;
   final String title;
   final String rightLabel;
+  final bool isRead;
+  final bool showActions;
   final String? subtitle;
   final bool showLocationIcon;
   final String? primaryActionText;
@@ -309,16 +389,21 @@ class _NotificationItem {
   factory _NotificationItem.fromModel(
     NotificationModel model, {
     required String rightLabel,
+    _ResolvedInviteAction? resolvedInviteAction,
   }) {
     final subtitle = model.displaySubtitle;
+    final showActions =
+        model.isInvitation && resolvedInviteAction == null;
     return _NotificationItem(
       avatarLetter: model.avatarLetter,
       title: model.displayTitle,
       rightLabel: rightLabel,
+      isRead: model.isRead,
+      showActions: showActions,
       subtitle: subtitle.isEmpty ? null : subtitle,
       showLocationIcon: model.locationName.isNotEmpty,
-      primaryActionText: model.isInvitation ? 'Accept' : null,
-      secondaryActionText: model.isInvitation ? 'Decline' : null,
+      primaryActionText: showActions ? 'Accept' : null,
+      secondaryActionText: showActions ? 'Decline' : null,
       isPrimaryActionFilled: true,
     );
   }
@@ -328,21 +413,24 @@ class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
     required this.item,
     this.isActionLoading = false,
+    this.onTap,
     this.onPrimaryTap,
     this.onSecondaryTap,
   });
 
   final _NotificationItem item;
   final bool isActionLoading;
+  final VoidCallback? onTap;
   final VoidCallback? onPrimaryTap;
   final VoidCallback? onSecondaryTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final hasActions = item.primaryActionText != null;
+    final hasActions = item.showActions && item.primaryActionText != null;
 
     return CardWidget(
+      onTap: onTap,
       padding: context.padSym(h: 12, v: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,9 +467,20 @@ class _NotificationCard extends StatelessWidget {
                     Text(
                       item.rightLabel,
                       style: context.appText.text16W400.copyWith(
-                        color: c.greyDark,
+                        color: item.isRead ? c.greyDark : c.primary,
                       ),
                     ),
+                    if (!item.isRead) ...[
+                      SizedBox(width: context.w(6)),
+                      Container(
+                        width: context.w(8),
+                        height: context.w(8),
+                        decoration: BoxDecoration(
+                          color: c.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 if (item.subtitle != null) ...[
@@ -480,3 +579,5 @@ class _ActionPill extends StatelessWidget {
     );
   }
 }
+
+enum _ResolvedInviteAction { accepted, declined }

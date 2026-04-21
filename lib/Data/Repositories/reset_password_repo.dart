@@ -6,32 +6,35 @@ class ResetPasswordRepo {
   final ApiService _apiService = ApiService();
 
   Future<ResetPasswordModel> resetPassword({
-    required String email,
-    required String otp,
+    required String resetToken,
     required String newPassword,
+    required String confirmPassword,
   }) async {
-    debugPrint("🟡 [RESET PASSWORD REPO] API CALL STARTED");
-    debugPrint("📩 Email: $email");
-    debugPrint("🔐 OTP: $otp");
-    debugPrint("🔑 New Password: $newPassword");
+    debugPrint('[ResetPasswordRepo] API call started');
+    debugPrint(
+      '[ResetPasswordRepo] Reset token present: ${resetToken.isNotEmpty}',
+    );
+    debugPrint(
+      '[ResetPasswordRepo] New password length: ${newPassword.length}',
+    );
+    debugPrint(
+      '[ResetPasswordRepo] Confirm password length: ${confirmPassword.length}',
+    );
 
     try {
       final response = await _apiService.post(
-        "/api/v1/auth/reset-password",
-        data: {"email": email, "otp": otp, "new_password": newPassword},
+        '/api/v1/auth/reset-password',
+        data: {
+          'reset_token': resetToken,
+          'new_password': newPassword,
+          'confirm_password': confirmPassword,
+        },
       );
 
-      debugPrint("🟢 [RESET PASSWORD REPO] RESPONSE RECEIVED");
-      debugPrint("📦 Response: $response");
-
-      final model = ResetPasswordModel.fromJson(response);
-
-      debugPrint("✅ Parsed Message: ${model.message}");
-
-      return model;
+      debugPrint('[ResetPasswordRepo] Response: $response');
+      return ResetPasswordModel.fromJson(Map<String, dynamic>.from(response));
     } catch (e) {
-      debugPrint("🔴 [RESET PASSWORD REPO] ERROR OCCURRED");
-      debugPrint("❌ Error: $e");
+      debugPrint('[ResetPasswordRepo] Error: $e');
       rethrow;
     }
   }

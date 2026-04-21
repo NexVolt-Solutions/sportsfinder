@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/host_detail_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -29,13 +30,20 @@ class UserMatchDetailsScreen extends StatefulWidget {
 }
 
 class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
+  bool _scheduledInitialBind = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_scheduledInitialBind) return;
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is DiscoveryMatch &&
         context.read<HostDetailScreenViewModel>().currentMatch == null) {
-      context.read<HostDetailScreenViewModel>().bindMatch(args);
+      _scheduledInitialBind = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<HostDetailScreenViewModel>().bindMatch(args);
+      });
     }
   }
 
@@ -220,11 +228,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
 
                             if (match.isHostedByCurrentUser) {
                               if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('You are hosting this match.'),
-                                ),
-                              );
+                              AppSnackBar.show('You are hosting this match.');
                               return;
                             }
 
@@ -232,20 +236,14 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                               final result = await model.leaveMatch(matchId);
                               if (!context.mounted) return;
                               if (!result && model.joinLeaveError != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(model.joinLeaveError!),
-                                    backgroundColor: context.appColors.error,
-                                  ),
+                                AppSnackBar.show(
+                                  model.joinLeaveError!,
+                                  backgroundColor: context.appColors.error,
                                 );
                               } else if (result) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'Left match successfully',
-                                    ),
-                                    backgroundColor: context.appColors.primary,
-                                  ),
+                                AppSnackBar.show(
+                                  'Left match successfully',
+                                  backgroundColor: context.appColors.primary,
                                 );
                               }
                               return;
@@ -293,20 +291,14 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                             if (!context.mounted) return;
 
                             if (!result && model.joinLeaveError != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(model.joinLeaveError!),
-                                  backgroundColor: context.appColors.error,
-                                ),
+                              AppSnackBar.show(
+                                model.joinLeaveError!,
+                                backgroundColor: context.appColors.error,
                               );
                             } else if (result) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Joined match successfully!',
-                                  ),
-                                  backgroundColor: context.appColors.primary,
-                                ),
+                              AppSnackBar.show(
+                                'Joined match successfully!',
+                                backgroundColor: context.appColors.primary,
                               );
                             }
                           },

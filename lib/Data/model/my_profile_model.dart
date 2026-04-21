@@ -197,6 +197,12 @@ class Settings {
   Map<String, dynamic> toJson() {
     return {'notifications_enabled': notificationsEnabled};
   }
+
+  Settings copyWith({bool? notificationsEnabled}) {
+    return Settings(
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+    );
+  }
 }
 
 class Navigation {

@@ -43,6 +43,7 @@ class ProfileScreenViewModel extends ChangeNotifier {
   String get followersCountLabel => '$followersCount';
   String get followingCountLabel => '$followingCount';
   String get matchesPlayedLabel => '$matchesPlayedCount';
+  bool get notificationsEnabled => _ps.notificationsEnabled;
 
   // --- unchanged below ---
   int selectedSportIndex = -1;
@@ -67,7 +68,7 @@ class ProfileScreenViewModel extends ChangeNotifier {
       'title': AppText.notification,
       'subtitle': AppText.pushNotificationEnabled,
       'trailingType': 'switch',
-      'switchValue': true,
+      'switchValue': false,
     },
     {
       'leading': AppAssets.termIcon,
@@ -93,7 +94,11 @@ class ProfileScreenViewModel extends ChangeNotifier {
   ];
 
   void toggleSwitch(int index, bool value) {
-    profileData[index]['switchValue'] = value;
+    if (index == 2) {
+      profileData[index]['switchValue'] = notificationsEnabled;
+    } else {
+      profileData[index]['switchValue'] = value;
+    }
     notifyListeners();
   }
 

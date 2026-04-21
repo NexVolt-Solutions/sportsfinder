@@ -194,6 +194,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
@@ -329,18 +330,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   if (!context.mounted) return;
 
                   if (error == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("OTP Verified Successfully!"),
-                      ),
-                    );
+                    AppSnackBar.show('OTP Verified Successfully!');
                     Navigator.pushNamed(context, RoutesName.LoginScreen);
                   } else {
                     // ❌ Wrong OTP - clear and restart timer
                     _pinController.clear();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error)));
+                    AppSnackBar.show(error);
                   }
                 },
               ),
@@ -375,13 +370,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   if (error == null) {
                     _pinController.clear(); // clear OTP field
                     _startTimer(); // ✅ restart timer
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("OTP Resent!")),
-                    );
+                    AppSnackBar.show('OTP Resent!');
                   } else {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(error)));
+                    AppSnackBar.show(error);
                   }
                 },
               ),

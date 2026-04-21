@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 
 void main() {
   runApp(
@@ -17,6 +18,7 @@ void main() {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
         initialRoute: RoutesName.splashScreen,
         onGenerateRoute: Routes.generateRoute,
       ),

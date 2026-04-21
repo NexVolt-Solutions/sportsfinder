@@ -198,6 +198,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
@@ -216,9 +217,7 @@ class SignUp extends StatelessWidget {
     final vm = context.read<SignUpViewModel>();
     final message = await vm.pickProfileImageFromGallery();
     if (!context.mounted || message == null) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(message);
   }
 
   @override
@@ -318,11 +317,7 @@ class SignUp extends StatelessWidget {
                       final error = await vm.registerUser();
                       if (!context.mounted) return;
                       if (error == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Registration Successful"),
-                          ),
-                        );
+                        AppSnackBar.show('Registration Successful');
                         Navigator.pushNamed(
                           context,
                           RoutesName
@@ -331,9 +326,7 @@ class SignUp extends StatelessWidget {
                               .trim(), // ✅ must pass email
                         );
                       } else {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(error)));
+                        AppSnackBar.show(error);
                       }
                     },
                     text: AppText.signIn,

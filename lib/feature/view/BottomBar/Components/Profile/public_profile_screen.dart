@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/public_profile_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -98,17 +99,20 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: context.h(20)),
-                              _FollowMessageRow(
-                                onFollow: () => model.onFollowTap(context),
-                                onMessage: () => model.onMessageTap(context),
-                                isFollowing: model.isFollowing,
-                                isFollowLoading: model.isFollowLoading,
-                              ),
-                              SizedBox(height: context.h(12)),
-                              _RatePlayerButton(
-                                onTap: () => _showRateSheet(context, model),
-                              ),
-                              SizedBox(height: context.h(20)),
+                              if (!model.isOwnProfile) ...[
+                                _FollowMessageRow(
+                                  onFollow: () => model.onFollowTap(context),
+                                  onMessage: () => model.onMessageTap(context),
+                                  isFollowing: model.isFollowing,
+                                  isFollowLoading: model.isFollowLoading,
+                                ),
+                                SizedBox(height: context.h(12)),
+                                _RatePlayerButton(
+                                  onTap: () => _showRateSheet(context, model),
+                                ),
+                                SizedBox(height: context.h(20)),
+                              ] else
+                                SizedBox(height: context.h(20)),
                               ProfileDetailStatsRow(
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
@@ -191,26 +195,22 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
   }
 
   Future<void> _submit() async {
-    final context = this.context;
-    final messenger = ScaffoldMessenger.of(context);
     final matchId = _matchIdController.text.trim();
     final comment = _controller.text.trim();
+    debugPrint(
+      '[RatePlayerSheet] Submit tapped for matchId=$matchId, '
+      'rating=$_selectedStars',
+    );
     if (matchId.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text(AppText.reviewValidationMatchId)),
-      );
+      AppSnackBar.show(AppText.reviewValidationMatchId);
       return;
     }
     if (_selectedStars <= 0) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text(AppText.reviewValidationRating)),
-      );
+      AppSnackBar.show(AppText.reviewValidationRating);
       return;
     }
     if (comment.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text(AppText.reviewValidationComment)),
-      );
+      AppSnackBar.show(AppText.reviewValidationComment);
       return;
     }
 
@@ -222,19 +222,19 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
     if (!mounted) return;
 
     if (ok) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text(AppText.reviewSubmitSuccess)),
+      debugPrint(
+        '[RatePlayerSheet] Review API success for user=${widget.model.displayName}',
       );
-      Navigator.of(this.context).pop();
+      Navigator.of(context).pop();
+      AppSnackBar.show(AppText.reviewSubmitSuccess);
       return;
     }
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.model.submitReviewError ?? 'Failed to submit review',
-        ),
-      ),
+    debugPrint(
+      '[RatePlayerSheet] Review API failed: ${widget.model.submitReviewError}',
+    );
+    AppSnackBar.show(
+      widget.model.submitReviewError ?? 'Failed to submit review',
     );
   }
 

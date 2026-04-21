@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -114,11 +115,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         arguments: BottomBarScreenViewModel.homeIndex,
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result ?? "Login failed"),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                      AppSnackBar.show(
+                        result ?? 'Login failed',
+                        behavior: SnackBarBehavior.floating,
                       );
                     }
                   },

@@ -10,6 +10,7 @@ import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
@@ -50,6 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!context.mounted) return;
     if (result is DeleteMatchModel) {
       model.removeMatchById(result.matchId);
+      AppSnackBar.show(
+        AppText.matchDeletedSuccessfully,
+        backgroundColor: context.appColors.primary,
+      );
     }
   }
 

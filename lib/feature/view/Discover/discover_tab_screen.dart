@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
@@ -35,10 +36,46 @@ class _DiscoverTabContent extends StatelessWidget {
 
   final bool embedInBottomBar;
 
+  Widget _buildNotificationBell(BuildContext context) {
+    final c = context.appColors;
+    final unreadCount = context.select<NotificationService, int>(
+      (service) => service.unreadCount,
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        SvgPicture.asset(AppAssets.notificationIcon),
+        if (unreadCount > 0)
+          Positioned(
+            right: -6,
+            top: -6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: c.error,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                textAlign: TextAlign.center,
+                style: context.appText.text12W500.copyWith(
+                  color: c.onPrimary,
+                  fontSize: 9,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DiscoveryTabViewModel>(
       builder: (context, model, _) {
+        final notificationService = context.watch<NotificationService>();
         return Padding(
           padding: context.padSym(h: 20),
           child: Column(
@@ -48,7 +85,15 @@ class _DiscoverTabContent extends StatelessWidget {
                 AppBarWidget(
                   onTapFirst: () => Navigator.pop(context),
                   leading: NormalText(titleText: AppText.sportFinding),
-                  trailing: SvgPicture.asset(AppAssets.notificationIcon),
+                  trailing: _buildNotificationBell(context),
+                  onTrailingTap: () async {
+                    await notificationService.fetchNotifications();
+                    if (!context.mounted) return;
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.notificationsScreen,
+                    );
+                  },
                 ),
               ],
               NormalText(titleText: AppText.discover),

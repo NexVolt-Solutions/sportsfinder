@@ -7,6 +7,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -39,13 +40,9 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
     if (!context.mounted) return;
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            model.errorMessage ?? 'Unable to get your current location.',
-          ),
-          backgroundColor: context.appColors.error,
-        ),
+      AppSnackBar.show(
+        model.errorMessage ?? 'Unable to get your current location.',
+        backgroundColor: context.appColors.error,
       );
       return;
     }
@@ -55,16 +52,15 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
       await AppPreferences.saveCurrentLocation(
         latitude: position.latitude,
         longitude: position.longitude,
+        locationName: model.currentAddress,
       );
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Location captured: ${model.currentPosition?.latitude}, ${model.currentPosition?.longitude}',
-        ),
-        backgroundColor: context.appColors.primary,
-      ),
+    AppSnackBar.show(
+      model.currentAddress != null && model.currentAddress!.isNotEmpty
+          ? 'Location captured: ${model.currentAddress}'
+          : 'Location captured: ${model.currentPosition?.latitude}, ${model.currentPosition?.longitude}',
+      backgroundColor: context.appColors.primary,
     );
 
     await _finishOnboardingAndOpenHome(context);
@@ -152,6 +148,20 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                             ),
                             if (model.currentPosition != null) ...[
                               SizedBox(height: context.h(16)),
+                              if (model.currentAddress != null &&
+                                  model.currentAddress!.isNotEmpty)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: context.h(8),
+                                  ),
+                                  child: NormalText(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    titleText: model.currentAddress!,
+                                    titleStyle: context.appText.text14W600,
+                                    titleAlign: TextAlign.center,
+                                  ),
+                                ),
                               NormalText(
                                 crossAxisAlignment:
                                     CrossAxisAlignment.center,

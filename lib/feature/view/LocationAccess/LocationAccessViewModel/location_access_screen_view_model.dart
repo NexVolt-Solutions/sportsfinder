@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sport_finding/core/Network/google_places_service.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class LocationAccessScreenViewModel extends ChangeNotifier {
+  final GooglePlacesService _googlePlacesService = GooglePlacesService();
+
   bool _isRequestingLocation = false;
   bool get isRequestingLocation => _isRequestingLocation;
 
@@ -11,6 +14,9 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
 
   Position? _currentPosition;
   Position? get currentPosition => _currentPosition;
+
+  String? _currentAddress;
+  String? get currentAddress => _currentAddress;
 
   Future<bool> requestCurrentLocation() async {
     AppLogger.info(
@@ -31,10 +37,7 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
 
       if (!serviceEnabled) {
         _errorMessage = 'Location services are disabled. Please turn them on.';
-        AppLogger.warning(
-          _errorMessage!,
-          tag: 'LocationAccessScreen',
-        );
+        AppLogger.warning(_errorMessage!, tag: 'LocationAccessScreen');
         return false;
       }
 
@@ -54,28 +57,30 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
 
       if (permission == LocationPermission.denied) {
         _errorMessage = 'Location permission was denied.';
-        AppLogger.warning(
-          _errorMessage!,
-          tag: 'LocationAccessScreen',
-        );
+        AppLogger.warning(_errorMessage!, tag: 'LocationAccessScreen');
         return false;
       }
 
       if (permission == LocationPermission.deniedForever) {
         _errorMessage =
             'Location permission is permanently denied. Please enable it from settings.';
-        AppLogger.warning(
-          _errorMessage!,
-          tag: 'LocationAccessScreen',
-        );
+        AppLogger.warning(_errorMessage!, tag: 'LocationAccessScreen');
         return false;
       }
-
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 0,
+          forceLocationManager: false,
+          intervalDuration: const Duration(seconds: 5),
+        ),
       );
 
       _currentPosition = position;
+      _currentAddress = await _googlePlacesService.reverseGeocode(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
       AppLogger.success(
         'Exact location fetched successfully.',
         tag: 'LocationAccessScreen',
@@ -84,6 +89,12 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
         'Latitude: ${position.latitude}, Longitude: ${position.longitude}',
         tag: 'LocationAccessScreen',
       );
+      if (_currentAddress != null && _currentAddress!.isNotEmpty) {
+        AppLogger.debug(
+          'Resolved current address: $_currentAddress',
+          tag: 'LocationAccessScreen',
+        );
+      }
       return true;
     } catch (e, stackTrace) {
       _errorMessage = 'Failed to get current location.';

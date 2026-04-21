@@ -13,6 +13,8 @@ class CustomSettingCard extends StatelessWidget {
   final bool? switchValue;
   final ValueChanged<bool>? onSwitchChanged;
   final VoidCallback? onTap;
+  final bool switchEnabled;
+  final bool switchLoading;
 
   const CustomSettingCard({
     super.key,
@@ -23,6 +25,8 @@ class CustomSettingCard extends StatelessWidget {
     this.switchValue,
     this.onSwitchChanged,
     this.onTap,
+    this.switchEnabled = true,
+    this.switchLoading = false,
   });
 
   @override
@@ -32,11 +36,20 @@ class CustomSettingCard extends StatelessWidget {
     if (trailingType == 'arrow') {
       trailingWidget = const Icon(Icons.arrow_forward_ios, size: 16);
     } else if (trailingType == 'switch') {
-      trailingWidget = Switch(
-        value: switchValue ?? false,
-        onChanged: onSwitchChanged,
-        activeThumbColor: context.appColors.primary,
-      );
+      trailingWidget = switchLoading
+          ? SizedBox(
+              width: context.w(24),
+              height: context.w(24),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: context.appColors.primary,
+              ),
+            )
+          : Switch(
+              value: switchValue ?? false,
+              onChanged: switchEnabled ? onSwitchChanged : null,
+              activeThumbColor: context.appColors.primary,
+            );
     }
 
     return CardWidget(

@@ -31,6 +31,7 @@ class ProfileService extends ChangeNotifier {
   List<dynamic> get sports => profile?.sports ?? [];
   int get totalReviews => profile?.totalReviews ?? 0;
   List<dynamic> get reviews => profile?.reviews ?? [];
+  bool get notificationsEnabled => profile?.settings.notificationsEnabled ?? true;
 
   // --- fetch (safe to call multiple times — skips if already loaded) ---
   Future<void> fetchMyProfile({bool forceRefresh = false}) async {
@@ -101,6 +102,31 @@ class ProfileService extends ChangeNotifier {
       stats: p.stats,
       actions: p.actions,
       settings: p.settings,
+      navigation: p.navigation,
+      cta: p.cta,
+      createdAt: p.createdAt,
+    );
+    notifyListeners();
+  }
+
+  void updateNotificationPreference(bool enabled) {
+    final p = profile;
+    if (p == null) return;
+    profile = UserProfileModel(
+      id: p.id,
+      fullName: p.fullName,
+      email: p.email,
+      bio: p.bio,
+      location: p.location,
+      avatarUrl: p.avatarUrl,
+      isAdmin: p.isAdmin,
+      status: p.status,
+      sports: p.sports,
+      totalReviews: p.totalReviews,
+      reviews: p.reviews,
+      stats: p.stats,
+      actions: p.actions,
+      settings: p.settings.copyWith(notificationsEnabled: enabled),
       navigation: p.navigation,
       cta: p.cta,
       createdAt: p.createdAt,

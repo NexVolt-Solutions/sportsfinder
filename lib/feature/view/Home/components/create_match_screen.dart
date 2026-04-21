@@ -9,6 +9,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
@@ -29,21 +30,6 @@ class CreateMatchScreen extends StatefulWidget {
 
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
   bool _didPopulateEditState = false;
-
-  static const List<String> _demoLocationItems = [
-    'Central Park',
-    'Denmark Central Park',
-    'Denmark Central Park Court',
-    'Denmark Central Park Court 2',
-    'Denmark Central Park Court 3',
-    'Denmark Central Park Court 4',
-    'Denmark Central Park Court 5',
-    'Denmark Central Park Court 6',
-    'Denmark Central Park Court 7',
-    'Denmark Central Park Court 8',
-    'Denmark Central Park Court 9',
-    'Denmark Central Park Court 10',
-  ];
 
   @override
   void didChangeDependencies() {
@@ -324,7 +310,8 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         label: AppText.location,
                         hintText: 'Search location...',
                         controller: model.locationController,
-                        items: _demoLocationItems,
+                        items: const <String>[],
+                        asyncItemsBuilder: model.searchLocationSuggestions,
                       ),
                     ),
                     SizedBox(height: context.h(12)),
@@ -449,11 +436,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                 );
                               }
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(vm.error ?? 'Operation failed'),
-                                ),
-                              );
+                              AppSnackBar.show(vm.error ?? 'Operation failed');
                             }
                           },
                         );

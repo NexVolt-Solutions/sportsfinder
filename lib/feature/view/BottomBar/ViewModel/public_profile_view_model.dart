@@ -1,17 +1,18 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/Data/model/CreateReviewRequest/create_review_request_model.dart';
+import 'package:sport_finding/Data/model/Review/create_review_model.dart';
 import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
+import 'package:sport_finding/Data/Repositories/Review/review_repository.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/Data/model/my_sport.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
-import 'package:sport_finding/Data/Repositories/CreateReviewRequest/create_review_repo.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
@@ -26,7 +27,7 @@ class PublicProfileViewModel extends ChangeNotifier {
   final MyProfileRepository _repo = MyProfileRepository(
     apiService: ApiService(),
   );
-  final CreateReviewRepo _createReviewRepo = CreateReviewRepo();
+  final ReviewRepository _reviewRepository = ReviewRepository();
   final FollowUserRepo _followUserRepo = FollowUserRepo();
 
   late final VoidCallback _listener;
@@ -300,9 +301,7 @@ class PublicProfileViewModel extends ChangeNotifier {
       notifyListeners();
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User followed successfully')),
-      );
+      AppSnackBar.show('User followed successfully');
     } catch (e) {
       log('❌ [PublicProfileVM] Follow API failed for userId: $selectedUserId');
       log('📍 [PublicProfileVM] Follow error: $e');
@@ -310,9 +309,7 @@ class PublicProfileViewModel extends ChangeNotifier {
       notifyListeners();
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_followError ?? 'Failed to follow user')),
-      );
+      AppSnackBar.show(_followError ?? 'Failed to follow user');
     } finally {
       _followLoading = false;
       notifyListeners();
@@ -324,6 +321,10 @@ class PublicProfileViewModel extends ChangeNotifier {
     required int rating,
     required String comment,
   }) async {
+    log(
+      '[PublicProfileVM] submitReview tapped for userId=$selectedUserId, '
+      'matchId=$matchId, rating=$rating',
+    );
     if (isOwnProfile) {
       _submitReviewError = AppText.cannotRateOwnProfile;
       notifyListeners();
@@ -340,13 +341,16 @@ class PublicProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _createReviewRepo.createReview(
+      await _reviewRepository.createReview(
         userId: selectedUserId,
-        data: CreateReviewRequestModel(
+        request: CreateReviewRequestModel(
           matchId: matchId.trim(),
           rating: rating,
           comment: comment.trim(),
         ),
+      );
+      log(
+        '[PublicProfileVM] submitReview success for userId=$selectedUserId',
       );
 
       final raw = await _repo.getUserById(selectedUserId);
@@ -361,6 +365,9 @@ class PublicProfileViewModel extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      log(
+        '[PublicProfileVM] submitReview failed for userId=$selectedUserId: $e',
+      );
       _submitReviewLoading = false;
       _submitReviewError = e.toString();
       notifyListeners();

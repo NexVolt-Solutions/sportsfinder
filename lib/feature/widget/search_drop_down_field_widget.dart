@@ -9,6 +9,7 @@ class SearchDropdownField extends StatefulWidget {
   final String? hintText;
   final TextEditingController controller;
   final List<String> items;
+  final Future<List<String>> Function(String query)? asyncItemsBuilder;
 
   const SearchDropdownField({
     super.key,
@@ -16,6 +17,7 @@ class SearchDropdownField extends StatefulWidget {
     this.hintText,
     required this.controller,
     required this.items,
+    this.asyncItemsBuilder,
   });
 
   @override
@@ -53,6 +55,7 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
       builder: (ctx) => _DropdownSheet(
         searchController: _internalSearchController,
         items: widget.items,
+        asyncItemsBuilder: widget.asyncItemsBuilder,
       ),
     );
 
@@ -125,8 +128,13 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
 class _DropdownSheet extends StatefulWidget {
   final TextEditingController searchController;
   final List<String> items;
+  final Future<List<String>> Function(String query)? asyncItemsBuilder;
 
-  const _DropdownSheet({required this.searchController, required this.items});
+  const _DropdownSheet({
+    required this.searchController,
+    required this.items,
+    this.asyncItemsBuilder,
+  });
 
   @override
   State<_DropdownSheet> createState() => _DropdownSheetState();
@@ -134,6 +142,8 @@ class _DropdownSheet extends StatefulWidget {
 
 class _DropdownSheetState extends State<_DropdownSheet> {
   late List<String> _filtered;
+  bool _isLoading = false;
+  int _activeRequest = 0;
 
   @override
   void initState() {
@@ -151,6 +161,10 @@ class _DropdownSheetState extends State<_DropdownSheet> {
   void _onSearchChanged() {
     if (!mounted) return;
     final query = widget.searchController.text.toLowerCase().trim();
+    if (widget.asyncItemsBuilder != null) {
+      _loadAsyncItems(query);
+      return;
+    }
     setState(() {
       _filtered = query.isEmpty
           ? widget.items
@@ -158,6 +172,39 @@ class _DropdownSheetState extends State<_DropdownSheet> {
                 .where((item) => item.toLowerCase().contains(query))
                 .toList();
     });
+  }
+
+  Future<void> _loadAsyncItems(String query) async {
+    final requestId = ++_activeRequest;
+    if (query.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _filtered = widget.items;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final results = await widget.asyncItemsBuilder!(query);
+      if (!mounted || requestId != _activeRequest) return;
+      setState(() {
+        _filtered = results;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _activeRequest) return;
+      setState(() {
+        _filtered = const <String>[];
+      });
+    } finally {
+      if (!mounted || requestId != _activeRequest) return;
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -217,7 +264,9 @@ class _DropdownSheetState extends State<_DropdownSheet> {
                 ),
                 // List or empty state
                 Flexible(
-                  child: _filtered.isEmpty
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filtered.isEmpty
                       ? Center(
                           child: Padding(
                             padding: EdgeInsets.all(24),

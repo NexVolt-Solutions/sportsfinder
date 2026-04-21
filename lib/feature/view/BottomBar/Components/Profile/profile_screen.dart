@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/Repositories/Logout/logout_repository.dart';
+import 'package:sport_finding/Data/model/Logout/logout_model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/core.dart';
+import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
 import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
+import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
+import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -31,12 +38,100 @@ class ProfileScreen extends StatelessWidget {
     return trimmed.startsWith('http') ? trimmed : null;
   }
 
+  Widget _buildNotificationBell(BuildContext context) {
+    final c = context.appColors;
+    final unreadCount = context.select<NotificationService, int>(
+      (service) => service.unreadCount,
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        SvgPicture.asset(AppAssets.notificationIcon),
+        if (unreadCount > 0)
+          Positioned(
+            right: -6,
+            top: -6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: c.error,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                textAlign: TextAlign.center,
+                style: context.appText.text12W500.copyWith(
+                  color: c.onPrimary,
+                  fontSize: 9,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(AppText.logoutConfirmationTitle),
+        content: const Text(AppText.logoutConfirmationMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(AppText.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(AppText.logout),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout != true || !context.mounted) return;
+
+    final refreshToken = await AppPreferences.getRefreshToken();
+
+    try {
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        final response = await LogoutRepository().logout(
+          request: LogoutRequestModel(refreshToken: refreshToken),
+        );
+        debugPrint('[ProfileScreen] Logout API success: ${response.message}');
+      } else {
+        debugPrint(
+          '[ProfileScreen] Refresh token missing, skipping logout API and clearing local session only',
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      AppSnackBar.show(e.toString(), backgroundColor: context.appColors.error);
+      return;
+    }
+
+    await LoginScreenViewModel.logout();
+    ListOfAllUserService().clear();
+
+    if (!context.mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      RoutesName.LoginScreen,
+      (route) => false,
+    );
+    AppSnackBar.show(AppText.logoutSuccess);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => ProfileScreenViewModel(),
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
+          final notificationService = context.watch<NotificationService>();
           return MainFrame(
             showDecorationLayer: !embedInBottomBar,
             child: ListView(
@@ -51,9 +146,16 @@ class ProfileScreen extends StatelessWidget {
                     onTapFirst: () => Navigator.pop(context),
                     leading: NormalText(titleText: AppText.sportFinding),
                     trailing: GestureDetector(
-                      onTap: () {},
+                      onTap: () async {
+                        await notificationService.fetchNotifications();
+                        if (!context.mounted) return;
+                        Navigator.pushNamed(
+                          context,
+                          RoutesName.notificationsScreen,
+                        );
+                      },
                       behavior: HitTestBehavior.opaque,
-                      child: SvgPicture.asset(AppAssets.notificationIcon),
+                      child: _buildNotificationBell(context),
                     ),
                   ),
                 NormalText(titleText: AppText.profile),
@@ -139,13 +241,71 @@ class ProfileScreen extends StatelessWidget {
                       title: item['title'],
                       subtitle: item['subtitle'],
                       trailingType: item['trailingType'],
-                      switchValue: item['switchValue'],
-                      onSwitchChanged: (val) {
-                        model.toggleSwitch(index, val);
-                      },
+                      switchValue: index == 2
+                          ? model.notificationsEnabled
+                          : item['switchValue'],
+                      onSwitchChanged: index == 2
+                          ? (val) async {
+                              final previous = model.notificationsEnabled;
+                              model.toggleSwitch(index, previous);
+                              try {
+                                final message = await notificationService
+                                    .updateNotificationPreference(val);
+                                if (!context.mounted) return;
+                                AppSnackBar.show(
+                                  message != null && message.isNotEmpty
+                                      ? message
+                                      : AppText.notificationsUpdated,
+                                );
+                              } catch (e) {
+                                if (!context.mounted) return;
+                                model.toggleSwitch(index, previous);
+                                AppSnackBar.show(e.toString());
+                              }
+                            }
+                          : (val) {
+                              model.toggleSwitch(index, val);
+                            },
+                      switchEnabled: index == 2
+                          ? !notificationService.isUpdatingPreference
+                          : true,
+                      switchLoading: index == 2
+                          ? notificationService.isUpdatingPreference
+                          : false,
                       onTap: () => model.onTapFun(context, index),
                     );
                   },
+                ),
+                CardWidget(
+                  onTap: () => _handleLogout(context),
+                  padding: context.padSym(h: 16, v: 14),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.logout_rounded,
+                        color: context.appColors.error,
+                        size: context.w(24),
+                      ),
+                      SizedBox(width: context.w(8)),
+                      Expanded(
+                        child: NormalText(
+                          titleText: AppText.logout,
+                          titleStyle: context.appText.text14W600.copyWith(
+                            color: context.appColors.error,
+                          ),
+                          subText: AppText.logoutSubtitle,
+                          subStyle: context.appText.text12W400.copyWith(
+                            color: context.appColors.greyDark,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: context.appColors.error,
+                      ),
+                    ],
+                  ),
                 ),
                 NormalText(titleText: AppText.mySports),
                 ListView.builder(

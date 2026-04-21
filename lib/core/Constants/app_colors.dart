@@ -5,7 +5,7 @@ class AppColors {
   static Color blue20 = Color(0xFF3EA7FD).withValues(alpha: 0.2);
   static const Color whitecolor = Color(0xFFFFFFFF);
   static Color blue10 = Color(0xFF3EA7FD).withValues(alpha: 0.1);
-  static const Color redcolor = Color(0xFFFF0000);
+  static const Color redcolor = Color.fromARGB(255, 195, 0, 0);
   static const Color greencolor = Color(0xFF00CC46);
   static const Color blackcolor = Color(0xFF000000);
   static const Color greydark = Color(0xFF565656);

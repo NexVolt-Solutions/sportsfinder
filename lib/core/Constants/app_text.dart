@@ -44,6 +44,10 @@ class AppText {
   static const String forgotPassword = 'Forget password?';
   static const String forgotPasswordSubText =
       'Enter your email address and we will send a verification code to reset your password';
+  static const String resetPasswordTitle = 'Reset Password';
+  static const String resetPasswordSubText =
+      'Enter your new password below and confirm it to finish resetting your account.';
+  static const String resetPasswordButton = 'Reset Password';
   static const String fullName = 'Full Name';
   static const String signIn = 'Sign In';
   static const String advanced = 'Advanced';
@@ -91,6 +95,12 @@ class AppText {
   static const String alreadyHaveAnAccountSignIn = 'Already have an account?';
 
   static const String notifications = 'Notifications';
+  static const String readAll = 'Read all';
+  static const String earlier = 'Earlier';
+  static const String notificationMarkedAsRead = 'Notification marked as read';
+  static const String allNotificationsMarkedRead =
+      'All notifications marked as read';
+  static const String notificationsUpdated = 'Notification settings updated';
   static const String today = 'Today';
   static const String heyGoodEvening = 'Hey, Good Evening!';
   static const String allUpcomingMatches = 'All Upcoming Matches';
@@ -256,6 +266,12 @@ class AppText {
       'Discover nearby people in your area';
 
   static const String editProfile = 'Edit Profile';
+  static const String logout = 'Logout';
+  static const String logoutSubtitle = 'Sign out from your account';
+  static const String logoutConfirmationTitle = 'Logout';
+  static const String logoutConfirmationMessage =
+      'Are you sure you want to logout?';
+  static const String logoutSuccess = 'Logged out successfully';
   static const String privacyPolicySportFinding =
       'Privacy Policy – SportFinding';
   static const String termsOfServiceSportFinding =

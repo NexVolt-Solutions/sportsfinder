@@ -9,6 +9,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/edit_match_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
@@ -29,21 +30,6 @@ class EditMatchScreen extends StatefulWidget {
 
 class _EditMatchScreenState extends State<EditMatchScreen> {
   bool _didPopulateEditState = false;
-
-  static const List<String> _demoLocationItems = [
-    'Central Park',
-    'Denmark Central Park',
-    'Denmark Central Park Court',
-    'Denmark Central Park Court 2',
-    'Denmark Central Park Court 3',
-    'Denmark Central Park Court 4',
-    'Denmark Central Park Court 5',
-    'Denmark Central Park Court 6',
-    'Denmark Central Park Court 7',
-    'Denmark Central Park Court 8',
-    'Denmark Central Park Court 9',
-    'Denmark Central Park Court 10',
-  ];
 
   @override
   void didChangeDependencies() {
@@ -166,11 +152,9 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(model.error ?? 'Failed to delete match'),
-        backgroundColor: Colors.red,
-      ),
+    AppSnackBar.show(
+      model.error ?? 'Failed to delete match',
+      backgroundColor: Colors.red,
     );
   }
 
@@ -368,7 +352,8 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                         label: AppText.location,
                         hintText: 'Search location...',
                         controller: model.locationController,
-                        items: _demoLocationItems,
+                        items: const <String>[],
+                        asyncItemsBuilder: model.searchLocationSuggestions,
                       ),
                     ),
                     SizedBox(height: context.h(12)),
@@ -500,18 +485,11 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                                       if (success) {
                                         Navigator.pop(context, vm.updatedMatch);
                                       } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              vm.error ??
-                                                  'Failed to save changes',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                            duration: const Duration(
-                                              seconds: 3,
-                                            ),
+                                        AppSnackBar.show(
+                                          vm.error ?? 'Failed to save changes',
+                                          backgroundColor: Colors.red,
+                                          duration: const Duration(
+                                            seconds: 3,
                                           ),
                                         );
                                       }
