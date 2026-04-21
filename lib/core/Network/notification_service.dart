@@ -151,4 +151,14 @@ class NotificationService extends ChangeNotifier {
     );
     notifyListeners();
   }
+
+  void clearAllNotifications() {
+    if (notifications.isEmpty) return;
+    notifications = <NotificationModel>[];
+    AppLogger.info(
+      'All notifications cleared from local UI state',
+      tag: 'NotificationService',
+    );
+    notifyListeners();
+  }
 }

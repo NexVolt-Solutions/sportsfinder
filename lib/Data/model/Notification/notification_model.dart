@@ -14,10 +14,33 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    final rawPayload = json['payload'];
+    final payloadMap = rawPayload is Map
+        ? Map<String, dynamic>.from(rawPayload)
+        : <String, dynamic>{};
+    final rawData = json['data'];
+    final dataMap = rawData is Map
+        ? Map<String, dynamic>.from(rawData)
+        : <String, dynamic>{};
+    final mergedPayload = <String, dynamic>{
+      ...dataMap,
+      ...payloadMap,
+      if (json['sender'] is Map) 'sender': json['sender'],
+      if (json['user'] is Map) 'user': json['user'],
+      if (json['inviter'] is Map) 'inviter': json['inviter'],
+      if (json['full_name'] != null) 'full_name': json['full_name'],
+      if (json['name'] != null) 'name': json['name'],
+      if (json['sender_name'] != null) 'sender_name': json['sender_name'],
+      if (json['inviter_name'] != null) 'inviter_name': json['inviter_name'],
+      if (json['message'] != null) 'message': json['message'],
+      if (json['body'] != null) 'body': json['body'],
+      if (json['text'] != null) 'text': json['text'],
+    };
+
     return NotificationModel(
       id: json['id'] ?? '',
       type: json['type'] ?? '',
-      payload: Map<String, dynamic>.from(json['payload'] ?? const {}),
+      payload: mergedPayload,
       isRead: json['is_read'] ?? false,
       createdAt: DateTime.parse(json['created_at']),
     );
@@ -60,9 +83,15 @@ class NotificationModel {
 
   String get inviterName => _readString([
     payload['inviter_name'],
+    payload['sender_full_name'],
+    payload['inviterFullName'],
+    payload['host_name'],
     payload['sender_name'],
     payload['user_name'],
     payload['full_name'],
+    payload['name'],
+    _nested(payload['inviter'], 'full_name'),
+    _nested(payload['inviter'], 'name'),
     _nested(payload['sender'], 'full_name'),
     _nested(payload['sender'], 'name'),
     _nested(payload['user'], 'full_name'),

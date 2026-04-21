@@ -12,12 +12,10 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/custom_bottom_sheet_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/drop_down_from_field_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/search_drop_down_field_widget.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
@@ -306,80 +304,40 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     SizedBox(height: context.h(16)),
                     SizedBox(
                       height: context.h(56),
-                      child: SearchDropdownField(
+                      child: TextFormFieldWidget(
                         label: AppText.location,
-                        hintText: 'Search location...',
+                        hintText: 'Tap to search location...',
                         controller: model.locationController,
-                        items: const <String>[],
-                        asyncItemsBuilder: model.searchLocationSuggestions,
-                      ),
-                    ),
-                    SizedBox(height: context.h(12)),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Padding(
-                        padding: EdgeInsets.only(right: context.w(8)),
-                        child: GestureDetector(
-                          onTap: () {
-                            showDialog<void>(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (context) => CustomBottomSheetWidget(
-                                isCenter: true,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Stack(
-                                        children: [
-                                          Container(
-                                            height: context.h(174),
-                                            width: context.w(380),
-                                            decoration: BoxDecoration(
-                                              color: context.appColors.blue10,
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                context.radiusR(12),
-                                              ),
-                                            ),
-                                          ),
-                                          Align(
-                                            alignment: Alignment.topRight,
-                                            child: Padding(
-                                              padding: context.padAll(12),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withValues(alpha: 0.8),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: IconButton(
-                                                  icon: const Icon(
-                                                    Icons.fullscreen,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () {},
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          child: NormalText(
-                            titleText: AppText.selectOnMap,
-                            titleColor: context.appColors.primary,
+                        readOnly: true,
+                        customSuffix: Padding(
+                          padding: EdgeInsets.all(context.w(12)),
+                          child: Icon(
+                            Icons.search,
+                            size: context.w(20),
+                            color: context.appColors.greyDark,
                           ),
                         ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Location is required';
+                          }
+                          return null;
+                        },
+                        onTap: () async {
+                          final selectedLocation = await Navigator.pushNamed(
+                            context,
+                            RoutesName.locationSearchScreen,
+                          );
+                          if (!context.mounted) return;
+                          if (selectedLocation is String &&
+                              selectedLocation.trim().isNotEmpty) {
+                            model.locationController.text =
+                                selectedLocation.trim();
+                          }
+                        },
                       ),
                     ),
-                    SizedBox(height: context.h(12)),
+                    SizedBox(height: context.h(16)),
                     SizedBox(
                       height: context.h(56),
                       child: TextFormFieldWidget(

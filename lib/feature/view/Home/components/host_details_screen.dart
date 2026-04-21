@@ -253,6 +253,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
           );
         }
 
+        final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -399,14 +400,16 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           subTitle: match.resolvedHostBio,
                           isShow: true,
                         ),
-                        SizedBox(height: context.h(16)),
-                        CardWidget(
-                          child: NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: '${match.resolvedHostMatchesPlayed}',
-                            subText: AppText.matchesPlayed,
+                        if (showPlayedMatchesCard) ...[
+                          SizedBox(height: context.h(16)),
+                          CardWidget(
+                            child: NormalText(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              titleText: '${match.hostMatchesPlayed}',
+                              subText: AppText.matchesPlayed,
+                            ),
                           ),
-                        ),
+                        ],
                         SizedBox(height: context.h(16)),
                         NormalText(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,7 +439,47 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
                               return UserMatchCard(
-                                onActionTap: () => model.removePlayerAt(index),
+                                onActionTap: () async {
+                                  final shouldRemove = await showDialog<bool>(
+                                    context: context,
+                                    builder: (dialogContext) => AlertDialog(
+                                      title: const Text('Remove Player'),
+                                      content: Text(
+                                        'Are you sure you want to remove ${model.rosterNameAt(index)} from this match?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(
+                                            dialogContext,
+                                            false,
+                                          ),
+                                          child: const Text(AppText.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(
+                                            dialogContext,
+                                            true,
+                                          ),
+                                          child: const Text('Remove'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (shouldRemove != true || !context.mounted) {
+                                    return;
+                                  }
+                                  final message = await model
+                                      .removePlayerFromMatchAt(index);
+                                  if (!context.mounted) return;
+                                  if (message != null && message.isNotEmpty) {
+                                    AppSnackBar.show(message);
+                                  } else if (model.joinLeaveError != null) {
+                                    AppSnackBar.show(
+                                      model.joinLeaveError!,
+                                      backgroundColor: context.appColors.error,
+                                    );
+                                  }
+                                },
                                 onCardTap: () =>
                                     match.pushPublicProfileForPlayer(
                                       context,
