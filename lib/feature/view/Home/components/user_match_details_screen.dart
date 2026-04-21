@@ -31,6 +31,9 @@ class UserMatchDetailsScreen extends StatefulWidget {
 
 class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
   bool _scheduledInitialBind = false;
+  static final RegExp _uuidPattern = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+  );
 
   @override
   void didChangeDependencies() {
@@ -197,11 +200,21 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         ...List.generate(
                           model.rosterCount,
                           (index) => UserMatchCard(
-                            onCardTap: () => match.pushPublicProfileForPlayer(
-                              context,
-                              displayName: model.rosterNameAt(index),
-                              userIdSuffix: 'match_detail_$index',
-                            ),
+                            onCardTap: () {
+                              final userId = model.rosterUserIdAt(index).trim();
+                              final displayName = model.rosterNameAt(index);
+                              if (_uuidPattern.hasMatch(userId)) {
+                                match.pushPublicProfileForUser(
+                                  context,
+                                  userId: userId,
+                                  displayName: displayName,
+                                );
+                                return;
+                              }
+                              AppSnackBar.show(
+                                'Player profile is not available yet. Please try again in a moment.',
+                              );
+                            },
                             title: model.rosterNameAt(index),
                             subTitle: model.rosterSkillAt(index),
                           ),

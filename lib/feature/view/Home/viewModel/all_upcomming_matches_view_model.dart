@@ -52,6 +52,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   // ================= PAGINATION =================
   int page = 1;
   bool hasNext = true;
+  bool _isDisposed = false;
 
   AllUpcommingMatchesViewModel({this.scope = UpcomingMatchesScope.allUpcoming}) {
     DeletedMatchesService().addListener(_onDeletedMatchesChanged);
@@ -65,8 +66,11 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void _onProfileChanged() {
     if (scope != UpcomingMatchesScope.myMatches) return;
-    _rebuildVisibleMatches();
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_isDisposed) return;
+      _rebuildVisibleMatches();
+      notifyListeners();
+    });
   }
 
   /// Seeds lists from Home (or another screen) so the initial GET is skipped.
@@ -231,8 +235,15 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     DeletedMatchesService().removeListener(_onDeletedMatchesChanged);
     ProfileService().removeListener(_onProfileChanged);
     super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
   }
 }
