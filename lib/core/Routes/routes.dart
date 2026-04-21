@@ -22,6 +22,7 @@ import 'package:sport_finding/feature/view/Home/components/user_match_details_sc
 import 'package:sport_finding/feature/view/BottomBar/bottom_bar_screen.dart';
 import 'package:sport_finding/feature/view/ChooseSport/choose_sport_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/match_created_done_screen.dart';
+import 'package:sport_finding/feature/view/Home/components/location_search_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/see_all_invated_player_screen.dart';
 import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
@@ -157,6 +158,14 @@ class Routes {
             RoutesName.createMatchScreen,
 
             CreateMatchScreen(),
+          ),
+        );
+      case RoutesName.locationSearchScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.locationSearchScreen,
+            const LocationSearchScreen(),
           ),
         );
       case RoutesName.editMatchScreen:

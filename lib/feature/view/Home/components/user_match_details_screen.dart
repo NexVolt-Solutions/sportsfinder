@@ -37,8 +37,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
     super.didChangeDependencies();
     if (_scheduledInitialBind) return;
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is DiscoveryMatch &&
-        context.read<HostDetailScreenViewModel>().currentMatch == null) {
+    if (args is DiscoveryMatch) {
       _scheduledInitialBind = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -85,6 +84,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
     return Consumer<HostDetailScreenViewModel>(
       builder: (context, model, _) {
         final match = model.currentMatch ?? routeMatch;
+        final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -163,14 +163,15 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                           titleStyle: context.appText.text14W600,
                         ),
                       ] else ...[
-                        CardWidget(
-                          padding: context.padSym(h: 82, v: 26),
-                          child: NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: '${match.resolvedHostMatchesPlayed}',
-                            subText: AppText.matchesPlayed,
+                        if (showPlayedMatchesCard)
+                          CardWidget(
+                            padding: context.padSym(h: 82, v: 26),
+                            child: NormalText(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              titleText: '${match.hostMatchesPlayed}',
+                              subText: AppText.matchesPlayed,
+                            ),
                           ),
-                        ),
                       ],
                       SizedBox(height: context.h(16)),
                       NormalText(
@@ -182,18 +183,30 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       ),
                       SizedBox(height: context.h(16)),
                       SectionHeaderWidget(title: AppText.participatedPlayers),
-                      ...List.generate(
-                        model.rosterCount,
-                        (index) => UserMatchCard(
-                          onCardTap: () => match.pushPublicProfileForPlayer(
-                            context,
-                            displayName: model.rosterNameAt(index),
-                            userIdSuffix: 'match_detail_$index',
+                      if (model.rosterCount == 0) ...[
+                        Padding(
+                          padding: context.padSym(v: 12),
+                          child: Text(
+                            AppText.noPlayersOnRoster,
+                            style: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
                           ),
-                          title: model.rosterNameAt(index),
-                          subTitle: model.rosterSkillAt(index),
                         ),
-                      ),
+                      ] else ...[
+                        ...List.generate(
+                          model.rosterCount,
+                          (index) => UserMatchCard(
+                            onCardTap: () => match.pushPublicProfileForPlayer(
+                              context,
+                              displayName: model.rosterNameAt(index),
+                              userIdSuffix: 'match_detail_$index',
+                            ),
+                            title: model.rosterNameAt(index),
+                            subTitle: model.rosterSkillAt(index),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

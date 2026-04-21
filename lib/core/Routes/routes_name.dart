@@ -16,6 +16,7 @@ class RoutesName {
   static const String userMatchDetailsScreen = 'user_match_details_screen';
   static const String hostDetailsScreen = 'host_details_screen';
   static const String createMatchScreen = 'create_match_screen';
+  static const String locationSearchScreen = 'location_search_screen';
   static const String editMatchScreen = 'edit_match_screen';
   static const String matchCreatedDoneScreen = 'match_created_done_screen';
   static const String allMemberScreen = 'all_member_screen';

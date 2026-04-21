@@ -194,6 +194,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Future<void> _handleClearMessages() async {
+    final service = context.read<NotificationService>();
+    if (service.notifications.isEmpty) return;
+    service.clearAllNotifications();
+    if (!mounted) return;
+    setState(() {
+      _actionLoading.clear();
+      _resolvedInviteActions.clear();
+    });
+    AppSnackBar.show('All messages cleared');
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
@@ -243,20 +255,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(width: context.w(28)),
-                      GestureDetector(
-                        onTap: service.hasUnread && !service.isMarkingAllRead
-                            ? _handleReadAll
-                            : null,
-                        behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          service.isMarkingAllRead
-                              ? '${AppText.readAll}...'
-                              : AppText.readAll,
-                          style: context.appText.text14W600.copyWith(
-                            color: service.hasUnread ? c.primary : c.greylight,
-                          ),
+                      PopupMenuButton<_NotificationMenuAction>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: c.greyDark,
+                          size: context.w(22),
                         ),
+                        onSelected: (action) {
+                          switch (action) {
+                            case _NotificationMenuAction.readAll:
+                              _handleReadAll();
+                              break;
+                            case _NotificationMenuAction.clearMessages:
+                              _handleClearMessages();
+                              break;
+                          }
+                        },
+                        itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
+                          PopupMenuItem<_NotificationMenuAction>(
+                            value: _NotificationMenuAction.readAll,
+                            enabled: service.hasUnread && !service.isMarkingAllRead,
+                            child: Text(
+                              service.isMarkingAllRead
+                                  ? '${AppText.readAll}...'
+                                  : AppText.readAll,
+                            ),
+                          ),
+                          PopupMenuItem<_NotificationMenuAction>(
+                            value: _NotificationMenuAction.clearMessages,
+                            enabled: visibleNotifications.isNotEmpty,
+                            child: const Text('Clear messages'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -581,3 +611,5 @@ class _ActionPill extends StatelessWidget {
 }
 
 enum _ResolvedInviteAction { accepted, declined }
+
+enum _NotificationMenuAction { readAll, clearMessages }
