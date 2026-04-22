@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ),
                 CustomButton(
                   text: "Login",
-                  // isLoading: model.isLoading,
+                  isLoading: model.isLoading,
                   onTap: () async {
                     final result = await model.loginUser();
 
@@ -126,8 +126,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 SocialButtonWidget(
                   imagePath: AppAssets.gmailIcon,
                   text: AppText.continueWithGoogle,
-                  onTap: () {
-                    print("Google Login");
+                  isLoading: model.isGoogleLoading,
+                  onTap: () async {
+                    final result = await model.loginWithGoogle();
+
+                    if (!context.mounted || result == null) return;
+
+                    if (result == "SKILL_LEVEL") {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        RoutesName.skillLevelScreen,
+                      );
+                    } else if (result == "HOME") {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        RoutesName.bottomBarScreen,
+                        arguments: BottomBarScreenViewModel.homeIndex,
+                      );
+                    } else {
+                      AppSnackBar.show(
+                        result,
+                        behavior: SnackBarBehavior.floating,
+                      );
+                    }
                   },
                 ),
                 SizedBox(height: context.h(12)),

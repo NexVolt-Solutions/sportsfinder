@@ -1,0 +1,88 @@
+{
+  "project_info": {
+    "project_number": "147032468406",
+    "project_id": "sportfinding-ttagmu",
+    "storage_bucket": "sportfinding-ttagmu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:147032468406:android:253ece4655d6a84fe56f17",
+        "android_client_info": {
+          "package_name": "com.example.sport_finding"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "147032468406-cj792ti9lqaldlonhl93p04vuui6rufv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmI7ykKeJmb9jupUjsr8nlno8H_bBzG5A"
+        },
+        {
+          "current_key": "AIzaSyBu_BZ3SA3Mm36f4zRHrAPWyEw9F_2kcKg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "147032468406-cj792ti9lqaldlonhl93p04vuui6rufv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "147032468406-u2dud8ekavnorss76179sf0co7d9bhe1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sportfinding.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:147032468406:android:76d70e077490946fe56f17",
+        "android_client_info": {
+          "package_name": "com.sportfinding.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "147032468406-cj792ti9lqaldlonhl93p04vuui6rufv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmI7ykKeJmb9jupUjsr8nlno8H_bBzG5A"
+        },
+        {
+          "current_key": "AIzaSyBu_BZ3SA3Mm36f4zRHrAPWyEw9F_2kcKg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "147032468406-cj792ti9lqaldlonhl93p04vuui6rufv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "147032468406-u2dud8ekavnorss76179sf0co7d9bhe1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sportfinding.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

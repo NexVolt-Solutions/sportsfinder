@@ -1,12 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/Data/model/GoogleAuth/google_auth_request_model.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 
 class LoginScreenViewModel extends ChangeNotifier {
-  final LoginRepository repository;
+  LoginScreenViewModel({
+    required this.repository,
+    required this.googleAuthRepository,
+  });
 
-  LoginScreenViewModel({required this.repository});
+  final LoginRepository repository;
+  final GoogleAuthRepository googleAuthRepository;
 
   final _formKey = GlobalKey<FormState>();
   GlobalKey<FormState> get formKey => _formKey;
@@ -20,14 +28,28 @@ class LoginScreenViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  void _print(String msg) => debugPrint("🔵 $msg");
+  bool _isGoogleLoading = false;
+  bool get isGoogleLoading => _isGoogleLoading;
+
+  static Future<void>? _googleSignInInitialization;
+  static const String _googleClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+  );
+  static const String _googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
+
+  static Future<void> _ensureGoogleSignInInitialized() {
+    return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
+      clientId: _googleClientId.isEmpty ? null : _googleClientId,
+      serverClientId:
+          _googleServerClientId.isEmpty ? null : _googleServerClientId,
+    );
+  }
 
   Future<String?> loginUser() async {
-    _print("========== LOGIN START ==========");
-
     if (!(_formKey.currentState?.validate() ?? false)) {
-      _print("❌ Form validation failed");
-      return "Please fill all the fields";
+      return 'Please fill all the fields';
     }
 
     try {
@@ -37,9 +59,6 @@ class LoginScreenViewModel extends ChangeNotifier {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      _print("📧 Email: $email");
-      _print("🔑 Password: ${'*' * password.length}");
-
       final response = await repository.loginUser(
         email,
         password,
@@ -48,37 +67,74 @@ class LoginScreenViewModel extends ChangeNotifier {
         'token_type',
       );
 
-      _print("📦 API RESPONSE:");
-      _print("$response");
-
       final accessToken = response['accessToken'];
       final refreshToken = response['refreshToken'];
       final tokenType = response['tokenType'];
 
-      _print("🔐 AccessToken: $accessToken");
-
       if (accessToken == null || accessToken.toString().isEmpty) {
-        _print("❌ No access token received");
-        return "Login failed: No token received";
+        return 'Login failed: No token received';
       }
 
       await _saveTokens(accessToken, refreshToken, tokenType);
 
       final isOnboardingCompleted =
           await AppPreferences.isOnboardingCompleted();
-
-      _print("📲 Onboarding: $isOnboardingCompleted");
-
-      _print("========== LOGIN SUCCESS ==========");
-
-      return isOnboardingCompleted ? "HOME" : "SKILL_LEVEL";
+      return isOnboardingCompleted ? 'HOME' : 'SKILL_LEVEL';
     } catch (e) {
-      _print("❌ ERROR: $e");
-      return e.toString();
+      return _cleanError(e);
     } finally {
       _isLoading = false;
       notifyListeners();
-      _print("========== LOGIN END ==========");
+    }
+  }
+
+  Future<String?> loginWithGoogle() async {
+    if (_isGoogleLoading) {
+      return null;
+    }
+
+    try {
+      _isGoogleLoading = true;
+      notifyListeners();
+
+      await _ensureGoogleSignInInitialized();
+
+      if (!GoogleSignIn.instance.supportsAuthenticate()) {
+        return 'Google sign-in is not supported on this platform.';
+      }
+
+      final GoogleSignInAccount account =
+          await GoogleSignIn.instance.authenticate();
+      final String? idToken = account.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        return 'Google ID token not received. Check Firebase/Google setup.';
+      }
+
+      final response = await googleAuthRepository.loginWithGoogle(
+        GoogleAuthRequestModel(idToken: idToken),
+      );
+
+      if (response.accessToken.isEmpty) {
+        return 'Google login failed: No access token received';
+      }
+
+      await _saveTokens(
+        response.accessToken,
+        response.refreshToken,
+        response.tokenType,
+      );
+
+      final isOnboardingCompleted =
+          await AppPreferences.isOnboardingCompleted();
+      return isOnboardingCompleted ? 'HOME' : 'SKILL_LEVEL';
+    } on GoogleSignInException catch (e) {
+      return _googleErrorMessage(e);
+    } catch (e) {
+      return _cleanError(e);
+    } finally {
+      _isGoogleLoading = false;
+      notifyListeners();
     }
   }
 
@@ -92,31 +148,54 @@ class LoginScreenViewModel extends ChangeNotifier {
       refreshToken: refreshToken,
       tokenType: tokenType,
     );
-
-    _print("💾 Tokens saved successfully");
   }
 
   static Future<String?> getAccessToken() async {
-    final token = await AppPreferences.getAccessToken();
-    debugPrint("🔵 TOKEN: $token");
-    return token;
+    return AppPreferences.getAccessToken();
   }
 
   static Future<bool> isLoggedIn() async {
-    final result = await AppPreferences.isLoggedIn();
-    debugPrint("🔵 IS LOGGED IN: $result");
-    return result;
+    return AppPreferences.isLoggedIn();
   }
 
   static Future<void> logout() async {
+    try {
+      await _ensureGoogleSignInInitialized();
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {}
+
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {}
+
     await AppPreferences.clearAuthSession();
     ProfileService().clear();
-    debugPrint("🔵 USER LOGGED OUT (auth cleared; onboarding prefs kept)");
+    debugPrint('USER LOGGED OUT (auth cleared; onboarding prefs kept)');
+  }
+
+  String _googleErrorMessage(GoogleSignInException error) {
+    switch (error.code) {
+      case GoogleSignInExceptionCode.canceled:
+        return 'Google sign-in was canceled.';
+      case GoogleSignInExceptionCode.clientConfigurationError:
+        return 'Google sign-in configuration is invalid. Check Firebase setup.';
+      case GoogleSignInExceptionCode.uiUnavailable:
+        return 'Google sign-in UI is unavailable right now.';
+      default:
+        return error.description ?? 'Google sign-in failed.';
+    }
+  }
+
+  String _cleanError(Object error) {
+    final message = error.toString();
+    if (message.startsWith('Exception: ')) {
+      return message.substring('Exception: '.length);
+    }
+    return message;
   }
 
   @override
   void dispose() {
-    _print("Dispose ViewModel");
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
