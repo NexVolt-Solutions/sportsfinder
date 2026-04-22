@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repository.dart';
 import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
@@ -57,6 +58,7 @@ class RouteProviders {
         return ChangeNotifierProvider(
           create: (_) => LoginScreenViewModel(
             repository: LoginRepository(apiService: ApiService()),
+            googleAuthRepository: GoogleAuthRepository(apiService: ApiService()),
           ),
           child: child,
         );

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 
 class ApiService {
@@ -123,7 +124,7 @@ class ApiService {
             await http.MultipartFile.fromPath(
               fileField,
               file.path,
-              contentType: http.MediaType('image', mimeType),
+              contentType: MediaType('image', mimeType),
             ),
           );
         }
@@ -135,7 +136,7 @@ class ApiService {
             fileField,
             fileBytes,
             filename: fileName,
-            contentType: http.MediaType('image', mimeType),
+            contentType: MediaType('image', mimeType),
           ),
         );
       }
@@ -208,7 +209,7 @@ class ApiService {
             await http.MultipartFile.fromPath(
               fileField,
               file.path,
-              contentType: http.MediaType(
+              contentType: MediaType(
                 'image',
                 ext == 'jpg' ? 'jpeg' : ext,
               ), // ✅ FIXED
@@ -224,7 +225,7 @@ class ApiService {
             fileField,
             fileBytes,
             filename: fileName,
-            contentType: http.MediaType(
+            contentType: MediaType(
               'image',
               ext == 'jpg' ? 'jpeg' : ext,
             ), // ✅ FIXED

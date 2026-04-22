@@ -132,8 +132,12 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                   ),
                   child: _isLoading
                       ? Padding(
-                          padding: EdgeInsets.symmetric(vertical: context.h(16)),
-                          child: const Center(child: CircularProgressIndicator()),
+                          padding: EdgeInsets.symmetric(
+                            vertical: context.h(16),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         )
                       : _error != null
                       ? Padding(
@@ -160,7 +164,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                       : ListView.separated(
                           shrinkWrap: true,
                           itemCount: _results.length,
-                          separatorBuilder: (_, __) => Divider(
+                          separatorBuilder: (_, _) => Divider(
                             color: context.appColors.greylight,
                             height: 1,
                           ),
