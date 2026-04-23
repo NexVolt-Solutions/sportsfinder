@@ -1,12 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/model/GoogleAuth/google_auth_request_model.dart';
+import 'package:sport_finding/core/Constants/google_sign_in_config.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
-import 'package:sport_finding/firebase_options.dart';
 
 class LoginScreenViewModel extends ChangeNotifier {
   LoginScreenViewModel({
@@ -40,14 +40,47 @@ class LoginScreenViewModel extends ChangeNotifier {
     'GOOGLE_SERVER_CLIENT_ID',
   );
 
-  /// `google_sign_in` needs this to request an ID token for your API. Build-time
-  /// env wins; otherwise we use the OAuth client from FlutterFire (same Firebase project).
+  /// Web OAuth 2.0 client ID for Android Credential Manager (`serverClientId`).
+  /// Order: `--dart-define=GOOGLE_SERVER_CLIENT_ID`, then
+  /// [kGoogleOauth2WebClientId], then `null` (native `default_web_client_id` from
+  /// `google-services.json` if Gradle generated it). **Never** use the iOS client here.
   static String? get _resolvedServerClientId {
-    if (_googleServerClientId.isNotEmpty) return _googleServerClientId;
-    return DefaultFirebaseOptions.ios.iosClientId;
+    if (_googleServerClientId.isNotEmpty) {
+      return _googleServerClientId;
+    }
+    if (kGoogleOauth2WebClientId.isNotEmpty) {
+      return kGoogleOauth2WebClientId;
+    }
+    return null;
+  }
+
+  static void _logGoogle(String message) {
+    debugPrint(
+      '[GoogleAuth] ${DateTime.now().toIso8601String()} $message',
+    );
+  }
+
+  /// OAuth client IDs are not secrets; still avoid dumping huge strings.
+  static String _describeOAuthId(String? id) {
+    if (id == null) {
+      return 'null';
+    }
+    if (id.isEmpty) {
+      return 'empty';
+    }
+    final tail = id.length > 24 ? '…${id.substring(id.length - 20)}' : id;
+    return 'len=${id.length} $tail';
   }
 
   static Future<void> _ensureGoogleSignInInitialized() {
+    if (_googleSignInInitialization == null) {
+      _logGoogle(
+        'GoogleSignIn.initialize: '
+        'clientId=${_describeOAuthId(_googleClientId.isEmpty ? null : _googleClientId)} '
+        'serverClientId=${_describeOAuthId(_resolvedServerClientId)} '
+        '(${_googleServerClientId.isNotEmpty ? "GOOGLE_SERVER_CLIENT_ID" : kGoogleOauth2WebClientId.isNotEmpty ? "kGoogleOauth2WebClientId" : "null (use default_web_client_id from google-services if present)"})',
+      );
+    }
     return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
       clientId: _googleClientId.isEmpty ? null : _googleClientId,
       serverClientId: _resolvedServerClientId,
@@ -97,34 +130,57 @@ class LoginScreenViewModel extends ChangeNotifier {
 
   Future<String?> loginWithGoogle() async {
     if (_isGoogleLoading) {
+      _logGoogle('loginWithGoogle: skipped (already loading)');
       return null;
     }
 
     try {
       _isGoogleLoading = true;
       notifyListeners();
+      _logGoogle('loginWithGoogle: start');
 
       await _ensureGoogleSignInInitialized();
+      _logGoogle('loginWithGoogle: init done');
 
-      if (!GoogleSignIn.instance.supportsAuthenticate()) {
+      final supportsAuth = GoogleSignIn.instance.supportsAuthenticate();
+      _logGoogle('loginWithGoogle: supportsAuthenticate()=$supportsAuth');
+      if (!supportsAuth) {
+        _logGoogle('loginWithGoogle: early exit — not supported on platform');
         return 'Google sign-in is not supported on this platform.';
       }
 
+      _logGoogle('loginWithGoogle: calling authenticate()…');
       final GoogleSignInAccount account =
           await GoogleSignIn.instance.authenticate();
       final String? idToken = account.authentication.idToken;
 
+      _logGoogle(
+        'loginWithGoogle: account id=${account.id} '
+        'email=${account.email} '
+        'idToken: ${idToken == null || idToken.isEmpty ? "MISSING" : "len=${idToken.length} (ok)"}',
+      );
+
       if (idToken == null || idToken.isEmpty) {
+        _logGoogle(
+          'loginWithGoogle: early exit — no idToken (Check SHA-1 in Firebase, serverClientId, Play services)',
+        );
         return 'Google ID token not received. Check Firebase/Google setup.';
       }
 
+      _logGoogle('loginWithGoogle: POST /api/v1/auth/google (idToken not logged)');
       final response = await googleAuthRepository.loginWithGoogle(
         GoogleAuthRequestModel(idToken: idToken),
       );
 
       if (response.accessToken.isEmpty) {
+        _logGoogle('loginWithGoogle: API returned empty accessToken');
         return 'Google login failed: No access token received';
       }
+
+      _logGoogle(
+        'loginWithGoogle: API ok accessToken len=${response.accessToken.length} '
+        'refreshToken=${response.refreshToken == null || response.refreshToken!.isEmpty ? "empty" : "len=${response.refreshToken!.length}"}',
+      );
 
       await _saveTokens(
         response.accessToken,
@@ -134,14 +190,26 @@ class LoginScreenViewModel extends ChangeNotifier {
 
       final isOnboardingCompleted =
           await AppPreferences.isOnboardingCompleted();
-      return isOnboardingCompleted ? 'HOME' : 'SKILL_LEVEL';
-    } on GoogleSignInException catch (e) {
+      final route = isOnboardingCompleted ? 'HOME' : 'SKILL_LEVEL';
+      _logGoogle('loginWithGoogle: success → route=$route');
+      return route;
+    } on GoogleSignInException catch (e, st) {
+      _logGoogle(
+        'loginWithGoogle: GoogleSignInException '
+        'code=${e.code} description=${e.description} runtimeType=${e.runtimeType}',
+      );
+      debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
       return _googleErrorMessage(e);
-    } catch (e) {
+    } catch (e, st) {
+      _logGoogle(
+        'loginWithGoogle: unhandled error type=${e.runtimeType} message=$e',
+      );
+      debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
       return _cleanError(e);
     } finally {
       _isGoogleLoading = false;
       notifyListeners();
+      _logGoogle('loginWithGoogle: finished (loading cleared)');
     }
   }
 
