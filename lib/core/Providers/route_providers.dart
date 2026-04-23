@@ -32,7 +32,6 @@ import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboar
 import 'package:sport_finding/feature/view/Auth/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
-import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/splash_screen_view_model.dart';
 
 /// Central place for all route-level ChangeNotifier wiring.
 class RouteProviders {
@@ -44,11 +43,6 @@ class RouteProviders {
     Object? routeArguments,
   }) {
     switch (routeName) {
-      case RoutesName.splashScreen:
-        return ChangeNotifierProvider(
-          create: (_) => SplashScreenViewModel(),
-          child: child,
-        );
       case RoutesName.onboardingScreen:
         return ChangeNotifierProvider(
           create: (_) => OnboardingScreenViewModel(),
@@ -66,6 +60,7 @@ class RouteProviders {
         return ChangeNotifierProvider(
           create: (_) => SignUpViewModel(
             repository: SignUpRepository(apiService: ApiService()),
+            googleAuthRepository: GoogleAuthRepository(apiService: ApiService()),
           ),
           child: child,
         );

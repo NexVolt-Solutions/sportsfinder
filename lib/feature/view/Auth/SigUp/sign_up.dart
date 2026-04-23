@@ -200,6 +200,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -336,7 +337,28 @@ class SignUp extends StatelessWidget {
                   SocialButtonWidget(
                     imagePath: AppAssets.gmailIcon,
                     text: AppText.continueWithGoogle,
-                    onTap: () {},
+                    isLoading: model.isGoogleLoading,
+                    onTap: () async {
+                      final result = await model.loginWithGoogle();
+                      if (!context.mounted || result == null) return;
+                      if (result == "SKILL_LEVEL") {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          RoutesName.skillLevelScreen,
+                        );
+                      } else if (result == "HOME") {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          RoutesName.bottomBarScreen,
+                          arguments: BottomBarScreenViewModel.homeIndex,
+                        );
+                      } else {
+                        AppSnackBar.show(
+                          result,
+                          behavior: SnackBarBehavior.floating,
+                        );
+                      }
+                    },
                   ),
                   SizedBox(height: context.h(12)),
                   Center(

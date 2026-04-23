@@ -146,16 +146,40 @@ class LoginScreenViewModel extends ChangeNotifier {
         return 'Google sign-in is not supported on this platform.';
       }
 
-      _logGoogle('loginWithGoogle: calling authenticate()…');
-      final GoogleSignInAccount account =
-          await GoogleSignIn.instance.authenticate();
-      final String? idToken = account.authentication.idToken;
-
-      _logGoogle(
-        'loginWithGoogle: account id=${account.id} '
-        'email=${account.email} '
-        'idToken: ${idToken == null || idToken.isEmpty ? "MISSING" : "len=${idToken.length} (ok)"}',
-      );
+      _logGoogle('loginWithGoogle: calling authenticate() with scopeHint');
+      String? idToken;
+      try {
+        final GoogleSignInAccount account =
+            await GoogleSignIn.instance.authenticate(
+              scopeHint: const ['email', 'profile', 'openid'],
+            );
+        idToken = account.authentication.idToken;
+        _logGoogle(
+          'loginWithGoogle: account id=${account.id} '
+          'email=${account.email} '
+          'idToken: ${idToken == null || idToken.isEmpty ? "MISSING" : "len=${idToken.length} (ok)"}',
+        );
+      } on GoogleSignInException catch (e) {
+        if (e.code != GoogleSignInExceptionCode.canceled) rethrow;
+        _logGoogle(
+          'loginWithGoogle: authenticate() canceled; trying silent lightweight fallback',
+        );
+        final fallbackAccount = await GoogleSignIn.instance
+            .attemptLightweightAuthentication();
+        if (fallbackAccount == null) {
+          _logGoogle(
+            'loginWithGoogle: lightweight fallback returned null (still canceled/no cached auth)',
+          );
+          return _googleErrorMessage(e);
+        }
+        final fallbackAuth = fallbackAccount.authentication;
+        idToken = fallbackAuth.idToken;
+        _logGoogle(
+          'loginWithGoogle: fallback account id=${fallbackAccount.id} '
+          'email=${fallbackAccount.email} '
+          'idToken: ${idToken == null || idToken.isEmpty ? "MISSING" : "len=${idToken.length} (ok)"}',
+        );
+      }
 
       if (idToken == null || idToken.isEmpty) {
         _logGoogle(

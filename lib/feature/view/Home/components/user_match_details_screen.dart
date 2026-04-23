@@ -108,32 +108,20 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.calendarIcon,
-                            title: 'Date',
-                            value: match.date,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.calendarIcon,
+                              title: 'Date',
+                              value: match.date,
+                            ),
                           ),
-                          InfoItem(
-                            icon: AppAssets.clockIcon,
-                            title: 'Time',
-                            value: match.time,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: context.h(16)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InfoItem(
-                            icon: AppAssets.matchesIcon,
-                            title: AppText.skillLevel,
-                            value: match.skillLevel,
-                          ),
-                          InfoItem(
-                            icon: AppAssets.playerIcon,
-                            title: AppText.players,
-                            value:
-                                '${model.rosterCount}/${match.participantsTotal}',
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.clockIcon,
+                              title: 'Time',
+                              value: match.time,
+                            ),
                           ),
                         ],
                       ),
@@ -141,12 +129,30 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.locationIcon,
-                            title: AppText.location,
-                            value: match.location,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.matchesIcon,
+                              title: AppText.skillLevel,
+                              value: match.skillLevel,
+                            ),
+                          ),
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.playerIcon,
+                              title: AppText.players,
+                              value:
+                                  '${model.rosterCount}/${match.participantsTotal}',
+                            ),
                           ),
                         ],
+                      ),
+                      SizedBox(height: context.h(16)),
+                      InfoItem(
+                        icon: AppAssets.locationIcon,
+                        title: AppText.location,
+                        value: match.location,
+                        maxLines: 3,
                       ),
                       SizedBox(height: context.h(16)),
                       UserGreetingWidget(

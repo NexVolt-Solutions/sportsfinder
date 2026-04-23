@@ -39,19 +39,10 @@ import 'package:sport_finding/feature/view/Notifications/notifications_screen.da
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Otp/otp_verification_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
-import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case RoutesName.splashScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.splashScreen,
-            const SplashScreen(),
-          ),
-        );
       case RoutesName.onboardingScreen:
         return MaterialPageRoute(
           settings: settings,

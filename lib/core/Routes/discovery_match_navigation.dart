@@ -42,6 +42,7 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
         userId: '${id}_$userIdSuffix',
         displayName: name,
         initialMatchId: id,
+        canRateForMatch: !isUpcomingRelativeTo(DateTime.now()),
       ),
     );
   }
@@ -62,6 +63,7 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
         userId: uid,
         displayName: name,
         initialMatchId: id,
+        canRateForMatch: !isUpcomingRelativeTo(DateTime.now()),
       ),
     );
   }

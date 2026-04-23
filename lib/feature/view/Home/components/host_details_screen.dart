@@ -85,7 +85,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         '📝 [HostDetailsScreen] Current match sport BEFORE: ${match.sportType}',
       );
 
-       String dateStr = match.date;
+      String dateStr = match.date;
       String timeStr = match.time;
       if (result.scheduledAt != null && result.scheduledAt!.isNotEmpty) {
         try {
@@ -312,15 +312,20 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.calendarIcon,
-                            title: 'Date',
-                            value: match.date,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.calendarIcon,
+                              title: 'Date',
+                              value: match.date,
+                            ),
                           ),
-                          InfoItem(
-                            icon: AppAssets.clockIcon,
-                            title: 'Time',
-                            value: match.time,
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.clockIcon,
+                              title: 'Time',
+                              value: match.time,
+                            ),
                           ),
                         ],
                       ),
@@ -328,16 +333,21 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.matchesIcon,
-                            title: AppText.skillLevel,
-                            value: match.skillLevel,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.matchesIcon,
+                              title: AppText.skillLevel,
+                              value: match.skillLevel,
+                            ),
                           ),
-                          InfoItem(
-                            icon: AppAssets.playerIcon,
-                            title: AppText.players,
-                            value:
-                                '${model.rosterCount}/${match.participantsTotal}',
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.playerIcon,
+                              title: AppText.players,
+                              value:
+                                  '${model.rosterCount}/${match.participantsTotal}',
+                            ),
                           ),
                         ],
                       ),
@@ -346,6 +356,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         icon: AppAssets.locationIcon,
                         title: AppText.location,
                         value: match.location,
+                        maxLines: 3,
                       ),
                       SizedBox(height: context.h(16)),
                       Card(
@@ -464,7 +475,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       ],
                                     ),
                                   );
-                                  if (shouldRemove != true || !context.mounted) {
+                                  if (shouldRemove != true ||
+                                      !context.mounted) {
                                     return;
                                   }
                                   final message = await model
@@ -480,7 +492,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   }
                                 },
                                 onCardTap: () {
-                                  final uid = model.rosterUserIdAt(index).trim();
+                                  final uid = model
+                                      .rosterUserIdAt(index)
+                                      .trim();
                                   final name = model.rosterNameAt(index);
                                   if (uid.isEmpty || name.trim().isEmpty) {
                                     return;
@@ -591,80 +605,88 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           )
                         // ── all users from API ─────────────────────────────────────
                         else
-                          ListView.builder(
-                            itemCount: model.allUsers.length,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final user = model.allUsers[index];
-                              final sport = user.sports?.isNotEmpty == true
-                                  ? user.sports!.first
-                                  : null;
+                          Column(
+                            children: [
+                              SizedBox(height: context.h(12)),
+                              SizedBox(
+                                height: context.h(320),
+                                child: ListView.builder(
+                                  itemCount: model.allUsers.length,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemBuilder: (context, index) {
+                                    final user = model.allUsers[index];
+                                    final sport = user.sports?.isNotEmpty == true
+                                        ? user.sports!.first
+                                        : null;
 
-                              return PersonInvitedCard(
-                                playerName: user.fullName,
-                                matchName: sport?.sport ?? match.sportType,
-                                matchLevel:
-                                    sport?.skillLevel ?? match.skillLevel,
-                                destance:
-                                    user.location?.trim().isNotEmpty == true
-                                    ? user.location
-                                    : '${match.distanceKm.toStringAsFixed(1)} km',
-                                isShow: true,
-                                isInvited: model.isUserAlreadyInvited(
-                                  user.id?.trim() ?? '',
+                                    return PersonInvitedCard(
+                                      playerName: user.fullName,
+                                      matchName: sport?.sport ?? match.sportType,
+                                      matchLevel:
+                                          sport?.skillLevel ?? match.skillLevel,
+                                      destance:
+                                          user.location?.trim().isNotEmpty == true
+                                          ? user.location
+                                          : '${match.distanceKm.toStringAsFixed(1)} km',
+                                      isShow: true,
+                                      isInvited: model.isUserAlreadyInvited(
+                                        user.id?.trim() ?? '',
+                                      ),
+                                      isLoading: model.isInvitingUser(
+                                        user.id?.trim() ?? '',
+                                      ),
+                                      ontap: () async {
+                                        final userId = user.id?.trim() ?? '';
+                                        AppLogger.info(
+                                          'Invite button tapped from HostDetailsScreen',
+                                          tag: 'HostDetailsScreen',
+                                        );
+                                        AppLogger.debug(
+                                          'Tapped matchId: ${match.id}',
+                                          tag: 'HostDetailsScreen',
+                                        );
+                                        AppLogger.debug(
+                                          'Tapped userId: $userId',
+                                          tag: 'HostDetailsScreen',
+                                        );
+                                        if (userId.isEmpty) {
+                                          if (!context.mounted) return;
+                                          AppSnackBar.show('User id is missing');
+                                          return;
+                                        }
+
+                                        final message = await model
+                                            .inviteUserToMatch(
+                                              matchId: match.id,
+                                              userId: userId,
+                                            );
+
+                                        AppLogger.debug(
+                                          'Invite result message: $message',
+                                          tag: 'HostDetailsScreen',
+                                        );
+                                        if (!context.mounted || message == null) {
+                                          return;
+                                        }
+                                        AppSnackBar.show(message);
+                                      },
+                                      cardOnTap: () {
+                                        ListOfAllUserService().recordProfileView(
+                                          user,
+                                        );
+                                        final uid = user.id?.trim() ?? '';
+                                        if (uid.isEmpty) return;
+                                        match.pushPublicProfileForUser(
+                                          context,
+                                          userId: uid,
+                                          displayName: user.fullName ?? '',
+                                        );
+                                      },
+                                    );
+                                  },
                                 ),
-                                isLoading: model.isInvitingUser(
-                                  user.id?.trim() ?? '',
-                                ),
-                                ontap: () async {
-                                  final userId = user.id?.trim() ?? '';
-                                  AppLogger.info(
-                                    'Invite button tapped from HostDetailsScreen',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  AppLogger.debug(
-                                    'Tapped matchId: ${match.id}',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  AppLogger.debug(
-                                    'Tapped userId: $userId',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  if (userId.isEmpty) {
-                                    if (!context.mounted) return;
-                                    AppSnackBar.show('User id is missing');
-                                    return;
-                                  }
-
-                                  final message = await model.inviteUserToMatch(
-                                    matchId: match.id,
-                                    userId: userId,
-                                  );
-
-                                  AppLogger.debug(
-                                    'Invite result message: $message',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  if (!context.mounted || message == null) {
-                                    return;
-                                  }
-                                  AppSnackBar.show(message);
-                                },
-                                cardOnTap: () {
-                                  ListOfAllUserService().recordProfileView(
-                                    user,
-                                  );
-                                  final uid = user.id?.trim() ?? '';
-                                  if (uid.isEmpty) return;
-                                  match.pushPublicProfileForUser(
-                                    context,
-                                    userId: uid,
-                                    displayName: user.fullName ?? '',
-                                  );
-                                },
-                              );
-                            },
+                              ),
+                            ],
                           ),
 
                         SizedBox(height: context.h(16)),
@@ -689,6 +711,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             SizedBox(width: context.w(4)),
                             Expanded(
                               child: NormalText(
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 subText: match.location,
                                 subColor: context.appColors.greylight,
                               ),
@@ -857,8 +881,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   if (!result && model.joinLeaveError != null) {
                                     AppSnackBar.show(
                                       model.joinLeaveError!,
-                                      backgroundColor:
-                                          context.appColors.error,
+                                      backgroundColor: context.appColors.error,
                                     );
                                   } else if (result) {
                                     AppSnackBar.show(

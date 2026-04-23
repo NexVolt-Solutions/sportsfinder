@@ -97,6 +97,9 @@ class PublicProfileViewModel extends ChangeNotifier {
   String? get followError => _followError;
   String get selectedUserId => _args?.userId.trim() ?? '';
   String get initialMatchId => _args?.initialMatchId?.trim() ?? '';
+  bool get canRateForMatch => _args?.canRateForMatch ?? false;
+  String get rateUnavailableMessage =>
+      'You can rate players only after the match is completed.';
 
   /// Hide follow / message / rate when viewing your own public profile.
   bool get isOwnProfile =>
@@ -309,15 +312,16 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> onFollowTap(BuildContext context) async {
-    if (isOwnProfile ||
-        selectedUserId.isEmpty ||
-        _followLoading ||
-        isFollowing) {
+    if (isOwnProfile || selectedUserId.isEmpty || _followLoading) {
       log(
         'ℹ️ [PublicProfileVM] Follow tap ignored '
         '(isOwnProfile: $isOwnProfile, selectedUserId: $selectedUserId, '
         'isLoading: $_followLoading, isFollowing: $isFollowing)',
       );
+      return;
+    }
+    if (isFollowing) {
+      openFollowers(context);
       return;
     }
 
@@ -337,6 +341,7 @@ class PublicProfileViewModel extends ChangeNotifier {
 
       if (!context.mounted) return;
       AppSnackBar.show('User followed successfully');
+      openFollowers(context);
     } catch (e) {
       if (_disposed) return;
       log('❌ [PublicProfileVM] Follow API failed for userId: $selectedUserId');
@@ -378,6 +383,11 @@ class PublicProfileViewModel extends ChangeNotifier {
     }
     if (matchId.trim().isEmpty) {
       _submitReviewError = AppText.reviewValidationMatchId;
+      _safeNotifyListeners();
+      return false;
+    }
+    if (!canRateForMatch) {
+      _submitReviewError = rateUnavailableMessage;
       _safeNotifyListeners();
       return false;
     }

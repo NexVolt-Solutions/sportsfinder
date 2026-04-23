@@ -107,7 +107,11 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: context.h(12)),
                                 _RatePlayerButton(
-                                  onTap: () => _showRateSheet(context, model),
+                                  onTap: model.canRateForMatch
+                                      ? () => _showRateSheet(context, model)
+                                      : () => AppSnackBar.show(
+                                          model.rateUnavailableMessage,
+                                        ),
                                 ),
                                 SizedBox(height: context.h(20)),
                               ] else
@@ -123,7 +127,11 @@ class PublicProfileScreen extends StatelessWidget {
                                     model.openFollowing(context),
                                 onRatingTap: model.isOwnProfile
                                     ? null
-                                    : () => _showRateSheet(context, model),
+                                    : model.canRateForMatch
+                                    ? () => _showRateSheet(context, model)
+                                    : () => AppSnackBar.show(
+                                        model.rateUnavailableMessage,
+                                      ),
                               ),
                               SizedBox(height: context.h(16)),
                               NormalText(

@@ -5,6 +5,7 @@ class PublicProfileArgs {
     required this.displayName,
     this.forceRefreshProfile = false,
     this.initialMatchId,
+    this.canRateForMatch = true,
   });
 
   final String userId;
@@ -14,11 +15,13 @@ class PublicProfileArgs {
   /// `GET /api/v1/users/me` again so Settings → preview matches the API.
   final bool forceRefreshProfile;
   final String? initialMatchId;
+  final bool canRateForMatch;
 
   /// Settings → Private profile: same user as `/users/me`, always refresh.
   factory PublicProfileArgs.privateProfilePreview() => const PublicProfileArgs(
     userId: '',
     displayName: '',
     forceRefreshProfile: true,
+    canRateForMatch: false,
   );
 }

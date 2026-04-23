@@ -91,6 +91,7 @@ class SeeAllInvatedPlayerScreen extends StatelessWidget {
                                 userId: row.user.id,
                                 displayName: name,
                                 initialMatchId: matchId,
+                                canRateForMatch: false,
                               ),
                             );
                           },
