@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
- import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
@@ -40,7 +41,7 @@ class LoginScreenViewModel extends ChangeNotifier {
     'GOOGLE_SERVER_CLIENT_ID',
   );
 
- static String? get _resolvedServerClientId {
+  static String? get _resolvedServerClientId {
     if (_googleServerClientId.isNotEmpty) {
       return _googleServerClientId;
     }
@@ -163,6 +164,20 @@ class LoginScreenViewModel extends ChangeNotifier {
         return 'Google ID token not received. Check Firebase/Google setup.';
       }
 
+      if (kDebugMode) {
+        final aud = idTokenGoogleAud(idToken);
+        _logGoogle(
+          'loginWithGoogle: id_token JWT aud=$aud '
+          '(API must verify audience = $kGoogleIdTokenExpectedAudience)',
+        );
+        if (aud != null && aud != kGoogleIdTokenExpectedAudience) {
+          _logGoogle(
+            'loginWithGoogle: WARNING — aud != Web client id; '
+            'check GoogleSignIn.initialize(serverClientId: …)',
+          );
+        }
+      }
+
       _logGoogle('loginWithGoogle: POST /api/v1/auth/google (idToken not logged)');
       final response = await googleAuthRepository.loginWithGoogle(
         GoogleAuthRequestModel(idToken: idToken),
@@ -201,7 +216,14 @@ class LoginScreenViewModel extends ChangeNotifier {
         'loginWithGoogle: unhandled error type=${e.runtimeType} message=$e',
       );
       debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
-      return _cleanError(e);
+      final msg = _cleanError(e);
+      if (msg.contains('audience mismatch') ||
+          msg.contains('Google token audience')) {
+        return 'Sign-in failed: the server rejected the Google token audience. '
+            'The API must verify ID tokens using the Firebase Web client ID: '
+            '$kGoogleIdTokenExpectedAudience (same as GoogleSignIn serverClientId).';
+      }
+      return msg;
     } finally {
       _isGoogleLoading = false;
       notifyListeners();

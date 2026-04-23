@@ -2,7 +2,7 @@
 
 **App name:** SportFinding (Android `android:label`, iOS `CFBundleDisplayName`, `MaterialApp.title`, store listings).
 
-**Icons:** Source file `assets/icon/app_icon.png`; Android adaptive background uses `assets/icon/ic_adaptive_bg_transparent.png` (fully transparent) so no solid color is forced behind the artwork. Regenerate after changing icons:
+**Icons:** Source file `assets/icon/app_icon.png`. Android adaptive background is a solid color via `adaptive_icon_background: "#FFFFFF"` in `pubspec.yaml` (do not point at a missing PNG). Regenerate after changing icons:
 
 `dart run flutter_launcher_icons`
 
