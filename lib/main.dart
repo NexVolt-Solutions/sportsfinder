@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -11,7 +13,16 @@ import 'package:sport_finding/firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Firebase.apps.isEmpty) {
+  // Android: the default app comes from `google-services.json`. Passing
+  // `DefaultFirebaseOptions` can still trigger [duplicate-app] if any field
+  // differs from native. Let the Android SDK own the default app.
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } else if (defaultTargetPlatform == TargetPlatform.android) {
+    await Firebase.initializeApp();
+  } else {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
