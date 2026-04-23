@@ -17,7 +17,6 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 class PublicProfileScreen extends StatelessWidget {
   const PublicProfileScreen({super.key, this.args});
 
-  /// From [RouteSettings.arguments]; avoids [ModalRoute.of] inside Provider `create`.
   final PublicProfileArgs? args;
 
   void _showRateSheet(BuildContext context, PublicProfileViewModel model) {
