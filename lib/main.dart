@@ -12,10 +12,7 @@ import 'package:sport_finding/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Android: the default app comes from `google-services.json`. Passing
-  // `DefaultFirebaseOptions` can still trigger [duplicate-app] if any field
-  // differs from native. Let the Android SDK own the default app.
+ 
   if (kIsWeb) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
