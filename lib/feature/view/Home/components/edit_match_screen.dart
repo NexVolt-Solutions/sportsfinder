@@ -353,7 +353,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                         hintText: 'Search location...',
                         controller: model.locationController,
                         items: const <String>[],
-                        asyncItemsBuilder: model.searchLocationSuggestions,
+                        asyncPlacesSearch: model.searchLocationSuggestions,
                       ),
                     ),
                     SizedBox(height: context.h(12)),

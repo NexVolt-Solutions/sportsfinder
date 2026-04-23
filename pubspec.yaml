@@ -26,6 +26,7 @@ dependencies:
   http_parser: ^4.1.2
   shared_preferences: ^2.5.5
   geolocator: ^14.0.2
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +47,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/config/maps.env
     - assets/logo/
     - assets/icon/
     - assets/sport/

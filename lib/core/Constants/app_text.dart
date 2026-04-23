@@ -7,8 +7,13 @@ class AppText {
 
   static const String noRouteFound = 'no Route Found';
   static const String verifyYourAccount = 'Verify Your Account';
-  static const String enterThe6DigitCodeWeHaveSentToYourEmail =
-      'Enter the 6-digit that we have sent to [EMAIL_ADDRESS]';
+  static String enterThe6DigitCodeWeHaveSentTo(String email) {
+    final e = email.trim();
+    if (e.isEmpty) {
+      return 'Enter the 6-digit code that we have sent to your email';
+    }
+    return 'Enter the 6-digit code that we have sent to $e';
+  }
   static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
   static const String skip = 'Skip';
   static const String sportFinding = 'SportFinding';

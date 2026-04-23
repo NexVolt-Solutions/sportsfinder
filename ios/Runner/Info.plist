@@ -72,6 +72,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>GMSApiKey</key>
+	<string>AIzaSyBvRb7DkwlU3NAirNeR5xIXorjwTRjCriw</string>
 	<key>GIDClientID</key>
 	<string>147032468406-u2dud8ekavnorss76179sf0co7d9bhe1.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>

@@ -13,9 +13,10 @@ class HomeScreenViewModel extends ChangeNotifier {
   final MyProfileRepository repository;
 
   HomeScreenViewModel({required this.repository}) {
-    // ✅ Delegate to the singleton — won't re-fetch if already loaded
+    // Defer so ProfileService does not notify during the first home build
+    // (avoids "setState during build" in listeners such as [AllUpcommingMatchesViewModel]).
     final service = ProfileService();
-    service.fetchMyProfile();
+    Future<void>.microtask(() => service.fetchMyProfile());
 
     // Listen to ProfileService changes and rebuild this ViewModel
     service.addListener(_onProfileServiceChanged);

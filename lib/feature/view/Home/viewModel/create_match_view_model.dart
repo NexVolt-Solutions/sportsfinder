@@ -5,6 +5,7 @@ import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/google_places_service.dart';
+import 'package:sport_finding/core/Network/places_search_result.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
@@ -296,7 +297,7 @@ class CreateMatchViewModel extends ChangeNotifier {
     return isEditMode ? updateMatchApi() : createMatchApi();
   }
 
-  Future<List<String>> searchLocationSuggestions(String query) {
+  Future<PlacesSearchResult> searchLocationSuggestions(String query) {
     return _googlePlacesService.searchPlaceSuggestions(query);
   }
 

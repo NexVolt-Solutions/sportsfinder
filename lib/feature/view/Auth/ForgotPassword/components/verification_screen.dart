@@ -336,7 +336,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
               NormalText(
                 titleText: AppText.verifyYourAccount,
-                subText: AppText.enterThe6DigitCodeWeHaveSentToYourEmail,
+                subText: AppText.enterThe6DigitCodeWeHaveSentTo(_email),
                 maxLines: 2,
               ),
               SizedBox(height: context.h(30)),

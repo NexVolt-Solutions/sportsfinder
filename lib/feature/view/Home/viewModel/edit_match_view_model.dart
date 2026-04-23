@@ -5,6 +5,7 @@ import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.da
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/google_places_service.dart';
+import 'package:sport_finding/core/Network/places_search_result.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
@@ -244,7 +245,7 @@ class EditMatchViewModel extends ChangeNotifier {
     }
   }
 
-  Future<List<String>> searchLocationSuggestions(String query) {
+  Future<PlacesSearchResult> searchLocationSuggestions(String query) {
     return _googlePlacesService.searchPlaceSuggestions(query);
   }
 

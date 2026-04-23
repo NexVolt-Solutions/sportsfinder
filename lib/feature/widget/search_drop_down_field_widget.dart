@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Network/places_search_result.dart';
 
 /// Searchable dropdown field - FIXED VERSION
 /// Eliminates all lifecycle, layout, and color issues
@@ -9,7 +10,8 @@ class SearchDropdownField extends StatefulWidget {
   final String? hintText;
   final TextEditingController controller;
   final List<String> items;
-  final Future<List<String>> Function(String query)? asyncItemsBuilder;
+  /// When set, queries Google Places Autocomplete (or your app’s search) for each query.
+  final Future<PlacesSearchResult> Function(String query)? asyncPlacesSearch;
 
   const SearchDropdownField({
     super.key,
@@ -17,7 +19,7 @@ class SearchDropdownField extends StatefulWidget {
     this.hintText,
     required this.controller,
     required this.items,
-    this.asyncItemsBuilder,
+    this.asyncPlacesSearch,
   });
 
   @override
@@ -55,7 +57,7 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
       builder: (ctx) => _DropdownSheet(
         searchController: _internalSearchController,
         items: widget.items,
-        asyncItemsBuilder: widget.asyncItemsBuilder,
+        asyncPlacesSearch: widget.asyncPlacesSearch,
       ),
     );
 
@@ -128,12 +130,12 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
 class _DropdownSheet extends StatefulWidget {
   final TextEditingController searchController;
   final List<String> items;
-  final Future<List<String>> Function(String query)? asyncItemsBuilder;
+  final Future<PlacesSearchResult> Function(String query)? asyncPlacesSearch;
 
   const _DropdownSheet({
     required this.searchController,
     required this.items,
-    this.asyncItemsBuilder,
+    this.asyncPlacesSearch,
   });
 
   @override
@@ -144,6 +146,7 @@ class _DropdownSheetState extends State<_DropdownSheet> {
   late List<String> _filtered;
   bool _isLoading = false;
   int _activeRequest = 0;
+  String? _asyncMessage;
 
   @override
   void initState() {
@@ -160,50 +163,67 @@ class _DropdownSheetState extends State<_DropdownSheet> {
 
   void _onSearchChanged() {
     if (!mounted) return;
-    final query = widget.searchController.text.toLowerCase().trim();
-    if (widget.asyncItemsBuilder != null) {
-      _loadAsyncItems(query);
+    final raw = widget.searchController.text.trim();
+    final qLower = raw.toLowerCase();
+    if (widget.asyncPlacesSearch != null) {
+      _loadAsyncItems(raw);
       return;
     }
     setState(() {
-      _filtered = query.isEmpty
+      _filtered = qLower.isEmpty
           ? widget.items
           : widget.items
-                .where((item) => item.toLowerCase().contains(query))
+                .where((item) => item.toLowerCase().contains(qLower))
                 .toList();
     });
   }
 
-  Future<void> _loadAsyncItems(String query) async {
+  Future<void> _loadAsyncItems(String queryTrimmed) async {
     final requestId = ++_activeRequest;
-    if (query.isEmpty) {
+    if (queryTrimmed.isEmpty) {
       setState(() {
         _isLoading = false;
         _filtered = widget.items;
+        _asyncMessage = null;
       });
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _asyncMessage = null;
     });
 
     try {
-      final results = await widget.asyncItemsBuilder!(query);
+      final result = await widget.asyncPlacesSearch!(queryTrimmed);
       if (!mounted || requestId != _activeRequest) return;
       setState(() {
-        _filtered = results;
+        _filtered = result.suggestions;
+        if (result.suggestions.isEmpty) {
+          if (result.missingApiKey) {
+            _asyncMessage = result.userMessage;
+          } else if (result.userMessage != null &&
+              result.userMessage!.trim().isNotEmpty) {
+            _asyncMessage = result.userMessage;
+          } else {
+            _asyncMessage = 'No locations found.';
+          }
+        } else {
+          _asyncMessage = null;
+        }
       });
     } catch (_) {
       if (!mounted || requestId != _activeRequest) return;
       setState(() {
         _filtered = const <String>[];
+        _asyncMessage = 'Could not search locations. Please try again.';
       });
     } finally {
-      if (!mounted || requestId != _activeRequest) return;
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted && requestId == _activeRequest) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -271,10 +291,11 @@ class _DropdownSheetState extends State<_DropdownSheet> {
                           child: Padding(
                             padding: EdgeInsets.all(24),
                             child: Text(
-                              'No items found',
+                              _asyncMessage ?? 'No items found',
                               style: context.appText.text14W400.copyWith(
                                 color: c.greylight,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         )
