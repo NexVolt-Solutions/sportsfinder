@@ -2,6 +2,7 @@ class UpdateProfileModel {
   final String id;
   final String fullName;
   final String? bio;
+  final String? location;
   final String? avatarUrl;
   final List<Sport> sports;
   final DateTime? updatedAt;
@@ -10,6 +11,7 @@ class UpdateProfileModel {
     required this.id,
     required this.fullName,
     this.bio,
+    this.location,
     this.avatarUrl,
     required this.sports,
     this.updatedAt,
@@ -21,6 +23,7 @@ class UpdateProfileModel {
       id: j['id'] ?? '',
       fullName: j['full_name'] ?? '',
       bio: j['bio'],
+      location: j['location']?.toString(),
       avatarUrl: j['avatar_url'],
       sports: (j['sports'] as List? ?? [])
           .map((e) => Sport.fromJson(e))
@@ -36,6 +39,7 @@ class UpdateProfileModel {
       "id": id,
       "full_name": fullName,
       "bio": bio,
+      "location": location,
       "avatar_url": avatarUrl,
       "sports": sports.map((e) => e.toJson()).toList(),
       "updated_at": updatedAt?.toIso8601String(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
@@ -12,6 +13,12 @@ import 'package:sport_finding/core/utils/match_form_sport_labels.dart';
 import 'package:sport_finding/core/Network/platform_options_store.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
+  void _safeNotifyListeners() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
+
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
   final DeleteMatchRepo _deleteRepo = DeleteMatchRepo();
   final GooglePlacesService _googlePlacesService = GooglePlacesService();
@@ -49,9 +56,11 @@ class EditMatchViewModel extends ChangeNotifier {
 
   Future<void> ensureOptionsLoaded() async {
     if (optionsLoaded) return;
+    await Future<void>.microtask(() {});
+    if (optionsLoaded) return;
     optionsLoading = true;
     optionsError = null;
-    notifyListeners();
+    _safeNotifyListeners();
     try {
       final o = await PlatformOptionsStore.instance.load();
       sportTypes = List<String>.from(o.sports);
@@ -63,7 +72,7 @@ class EditMatchViewModel extends ChangeNotifier {
       skillLevels = [];
     } finally {
       optionsLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 

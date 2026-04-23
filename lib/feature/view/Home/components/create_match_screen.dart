@@ -30,24 +30,30 @@ class CreateMatchScreen extends StatefulWidget {
 class _CreateMatchScreenState extends State<CreateMatchScreen> {
   bool _didPopulateEditState = false;
   bool _scheduledOptions = false;
+  /// Captured synchronously; never read [ModalRoute] after an async gap.
+  Object? _routeArgs;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _routeArgs ??= ModalRoute.of(context)?.settings.arguments;
     if (_scheduledOptions) return;
     _scheduledOptions = true;
     final model = context.read<CreateMatchViewModel>();
     model.ensureOptionsLoaded().then((_) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       if (model.optionsLoaded) {
-        _applyRouteAfterOptions(model);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          _applyRouteAfterOptions(model);
+        });
       }
     });
   }
 
   void _applyRouteAfterOptions(CreateMatchViewModel model) {
-    if (_didPopulateEditState) return;
-    final args = ModalRoute.of(context)?.settings.arguments;
+    if (!context.mounted || _didPopulateEditState) return;
+    final args = _routeArgs;
     if (args is UpdateMatchModel) {
       model.populateForEdit(args, context);
       _didPopulateEditState = true;
@@ -161,7 +167,11 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                     m.ensureOptionsLoaded().then((_) {
                                       if (!context.mounted) return;
                                       if (m.optionsLoaded) {
-                                        _applyRouteAfterOptions(m);
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (!context.mounted) return;
+                                          _applyRouteAfterOptions(m);
+                                        });
                                       }
                                     });
                                   },

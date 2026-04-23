@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
 import 'package:sport_finding/Data/Repositories/create_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
@@ -14,6 +15,12 @@ import 'package:sport_finding/core/utils/match_form_sport_labels.dart';
 import 'package:sport_finding/core/Network/platform_options_store.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
+  void _safeNotifyListeners() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
+
   final CreateMatchRepo _createRepo = CreateMatchRepo();
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
   final GooglePlacesService _googlePlacesService = GooglePlacesService();
@@ -57,9 +64,14 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   Future<void> ensureOptionsLoaded() async {
     if (optionsLoaded) return;
+    // Do not [notifyListeners] from the first synchronous part of
+    // [State.didChangeDependencies] — that runs during a parent’s build
+    // and triggers the framework `!_dirty` assertion.
+    await Future<void>.microtask(() {});
+    if (optionsLoaded) return;
     optionsLoading = true;
     optionsError = null;
-    notifyListeners();
+    _safeNotifyListeners();
     try {
       final o = await PlatformOptionsStore.instance.load();
       sportTypes = List<String>.from(o.sports);
@@ -71,7 +83,7 @@ class CreateMatchViewModel extends ChangeNotifier {
       skillLevels = [];
     } finally {
       optionsLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -297,7 +309,7 @@ class CreateMatchViewModel extends ChangeNotifier {
       'Loaded saved exact location into create match form: $savedLocation',
       tag: 'CreateMatchVM',
     );
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   Future<String> _resolveLocationForRequest() async {

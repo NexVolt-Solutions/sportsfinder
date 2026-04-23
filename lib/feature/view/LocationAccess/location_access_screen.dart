@@ -9,6 +9,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/onboarding_profile_sync.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
@@ -30,6 +31,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   Future<void> _finishOnboardingAndOpenHome(BuildContext context) async {
     if (_navigated) return;
     _navigated = true;
+    await syncPendingOnboardingToServer();
     await AppPreferences.setOnboardingCompleted(true);
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(
@@ -45,7 +47,8 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
     final model = context.read<LocationAccessScreenViewModel>();
     final ok = await model.hasUsableLocationPermission();
     if (!ok || _navigated || !mounted) return;
-    unawaited(model.saveLocationInBackground());
+    await model.saveLocationInBackground();
+    if (_navigated || !mounted) return;
     await _finishOnboardingAndOpenHome(context);
   }
 

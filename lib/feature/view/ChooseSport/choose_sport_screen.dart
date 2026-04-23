@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -97,7 +98,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                 child: CustomButton(
                   text: AppText.continueText,
                   color: context.appColors.primary,
-                  onTap: () {
+                  onTap: () async {
                     if (!model.hasSelection) {
                       AppSnackBar.show(
                         'Please select a sport to continue.',
@@ -105,6 +106,10 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                       );
                       return;
                     }
+                    await AppPreferences.setPendingOnboardingSport(
+                      model.selectedSport!,
+                    );
+                    if (!context.mounted) return;
                     Navigator.pushNamed(
                       context,
                       RoutesName.locationAccessScreen,

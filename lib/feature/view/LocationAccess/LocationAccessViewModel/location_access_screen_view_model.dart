@@ -127,10 +127,10 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
           pre == LocationPermission.whileInUse || pre == LocationPermission.always;
       if (hadPermissionBeforeRequest) {
         AppLogger.info(
-          'Location permission already granted; navigating without blocking on GPS.',
+          'Location permission already granted; saving location then continuing.',
           tag: 'LocationAccessScreen',
         );
-        unawaited(saveLocationInBackground());
+        await saveLocationInBackground();
         return true;
       }
 

@@ -92,7 +92,9 @@ class ProfileService extends ChangeNotifier {
       fullName: u.fullName.isNotEmpty ? u.fullName : p.fullName,
       email: p.email,
       bio: u.bio ?? p.bio,
-      location: p.location,
+      location: (u.location != null && u.location!.trim().isNotEmpty)
+          ? u.location
+          : p.location,
       avatarUrl: u.avatarUrl ?? p.avatarUrl,
       isAdmin: p.isAdmin,
       status: p.status,

@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
@@ -95,7 +96,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                 child: CustomButton(
                   text: AppText.continueText,
                   color: context.appColors.primary,
-                  onTap: () {
+                  onTap: () async {
                     if (!model.hasSelection) {
                       AppSnackBar.show(
                         'Please select a skill level to continue.',
@@ -103,7 +104,14 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                       );
                       return;
                     }
-                    Navigator.pushNamed(context, RoutesName.chooseSportScreen);
+                    await AppPreferences.setPendingOnboardingSkill(
+                      model.selectedSkill!,
+                    );
+                    if (!context.mounted) return;
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.chooseSportScreen,
+                    );
                   },
                 ),
               ),
