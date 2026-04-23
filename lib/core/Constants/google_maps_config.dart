@@ -1,4 +1,4 @@
- 
+// Google Maps keys: [apiKey] = SDK / general; [webServicesKey] = Places + Geocoding HTTP.
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -23,7 +23,13 @@ class GoogleMapsConfig {
     'GOOGLE_MAPS_API_KEY_WEB',
     defaultValue: '',
   );
+  /// Optional override for Geocoding + Places Autocomplete **HTTP** only (`dart-define`).
+  static const String _defineWebServices = String.fromEnvironment(
+    'GOOGLE_MAPS_WEB_SERVICES_KEY',
+    defaultValue: '',
+  );
 
+  /// Maps SDK (Android manifest / iOS plist) and default fallback.
   static String get apiKey {
     final generic = _defineGeneric.trim();
     if (generic.isNotEmpty) return generic;
@@ -36,6 +42,24 @@ class GoogleMapsConfig {
 
     final legacy = dotenv.env['GOOGLE_MAPS_API_KEY']?.trim() ?? '';
     return legacy;
+  }
+
+  /// Use for **only** `maps.googleapis.com` Geocoding + Places Autocomplete (legacy) HTTP.
+  ///
+  /// Those endpoints do **not** receive Android/iOS app attestation from a plain
+  /// [`http.get`], so Google often rejects keys with **Application → Android apps**
+  /// (same `REQUEST_DENIED` / "empty referer" as a web-only key).
+  ///
+  /// **Fix:** create a **second** API key in Cloud Console: **Application restrictions → None**,
+  /// **API restrictions → Places API + Geocoding API** (only). Put it in
+  /// `GOOGLE_MAPS_WEB_SERVICES_KEY` in [assets/config/maps.env]. Keep your existing
+  /// Android-restricted key for [apiKey] / Maps SDK in the manifest.
+  static String get webServicesKey {
+    final d = _defineWebServices.trim();
+    if (d.isNotEmpty) return d;
+    final f = dotenv.env['GOOGLE_MAPS_WEB_SERVICES_KEY']?.trim() ?? '';
+    if (f.isNotEmpty) return f;
+    return apiKey;
   }
 
   static String _defineKeyForCurrentPlatform() {
@@ -67,7 +91,6 @@ class GoogleMapsConfig {
 
   static bool get hasApiKey => apiKey.isNotEmpty;
 
-  /// Call once after [WidgetsFlutterBinding.ensureInitialized], before [runApp].
   static Future<void> loadEnv() async {
     try {
       await dotenv.load(fileName: 'assets/config/maps.env');

@@ -144,16 +144,84 @@ class CreateMatchViewModel extends ChangeNotifier {
     matchDurationController.text = '$minutes minutes';
   }
 
+  /// [AppPreferences] may only have lat/lng (stored as "lat,lng") when geocoding failed earlier.
+  static final RegExp _latLngPairPattern = RegExp(
+    r'^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$',
+  );
+
+  static bool _looksLikeLatLngPair(String s) {
+    return _latLngPairPattern.hasMatch(s.trim());
+  }
+
+  static (double, double)? _tryParseLatLngPair(String s) {
+    final m = _latLngPairPattern.firstMatch(s.trim());
+    if (m == null) return null;
+    final lat = double.tryParse(m.group(1)!);
+    final lng = double.tryParse(m.group(2)!);
+    if (lat == null || lng == null) return null;
+    return (lat, lng);
+  }
+
+   Future<String> _humanReadableLocation(String raw) async {
+    final t = raw.trim();
+    if (t.isEmpty) return '';
+    final m = _latLngPairPattern.firstMatch(t);
+    if (m == null) return t;
+    final lat = double.tryParse(m.group(1)!);
+    final lng = double.tryParse(m.group(2)!);
+    if (lat == null || lng == null) return t;
+    final address = await _googlePlacesService.reverseGeocode(
+      latitude: lat,
+      longitude: lng,
+    );
+    if (address != null && address.isNotEmpty) {
+      return address;
+    }
+    return t;
+  }
+
   Future<void> _hydrateSavedLocation() async {
     if (locationController.text.trim().isNotEmpty) return;
-    final savedLocation = await AppPreferences.getCurrentLocationName() ??
-        await AppPreferences.getCurrentLocationText();
+    var name = await AppPreferences.getCurrentLocationName();
+    var savedLocation = (name != null && name.trim().isNotEmpty)
+        ? name.trim()
+        : await AppPreferences.getCurrentLocationText();
+
     if (savedLocation == null || savedLocation.trim().isEmpty) {
-      AppLogger.warning(
-        'No saved exact location found for create match form.',
-        tag: 'CreateMatchVM',
+      final coords = await AppPreferences.getCurrentLocation();
+      if (coords == null) {
+        AppLogger.warning(
+          'No saved exact location found for create match form.',
+          tag: 'CreateMatchVM',
+        );
+        return;
+      }
+      savedLocation = '${coords.$1},${coords.$2}';
+    } else {
+      savedLocation = savedLocation.trim();
+    }
+
+    if (_looksLikeLatLngPair(savedLocation)) {
+      final m = _latLngPairPattern.firstMatch(savedLocation)!;
+      var lat = double.parse(m.group(1)!);
+      var lng = double.parse(m.group(2)!);
+      final coords = await AppPreferences.getCurrentLocation();
+      if (coords != null) {
+        lat = coords.$1;
+        lng = coords.$2;
+      }
+      final address = await _googlePlacesService.reverseGeocode(
+        latitude: lat,
+        longitude: lng,
       );
-      return;
+      if (address != null && address.isNotEmpty) {
+        savedLocation = address;
+        await AppPreferences.saveCurrentLocation(
+          latitude: lat,
+          longitude: lng,
+          locationName: address,
+        );
+      }
     }
 
     locationController.text = savedLocation;
@@ -165,8 +233,13 @@ class CreateMatchViewModel extends ChangeNotifier {
   }
 
   Future<String> _resolveLocationForRequest() async {
-    final typedLocation = locationController.text.trim();
+    var typedLocation = locationController.text.trim();
     if (typedLocation.isNotEmpty) {
+      typedLocation = await _humanReadableLocation(typedLocation);
+      if (locationController.text.trim() != typedLocation) {
+        locationController.text = typedLocation;
+        notifyListeners();
+      }
       AppLogger.debug(
         'Using location from form field: $typedLocation',
         tag: 'CreateMatchVM',
@@ -174,15 +247,26 @@ class CreateMatchViewModel extends ChangeNotifier {
       return typedLocation;
     }
 
-    final savedLocation = await AppPreferences.getCurrentLocationName() ??
+    var savedLocation = await AppPreferences.getCurrentLocationName() ??
         await AppPreferences.getCurrentLocationText();
     if (savedLocation != null && savedLocation.trim().isNotEmpty) {
-      locationController.text = savedLocation;
+      final trimmed = savedLocation.trim();
+      var resolved = await _humanReadableLocation(trimmed);
+      final coords = await AppPreferences.getCurrentLocation() ??
+          _tryParseLatLngPair(trimmed);
+      if (resolved != trimmed && coords != null) {
+        await AppPreferences.saveCurrentLocation(
+          latitude: coords.$1,
+          longitude: coords.$2,
+          locationName: resolved,
+        );
+      }
+      locationController.text = resolved;
       AppLogger.info(
-        'Location field was empty, using saved exact location: $savedLocation',
+        'Location field was empty, using saved exact location: $resolved',
         tag: 'CreateMatchVM',
       );
-      return savedLocation;
+      return resolved;
     }
 
     AppLogger.warning(

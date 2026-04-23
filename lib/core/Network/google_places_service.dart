@@ -11,9 +11,9 @@ class GooglePlacesService {
     required double latitude,
     required double longitude,
   }) async {
-    if (!GoogleMapsConfig.hasApiKey) {
+    if (GoogleMapsConfig.webServicesKey.isEmpty) {
       AppLogger.warning(
-        'Google Maps API key missing. Reverse geocoding skipped.',
+        'Google Maps web services key missing. Reverse geocoding skipped.',
         tag: 'GooglePlacesService',
       );
       return null;
@@ -21,7 +21,7 @@ class GooglePlacesService {
 
     final uri = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
       'latlng': '$latitude,$longitude',
-      'key': GoogleMapsConfig.apiKey,
+      'key': GoogleMapsConfig.webServicesKey,
     });
 
     final response = await http.get(uri);
@@ -54,16 +54,16 @@ class GooglePlacesService {
     if (trimmed.isEmpty) {
       return const PlacesSearchResult();
     }
-    if (!GoogleMapsConfig.hasApiKey) {
+    if (GoogleMapsConfig.webServicesKey.isEmpty) {
       AppLogger.warning(
-        'Google Maps API key missing. Place autocomplete skipped.',
+        'Google Maps web services key missing. Place autocomplete skipped.',
         tag: 'GooglePlacesService',
       );
       return const PlacesSearchResult(
         userMessage:
-            'Add a Google Maps API key: set GOOGLE_MAPS_API_KEY_ANDROID / _IOS / _WEB in '
-            'assets/config/maps.env, or use --dart-define (see GoogleMapsConfig). '
-            'Enable Places + Geocoding API for each key.',
+            'Set GOOGLE_MAPS_WEB_SERVICES_KEY in assets/config/maps.env (see GoogleMapsConfig). '
+            'Plain HTTP calls need a key with Application restrictions = None and '
+            'API restrictions = Places + Geocoding.',
         missingApiKey: true,
       );
     }
@@ -73,7 +73,7 @@ class GooglePlacesService {
       '/maps/api/place/autocomplete/json',
       {
         'input': trimmed,
-        'key': GoogleMapsConfig.apiKey,
+        'key': GoogleMapsConfig.webServicesKey,
       },
     );
 
@@ -139,20 +139,25 @@ class GooglePlacesService {
     );
   }
 
-  /// Google returns "empty referer" when the key is restricted to **HTTP referrers** (web)
-  /// but the Places web service is called from the mobile app (no browser referer).
+  /// Geocoding / Places **HTTP** do not send Android app attestation; "Android apps"
+  /// key restrictions often still fail with the same error as website-only keys.
   static String _messageForRequestDenied(String errMsg) {
     final m = errMsg.trim();
     final lower = m.toLowerCase();
-    const hint = '\n\nFor mobile apps: do not restrict this key to "Websites" only (that '
-        'causes "empty referer"). In Google Cloud → Credentials, use an API key with '
-        'Application restrictions set to "Android apps" (your package name + SHA-1), '
-        'or "None" for testing. Ensure Places API + Geocoding API are enabled for that key.';
+    const hint = '\n\nFix: Use the key in GOOGLE_MAPS_WEB_SERVICES_KEY. In Google Cloud → '
+        'that key → Application restrictions: **None**. API restrictions: **Restrict key** and '
+        'add **Places API** (the classic one — “100 million places”, *not* “Places API (New)”) '
+        'and **Geocoding API**. Also enable “Places API” in APIs & Services → Library for this '
+        'project. See GoogleMapsConfig.webServicesKey.';
 
     if (lower.isEmpty) {
-      return 'Request denied. Enable Places API and allow this key for your app.$hint';
+      return 'Request denied. Check API restrictions include classic Places + Geocoding.$hint';
     }
-    if (lower.contains('referer') || lower.contains('not authorized to use this api key')) {
+    final isApiListWrong = lower.contains('referer') ||
+        lower.contains('not authorized to use this api key') ||
+        lower.contains('not authorized to use this service or api') ||
+        lower.contains('api restrictions');
+    if (isApiListWrong) {
       return '$m$hint';
     }
     return m;
