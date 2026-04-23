@@ -6,6 +6,8 @@ import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/google_places_service.dart';
 import 'package:sport_finding/core/Network/places_search_result.dart';
+import 'package:sport_finding/core/Constants/match_form_limits.dart';
+import 'package:sport_finding/core/utils/match_duration_format.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
@@ -20,7 +22,6 @@ class EditMatchViewModel extends ChangeNotifier {
   final timeController = TextEditingController();
   final locationController = TextEditingController();
   final matchDurationController = TextEditingController();
-  final maxPlayersController = TextEditingController();
 
   String? selectedSportType;
   String? selectedSkillLevel;
@@ -28,6 +29,7 @@ class EditMatchViewModel extends ChangeNotifier {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   int duration = 60;
+  int maxPlayers = 8;
 
   UpdateMatchModel? updatedMatch;
   DeleteMatchModel? deletedMatch;
@@ -47,20 +49,18 @@ class EditMatchViewModel extends ChangeNotifier {
 
   final List<String> skillLevels = ['Beginner', 'Intermediate', 'Advanced'];
 
-  final List<int> durationOptions = [30, 45, 60, 90, 120, 150, 180];
-
   void populateForEdit(UpdateMatchModel match, BuildContext context) {
     matchId = match.id;
 
     matchTitleController.text = match.title ?? '';
     descriptionController.text = match.description ?? '';
     locationController.text = match.location ?? '';
-    maxPlayersController.text = match.maxPlayers?.toString() ?? '';
+    maxPlayers = MatchFormLimits.clampMaxPlayers(match.maxPlayers ?? 8);
     selectedSportType = match.sport;
     selectedSkillLevel = match.skillLevel;
 
     duration = match.durationMinutes ?? 60;
-    matchDurationController.text = '$duration minutes';
+    matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     if (match.scheduledAt != null && match.scheduledAt!.isNotEmpty) {
       final dt = DateTime.parse(match.scheduledAt!).toLocal();
@@ -85,10 +85,10 @@ class EditMatchViewModel extends ChangeNotifier {
     matchTitleController.text = match.title;
     descriptionController.text = match.matchDescription;
     locationController.text = match.location;
-    maxPlayersController.text = match.participantsTotal.toString();
+    maxPlayers = MatchFormLimits.clampMaxPlayers(match.participantsTotal);
     selectedSportType = match.sportType;
     selectedSkillLevel = match.skillLevel;
-    matchDurationController.text = '$duration minutes';
+    matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     debugPrint('📋 [EditMatchViewModel] Populated from DiscoveryMatch:');
     debugPrint('📋 Title: ${match.title}');
@@ -142,9 +142,24 @@ class EditMatchViewModel extends ChangeNotifier {
     timeController.text = time.format(context);
   }
 
-  void setDuration(int minutes) {
-    duration = minutes;
-    matchDurationController.text = '$minutes minutes';
+  void setMaxPlayers(int value) {
+    maxPlayers = MatchFormLimits.clampMaxPlayers(value);
+    notifyListeners();
+  }
+
+  void setDurationFromHms(int hours, int minutes, int seconds) {
+    final sec = matchDurationHmsToTotalSeconds(hours, minutes, seconds);
+    duration = matchDurationHmsToApiMinutes(hours, minutes, seconds);
+    if (sec < 60) {
+      matchDurationController.text = '1 min';
+    } else {
+      matchDurationController.text = matchDurationHmsLabel(
+        hours,
+        minutes,
+        seconds,
+      );
+    }
+    notifyListeners();
   }
 
   String? _buildScheduledAt() {
@@ -189,7 +204,7 @@ class EditMatchViewModel extends ChangeNotifier {
         'scheduled_at': _buildScheduledAt(),
         'duration_minutes': duration,
         'location': locationController.text.trim(),
-        'max_players': int.tryParse(maxPlayersController.text.trim()) ?? 0,
+        'max_players': maxPlayers,
       };
 
       debugPrint('💾 [EditMatchViewModel] Saving match with data:');
@@ -257,7 +272,6 @@ class EditMatchViewModel extends ChangeNotifier {
     timeController.dispose();
     locationController.dispose();
     matchDurationController.dispose();
-    maxPlayersController.dispose();
     super.dispose();
   }
 }

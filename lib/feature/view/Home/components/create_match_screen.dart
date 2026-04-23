@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +16,8 @@ import 'package:sport_finding/feature/widget/drop_down_from_field_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
+import 'package:sport_finding/feature/widget/match_duration_picker_sheet.dart';
+import 'package:sport_finding/feature/widget/max_players_stepper_field.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
 class CreateMatchScreen extends StatefulWidget {
@@ -52,65 +53,11 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
   Future<void> _showDurationPicker(
     BuildContext context,
     CreateMatchViewModel model,
-  ) async {
-    final initialIndex = model.durationOptions.indexOf(model.duration);
-    final safeInitialIndex = initialIndex < 0 ? 0 : initialIndex;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        final bottomPad = MediaQuery.paddingOf(ctx).bottom;
-        return Container(
-          decoration: BoxDecoration(
-            color: context.appColors.onPrimary,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(context.radiusR(16)),
-            ),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            0,
-            context.h(8),
-            0,
-            bottomPad + context.h(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: context.h(200),
-                width: double.infinity,
-                child: CupertinoPicker(
-                  itemExtent: context.h(40),
-                  scrollController: FixedExtentScrollController(
-                    initialItem: safeInitialIndex,
-                  ),
-                  onSelectedItemChanged: (i) {
-                    model.setDuration(model.durationOptions[i]);
-                  },
-                  children: model.durationOptions
-                      .map(
-                        (m) => Center(
-                          child: Text(
-                            '$m minutes',
-                            style: context.appText.text16W600,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-              CupertinoButton(
-                padding: EdgeInsets.symmetric(vertical: context.h(8)),
-                minimumSize: Size.zero,
-                child: Text(AppText.done, style: context.appText.text16W600),
-                onPressed: () => Navigator.pop(ctx),
-              ),
-            ],
-          ),
-        );
-      },
+  ) {
+    return showMatchDurationPickerSheet(
+      context,
+      initialTotalMinutes: model.duration,
+      onConfirm: model.setDurationFromHms,
     );
   }
 
@@ -194,21 +141,18 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       selector: (_, m) => m.selectedSportType,
                       builder: (context, selectedSport, _) {
                         final vm = context.read<CreateMatchViewModel>();
-                        return SizedBox(
-                          height: context.h(56),
-                          child: DropdownFormFieldWidget(
-                            label: AppText.sportType,
-                            hintText: AppText.chooseYourSports,
-                            items: vm.sportTypes,
-                            value: selectedSport,
-                            onChanged: vm.setSportType,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return AppText.sportTypeValidation;
-                              }
-                              return null;
-                            },
-                          ),
+                        return DropdownFormFieldWidget(
+                          label: AppText.sportType,
+                          hintText: AppText.chooseYourSports,
+                          items: vm.sportTypes,
+                          value: selectedSport,
+                          onChanged: vm.setSportType,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return AppText.sportTypeValidation;
+                            }
+                            return null;
+                          },
                         );
                       },
                     ),
@@ -217,158 +161,138 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       selector: (_, m) => m.selectedSkillLevel,
                       builder: (context, selectedSkill, _) {
                         final vm = context.read<CreateMatchViewModel>();
-                        return SizedBox(
-                          height: context.h(56),
-                          child: DropdownFormFieldWidget(
-                            label: AppText.skillLevel,
-                            hintText: AppText.skillLevelHint,
-                            items: vm.skillLevels,
-                            value: selectedSkill,
-                            onChanged: vm.setSkillLevel,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return AppText.skillLevelValidation;
-                              }
-                              return null;
-                            },
-                          ),
+                        return DropdownFormFieldWidget(
+                          label: AppText.skillLevel,
+                          hintText: AppText.skillLevelHint,
+                          items: vm.skillLevels,
+                          value: selectedSkill,
+                          onChanged: vm.setSkillLevel,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return AppText.skillLevelValidation;
+                            }
+                            return null;
+                          },
                         );
                       },
                     ),
                     SizedBox(height: context.h(16)),
                     SectionHeaderWidget(title: AppText.schedule),
                     SizedBox(height: context.h(16)),
-                    SizedBox(
-                      height: context.h(56),
-                      child: TextFormFieldWidget(
-                        label: AppText.date,
-                        hintText: AppText.dateHit,
-                        controller: model.dateController,
-                        readOnly: true,
-                        customSuffix: Padding(
-                          padding: EdgeInsets.all(context.w(12)),
-                          child: SizedBox(
-                            height: context.h(20),
-                            width: context.w(20),
-                            child: SvgPicture.asset(
-                              AppAssets.calendarIcon,
-                              fit: BoxFit.contain,
-                            ),
+                    TextFormFieldWidget(
+                      label: AppText.date,
+                      hintText: AppText.dateHit,
+                      controller: model.dateController,
+                      readOnly: true,
+                      customSuffix: Padding(
+                        padding: EdgeInsets.all(context.w(12)),
+                        child: SizedBox(
+                          height: context.h(20),
+                          width: context.w(20),
+                          child: SvgPicture.asset(
+                            AppAssets.calendarIcon,
+                            fit: BoxFit.contain,
                           ),
                         ),
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(
-                              const Duration(days: 365),
-                            ),
-                          );
-                          if (date != null && context.mounted) {
-                            model.setDate(date);
-                          }
-                        },
                       ),
-                    ),
-                    SizedBox(height: context.h(16)),
-                    SizedBox(
-                      height: context.h(56),
-                      child: TextFormFieldWidget(
-                        label: AppText.time,
-                        hintText: AppText.dateHit,
-                        controller: model.timeController,
-                        readOnly: true,
-                        customSuffix: Padding(
-                          padding: EdgeInsets.all(context.w(12)),
-                          child: SizedBox(
-                            height: context.h(20),
-                            width: context.w(20),
-                            child: SvgPicture.asset(
-                              AppAssets.homeTimeIcon,
-                              fit: BoxFit.contain,
-                            ),
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
                           ),
-                        ),
-                        onTap: () async {
-                          final time = await showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.now(),
-                          );
-                          if (time != null && context.mounted) {
-                            model.setTime(time, context);
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(height: context.h(16)),
-                    SizedBox(
-                      height: context.h(56),
-                      child: TextFormFieldWidget(
-                        label: AppText.location,
-                        hintText: 'Tap to search location...',
-                        controller: model.locationController,
-                        readOnly: true,
-                        customSuffix: Padding(
-                          padding: EdgeInsets.all(context.w(12)),
-                          child: Icon(
-                            Icons.search,
-                            size: context.w(20),
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Location is required';
-                          }
-                          return null;
-                        },
-                        onTap: () async {
-                          final selectedLocation = await Navigator.pushNamed(
-                            context,
-                            RoutesName.locationSearchScreen,
-                          );
-                          if (!context.mounted) return;
-                          if (selectedLocation is String &&
-                              selectedLocation.trim().isNotEmpty) {
-                            model.locationController.text =
-                                selectedLocation.trim();
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(height: context.h(16)),
-                    SizedBox(
-                      height: context.h(56),
-                      child: TextFormFieldWidget(
-                        label: AppText.matchDuration,
-                        controller: model.matchDurationController,
-                        readOnly: true,
-                        customSuffix: Padding(
-                          padding: EdgeInsets.all(context.w(12)),
-                          child: Icon(
-                            Icons.timer_rounded,
-                            size: context.w(20),
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                        onTap: () => _showDurationPicker(context, model),
-                      ),
+                        );
+                        if (date != null && context.mounted) {
+                          model.setDate(date);
+                        }
+                      },
                     ),
                     SizedBox(height: context.h(16)),
                     TextFormFieldWidget(
-                      label: 'Max Players',
-                      hintText: 'Enter max number of players',
-                      controller: model.maxPlayersController,
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Max players is required';
+                      label: AppText.time,
+                      hintText: AppText.dateHit,
+                      controller: model.timeController,
+                      readOnly: true,
+                      customSuffix: Padding(
+                        padding: EdgeInsets.all(context.w(12)),
+                        child: SizedBox(
+                          height: context.h(20),
+                          width: context.w(20),
+                          child: SvgPicture.asset(
+                            AppAssets.homeTimeIcon,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      onTap: () async {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (time != null && context.mounted) {
+                          model.setTime(time, context);
                         }
-                        if (int.tryParse(value) == null) {
-                          return 'Enter a valid number';
+                      },
+                    ),
+                    SizedBox(height: context.h(16)),
+                    TextFormFieldWidget(
+                      label: AppText.location,
+                      hintText: 'Tap to search location...',
+                      controller: model.locationController,
+                      readOnly: true,
+                      customSuffix: Padding(
+                        padding: EdgeInsets.all(context.w(12)),
+                        child: Icon(
+                          Icons.search,
+                          size: context.w(20),
+                          color: context.appColors.greyDark,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Location is required';
                         }
                         return null;
+                      },
+                      onTap: () async {
+                        final selectedLocation = await Navigator.pushNamed(
+                          context,
+                          RoutesName.locationSearchScreen,
+                        );
+                        if (!context.mounted) return;
+                        if (selectedLocation is String &&
+                            selectedLocation.trim().isNotEmpty) {
+                          model.locationController.text =
+                              selectedLocation.trim();
+                        }
+                      },
+                    ),
+                    SizedBox(height: context.h(16)),
+                    TextFormFieldWidget(
+                      label: AppText.matchDuration,
+                      controller: model.matchDurationController,
+                      readOnly: true,
+                      customSuffix: Padding(
+                        padding: EdgeInsets.all(context.w(12)),
+                        child: Icon(
+                          Icons.timer_rounded,
+                          size: context.w(20),
+                          color: context.appColors.greyDark,
+                        ),
+                      ),
+                      onTap: () => _showDurationPicker(context, model),
+                    ),
+                    SizedBox(height: context.h(16)),
+                    Selector<CreateMatchViewModel, int>(
+                      selector: (_, m) => m.maxPlayers,
+                      builder: (context, maxPlayers, _) {
+                        final vm = context.read<CreateMatchViewModel>();
+                        return MaxPlayersStepperField(
+                          value: maxPlayers,
+                          onChanged: vm.setMaxPlayers,
+                        );
                       },
                     ),
                     SizedBox(height: context.h(16)),

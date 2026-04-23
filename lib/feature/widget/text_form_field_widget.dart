@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -93,28 +94,31 @@ class TextFormFieldWidget extends StatelessWidget {
       onTap: onTap,
       maxLines: maxLines,
       style: context.appText.text14W400.copyWith(color: c.greyDark),
-    
       decoration: InputDecoration(
         alignLabelWithHint: true,
-    
+        isDense: maxLines == 1,
+        contentPadding: maxLines > 1
+            ? AppFormFieldLayout.contentPaddingMultiline(context)
+            : AppFormFieldLayout.contentPadding(context),
+        errorStyle: AppFormFieldLayout.errorStyle(context),
+        errorMaxLines: 2,
+        suffixIconConstraints: BoxConstraints(
+          minWidth: context.w(40),
+          minHeight: context.h(40),
+        ),
         label: label != null
             ? Text(
                 label!,
                 style: context.appText.text16W400.copyWith(color: c.onSurface),
               )
             : null,
-    
         hintText: hintText,
         hintStyle: context.appText.text14W400.copyWith(color: c.greylight),
-    
         filled: true,
         fillColor: c.transparent,
-    
         suffixIcon:
             customSuffix ??
             (suffixIcon != null ? Icon(suffixIcon, color: c.greyDark) : null),
-    
-        // ✅ DEFAULT BORDER
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.greylight, width: 1),
@@ -132,16 +136,13 @@ class TextFormFieldWidget extends StatelessWidget {
           borderSide: BorderSide(color: c.primary, width: 1),
         ),
     
-        // ❌ ERROR (Red)
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.error, width: 1),
         ),
-    
-        // 🔥 FOCUSED + ERROR (Primary instead of red if you want)
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: BorderSide(color: c.primary, width: 1),
+          borderSide: BorderSide(color: c.error, width: 1),
         ),
     
         // (Optional) disable white hover issue

@@ -13,6 +13,42 @@ class AppPreferences {
   static const String _keyCurrentLatitude = 'current_latitude';
   static const String _keyCurrentLongitude = 'current_longitude';
   static const String _keyCurrentLocationName = 'current_location_name';
+  static const String _keyLocationSearchHistory = 'location_search_history';
+  static const int _maxLocationSearchHistory = 12;
+
+  /// Recent location strings from [LocationSearchScreen] (newest first).
+  static Future<List<String>> getLocationSearchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_keyLocationSearchHistory) ?? <String>[];
+  }
+
+  static Future<void> addLocationSearchHistoryItem(String value) async {
+    final t = value.trim();
+    if (t.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    var list = List<String>.from(
+      prefs.getStringList(_keyLocationSearchHistory) ?? <String>[],
+    );
+    list.removeWhere((e) => e == t);
+    list.insert(0, t);
+    if (list.length > _maxLocationSearchHistory) {
+      list = list.sublist(0, _maxLocationSearchHistory);
+    }
+    await prefs.setStringList(_keyLocationSearchHistory, list);
+  }
+
+  static Future<void> removeLocationSearchHistoryItem(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = List<String>.from(
+      prefs.getStringList(_keyLocationSearchHistory) ?? <String>[],
+    )..removeWhere((e) => e == value);
+    await prefs.setStringList(_keyLocationSearchHistory, list);
+  }
+
+  static Future<void> clearLocationSearchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyLocationSearchHistory);
+  }
 
   static Future<void> saveAuthTokens({
     required String accessToken,

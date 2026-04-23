@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/google_places_service.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
-import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
 class LocationSearchScreen extends StatefulWidget {
   const LocationSearchScreen({super.key});
@@ -21,6 +21,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   Timer? _debounce;
 
   List<String> _results = <String>[];
+  List<String> _history = <String>[];
   bool _isLoading = false;
   String? _error;
 
@@ -28,10 +29,18 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_handleQueryListener);
+    unawaited(_loadHistory());
   }
 
   void _handleQueryListener() {
+    setState(() {});
     _onQueryChanged(_searchController.text);
+  }
+
+  Future<void> _loadHistory() async {
+    final list = await AppPreferences.getLocationSearchHistory();
+    if (!mounted) return;
+    setState(() => _history = list);
   }
 
   @override
@@ -52,6 +61,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   Future<void> _search(String query) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
+      if (!mounted) return;
       setState(() {
         _results = <String>[];
         _error = null;
@@ -97,120 +107,296 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     }
   }
 
-  void _selectLocation(String location) {
+  Future<void> _selectLocation(String location) async {
+    await AppPreferences.addLocationSearchHistoryItem(location);
+    if (!mounted) return;
+    await _loadHistory();
+    if (!mounted) return;
     Navigator.pop(context, location);
+  }
+
+  Future<void> _removeHistoryItem(String item) async {
+    await AppPreferences.removeLocationSearchHistoryItem(item);
+    if (!mounted) return;
+    setState(() {
+      _history = List<String>.from(_history)..remove(item);
+    });
+  }
+
+  Future<void> _clearHistory() async {
+    await AppPreferences.clearLocationSearchHistory();
+    if (!mounted) return;
+    setState(() => _history = <String>[]);
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
+    final t = context.appText;
     final hasQuery = _searchController.text.trim().isNotEmpty;
+    final query = _searchController.text;
 
     return Scaffold(
-      backgroundColor: context.appColors.surface,
+      backgroundColor: c.surface,
       resizeToAvoidBottomInset: true,
       body: MainFrame(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: context.padonly(
-                left: context.w(20),
-                right: context.w(20),
-                bottom: context.h(20),
+        child: Padding(
+          padding: context.padonly(
+            left: context.w(20),
+            right: context.w(20),
+            bottom: context.h(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: context.h(8)),
+              AppBarWidget(
+                onTapFirst: () => Navigator.pop(context),
+                title: 'Search location',
               ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: context.h(20)),
-                    AppBarWidget(
-                      onTapFirst: () => Navigator.pop(context),
-                      title: 'Search Location',
-                    ),
-                    SizedBox(height: context.h(20)),
-                    TextFormFieldWidget(
-                      label: 'Location',
-                      hintText: 'Search city e.g. Peshawar',
-                      controller: _searchController,
-                    ),
-                    SizedBox(height: context.h(8)),
-                    if (hasQuery)
-                      Container(
-                        width: double.infinity,
-                        constraints: BoxConstraints(maxHeight: context.h(280)),
-                        decoration: BoxDecoration(
-                          color: context.appColors.onPrimary,
-                          borderRadius:
-                              BorderRadius.circular(context.radiusR(12)),
-                          border: Border.all(
-                            color: context.appColors.greylight,
-                          ),
-                        ),
-                        child: _isLoading
-                            ? Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: context.h(16),
-                                ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
-                            : _error != null
-                            ? SingleChildScrollView(
-                                padding: EdgeInsets.all(context.w(12)),
-                                child: Text(
-                                  _error!,
-                                  style: context.appText.text14W400.copyWith(
-                                    color: context.appColors.greyDark,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
-                            : _results.isEmpty
-                            ? Padding(
-                                padding: EdgeInsets.all(context.w(12)),
-                                child: Text(
-                                  'No matching location found.',
-                                  style: context.appText.text14W400.copyWith(
-                                    color: context.appColors.greyDark,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
-                            : ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _results.length,
-                                separatorBuilder: (_, _) => Divider(
-                                  color: context.appColors.greylight,
-                                  height: 1,
-                                ),
-                                itemBuilder: (_, index) {
-                                  final item = _results[index];
-                                  return ListTile(
-                                    dense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: context.w(12),
-                                      vertical: context.h(2),
-                                    ),
-                                    title: Text(
-                                      item,
-                                      style: context.appText.text14W500
-                                          .copyWith(
-                                        color: context.appColors.onSurface,
-                                      ),
-                                    ),
-                                    onTap: () => _selectLocation(item),
-                                  );
-                                },
-                              ),
-                      ),
-                  ],
+              SizedBox(height: context.h(16)),
+              _buildSearchField(c, t, query),
+              SizedBox(height: context.h(12)),
+              Expanded(
+                child: hasQuery
+                    ? _buildSuggestionsBody(c, t, query)
+                    : _buildHistoryBody(c, t),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField(AppColorTheme c, AppTextTheme t, String query) {
+    return TextField(
+      controller: _searchController,
+      autofocus: true,
+      textInputAction: TextInputAction.search,
+      textCapitalization: TextCapitalization.sentences,
+      style: t.text16W400.copyWith(color: c.onSurface, height: 1.3),
+      cursorColor: c.primary,
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: 'Search city or area',
+        hintStyle: t.text16W400.copyWith(color: c.greylight),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          size: context.w(22),
+          color: c.greylight,
+        ),
+        suffixIcon: query.trim().isNotEmpty
+            ? IconButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {
+                    _results = <String>[];
+                    _error = null;
+                    _isLoading = false;
+                  });
+                },
+                icon: Icon(Icons.close_rounded, size: context.w(20), color: c.greyDark),
+                style: IconButton.styleFrom(foregroundColor: c.greyDark),
+                tooltip: 'Clear',
+              )
+            : null,
+        filled: true,
+        fillColor: c.blue10,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderSide: BorderSide(color: c.primary, width: 1),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          vertical: context.h(14),
+          horizontal: context.w(4),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsBody(AppColorTheme c, AppTextTheme t, String query) {
+    if (_isLoading) {
+      return Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: c.primary,
+          ),
+        ),
+      );
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.w(8)),
+          child: Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: t.text14W400.copyWith(
+              color: c.greyDark,
+              height: 1.45,
+            ),
+          ),
+        ),
+      );
+    }
+    if (_results.isEmpty) {
+      return Center(
+        child: Text(
+          'No matches for your search.',
+          style: t.text14W400.copyWith(color: c.greylight),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: EdgeInsets.only(top: context.h(4), bottom: context.h(24)),
+      itemCount: _results.length,
+      separatorBuilder: (context, _) => SizedBox(height: context.h(2)),
+      itemBuilder: (context, index) {
+        final item = _results[index];
+        return _locationTile(
+          c: c,
+          t: t,
+          title: item,
+          leading: Icons.place_outlined,
+          onTap: () => _selectLocation(item),
+        );
+      },
+    );
+  }
+
+  Widget _buildHistoryBody(AppColorTheme c, AppTextTheme t) {
+    if (_history.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.travel_explore_rounded,
+              size: context.w(40),
+              color: c.greylight,
+            ),
+            SizedBox(height: context.h(12)),
+            Text(
+              'Start typing to find a place',
+              style: t.text16W500.copyWith(color: c.greyDark),
+            ),
+            SizedBox(height: context.h(6)),
+            Text(
+              'Your recent searches will appear here.',
+              textAlign: TextAlign.center,
+              style: t.text14W400.copyWith(color: c.greylight),
+            ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Recent',
+              style: t.text12W600.copyWith(
+                color: c.greyDark,
+                letterSpacing: 0.4,
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: _clearHistory,
+              style: TextButton.styleFrom(
+                foregroundColor: c.primary,
+                padding: EdgeInsets.symmetric(horizontal: context.w(8)),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text('Clear all', style: t.text12W600),
+            ),
+          ],
+        ),
+        SizedBox(height: context.h(8)),
+        Expanded(
+          child: ListView.separated(
+            padding: EdgeInsets.only(bottom: context.h(24)),
+            itemCount: _history.length,
+            separatorBuilder: (context, _) => SizedBox(height: context.h(2)),
+            itemBuilder: (context, index) {
+              final item = _history[index];
+              return _locationTile(
+                c: c,
+                t: t,
+                title: item,
+                leading: Icons.history_rounded,
+                onTap: () => _selectLocation(item),
+                onRemove: () => _removeHistoryItem(item),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _locationTile({
+    required AppColorTheme c,
+    required AppTextTheme t,
+    required String title,
+    required IconData leading,
+    required VoidCallback onTap,
+    VoidCallback? onRemove,
+  }) {
+    return Material(
+      color: c.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(context.radiusR(12)),
+        splashColor: c.primary.withValues(alpha: 0.08),
+        highlightColor: c.primary.withValues(alpha: 0.04),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            vertical: context.h(12),
+            horizontal: context.w(4),
+          ),
+          child: Row(
+            children: [
+              Icon(leading, size: context.w(22), color: c.greyDark),
+              SizedBox(width: context.w(12)),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: t.text16W500.copyWith(
+                    color: c.onSurface,
+                    height: 1.3,
+                  ),
                 ),
               ),
-            );
-          },
+              if (onRemove != null)
+                IconButton(
+                  onPressed: onRemove,
+                  icon: Icon(Icons.close, size: context.w(18), color: c.greylight),
+                  style: IconButton.styleFrom(
+                    minimumSize: Size(context.w(36), context.h(36)),
+                    padding: EdgeInsets.zero,
+                  ),
+                  tooltip: 'Remove from recent',
+                ),
+            ],
+          ),
         ),
       ),
     );

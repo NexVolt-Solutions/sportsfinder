@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/places_search_result.dart';
@@ -74,6 +75,7 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
     return InputDecorator(
       decoration: InputDecoration(
         alignLabelWithHint: true,
+        isDense: true,
         label: widget.label != null
             ? Text(
                 widget.label!,
@@ -92,12 +94,9 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
-          borderSide: BorderSide(color: c.primary, width: 1.5),
+          borderSide: BorderSide(color: c.primary, width: 1),
         ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: context.w(12),
-          vertical: context.h(8),
-        ),
+        contentPadding: AppFormFieldLayout.contentPadding(context),
       ),
       child: InkWell(
         onTap: _openDropdown,
