@@ -8,6 +8,8 @@ import 'package:sport_finding/core/Network/google_places_service.dart';
 import 'package:sport_finding/core/Network/places_search_result.dart';
 import 'package:sport_finding/core/Constants/match_form_limits.dart';
 import 'package:sport_finding/core/utils/match_duration_format.dart';
+import 'package:sport_finding/core/utils/match_form_sport_labels.dart';
+import 'package:sport_finding/core/Network/platform_options_store.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
   final UpdateMatchRepo _updateRepo = UpdateMatchRepo();
@@ -38,16 +40,32 @@ class EditMatchViewModel extends ChangeNotifier {
   bool isDeleting = false;
   String? matchId;
 
-  final List<String> sportTypes = [
-    'Football',
-    'Basketball',
-    'Tennis',
-    'Cricket',
-    'Volleyball',
-    'Badminton',
-  ];
+  /// From [GET /api/v1/options/] via [PlatformOptionsStore].
+  List<String> sportTypes = [];
+  List<String> skillLevels = [];
+  bool optionsLoading = false;
+  bool optionsLoaded = false;
+  String? optionsError;
 
-  final List<String> skillLevels = ['Beginner', 'Intermediate', 'Advanced'];
+  Future<void> ensureOptionsLoaded() async {
+    if (optionsLoaded) return;
+    optionsLoading = true;
+    optionsError = null;
+    notifyListeners();
+    try {
+      final o = await PlatformOptionsStore.instance.load();
+      sportTypes = List<String>.from(o.sports);
+      skillLevels = List<String>.from(o.skills);
+      optionsLoaded = true;
+    } catch (e) {
+      optionsError = e.toString();
+      sportTypes = [];
+      skillLevels = [];
+    } finally {
+      optionsLoading = false;
+      notifyListeners();
+    }
+  }
 
   void populateForEdit(UpdateMatchModel match, BuildContext context) {
     matchId = match.id;
@@ -56,8 +74,16 @@ class EditMatchViewModel extends ChangeNotifier {
     descriptionController.text = match.description ?? '';
     locationController.text = match.location ?? '';
     maxPlayers = MatchFormLimits.clampMaxPlayers(match.maxPlayers ?? 8);
-    selectedSportType = match.sport;
-    selectedSkillLevel = match.skillLevel;
+    final fromMatchSport =
+        sportValueForMatchDropdown(match.sport, sportTypes);
+    final fromMatchSkill =
+        skillValueForMatchDropdown(match.skillLevel, skillLevels);
+    final profileDefaults = profileDefaultsForMatchForm(
+      sportTypes,
+      skillLevels,
+    );
+    selectedSportType = fromMatchSport ?? profileDefaults?.sport;
+    selectedSkillLevel = fromMatchSkill ?? profileDefaults?.skill;
 
     duration = match.durationMinutes ?? 60;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
@@ -86,8 +112,16 @@ class EditMatchViewModel extends ChangeNotifier {
     descriptionController.text = match.matchDescription;
     locationController.text = match.location;
     maxPlayers = MatchFormLimits.clampMaxPlayers(match.participantsTotal);
-    selectedSportType = match.sportType;
-    selectedSkillLevel = match.skillLevel;
+    final fromMatchSport =
+        sportValueForMatchDropdown(match.sportType, sportTypes);
+    final fromMatchSkill =
+        skillValueForMatchDropdown(match.skillLevel, skillLevels);
+    final profileDefaults = profileDefaultsForMatchForm(
+      sportTypes,
+      skillLevels,
+    );
+    selectedSportType = fromMatchSport ?? profileDefaults?.sport;
+    selectedSkillLevel = fromMatchSkill ?? profileDefaults?.skill;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     debugPrint('📋 [EditMatchViewModel] Populated from DiscoveryMatch:');

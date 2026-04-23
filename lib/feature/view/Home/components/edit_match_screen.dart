@@ -31,29 +31,42 @@ class EditMatchScreen extends StatefulWidget {
 
 class _EditMatchScreenState extends State<EditMatchScreen> {
   bool _didPopulateEditState = false;
+  bool _scheduledOptions = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_didPopulateEditState) return;
-
-    final args = ModalRoute.of(context)?.settings.arguments;
+    if (_scheduledOptions) return;
+    _scheduledOptions = true;
     final model = context.read<EditMatchViewModel>();
+    model.ensureOptionsLoaded().then((_) {
+      if (!mounted) return;
+      if (model.optionsLoaded) {
+        _applyRouteAfterOptions(model);
+      }
+    });
+  }
 
+  void _applyRouteAfterOptions(EditMatchViewModel model) {
+    if (_didPopulateEditState) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
     if (args is UpdateMatchModel) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
         model.populateForEdit(args, context);
       });
       _didPopulateEditState = true;
       return;
     }
-
     if (args is DiscoveryMatch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
         model.populateForEditFromDiscoveryMatch(args, context);
       });
       _didPopulateEditState = true;
+      return;
     }
+    _didPopulateEditState = true;
   }
 
   Future<void> _showDurationPicker(
@@ -151,7 +164,54 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(8)),
+                    Selector<EditMatchViewModel, (bool, String?)>(
+                      selector: (_, m) => (m.optionsLoading, m.optionsError),
+                      builder: (context, state, _) {
+                        final loading = state.$1;
+                        final err = state.$2;
+                        if (loading) {
+                          return LinearProgressIndicator(
+                            minHeight: 2,
+                            color: context.appColors.primary,
+                            backgroundColor: context.appColors.greylight
+                                .withValues(alpha: 0.3),
+                          );
+                        }
+                        if (err != null) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: context.h(8)),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    err,
+                                    style: context.appText.text12W400.copyWith(
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    final m = context
+                                        .read<EditMatchViewModel>();
+                                    m.ensureOptionsLoaded().then((_) {
+                                      if (!context.mounted) return;
+                                      if (m.optionsLoaded) {
+                                        _applyRouteAfterOptions(m);
+                                      }
+                                    });
+                                  },
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                    SizedBox(height: context.h(8)),
                     SectionHeaderWidget(title: AppText.basicInfo),
                     SizedBox(height: context.h(16)),
                     TextFormFieldWidget(
