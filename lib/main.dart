@@ -11,14 +11,17 @@ import 'package:sport_finding/firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
 
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => NotificationService())],
       child: MaterialApp(
+        title: 'SportFinding',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         scaffoldMessengerKey: rootScaffoldMessengerKey,

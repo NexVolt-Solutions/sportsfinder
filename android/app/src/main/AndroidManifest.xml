@@ -9,7 +9,7 @@
     <application
         android:usesCleartextTraffic="true"  
 
-        android:label="sport_finding"
+        android:label="SportFinding"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

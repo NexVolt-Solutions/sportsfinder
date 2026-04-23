@@ -40,11 +40,7 @@ class LoginScreenViewModel extends ChangeNotifier {
     'GOOGLE_SERVER_CLIENT_ID',
   );
 
-  /// Web OAuth 2.0 client ID for Android Credential Manager (`serverClientId`).
-  /// Order: `--dart-define=GOOGLE_SERVER_CLIENT_ID`, then
-  /// [kGoogleOauth2WebClientId], then `null` (native `default_web_client_id` from
-  /// `google-services.json` if Gradle generated it). **Never** use the iOS client here.
-  static String? get _resolvedServerClientId {
+ static String? get _resolvedServerClientId {
     if (_googleServerClientId.isNotEmpty) {
       return _googleServerClientId;
     }
