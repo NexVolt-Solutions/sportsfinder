@@ -6,6 +6,7 @@ import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/model/GoogleAuth/google_auth_request_model.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/firebase_options.dart';
 
 class LoginScreenViewModel extends ChangeNotifier {
   LoginScreenViewModel({
@@ -39,11 +40,17 @@ class LoginScreenViewModel extends ChangeNotifier {
     'GOOGLE_SERVER_CLIENT_ID',
   );
 
+  /// `google_sign_in` needs this to request an ID token for your API. Build-time
+  /// env wins; otherwise we use the OAuth client from FlutterFire (same Firebase project).
+  static String? get _resolvedServerClientId {
+    if (_googleServerClientId.isNotEmpty) return _googleServerClientId;
+    return DefaultFirebaseOptions.ios.iosClientId;
+  }
+
   static Future<void> _ensureGoogleSignInInitialized() {
     return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
       clientId: _googleClientId.isEmpty ? null : _googleClientId,
-      serverClientId:
-          _googleServerClientId.isEmpty ? null : _googleServerClientId,
+      serverClientId: _resolvedServerClientId,
     );
   }
 
