@@ -9,6 +9,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -127,6 +128,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
       }
 
+      if (!mounted) return;
       final notificationService = context.read<NotificationService>();
       await notificationService.markAsRead(item.id);
 
@@ -156,12 +158,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         error: e,
       );
       if (!mounted) return;
-      AppSnackBar.show(e.toString());
+      AppSnackBar.show(messageFromApiException(e));
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _actionLoading.remove(item.id);
-      });
+      if (mounted) {
+        setState(() {
+          _actionLoading.remove(item.id);
+        });
+      }
     }
   }
 
@@ -172,7 +175,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await context.read<NotificationService>().markAsRead(item.id);
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.show(e.toString());
+      AppSnackBar.show(messageFromApiException(e));
     }
   }
 
@@ -190,7 +193,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.show(e.toString());
+      AppSnackBar.show(messageFromApiException(e));
     }
   }
 

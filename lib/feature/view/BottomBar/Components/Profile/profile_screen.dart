@@ -183,52 +183,13 @@ class ProfileScreen extends StatelessWidget {
                     isShow: model.bio.isNotEmpty,
                   ),
                 SizedBox(height: context.h(16)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: CardWidget(
-                        onTap: () => model.openFollowers(context),
-                        padding: context.padSym(h: 22, v: 18),
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: model.followersCountLabel,
-                          subText: AppText.followers,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: context.w(12)),
-                    Expanded(
-                      child: CardWidget(
-                        onTap: () => model.openFollowing(context),
-                        padding: context.padSym(h: 22, v: 18),
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: model.followingCountLabel,
-                          subText: AppText.following,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: context.w(12)),
-                    Expanded(
-                      child: CardWidget(
-                        padding: context.padSym(h: 22, v: 18),
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: model.matchesPlayedLabel,
-                          subText: AppText.matches,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                ProfileDetailStatsRow(
+                  followersCount: model.followersCount,
+                  followingCount: model.followingCount,
+                  ratingValue: model.ratingValue,
+                  matchesPlayedValue: model.matchesPlayedLabel,
+                  onFollowersTap: () => model.openFollowers(context),
+                  onFollowingTap: () => model.openFollowing(context),
                 ),
                 ListView.builder(
                   itemCount: model.profileData.length,

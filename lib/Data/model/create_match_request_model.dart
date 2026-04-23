@@ -92,8 +92,8 @@ class MatchModel {
     if (sport.isNotEmpty) 'sport': sport,
     if (skillLevel.isNotEmpty) 'skill_level': skillLevel,
     if (scheduledAt != null) 'scheduled_at': scheduledAt,
-    if (scheduledDate != null) 'date': scheduledDate,
-    if (scheduledTime != null) 'time': scheduledTime,
+    if (scheduledDate != null) 'scheduled_date': scheduledDate,
+    if (scheduledTime != null) 'scheduled_time': scheduledTime,
     if (durationMinutes != null) 'duration_minutes': durationMinutes,
     if (facilityAddress != null) 'facility_address': facilityAddress,
     if (locationName != null) 'location_name': locationName,
@@ -129,6 +129,8 @@ extension ToDiscoveryMatch on MatchModel {
       hostBio: '', // API doesn't provide bio
       playerSkills: [], // Will be populated dynamically if needed
       hostMatchesPlayed: 0, // Will be resolved dynamically
+      latitude: latitude,
+      longitude: longitude,
     );
   }
 }

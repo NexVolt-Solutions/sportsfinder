@@ -69,6 +69,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       RoutesName.editMatchScreen,
       arguments: match,
     );
+    if (!mounted) return;
 
     debugPrint(
       '🔵 [HostDetailsScreen] Navigation returned with result: $result',
@@ -84,14 +85,18 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         '📝 [HostDetailsScreen] Current match sport BEFORE: ${match.sportType}',
       );
 
-      // Extract time from scheduledAt with AM/PM format
+       String dateStr = match.date;
       String timeStr = match.time;
       if (result.scheduledAt != null && result.scheduledAt!.isNotEmpty) {
         try {
           final dt = DateTime.parse(result.scheduledAt!).toLocal();
+          final dd = dt.day.toString().padLeft(2, '0');
+          final mm = dt.month.toString().padLeft(2, '0');
+          dateStr = '$dd/$mm/${dt.year}';
           final timeOfDay = TimeOfDay.fromDateTime(dt);
           timeStr = timeOfDay.format(context);
         } catch (e) {
+          dateStr = match.date;
           timeStr = match.time;
         }
       }
@@ -103,11 +108,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         distanceKm: match.distanceKm,
         sportType: result.sport ?? match.sportType,
         location: result.location ?? match.location,
-        date: result.scheduledAt != null
-            ? DateTime.parse(
-                result.scheduledAt!,
-              ).toLocal().toString().split(' ')[0]
-            : match.date,
+        date: dateStr,
         time: timeStr,
         participantsJoined: match.participantsJoined,
         participantsTotal: result.maxPlayers ?? match.participantsTotal,
@@ -119,6 +120,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         hostBio: match.hostBio,
         playerSkills: match.playerSkills,
         hostMatchesPlayed: match.hostMatchesPlayed,
+        latitude: result.latitude ?? match.latitude,
+        longitude: result.longitude ?? match.longitude,
       );
 
       debugPrint(
@@ -339,15 +342,10 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         ],
                       ),
                       SizedBox(height: context.h(16)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InfoItem(
-                            icon: AppAssets.locationIcon,
-                            title: AppText.location,
-                            value: match.location,
-                          ),
-                        ],
+                      InfoItem(
+                        icon: AppAssets.locationIcon,
+                        title: AppText.location,
+                        value: match.location,
                       ),
                       SizedBox(height: context.h(16)),
                       Card(
@@ -481,12 +479,18 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     );
                                   }
                                 },
-                                onCardTap: () =>
-                                    match.pushPublicProfileForPlayer(
-                                      context,
-                                      displayName: model.rosterNameAt(index),
-                                      userIdSuffix: 'roster_$index',
-                                    ),
+                                onCardTap: () {
+                                  final uid = model.rosterUserIdAt(index).trim();
+                                  final name = model.rosterNameAt(index);
+                                  if (uid.isEmpty || name.trim().isEmpty) {
+                                    return;
+                                  }
+                                  match.pushPublicProfileForUser(
+                                    context,
+                                    userId: uid,
+                                    displayName: name,
+                                  );
+                                },
                                 title: model.rosterNameAt(index),
                                 subTitle: model.rosterSkillAt(index),
                                 showActionIcon: true,

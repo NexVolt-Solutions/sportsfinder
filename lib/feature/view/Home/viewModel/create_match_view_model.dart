@@ -15,6 +15,7 @@ import 'package:sport_finding/core/utils/match_form_sport_labels.dart';
 import 'package:sport_finding/core/Network/platform_options_store.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Network/location_selection_result.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
   void _safeNotifyListeners() {
@@ -41,6 +42,8 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  double? _selectedLatitude;
+  double? _selectedLongitude;
   int duration = 60;
   int maxPlayers = 8;
 
@@ -96,6 +99,8 @@ class CreateMatchViewModel extends ChangeNotifier {
     matchTitleController.text = match.title ?? '';
     descriptionController.text = match.description ?? '';
     locationController.text = match.location ?? '';
+    _selectedLatitude = match.latitude;
+    _selectedLongitude = match.longitude;
     maxPlayers = MatchFormLimits.clampMaxPlayers(match.maxPlayers ?? 8);
     final fromMatchSport =
         sportValueForMatchDropdown(match.sport, sportTypes);
@@ -131,6 +136,8 @@ class CreateMatchViewModel extends ChangeNotifier {
     matchTitleController.text = match.title;
     descriptionController.text = match.matchDescription;
     locationController.text = match.location;
+    _selectedLatitude = match.latitude;
+    _selectedLongitude = match.longitude;
     maxPlayers = MatchFormLimits.clampMaxPlayers(match.participantsTotal);
     final fromMatchSport =
         sportValueForMatchDropdown(match.sportType, sportTypes);
@@ -178,6 +185,13 @@ class CreateMatchViewModel extends ChangeNotifier {
   void setTime(TimeOfDay time, BuildContext context) {
     _selectedTime = time;
     timeController.text = time.format(context);
+  }
+
+  void setSelectedLocation(LocationSelectionResult selected) {
+    locationController.text = selected.location.trim();
+    _selectedLatitude = selected.latitude;
+    _selectedLongitude = selected.longitude;
+    notifyListeners();
   }
 
   void setMaxPlayers(int value) {
@@ -292,10 +306,17 @@ class CreateMatchViewModel extends ChangeNotifier {
     var typedLocation = locationController.text.trim();
     if (typedLocation.isNotEmpty) {
       typedLocation = await _humanReadableLocation(typedLocation);
+      final coords = await _googlePlacesService.geocodeAddress(typedLocation);
+      if (coords != null) {
+        _selectedLatitude = coords.$1;
+        _selectedLongitude = coords.$2;
+      }
       if (locationController.text.trim() != typedLocation) {
         locationController.text = typedLocation;
         notifyListeners();
       }
+      _selectedLatitude ??= _tryParseLatLngPair(typedLocation)?.$1;
+      _selectedLongitude ??= _tryParseLatLngPair(typedLocation)?.$2;
       AppLogger.debug(
         'Using location from form field: $typedLocation',
         tag: 'CreateMatchVM',
@@ -318,6 +339,10 @@ class CreateMatchViewModel extends ChangeNotifier {
         );
       }
       locationController.text = resolved;
+      if (coords != null) {
+        _selectedLatitude = coords.$1;
+        _selectedLongitude = coords.$2;
+      }
       AppLogger.info(
         'Location field was empty, using saved exact location: $resolved',
         tag: 'CreateMatchVM',
@@ -380,6 +405,8 @@ class CreateMatchViewModel extends ChangeNotifier {
         scheduledTime: timeController.text,
         durationMinutes: duration,
         location: resolvedLocation,
+        latitude: _selectedLatitude,
+        longitude: _selectedLongitude,
         maxPlayers: maxPlayers,
       ).toJson();
 
@@ -426,6 +453,8 @@ class CreateMatchViewModel extends ChangeNotifier {
         'scheduled_at': _buildScheduledAt(),
         'duration_minutes': duration,
         'location': resolvedLocation,
+        'latitude': _selectedLatitude,
+        'longitude': _selectedLongitude,
         'max_players': maxPlayers,
       };
 

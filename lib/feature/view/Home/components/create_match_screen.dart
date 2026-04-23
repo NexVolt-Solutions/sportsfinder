@@ -8,6 +8,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Network/location_selection_result.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -343,10 +344,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           RoutesName.locationSearchScreen,
                         );
                         if (!context.mounted) return;
-                        if (selectedLocation is String &&
+                        if (selectedLocation is LocationSelectionResult &&
+                            selectedLocation.location.trim().isNotEmpty) {
+                          model.setSelectedLocation(selectedLocation);
+                        } else if (selectedLocation is String &&
                             selectedLocation.trim().isNotEmpty) {
-                          model.locationController.text =
-                              selectedLocation.trim();
+                          model.locationController.text = selectedLocation.trim();
                         }
                       },
                     ),

@@ -116,6 +116,7 @@ class PublicProfileScreen extends StatelessWidget {
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
                                 ratingValue: model.ratingValue,
+                                matchesPlayedValue: model.matchesPlayedValue,
                                 onFollowersTap: () =>
                                     model.openFollowers(context),
                                 onFollowingTap: () =>
@@ -137,19 +138,21 @@ class PublicProfileScreen extends StatelessWidget {
                                   skillLabel: s.skill,
                                 ),
                               ),
-                              SizedBox(height: context.h(8)),
-                              NormalText(
-                                titleText: AppText.reviews,
-                                titleStyle: t.text16Bold.copyWith(
-                                  color: c.greyDark,
+                              if (model.hasReviews) ...[
+                                SizedBox(height: context.h(8)),
+                                NormalText(
+                                  titleText: AppText.reviews,
+                                  titleStyle: t.text16Bold.copyWith(
+                                    color: c.greyDark,
+                                  ),
                                 ),
-                              ),
-                              ProfileDetailReviewCard(
-                                reviewAuthor: model.reviewAuthorForDisplay,
-                                reviewDate: model.reviewDateForDisplay,
-                                reviewBody: model.reviewBodyForDisplay,
-                                reviewInitial: model.reviewInitial,
-                              ),
+                                ProfileDetailReviewCard(
+                                  reviewAuthor: model.reviewAuthorForDisplay,
+                                  reviewDate: model.reviewDateForDisplay,
+                                  reviewBody: model.reviewBodyForDisplay,
+                                  reviewInitial: model.reviewInitial,
+                                ),
+                              ],
                             ],
                           ),
                   ),
@@ -173,33 +176,26 @@ class _RatePlayerSheet extends StatefulWidget {
 }
 
 class _RatePlayerSheetState extends State<_RatePlayerSheet> {
-  final TextEditingController _matchIdController = TextEditingController();
   final TextEditingController _controller = TextEditingController();
   int _selectedStars = 0;
+  bool _isSubmittingLocal = false;
 
   @override
   void initState() {
     super.initState();
-    final initialMatchId = widget.model.initialMatchId;
-    if (initialMatchId.isNotEmpty) {
-      _matchIdController.text = initialMatchId;
-    }
   }
 
   @override
   void dispose() {
-    _matchIdController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final matchId = _matchIdController.text.trim();
+    if (_isSubmittingLocal || widget.model.isSubmittingReview) return;
+    final matchId = widget.model.initialMatchId.trim();
     final comment = _controller.text.trim();
-    debugPrint(
-      '[RatePlayerSheet] Submit tapped for matchId=$matchId, '
-      'rating=$_selectedStars',
-    );
+    debugPrint('[RatePlayerSheet] Submit tapped for rating=$_selectedStars');
     if (matchId.isEmpty) {
       AppSnackBar.show(AppText.reviewValidationMatchId);
       return;
@@ -213,11 +209,15 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
       return;
     }
 
+    setState(() => _isSubmittingLocal = true);
     final ok = await widget.model.submitReview(
       matchId: matchId,
       rating: _selectedStars,
       comment: comment,
     );
+    if (mounted) {
+      setState(() => _isSubmittingLocal = false);
+    }
     if (!mounted) return;
 
     if (ok) {
@@ -294,24 +294,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(20)),
             Container(
-              padding: context.padSym(h: 14, v: 4),
-              decoration: BoxDecoration(
-                color: c.blue10,
-                borderRadius: BorderRadius.circular(context.radiusR(12)),
-              ),
-              child: TextField(
-                controller: _matchIdController,
-                style: t.text16W500.copyWith(color: c.onSurface),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  labelText: AppText.matchId,
-                  hintText: AppText.matchIdHint,
-                  hintStyle: t.text14W400.copyWith(color: c.greylight),
-                ),
-              ),
-            ),
-            SizedBox(height: context.h(12)),
-            Container(
               height: context.h(120),
               padding: context.padAll(16),
               decoration: BoxDecoration(
@@ -334,12 +316,14 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(18)),
             CustomButton(
-              text: widget.model.isSubmittingReview
+              text: (widget.model.isSubmittingReview || _isSubmittingLocal)
                   ? '${AppText.submitReview}...'
                   : AppText.submitReview,
               color: c.primary,
               colorText: c.onPrimary,
-              onTap: widget.model.isSubmittingReview ? null : _submit,
+              onTap: (widget.model.isSubmittingReview || _isSubmittingLocal)
+                  ? null
+                  : _submit,
             ),
           ],
         ),

@@ -44,6 +44,11 @@ class ProfileScreenViewModel extends ChangeNotifier {
   String get followersCountLabel => '$followersCount';
   String get followingCountLabel => '$followingCount';
   String get matchesPlayedLabel => '$matchesPlayedCount';
+  String get ratingValue {
+    final r = _ps.profile?.stats.rating;
+    if (r == null) return '—';
+    return r.toStringAsFixed(1);
+  }
   bool get notificationsEnabled => _ps.notificationsEnabled;
 
   // --- unchanged below ---

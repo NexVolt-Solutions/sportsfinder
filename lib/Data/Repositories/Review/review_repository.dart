@@ -16,7 +16,7 @@ class ReviewRepository {
     try {
       log(
         '[ReviewRepository] Create review API hit for userId=$userId, '
-        'matchId=${request.matchId}, rating=${request.rating}',
+        'matchId=${request.matchId ?? 'n/a'}, rating=${request.rating}',
       );
 
       final response = await _apiService.post(

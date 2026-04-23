@@ -1,27 +1,4 @@
-//       return;
-//     }
-//     final base = _baseListForChips();
-//     final afterSheet = currentFilters != null
-//         ? applyFilterDataToMatches(base, currentFilters!)
-//         : List<DiscoveryMatch>.from(base);
-//     final q = query.toLowerCase();
-//     matches = afterSheet
-//         .where(
-//           (match) =>
-//               match.title.toLowerCase().contains(q) ||
-//               match.sportType.toLowerCase().contains(q) ||
-//               match.location.toLowerCase().contains(q),
-//         )
-//         .toList();
-//     notifyListeners();
-//   }
-
-//   void applyFilters(FilterData filterData) {
-//     currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
-//     _rebuildMatches();
-//     notifyListeners();
-//   }
-// }
+ 
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
@@ -70,11 +47,11 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   }
 
   /// Seeds lists from Home (or another screen) so the initial GET is skipped.
-  void applyPrefetchedMatches(List<AllMatches> items) {
+  void applyPrefetchedMatches(List<AllMatches> items, {bool? hasNext}) {
     allMatches = List<AllMatches>.from(items);
     _rebuildVisibleMatches();
     page = 1;
-    hasNext = items.length >= 20;
+    this.hasNext = hasNext ?? items.length >= 20;
     isLoading = false;
     error = null;
     notifyListeners();
@@ -94,11 +71,35 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
         hasNext = true;
       }
 
-      final res = await _repo.getAllMatches(page: page);
-      allMatches.addAll(
-        res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
-      );
-      hasNext = res.hasNext;
+      if (scope == UpcomingMatchesScope.allUpcoming) {
+        final allRes = await _repo.getAllMatches(
+          page: page,
+          type: 'all',
+        );
+        final myRes = await _repo.getAllMatches(
+          page: page,
+          type: 'my',
+        );
+        final merged = <String, AllMatches>{};
+        for (final m in allRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        for (final m in myRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        allMatches.addAll(merged.values);
+        hasNext = allRes.hasNext || myRes.hasNext;
+      } else {
+        final res = await _repo.getAllMatches(page: page, type: 'my');
+        allMatches.addAll(
+          res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
+        );
+        hasNext = res.hasNext;
+      }
       _rebuildVisibleMatches();
     } catch (e) {
       error = e.toString();
@@ -178,18 +179,38 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     if (!hasNext || isLoading) return;
 
     try {
+      isLoading = true;
+      notifyListeners();
       page++;
 
-      final res = await _repo.getAllMatches(page: page);
-
-      allMatches.addAll(
-        res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
-      );
+      if (scope == UpcomingMatchesScope.allUpcoming) {
+        final allRes = await _repo.getAllMatches(page: page, type: 'all');
+        final myRes = await _repo.getAllMatches(page: page, type: 'my');
+        final merged = <String, AllMatches>{};
+        for (final m in allRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        for (final m in myRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        allMatches.addAll(merged.values);
+        hasNext = allRes.hasNext || myRes.hasNext;
+      } else {
+        final res = await _repo.getAllMatches(page: page, type: 'my');
+        allMatches.addAll(
+          res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
+        );
+        hasNext = res.hasNext;
+      }
       _rebuildVisibleMatches();
-
-      hasNext = res.hasNext;
     } catch (e) {
       error = e.toString();
+    } finally {
+      isLoading = false;
     }
 
     notifyListeners();
@@ -206,9 +227,17 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   }
 
   List<AllMatches> _scopedBaseMatches() {
-    final visible = allMatches.where(
-      (m) => !DeletedMatchesService().isDeleted(m.id),
-    );
+    final nowUtc = DateTime.now().toUtc();
+    final visible = allMatches.where((m) {
+      if (DeletedMatchesService().isDeleted(m.id)) return false;
+      // Upcoming list should only show matches scheduled in the future.
+      if (scope == UpcomingMatchesScope.allUpcoming) {
+        final start = m.scheduledStartUtc;
+        if (start == null) return false;
+        return start.isAfter(nowUtc);
+      }
+      return true;
+    });
 
     if (scope != UpcomingMatchesScope.myMatches) {
       return visible.toList();
@@ -219,7 +248,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       return visible.toList();
     }
 
-    return visible.where((m) => m.host.id == myId).toList();
+    return visible.where((m) => m.host.id.trim() == myId).toList();
   }
 
   void _rebuildVisibleMatches() {

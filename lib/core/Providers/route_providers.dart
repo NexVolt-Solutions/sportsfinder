@@ -193,17 +193,19 @@ class RouteProviders {
   ) {
     var scope = UpcomingMatchesScope.allUpcoming;
     List<AllMatches>? prefetched;
+    bool? hasNext;
 
     if (routeArguments is AllUpcomingMatchesRouteArgs) {
       scope = routeArguments.scope;
       prefetched = routeArguments.prefetchedMatches;
+      hasNext = routeArguments.hasNext;
     } else if (routeArguments is UpcomingMatchesScope) {
       scope = routeArguments;
     }
 
     final vm = AllUpcommingMatchesViewModel(scope: scope);
     if (prefetched != null) {
-      vm.applyPrefetchedMatches(prefetched);
+      vm.applyPrefetchedMatches(prefetched, hasNext: hasNext);
     } else {
       Future.microtask(() => vm.fetchMatches());
     }

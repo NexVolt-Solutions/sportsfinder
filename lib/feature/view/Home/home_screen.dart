@@ -163,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   arguments: AllUpcomingMatchesRouteArgs(
                     scope: UpcomingMatchesScope.allUpcoming,
                     prefetchedMatches: List<AllMatches>.from(model.matches),
+                    hasNext: model.hasMoreUpcoming,
                   ),
                 );
               },

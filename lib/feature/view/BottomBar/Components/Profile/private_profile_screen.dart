@@ -83,6 +83,7 @@ class PrivateProfileScreen extends StatelessWidget {
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
                                 ratingValue: model.ratingValue,
+                                matchesPlayedValue: model.matchesPlayedValue,
                                 onFollowersTap: () =>
                                     model.openFollowers(context),
                                 onFollowingTap: () =>
@@ -101,19 +102,21 @@ class PrivateProfileScreen extends StatelessWidget {
                                   skillLabel: s.skill,
                                 ),
                               ),
-                              SizedBox(height: context.h(8)),
-                              NormalText(
-                                titleText: AppText.reviews,
-                                titleStyle: t.text16Bold.copyWith(
-                                  color: c.greyDark,
+                              if (model.hasReviews) ...[
+                                SizedBox(height: context.h(8)),
+                                NormalText(
+                                  titleText: AppText.reviews,
+                                  titleStyle: t.text16Bold.copyWith(
+                                    color: c.greyDark,
+                                  ),
                                 ),
-                              ),
-                              ProfileDetailReviewCard(
-                                reviewAuthor: model.reviewAuthorForDisplay,
-                                reviewDate: model.reviewDateForDisplay,
-                                reviewBody: model.reviewBodyForDisplay,
-                                reviewInitial: model.reviewInitial,
-                              ),
+                                ProfileDetailReviewCard(
+                                  reviewAuthor: model.reviewAuthorForDisplay,
+                                  reviewDate: model.reviewDateForDisplay,
+                                  reviewBody: model.reviewBodyForDisplay,
+                                  reviewInitial: model.reviewInitial,
+                                ),
+                              ],
                             ],
                           ),
                   ),

@@ -12,6 +12,7 @@ import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
@@ -184,6 +185,8 @@ class PublicProfileViewModel extends ChangeNotifier {
     return r.toStringAsFixed(1);
   }
 
+  String get matchesPlayedValue => '${_active?.stats.matches ?? 0}';
+
   List<MySport> get publicSports {
     final raw = _active?.sports ?? [];
     final out = <MySport>[];
@@ -212,6 +215,23 @@ class PublicProfileViewModel extends ChangeNotifier {
     final first = list.first;
     if (first is Map) return Map<String, dynamic>.from(first);
     return null;
+  }
+
+  bool get hasReviews {
+    final list = _active?.reviews;
+    if (list == null || list.isEmpty) return false;
+    for (final item in list) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final authorRaw =
+          m['author_name'] ?? m['reviewer_name'] ?? m['author'] ?? m['user'];
+      final author = authorRaw is Map
+          ? '${authorRaw['full_name'] ?? authorRaw['name'] ?? ''}'.trim()
+          : '${authorRaw ?? ''}'.trim();
+      final body = '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+      if (author.isNotEmpty || body.isNotEmpty) return true;
+    }
+    return false;
   }
 
   String get reviewAuthor {
@@ -343,6 +363,9 @@ class PublicProfileViewModel extends ChangeNotifier {
       '[PublicProfileVM] submitReview tapped for userId=$selectedUserId, '
       'matchId=$matchId, rating=$rating',
     );
+    if (_submitReviewLoading) {
+      return false;
+    }
     if (isOwnProfile) {
       _submitReviewError = AppText.cannotRateOwnProfile;
       _safeNotifyListeners();
@@ -350,6 +373,11 @@ class PublicProfileViewModel extends ChangeNotifier {
     }
     if (selectedUserId.isEmpty) {
       _submitReviewError = AppText.invalidUserProfile;
+      _safeNotifyListeners();
+      return false;
+    }
+    if (matchId.trim().isEmpty) {
+      _submitReviewError = AppText.reviewValidationMatchId;
       _safeNotifyListeners();
       return false;
     }
@@ -390,7 +418,7 @@ class PublicProfileViewModel extends ChangeNotifier {
         '[PublicProfileVM] submitReview failed for userId=$selectedUserId: $e',
       );
       _submitReviewLoading = false;
-      _submitReviewError = e.toString();
+      _submitReviewError = messageFromApiException(e);
       _safeNotifyListeners();
       return false;
     }

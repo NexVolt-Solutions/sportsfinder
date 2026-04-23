@@ -95,6 +95,7 @@ import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/match_detail_model.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailScreenViewModel extends ChangeNotifier {
@@ -120,6 +121,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       i >= 0 && i < _rosterNames.length ? _rosterNames[i] : '';
   String rosterSkillAt(int i) =>
       i >= 0 && i < _rosterSkills.length ? _rosterSkills[i] : '';
+  String rosterUserIdAt(int i) =>
+      i >= 0 && i < _rosterUserIds.length ? _rosterUserIds[i] : '';
 
   // ── All users from the global service ─────────────────────────────────────
   List<Items> get allUsers => ListOfAllUserService().allUsers;
@@ -276,7 +279,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       invitedIds.add(trimmedUserId);
       return response.message;
     } catch (e) {
-      _inviteErrorMessage = e.toString();
+      _inviteErrorMessage = messageFromApiException(e);
       AppLogger.error('Invite API call failed', tag: 'HostDetailVM', error: e);
       return _inviteErrorMessage;
     } finally {
@@ -317,7 +320,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       );
       return result;
     } catch (e) {
-      _deleteMatchError = e.toString();
+      _deleteMatchError = messageFromApiException(e);
       AppLogger.error(
         'Delete match failed for matchId: $matchId',
         tag: 'HostDetailVM',
@@ -357,7 +360,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] joinMatch failed — error: $e');
       log('📍 [ViewModel] joinMatch stacktrace: $stack');
 
-      final errorStr = e.toString();
+      final errorStr = messageFromApiException(e);
       _joinLeaveError = errorStr;
 
       // If user already joined, still show Leave button
@@ -406,7 +409,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] leaveMatch failed — error: $e');
       log('📍 [ViewModel] leaveMatch stacktrace: $stack');
 
-      final errorStr = e.toString();
+      final errorStr = messageFromApiException(e);
       _joinLeaveError = errorStr;
 
       // If user is the host, they cannot leave
@@ -524,7 +527,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       _syncCurrentMatchRoster();
       return response.message;
     } catch (e) {
-      _joinLeaveError = e.toString();
+      _joinLeaveError = messageFromApiException(e);
       return null;
     } finally {
       _isJoinLeaveLoading = false;
@@ -722,7 +725,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] Failed to update match status — error: $e');
       log('📍 [ViewModel] Stacktrace: $stack');
 
-      _matchStatusError = e.toString();
+      _matchStatusError = messageFromApiException(e);
       _matchStatus = 'pending'; // Revert to pending on error
       _isUpdatingMatchStatus = false;
       notifyListeners();

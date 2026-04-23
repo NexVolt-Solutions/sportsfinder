@@ -537,17 +537,21 @@ class ProfileDetailStatsRow extends StatelessWidget {
     required this.followersCount,
     required this.followingCount,
     required this.ratingValue,
+    required this.matchesPlayedValue,
     this.onFollowersTap,
     this.onFollowingTap,
     this.onRatingTap,
+    this.onMatchesTap,
   });
 
   final int followersCount;
   final int followingCount;
   final String ratingValue;
+  final String matchesPlayedValue;
   final VoidCallback? onFollowersTap;
   final VoidCallback? onFollowingTap;
   final VoidCallback? onRatingTap;
+  final VoidCallback? onMatchesTap;
 
   @override
   Widget build(BuildContext context) {
@@ -567,16 +571,17 @@ class ProfileDetailStatsRow extends StatelessWidget {
             child: Column(
               children: [
                 icon,
-                SizedBox(height: 8),
+
+                SizedBox(height: 6),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: c.onSurface,
                   ),
                 ),
-                Text(label, style: TextStyle(fontSize: 12, color: c.greyDark)),
+                Text(label, style: TextStyle(fontSize: 11, color: c.greyDark)),
               ],
             ),
           ),
@@ -587,24 +592,31 @@ class ProfileDetailStatsRow extends StatelessWidget {
     return Row(
       children: [
         buildCard(
-          SvgPicture.asset(AppAssets.follow, width: 20),
+          SvgPicture.asset(AppAssets.follow, width: 18, height: 18,color: c.greyDark,),
           "$followersCount",
           AppText.followers,
           onFollowersTap,
         ),
         SizedBox(width: 10),
         buildCard(
-          SvgPicture.asset(AppAssets.follower, width: 20),
+          SvgPicture.asset(AppAssets.follower, width: 18, height: 18,color: c.greyDark,   ),
           "$followingCount",
           AppText.following,
           onFollowingTap,
         ),
         SizedBox(width: 10),
         buildCard(
-          Icon(Icons.star, color: c.greyDark),
+           Icon(Icons.star, color: c.greyDark, size: 18),
           ratingValue,
           AppText.rating,
           onRatingTap,
+        ),
+        SizedBox(width: 10),
+        buildCard(
+          Icon(Icons.sports_soccer_rounded, color: c.greyDark, size: 18),
+          matchesPlayedValue,
+          AppText.matches,
+          onMatchesTap,
         ),
       ],
     );

@@ -15,11 +15,11 @@ class InviteActionRepository {
         tag: 'InviteActionRepo',
       );
       AppLogger.debug(
-        'Backend accepts invitations through POST /api/v1/matches/$matchId/join',
+        'Backend accepts invitations through POST /api/v1/matches/$matchId/invite/accept',
         tag: 'InviteActionRepo',
       );
       final response = await _apiService.post(
-        '/api/v1/matches/$matchId/join',
+        '/api/v1/matches/$matchId/invite/accept',
       );
       AppLogger.success(
         'Accept invite request completed for matchId: $matchId',

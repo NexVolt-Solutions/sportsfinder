@@ -6,6 +6,36 @@ import 'package:sport_finding/core/Network/places_search_result.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class GooglePlacesService {
+  /// Forward geocoding (address -> lat/lng).
+  Future<(double, double)?> geocodeAddress(String address) async {
+    final q = address.trim();
+    if (q.isEmpty) return null;
+    if (GoogleMapsConfig.webServicesKey.isEmpty) return null;
+
+    final uri = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
+      'address': q,
+      'key': GoogleMapsConfig.webServicesKey,
+    });
+
+    final response = await http.get(uri);
+    if (response.statusCode != 200) return null;
+    final body = _decodeJson(response.body);
+    final status = (body['status'] ?? '').toString();
+    if (status != 'OK') return null;
+    final results = body['results'];
+    if (results is! List || results.isEmpty) return null;
+    final first = results.first;
+    if (first is! Map) return null;
+    final geometry = first['geometry'];
+    if (geometry is! Map) return null;
+    final location = geometry['location'];
+    if (location is! Map) return null;
+    final lat = (location['lat'] as num?)?.toDouble();
+    final lng = (location['lng'] as num?)?.toDouble();
+    if (lat == null || lng == null) return null;
+    return (lat, lng);
+  }
+
   /// Reverse geocoding (lat/lng → address).
   Future<String?> reverseGeocode({
     required double latitude,

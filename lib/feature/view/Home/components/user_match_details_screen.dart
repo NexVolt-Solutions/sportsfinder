@@ -204,11 +204,16 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         ...List.generate(
                           model.rosterCount,
                           (index) => UserMatchCard(
-                            onCardTap: () => match.pushPublicProfileForPlayer(
-                              context,
-                              displayName: model.rosterNameAt(index),
-                              userIdSuffix: 'match_detail_$index',
-                            ),
+                            onCardTap: () {
+                              final uid = model.rosterUserIdAt(index).trim();
+                              final name = model.rosterNameAt(index);
+                              if (uid.isEmpty || name.trim().isEmpty) return;
+                              match.pushPublicProfileForUser(
+                                context,
+                                userId: uid,
+                                displayName: name,
+                              );
+                            },
                             title: model.rosterNameAt(index),
                             subTitle: model.rosterSkillAt(index),
                           ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/google_places_service.dart';
+import 'package:sport_finding/core/Network/location_selection_result.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -108,11 +109,19 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   }
 
   Future<void> _selectLocation(String location) async {
+    final coords = await _googlePlacesService.geocodeAddress(location);
     await AppPreferences.addLocationSearchHistoryItem(location);
     if (!mounted) return;
     await _loadHistory();
     if (!mounted) return;
-    Navigator.pop(context, location);
+    Navigator.pop(
+      context,
+      LocationSelectionResult(
+        location: location,
+        latitude: coords?.$1,
+        longitude: coords?.$2,
+      ),
+    );
   }
 
   Future<void> _removeHistoryItem(String item) async {
