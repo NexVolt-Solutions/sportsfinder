@@ -22,6 +22,8 @@ class DiscoveryMatch {
     this.hostBio = '',
     this.playerSkills = const [],
     this.hostMatchesPlayed = 0,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -49,6 +51,8 @@ class DiscoveryMatch {
 
   /// Shown on host profile card; if 0, [resolvedHostMatchesPlayed] derives a value.
   final int hostMatchesPlayed;
+  final double? latitude;
+  final double? longitude;
 
   /// Maps API match data into [DiscoveryMatch] (date/time formatted for [matchScheduledStart]).
   factory DiscoveryMatch.fromAllMatches(AllMatches m) {
@@ -80,6 +84,8 @@ class DiscoveryMatch {
       hostBio: '',
       playerSkills: const [],
       hostMatchesPlayed: 0,
+      latitude: m.latitude,
+      longitude: m.longitude,
     );
   }
 
@@ -221,6 +227,8 @@ class DiscoveryMatch {
     String? hostBio,
     List<String>? playerSkills,
     int? hostMatchesPlayed,
+    double? latitude,
+    double? longitude,
   }) {
     return DiscoveryMatch(
       id: id ?? this.id,
@@ -240,6 +248,8 @@ class DiscoveryMatch {
       hostBio: hostBio ?? this.hostBio,
       playerSkills: playerSkills ?? this.playerSkills,
       hostMatchesPlayed: hostMatchesPlayed ?? this.hostMatchesPlayed,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 }

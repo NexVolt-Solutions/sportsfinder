@@ -17,10 +17,17 @@ import 'package:sport_finding/core/utils/app_snack_bar.dart';
 class PublicProfileViewModel extends ChangeNotifier {
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
     _listener = () {
-      Future.microtask(notifyListeners);
+      Future.microtask(_safeNotifyListeners);
     };
     ProfileService().addListener(_listener);
     Future.microtask(_load);
+  }
+
+  bool _disposed = false;
+
+  void _safeNotifyListeners() {
+    if (_disposed) return;
+    notifyListeners();
   }
 
   final PublicProfileArgs? _args;
@@ -100,35 +107,42 @@ class PublicProfileViewModel extends ChangeNotifier {
       try {
         await ProfileService().fetchMyProfile(forceRefresh: refresh);
       } catch (_) {}
-      notifyListeners();
+      _safeNotifyListeners();
       return;
     }
 
     _fetchOtherLoading = true;
     _fetchOtherError = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       final raw = await _repo.getUserById(_args!.userId.trim());
-      if (raw is Map) {
-        _otherProfile = UserProfileModel.fromJson(
-          Map<String, dynamic>.from(raw),
-        );
-        _fetchOtherError = null;
-      } else {
-        throw Exception('Invalid profile response');
+      if (!_disposed) {
+        if (raw is Map) {
+          _otherProfile = UserProfileModel.fromJson(
+            Map<String, dynamic>.from(raw),
+          );
+          _fetchOtherError = null;
+        } else {
+          throw Exception('Invalid profile response');
+        }
       }
     } catch (e) {
-      _fetchOtherError = e.toString();
-      _otherProfile = null;
+      if (!_disposed) {
+        _fetchOtherError = e.toString();
+        _otherProfile = null;
+      }
     } finally {
-      _fetchOtherLoading = false;
-      notifyListeners();
+      if (!_disposed) {
+        _fetchOtherLoading = false;
+        _safeNotifyListeners();
+      }
     }
   }
 
   @override
   void dispose() {
+    _disposed = true;
     ProfileService().removeListener(_listener);
     super.dispose();
   }
@@ -289,30 +303,34 @@ class PublicProfileViewModel extends ChangeNotifier {
 
     _followLoading = true;
     _followError = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       log('🚀 [PublicProfileVM] Follow API hit for userId: $selectedUserId');
       await _followUserRepo.followUser(userId: selectedUserId);
+      if (_disposed) return;
       log('✅ [PublicProfileVM] Follow API success for userId: $selectedUserId');
       _isFollowingOverride = true;
       _followersCountOverride = followersCount + 1;
       _followError = null;
-      notifyListeners();
+      _safeNotifyListeners();
 
       if (!context.mounted) return;
       AppSnackBar.show('User followed successfully');
     } catch (e) {
+      if (_disposed) return;
       log('❌ [PublicProfileVM] Follow API failed for userId: $selectedUserId');
       log('📍 [PublicProfileVM] Follow error: $e');
       _followError = e.toString();
-      notifyListeners();
+      _safeNotifyListeners();
 
       if (!context.mounted) return;
       AppSnackBar.show(_followError ?? 'Failed to follow user');
     } finally {
-      _followLoading = false;
-      notifyListeners();
+      if (!_disposed) {
+        _followLoading = false;
+        _safeNotifyListeners();
+      }
     }
   }
 
@@ -327,18 +345,18 @@ class PublicProfileViewModel extends ChangeNotifier {
     );
     if (isOwnProfile) {
       _submitReviewError = AppText.cannotRateOwnProfile;
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
     if (selectedUserId.isEmpty) {
       _submitReviewError = AppText.invalidUserProfile;
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _submitReviewLoading = true;
     _submitReviewError = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _reviewRepository.createReview(
@@ -349,11 +367,13 @@ class PublicProfileViewModel extends ChangeNotifier {
           comment: comment.trim(),
         ),
       );
+      if (_disposed) return false;
       log(
         '[PublicProfileVM] submitReview success for userId=$selectedUserId',
       );
 
       final raw = await _repo.getUserById(selectedUserId);
+      if (_disposed) return false;
       if (raw is Map) {
         _otherProfile = UserProfileModel.fromJson(
           Map<String, dynamic>.from(raw),
@@ -362,15 +382,16 @@ class PublicProfileViewModel extends ChangeNotifier {
 
       _submitReviewLoading = false;
       _submitReviewError = null;
-      notifyListeners();
+      _safeNotifyListeners();
       return true;
     } catch (e) {
+      if (_disposed) return false;
       log(
         '[PublicProfileVM] submitReview failed for userId=$selectedUserId: $e',
       );
       _submitReviewLoading = false;
       _submitReviewError = e.toString();
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
   }

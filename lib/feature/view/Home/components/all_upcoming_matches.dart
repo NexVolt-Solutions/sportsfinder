@@ -117,30 +117,56 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                     : ListenableBuilder(
                         listenable: ProfileService(),
                         builder: (context, _) {
-                          return ListView.separated(
-                            itemCount: model.matches.length,
-                            padding: context.padSym(h: 0),
-                            itemBuilder: (context, index) {
-                              final match = model.matches[index];
-
-                              return GlobalMatchCard.fromAllMatches(
-                                match,
-                                onCardTap: () => _openMatchDetails(
-                                  context,
-                                  model,
-                                  DiscoveryMatch.fromAllMatches(match),
-                                ),
-                                onSeeAllTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.seeAllInvatedPlayerScreen,
-                                    arguments: match,
-                                  );
-                                },
-                              );
+                          return NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              final metrics = notification.metrics;
+                              final shouldLoadMore =
+                                  metrics.pixels >=
+                                      metrics.maxScrollExtent - 200 &&
+                                  model.hasNext &&
+                                  !model.isLoading;
+                              if (shouldLoadMore) {
+                                model.loadMore();
+                              }
+                              return false;
                             },
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: context.h(12)),
+                            child: ListView.separated(
+                              itemCount:
+                                  model.matches.length +
+                                  (model.hasNext ? 1 : 0),
+                              padding: context.padSym(h: 0),
+                              itemBuilder: (context, index) {
+                                if (index >= model.matches.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final match = model.matches[index];
+
+                                return GlobalMatchCard.fromAllMatches(
+                                  match,
+                                  onCardTap: () => _openMatchDetails(
+                                    context,
+                                    model,
+                                    DiscoveryMatch.fromAllMatches(match),
+                                  ),
+                                  onSeeAllTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      RoutesName.seeAllInvatedPlayerScreen,
+                                      arguments: match,
+                                    );
+                                  },
+                                );
+                              },
+                              separatorBuilder: (context, index) =>
+                                  SizedBox(height: context.h(12)),
+                            ),
                           );
                         },
                       ),

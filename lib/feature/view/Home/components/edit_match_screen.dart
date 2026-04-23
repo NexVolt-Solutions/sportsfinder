@@ -308,6 +308,12 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                           ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppText.selectMatchDateRequired;
+                        }
+                        return null;
+                      },
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -339,6 +345,12 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                           ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppText.selectMatchTimeRequired;
+                        }
+                        return null;
+                      },
                       onTap: () async {
                         final time = await showTimePicker(
                           context: context,

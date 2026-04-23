@@ -13,6 +13,8 @@ import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/core/utils/match_duration_format.dart';
 import 'package:sport_finding/core/utils/match_form_sport_labels.dart';
 import 'package:sport_finding/core/Network/platform_options_store.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
   void _safeNotifyListeners() {
@@ -99,12 +101,8 @@ class CreateMatchViewModel extends ChangeNotifier {
         sportValueForMatchDropdown(match.sport, sportTypes);
     final fromMatchSkill =
         skillValueForMatchDropdown(match.skillLevel, skillLevels);
-    final profileDefaults = profileDefaultsForMatchForm(
-      sportTypes,
-      skillLevels,
-    );
-    selectedSportType = fromMatchSport ?? profileDefaults?.sport;
-    selectedSkillLevel = fromMatchSkill ?? profileDefaults?.skill;
+    selectedSportType = fromMatchSport;
+    selectedSkillLevel = fromMatchSkill;
 
     duration = match.durationMinutes ?? 60;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
@@ -138,12 +136,8 @@ class CreateMatchViewModel extends ChangeNotifier {
         sportValueForMatchDropdown(match.sportType, sportTypes);
     final fromMatchSkill =
         skillValueForMatchDropdown(match.skillLevel, skillLevels);
-    final profileDefaults = profileDefaultsForMatchForm(
-      sportTypes,
-      skillLevels,
-    );
-    selectedSportType = fromMatchSport ?? profileDefaults?.sport;
-    selectedSkillLevel = fromMatchSkill ?? profileDefaults?.skill;
+    selectedSportType = fromMatchSport;
+    selectedSkillLevel = fromMatchSkill;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     final dt = match.matchScheduledStart;
@@ -161,24 +155,6 @@ class CreateMatchViewModel extends ChangeNotifier {
     }
 
     notifyListeners();
-  }
-
-  /// Fills empty sport / skill from the signed-in profile (onboarding) on
-  /// the create (non-edit) flow.
-  void applyNewMatchDefaultsFromProfile() {
-    if (isEditMode) return;
-    final d = profileDefaultsForMatchForm(sportTypes, skillLevels);
-    if (d == null) return;
-    var changed = false;
-    if (selectedSportType == null && d.sport != null) {
-      selectedSportType = d.sport;
-      changed = true;
-    }
-    if (selectedSkillLevel == null && d.skill != null) {
-      selectedSkillLevel = d.skill;
-      changed = true;
-    }
-    if (changed) notifyListeners();
   }
 
   void setSportType(String? value) {
@@ -374,6 +350,11 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   Future<bool> createMatchApi() async {
     if (!formKey.currentState!.validate()) return false;
+    if (_buildScheduledAt() == null) {
+      error = AppText.scheduleDateTimeRequired;
+      notifyListeners();
+      return false;
+    }
 
     error = null;
     isLoading = true;
@@ -405,7 +386,7 @@ class CreateMatchViewModel extends ChangeNotifier {
       createdMatch = await _createRepo.createMatch(data);
       return true;
     } catch (e) {
-      error = e.toString();
+      error = messageFromApiException(e);
       return false;
     } finally {
       isLoading = false;
@@ -417,6 +398,11 @@ class CreateMatchViewModel extends ChangeNotifier {
     if (!formKey.currentState!.validate()) return false;
     if (matchId == null || matchId!.isEmpty) {
       error = 'Match ID is missing';
+      return false;
+    }
+    if (_buildScheduledAt() == null) {
+      error = AppText.scheduleDateTimeRequired;
+      notifyListeners();
       return false;
     }
 
@@ -449,7 +435,7 @@ class CreateMatchViewModel extends ChangeNotifier {
       );
       return true;
     } catch (e) {
-      error = e.toString();
+      error = messageFromApiException(e);
       return false;
     } finally {
       isLoading = false;

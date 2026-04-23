@@ -85,7 +85,7 @@ class HomeScreenViewModel extends ChangeNotifier {
 
       matches =
           res.items.where((m) {
-            final start = m.scheduledStartUtc;
+        final start = m.scheduledStartUtc;
             return start != null &&
                 start.isAfter(nowUtc) &&
                 !DeletedMatchesService().isDeleted(m.id);

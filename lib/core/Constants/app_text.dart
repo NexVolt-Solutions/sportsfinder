@@ -198,6 +198,17 @@ class AppText {
   static const String denmarkCentralPark = 'Denmark Central Park';
   static const String maximumPlayers = 'Maximum Players';
   static const String skillLevelHint = 'Beginner / Intermediate / Advanced';
+
+  /// Create match sport/skill dropdowns when nothing is selected yet.
+  static const String selectSportType = 'Select sport type';
+  static const String selectYourSkill = 'Select your skill';
+
+  /// Match schedule: require date and time before save/create.
+  static const String selectMatchDateRequired = 'Please select a date';
+  static const String selectMatchTimeRequired = 'Please select a time';
+  static const String scheduleDateTimeRequired =
+      'Please select both date and time for the match.';
+
   static const String eG10 = 'e.g. 10';
   static const String eGBasketball = 'e.g Basketball';
   static const String description = 'Description';

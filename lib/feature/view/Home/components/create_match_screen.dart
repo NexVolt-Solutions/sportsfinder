@@ -64,7 +64,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
       _didPopulateEditState = true;
       return;
     }
-    model.applyNewMatchDefaultsFromProfile();
+    // New match: sport/skill describe this match for other players — not the host's profile.
     _didPopulateEditState = true;
   }
 
@@ -212,7 +212,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         final vm = context.read<CreateMatchViewModel>();
                         return DropdownFormFieldWidget(
                           label: AppText.sportType,
-                          hintText: AppText.chooseYourSports,
+                          hintText: AppText.selectSportType,
                           items: vm.sportTypes,
                           value: selectedSport,
                           onChanged: vm.setSportType,
@@ -232,7 +232,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         final vm = context.read<CreateMatchViewModel>();
                         return DropdownFormFieldWidget(
                           label: AppText.skillLevel,
-                          hintText: AppText.skillLevelHint,
+                          hintText: AppText.selectYourSkill,
                           items: vm.skillLevels,
                           value: selectedSkill,
                           onChanged: vm.setSkillLevel,
@@ -264,6 +264,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppText.selectMatchDateRequired;
+                        }
+                        return null;
+                      },
                       onTap: () async {
                         final date = await showDatePicker(
                           context: context,
@@ -295,6 +301,12 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppText.selectMatchTimeRequired;
+                        }
+                        return null;
+                      },
                       onTap: () async {
                         final time = await showTimePicker(
                           context: context,

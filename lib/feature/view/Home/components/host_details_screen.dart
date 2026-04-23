@@ -27,6 +27,7 @@ import 'package:sport_finding/feature/widget/person_invited_card.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
+import 'package:sport_finding/feature/widget/match_location_map_card.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailsScreen extends StatefulWidget {
@@ -666,43 +667,10 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       ],
 
                       if (model.selectedIndex == 2) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            children: [
-                              Container(
-                                height: context.h(174),
-                                width: context.w(380),
-                                decoration: BoxDecoration(
-                                  color: context.appColors.blue10,
-                                  borderRadius: BorderRadius.circular(
-                                    context.radiusR(12),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: Padding(
-                                  padding: context.padAll(12),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.fullscreen,
-                                        size: 20,
-                                      ),
-                                      onPressed: () {},
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        MatchLocationMapCard(
+                          location: match.location,
+                          latitude: match.latitude,
+                          longitude: match.longitude,
                         ),
                         SizedBox(height: context.h(16)),
                         SectionHeaderWidget(title: match.location),

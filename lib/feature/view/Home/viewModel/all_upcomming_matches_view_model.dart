@@ -95,13 +95,11 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       }
 
       final res = await _repo.getAllMatches(page: page);
-
       allMatches.addAll(
         res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
       );
-      _rebuildVisibleMatches();
-
       hasNext = res.hasNext;
+      _rebuildVisibleMatches();
     } catch (e) {
       error = e.toString();
     } finally {

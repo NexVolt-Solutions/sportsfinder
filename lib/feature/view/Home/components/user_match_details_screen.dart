@@ -19,6 +19,7 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
+import 'package:sport_finding/feature/widget/match_location_map_card.dart';
 
 /// Match detail UI. Reads [DiscoveryMatch] from [ModalRoute.settings.arguments]
 /// only in [build] so we never call [notifyListeners] during dependency changes.
@@ -173,6 +174,12 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                             ),
                           ),
                       ],
+                      SizedBox(height: context.h(16)),
+                      MatchLocationMapCard(
+                        location: match.location,
+                        latitude: match.latitude,
+                        longitude: match.longitude,
+                      ),
                       SizedBox(height: context.h(16)),
                       NormalText(
                         crossAxisAlignment: CrossAxisAlignment.start,

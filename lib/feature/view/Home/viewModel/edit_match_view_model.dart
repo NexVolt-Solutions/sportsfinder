@@ -11,6 +11,8 @@ import 'package:sport_finding/core/Constants/match_form_limits.dart';
 import 'package:sport_finding/core/utils/match_duration_format.dart';
 import 'package:sport_finding/core/utils/match_form_sport_labels.dart';
 import 'package:sport_finding/core/Network/platform_options_store.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
   void _safeNotifyListeners() {
@@ -233,6 +235,11 @@ class EditMatchViewModel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    if (_buildScheduledAt() == null) {
+      error = AppText.scheduleDateTimeRequired;
+      notifyListeners();
+      return false;
+    }
 
     error = null;
     isLoading = true;
@@ -269,7 +276,7 @@ class EditMatchViewModel extends ChangeNotifier {
     } catch (e, stackTrace) {
       debugPrint('❌ API Error updating match: $e');
       debugPrint('📋 StackTrace: $stackTrace');
-      error = e.toString();
+      error = messageFromApiException(e);
       notifyListeners();
       return false;
     } finally {
@@ -295,7 +302,7 @@ class EditMatchViewModel extends ChangeNotifier {
     } catch (e, stackTrace) {
       debugPrint('Delete match failed: $e');
       debugPrint('$stackTrace');
-      error = e.toString();
+      error = messageFromApiException(e);
       return false;
     } finally {
       isDeleting = false;
