@@ -98,26 +98,6 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: context.h(20)),
-<<<<<<< HEAD
-                              if (!model.isOwnProfile) ...[
-                                _FollowMessageRow(
-                                  onFollow: () => model.onFollowTap(context),
-                                  onMessage: () => model.onMessageTap(context),
-                                  isFollowing: model.isFollowing,
-                                  isFollowLoading: model.isFollowLoading,
-                                ),
-                                SizedBox(height: context.h(12)),
-                                _RatePlayerButton(
-                                  onTap: model.canRateForMatch
-                                      ? () => _showRateSheet(context, model)
-                                      : () => AppSnackBar.show(
-                                          model.rateUnavailableMessage,
-                                        ),
-                                ),
-                                SizedBox(height: context.h(20)),
-                              ] else
-                                SizedBox(height: context.h(20)),
-=======
 
                               _FollowMessageRow(
                                 onFollow: () async => !model.isOwnProfile
@@ -138,7 +118,6 @@ class PublicProfileScreen extends StatelessWidget {
                               SizedBox(height: context.h(20)),
 
                               SizedBox(height: context.h(20)),
->>>>>>> b37d7e0 (Refactor public profile screen and view model for improved user interaction)
                               ProfileDetailStatsRow(
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
@@ -152,17 +131,13 @@ class PublicProfileScreen extends StatelessWidget {
                                     : () => model.openFollowing(context),
                                 onRatingTap: model.isOwnProfile
                                     ? null
-<<<<<<< HEAD
+                                    : !model.canRateProfile
+                                    ? null
                                     : model.canRateForMatch
                                     ? () => _showRateSheet(context, model)
                                     : () => AppSnackBar.show(
                                         model.rateUnavailableMessage,
                                       ),
-=======
-                                    : !model.canRateProfile
-                                    ? null
-                                    : () => _showRateSheet(context, model),
->>>>>>> b37d7e0 (Refactor public profile screen and view model for improved user interaction)
                               ),
                               SizedBox(height: context.h(16)),
                               NormalText(
