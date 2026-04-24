@@ -4,6 +4,7 @@ import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repositor
 import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/Data/Repositories/list_of_all_user_repository.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
@@ -135,7 +136,9 @@ class RouteProviders {
         );
       case RoutesName.allMemberScreen:
         return ChangeNotifierProvider(
-          create: (_) => AllMemberScreenViewModel(),
+          create: (_) => AllMemberScreenViewModel(
+            repository: ListOfAllUserRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.chatScreen:

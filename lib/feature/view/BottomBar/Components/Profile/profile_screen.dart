@@ -12,6 +12,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
+import 'package:sport_finding/core/utils/share_sheet_helper.dart';
 import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
@@ -123,6 +124,31 @@ class ProfileScreen extends StatelessWidget {
       (route) => false,
     );
     AppSnackBar.show(AppText.logoutSuccess);
+  }
+
+  Future<void> _shareProfile(BuildContext context) async {
+    final model = context.read<ProfileScreenViewModel>();
+    final sportLine = model.sportsList.isNotEmpty
+        ? model.sportsList
+              .map((sport) => '${sport.name} (${sport.skill})')
+              .join(', ')
+        : '';
+
+    final shareText = [
+      'Check out my SportFinding profile!',
+      model.fullName,
+      if (model.bio.isNotEmpty) model.bio,
+      if (model.location.isNotEmpty) 'Location: ${model.location}',
+      if (sportLine.isNotEmpty) 'Sports: $sportLine',
+      if (model.matchesPlayedLabel.isNotEmpty)
+        'Matches: ${model.matchesPlayedLabel}',
+    ].join('\n');
+
+    await ShareSheetHelper.showShareSheet(
+      context,
+      title: model.fullName.isNotEmpty ? model.fullName : AppText.share,
+      text: shareText,
+    );
   }
 
   @override
@@ -339,7 +365,7 @@ class ProfileScreen extends StatelessWidget {
                         leading: SvgPicture.asset(AppAssets.share),
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),
-                        onTap: () {},
+                        onTap: () => _shareProfile(context),
                         text: AppText.share,
                       ),
                     ),

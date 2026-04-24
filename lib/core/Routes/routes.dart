@@ -38,11 +38,17 @@ import 'package:sport_finding/feature/view/Legal/terms_of_service_screen.dart';
 import 'package:sport_finding/feature/view/Notifications/notifications_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Otp/otp_verification_screen.dart';
+import 'package:sport_finding/feature/view/AppStart/app_start_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case RoutesName.appStartScreen:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const AppStartScreen(),
+        );
       case RoutesName.onboardingScreen:
         return MaterialPageRoute(
           settings: settings,

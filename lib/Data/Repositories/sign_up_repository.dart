@@ -58,7 +58,7 @@ class SignUpRepository {
         file: imageFile,
         fileBytes: imageBytes,
         fileName: imageName,
-        fileField: "profile_image",
+        fileField: "avatar",
       );
 
       print("========== SIGN UP API RESPONSE ==========");

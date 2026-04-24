@@ -21,7 +21,7 @@ Future<void> main() async {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         scaffoldMessengerKey: rootScaffoldMessengerKey,
-        initialRoute: RoutesName.onboardingScreen,
+        initialRoute: RoutesName.appStartScreen,
         onGenerateRoute: Routes.generateRoute,
       ),
     ),

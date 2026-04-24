@@ -8,6 +8,7 @@ import 'package:sport_finding/Data/model/GoogleAuth/google_auth_request_model.da
 import 'package:sport_finding/core/Constants/google_sign_in_config.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 
 class LoginScreenViewModel extends ChangeNotifier {
   LoginScreenViewModel({
@@ -114,9 +115,7 @@ class LoginScreenViewModel extends ChangeNotifier {
 
       await _saveTokens(accessToken, refreshToken, tokenType);
 
-      final isOnboardingCompleted =
-          await AppPreferences.isOnboardingCompleted();
-      return isOnboardingCompleted ? 'HOME' : 'SKILL_LEVEL';
+      return AuthRouteResolver.resolvePostAuthTag();
     } catch (e) {
       return _cleanError(e);
     } finally {
@@ -223,9 +222,7 @@ class LoginScreenViewModel extends ChangeNotifier {
         response.tokenType,
       );
 
-      final isOnboardingCompleted =
-          await AppPreferences.isOnboardingCompleted();
-      final route = isOnboardingCompleted ? 'HOME' : 'SKILL_LEVEL';
+      final route = await AuthRouteResolver.resolvePostAuthTag();
       _logGoogle('loginWithGoogle: success → route=$route');
       return route;
     } on GoogleSignInException catch (e, st) {

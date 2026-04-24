@@ -138,7 +138,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                               itemBuilder: (context, index) {
                                 if (index >= model.matches.length) {
                                   return const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12),
+                                    padding: EdgeInsets.symmetric(vertical: 10),
                                     child: Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,

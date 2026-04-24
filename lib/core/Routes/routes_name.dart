@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 class RoutesName {
+  static const String appStartScreen = 'app_start_screen';
   static const String onboardingScreen = 'on_boarding_screen';
   static const String LoginScreen = 'login_screen';
   static const String SignUp = 'sign_up';

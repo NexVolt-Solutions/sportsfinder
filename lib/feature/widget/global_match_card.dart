@@ -29,7 +29,7 @@ class GlobalMatchCard extends StatelessWidget {
 
   /// Total slot height: inner content + CardWidget margin (24) + vertical padding (36).
   static double listSlotHeight(BuildContext context) =>
-      contentHeight(context) + 60;
+      contentHeight(context) + 40;
 
   // ──────────────────────────── Constructors ─────────────────────────────
 

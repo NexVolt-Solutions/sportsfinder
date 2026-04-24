@@ -23,10 +23,11 @@ class SectionHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasAction = actionText != null;
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: NormalText(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             titleText: title,
             maxLines: hasAction ? 1 : 3,
             overflow: TextOverflow.ellipsis,
