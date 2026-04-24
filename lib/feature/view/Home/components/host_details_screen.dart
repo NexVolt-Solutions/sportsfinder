@@ -46,6 +46,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
     if (_scheduledInitialBind) return;
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is DiscoveryMatch &&
+        !DeletedMatchesService().isDeleted(args.id) &&
         context.read<HostDetailScreenViewModel>().currentMatch == null) {
       _scheduledInitialBind = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {

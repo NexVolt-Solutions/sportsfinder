@@ -98,6 +98,7 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: context.h(20)),
+<<<<<<< HEAD
                               if (!model.isOwnProfile) ...[
                                 _FollowMessageRow(
                                   onFollow: () => model.onFollowTap(context),
@@ -116,22 +117,52 @@ class PublicProfileScreen extends StatelessWidget {
                                 SizedBox(height: context.h(20)),
                               ] else
                                 SizedBox(height: context.h(20)),
+=======
+
+                              _FollowMessageRow(
+                                onFollow: () async => !model.isOwnProfile
+                                    ? await model.onFollowTap(context)
+                                    : null,
+                                onMessage: () => !model.isOwnProfile
+                                    ? model.onMessageTap(context)
+                                    : null,
+                                isFollowing: model.isFollowing,
+                                isFollowLoading: model.isFollowLoading,
+                              ),
+                              SizedBox(height: context.h(12)),
+                              _RatePlayerButton(
+                                onTap: model.canRateProfile
+                                    ? () => _showRateSheet(context, model)
+                                    : null,
+                              ),
+                              SizedBox(height: context.h(20)),
+
+                              SizedBox(height: context.h(20)),
+>>>>>>> b37d7e0 (Refactor public profile screen and view model for improved user interaction)
                               ProfileDetailStatsRow(
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
                                 ratingValue: model.ratingValue,
                                 matchesPlayedValue: model.matchesPlayedValue,
-                                onFollowersTap: () =>
-                                    model.openFollowers(context),
-                                onFollowingTap: () =>
-                                    model.openFollowing(context),
+                                onFollowersTap: model.isOwnProfile
+                                    ? null
+                                    : () => model.openFollowers(context),
+                                onFollowingTap: model.isOwnProfile
+                                    ? null
+                                    : () => model.openFollowing(context),
                                 onRatingTap: model.isOwnProfile
                                     ? null
+<<<<<<< HEAD
                                     : model.canRateForMatch
                                     ? () => _showRateSheet(context, model)
                                     : () => AppSnackBar.show(
                                         model.rateUnavailableMessage,
                                       ),
+=======
+                                    : !model.canRateProfile
+                                    ? null
+                                    : () => _showRateSheet(context, model),
+>>>>>>> b37d7e0 (Refactor public profile screen and view model for improved user interaction)
                               ),
                               SizedBox(height: context.h(16)),
                               NormalText(
@@ -329,7 +360,10 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
                   : AppText.submitReview,
               color: c.primary,
               colorText: c.onPrimary,
-              onTap: (widget.model.isSubmittingReview || _isSubmittingLocal)
+              onTap:
+                  (widget.model.isSubmittingReview ||
+                      _isSubmittingLocal ||
+                      !widget.model.canRateProfile)
                   ? null
                   : _submit,
             ),
@@ -431,7 +465,7 @@ class _FollowMessageRow extends StatelessWidget {
 class _RatePlayerButton extends StatelessWidget {
   const _RatePlayerButton({required this.onTap});
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

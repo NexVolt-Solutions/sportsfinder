@@ -49,6 +49,7 @@ class PublicProfileViewModel extends ChangeNotifier {
   String? _followError;
   bool? _isFollowingOverride;
   int? _followersCountOverride;
+  bool? _canRateOverride;
 
   /// True when opening from settings (no args) or empty [userId], or when the
   /// selected user is the logged-in account.
@@ -104,6 +105,8 @@ class PublicProfileViewModel extends ChangeNotifier {
   /// Hide follow / message / rate when viewing your own public profile.
   bool get isOwnProfile =>
       _viewingSelf || (_active?.actions.isOwnProfile ?? false);
+  bool get canRateProfile =>
+      !isOwnProfile && (_canRateOverride ?? (_active?.actions.canRate ?? true));
 
   Future<void> _load() async {
     if (_viewingSelf) {
@@ -221,13 +224,19 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   bool get hasReviews {
+    final total = _active?.totalReviews ?? 0;
+    if (total > 0) return true;
     final list = _active?.reviews;
     if (list == null || list.isEmpty) return false;
     for (final item in list) {
       if (item is! Map) continue;
       final m = Map<String, dynamic>.from(item);
       final authorRaw =
-          m['author_name'] ?? m['reviewer_name'] ?? m['author'] ?? m['user'];
+          m['author_name'] ??
+          m['reviewer_name'] ??
+          m['reviewer'] ??
+          m['author'] ??
+          m['user'];
       final author = authorRaw is Map
           ? '${authorRaw['full_name'] ?? authorRaw['name'] ?? ''}'.trim()
           : '${authorRaw ?? ''}'.trim();
@@ -241,7 +250,11 @@ class PublicProfileViewModel extends ChangeNotifier {
     final m = _firstReviewMap;
     if (m == null) return '';
     final name =
-        m['author_name'] ?? m['reviewer_name'] ?? m['author'] ?? m['user'];
+        m['author_name'] ??
+        m['reviewer_name'] ??
+        m['reviewer'] ??
+        m['author'] ??
+        m['user'];
     if (name is Map) return '${name['full_name'] ?? name['name'] ?? ''}';
     return name?.toString() ?? '';
   }
@@ -376,6 +389,11 @@ class PublicProfileViewModel extends ChangeNotifier {
       _safeNotifyListeners();
       return false;
     }
+    if (!canRateProfile) {
+      _submitReviewError = 'You have already submitted a profile review for this user.';
+      _safeNotifyListeners();
+      return false;
+    }
     if (selectedUserId.isEmpty) {
       _submitReviewError = AppText.invalidUserProfile;
       _safeNotifyListeners();
@@ -429,6 +447,11 @@ class PublicProfileViewModel extends ChangeNotifier {
       );
       _submitReviewLoading = false;
       _submitReviewError = messageFromApiException(e);
+      if ((_submitReviewError ?? '').toLowerCase().contains(
+        'already submitted a profile review',
+      )) {
+        _canRateOverride = false;
+      }
       _safeNotifyListeners();
       return false;
     }

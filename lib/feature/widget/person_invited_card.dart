@@ -48,59 +48,60 @@ class PersonInvitedCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              // ✅ CircleAvatar like UserMatchCard
-              CircleAvatar(
-                radius: context.radiusR(22), // half of previous 42 height
-                backgroundColor: context.appColors.primary,
-                child: Text(
-                  getInitials(playerName),
-                  style: TextStyle(
-                    color: context.appColors.white,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            child: Row(
+              children: [
+                // ✅ CircleAvatar like UserMatchCard
+                CircleAvatar(
+                  radius: context.radiusR(22), // half of previous 42 height
+                  backgroundColor: context.appColors.primary,
+                  child: Text(
+                    getInitials(playerName),
+                    style: TextStyle(
+                      color: context.appColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: context.w(12)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  NormalText(
-                    titleText: playerName ?? 'Shehzad Khan',
-                    titleColor: context.appColors.onSurface,
-                  ),
-                  Row(
+                SizedBox(width: context.w(12)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       NormalText(
-                        titleText: matchName ?? AppText.football,
-                        titleColor: context.appColors.greylight,
-                        titleStyle: context.appText.text14W500,
+                        titleText: playerName ?? 'Shehzad Khan',
+                        titleColor: context.appColors.onSurface,
+                        maxLines: 1,
                       ),
-                      SizedBox(width: context.w(12)),
                       NormalText(
-                        titleText: matchLevel ?? AppText.advanced,
+                        titleText:
+                            '${matchName ?? AppText.football} - ${matchLevel ?? AppText.advanced}',
                         titleColor: context.appColors.greylight,
                         titleStyle: context.appText.text14W500,
+                        maxLines: 1,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          SvgPicture.asset(AppAssets.homeLocIcon),
+                          SizedBox(width: context.w(4)),
+                          Expanded(
+                            child: NormalText(
+                              titleText: destance ?? AppText.filters,
+                              titleColor: context.appColors.greylight,
+                              titleStyle: context.appText.text14W500,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SvgPicture.asset(AppAssets.homeLocIcon),
-                      SizedBox(width: context.w(4)),
-                      NormalText(
-                        titleText: destance ?? AppText.filters,
-                        titleColor: context.appColors.greylight,
-                        titleStyle: context.appText.text14W500,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          SizedBox(width: context.w(8)),
           if (isShow)
             MatchCardButton(
               ontap: isInvited || isLoading ? null : ontap,
