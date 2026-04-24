@@ -14,6 +14,7 @@ class AppText {
     }
     return 'Enter the 6-digit code that we have sent to $e';
   }
+
   static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
   static const String skip = 'Skip';
   static const String sportFinding = 'SportFinding';
@@ -222,7 +223,7 @@ class AppText {
       'Your match is live. Share it with friends!';
   static const String shareMatch = 'Share Match';
 
-  static const String invitedPlayers = 'Invited Players';
+  static const String invitePlayers = 'Invite Players';
   static const String alexJohnson = 'Alex Johnson';
   static const String losAngelesCa = 'Los Angeles, CA';
   static const String passionateAthleteBio =

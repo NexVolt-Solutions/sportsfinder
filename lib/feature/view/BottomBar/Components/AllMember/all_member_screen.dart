@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/all_member_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/person_invited_card.dart';
@@ -29,56 +29,59 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: context.h(20)),
-
                 AppBarWidget(
                   onTapFirst: () => Navigator.pop(context),
                   title: AppText.sportFinding,
                 ),
-
-                // SizedBox(height: context.h(16)),
                 NormalText(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   titleText: AppText.allMembers,
                 ),
-
                 SizedBox(height: context.h(8)),
-
                 SearchBarWidget(
-                  isShow: true,
-                  onChanged: (text) {
-                    model.searchMatches(text);
-                  },
-                  onFilterTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) {
-                        return FilterBottomSheet(onApply: model.applyFilters);
-                      },
-                    );
-                  },
+                  isShow: false,
+                  onChanged: model.searchUsers,
                 ),
                 SizedBox(height: context.h(16)),
-                // ✅ Use Expanded to fill remaining space
                 Expanded(
-                  child: model.matches.isEmpty
+                  child: model.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : model.errorMessage != null
                       ? Center(
                           child: Text(
-                            AppText.noMatchesFound,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            model.errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
+                          ),
+                        )
+                      : model.users.isEmpty
+                      ? Center(
+                          child: Text(
+                            AppText.noUsersFound,
+                            style: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
                           ),
                         )
                       : ListView.builder(
-                          itemCount: model.matches.length,
+                          itemCount: model.users.length,
                           itemBuilder: (context, index) {
-                            final m = model.matches[index];
+                            final user = model.users[index];
+                            final firstSport = user.sports?.isNotEmpty == true
+                                ? user.sports!.first
+                                : null;
+
                             return PersonInvitedCard(
-                              cardOnTap: () => Navigator.pop(context, m.title),
-                              playerName: m.title,
-                              matchLevel: m.skillLevel,
-                              matchName: m.sportType,
-                              destance: '${m.distanceKm} km',
+                              cardOnTap: () => Navigator.pop(
+                                context,
+                                (user.fullName ?? '').trim(),
+                              ),
+                              playerName: user.fullName,
+                              matchLevel: firstSport?.skillLevel ?? '',
+                              matchName: firstSport?.sport ?? '',
+                              destance: user.location ?? '',
                               ontap: () {},
                             );
                           },

@@ -11,6 +11,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/onboarding_profile_sync.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -32,7 +33,8 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
     if (_navigated) return;
     _navigated = true;
     await syncPendingOnboardingToServer();
-    await AppPreferences.setOnboardingCompleted(true);
+    final isComplete = await AuthRouteResolver.isCurrentUserProfileComplete();
+    await AppPreferences.setOnboardingCompleted(isComplete);
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(
       context,
