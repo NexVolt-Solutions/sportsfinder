@@ -287,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 titleFontWeight: FontWeight.w400,
                 titleFontSize: context.text(16),
                 sizeBoxheight: context.h(4),
-                subText: msg.time,
+                subText: msg.isPending ? 'Sending...' : msg.time,
                 subColor: isMe
                     ? context.appColors.onPrimary.withValues(alpha: 0.7)
                     : context.appColors.greylight,

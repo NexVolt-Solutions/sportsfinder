@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RealtimeChatMessage {
@@ -43,6 +44,11 @@ class MatchChatService {
   final String matchId;
 
   WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _channelSub;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  bool _isDisposed = false;
+  bool _isReconnectScheduled = false;
 
   final _messageController = StreamController<RealtimeChatMessage>.broadcast();
   final _errorController = StreamController<String>.broadcast();
@@ -80,30 +86,42 @@ class MatchChatService {
   }
 
   void connect() {
-    if (_channel != null) return;
+    if (_isDisposed || _channel != null) return;
+    _reconnectTimer?.cancel();
+    _isReconnectScheduled = false;
     final uri = Uri.parse(
       '$_baseWs/ws/matches/$matchId/chat?token=${Uri.encodeQueryComponent(accessToken)}',
     );
 
-    _channel = WebSocketChannel.connect(uri);
-    _channel!.stream.listen(
+    _channel = IOWebSocketChannel.connect(
+      uri,
+      headers: <String, dynamic>{
+        HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+      },
+    );
+    _channelSub = _channel!.stream.listen(
       (dynamic data) {
         if (data is! String) return;
         _handleServerEvent(jsonDecode(data) as Map<String, dynamic>);
       },
       onError: (Object error) {
         _errorController.add('WebSocket error: $error');
+        _resetSocket();
+        _scheduleReconnect();
       },
       onDone: () {
         _errorController.add('Connection closed');
-        _channel = null;
+        _resetSocket();
+        _scheduleReconnect();
       },
+      cancelOnError: true,
     );
   }
 
   void _handleServerEvent(Map<String, dynamic> event) {
     switch ('${event['type'] ?? ''}') {
       case 'connected':
+        _reconnectAttempts = 0;
         _connectedController.add(null);
         break;
       case 'chat_message':
@@ -115,12 +133,17 @@ class MatchChatService {
     }
   }
 
-  void sendMessage(String content) {
+  bool sendMessage(String content) {
     final trimmed = content.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty) return false;
     if (trimmed.length > 1000) {
       _errorController.add('Message too long (max 1000 characters)');
-      return;
+      return false;
+    }
+    if (_channel == null) {
+      _errorController.add('Not connected. Reconnecting...');
+      _scheduleReconnect();
+      return false;
     }
 
     _channel?.sink.add(
@@ -129,9 +152,35 @@ class MatchChatService {
         'content': trimmed,
       }),
     );
+    return true;
+  }
+
+  void _resetSocket() {
+    _channelSub?.cancel();
+    _channelSub = null;
+    _channel = null;
+  }
+
+  void _scheduleReconnect() {
+    if (_isDisposed || _isReconnectScheduled) return;
+    _isReconnectScheduled = true;
+    _reconnectAttempts += 1;
+    final seconds = _reconnectAttempts <= 1
+        ? 1
+        : (_reconnectAttempts <= 3 ? 2 : 5);
+    _reconnectTimer = Timer(Duration(seconds: seconds), () {
+      _isReconnectScheduled = false;
+      if (_isDisposed || _channel != null) return;
+      connect();
+    });
   }
 
   void dispose() {
+    _isDisposed = true;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _channelSub?.cancel();
+    _channelSub = null;
     _channel?.sink.close();
     _channel = null;
     _messageController.close();

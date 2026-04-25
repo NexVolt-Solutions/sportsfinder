@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/Notification/notification_reop.dart';
@@ -11,6 +12,7 @@ import 'package:sport_finding/Data/model/NotificationSettings/notification_setti
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class NotificationService extends ChangeNotifier {
@@ -32,7 +34,12 @@ class NotificationService extends ChangeNotifier {
   bool isUpdatingPreference = false;
   bool _isRealtimeConnected = false;
   WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _channelSub;
   Timer? _pingTimer;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  bool _isReconnectScheduled = false;
+  bool _isDisposed = false;
   final Set<String> _hiddenNotificationIds = <String>{};
   DateTime? _notificationsClearedAt;
 
@@ -42,7 +49,9 @@ class NotificationService extends ChangeNotifier {
   bool get isRealtimeConnected => _isRealtimeConnected;
 
   Future<void> ensureRealtimeConnected() async {
-    if (_channel != null) return;
+    if (_isDisposed || _channel != null) return;
+    _reconnectTimer?.cancel();
+    _isReconnectScheduled = false;
     final token = await AppPreferences.getAccessToken();
     if (token == null || token.isEmpty) return;
 
@@ -51,8 +60,13 @@ class NotificationService extends ChangeNotifier {
     );
 
     try {
-      _channel = WebSocketChannel.connect(uri);
-      _channel!.stream.listen(
+      _channel = IOWebSocketChannel.connect(
+        uri,
+        headers: <String, dynamic>{
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      _channelSub = _channel!.stream.listen(
         (dynamic data) {
           if (data is! String) return;
           _handleRealtimeEvent(jsonDecode(data) as Map<String, dynamic>);
@@ -64,6 +78,7 @@ class NotificationService extends ChangeNotifier {
             error: error,
           );
           _cleanupRealtimeState();
+          _scheduleReconnect();
         },
         onDone: () {
           AppLogger.warning(
@@ -71,7 +86,9 @@ class NotificationService extends ChangeNotifier {
             tag: 'NotificationService',
           );
           _cleanupRealtimeState();
+          _scheduleReconnect();
         },
+        cancelOnError: true,
       );
 
       _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -84,20 +101,34 @@ class NotificationService extends ChangeNotifier {
         error: e,
       );
       _cleanupRealtimeState();
+      _scheduleReconnect();
     }
   }
 
   void _handleRealtimeEvent(Map<String, dynamic> event) {
     switch ('${event['type'] ?? ''}') {
       case 'connected':
+        _reconnectAttempts = 0;
         _isRealtimeConnected = true;
         notifyListeners();
         return;
       case 'notification':
         final payload = event['payload'];
-        final notificationMap = payload is Map<String, dynamic>
+        final notificationType = '${event['notification_type'] ?? ''}'.trim();
+        final payloadMap = payload is Map<String, dynamic>
             ? payload
-            : (payload is Map ? Map<String, dynamic>.from(payload) : event);
+            : (payload is Map ? Map<String, dynamic>.from(payload) : <String, dynamic>{});
+        final notificationMap = <String, dynamic>{
+          ...payloadMap,
+          if (payloadMap['id'] == null)
+            'id': '${notificationType.isNotEmpty ? notificationType : 'notification'}_${DateTime.now().microsecondsSinceEpoch}',
+          if (payloadMap['type'] == null)
+            'type': notificationType.isNotEmpty ? notificationType : '${event['type'] ?? 'notification'}',
+          if (payloadMap['payload'] == null) 'payload': payloadMap,
+          if (payloadMap['is_read'] == null) 'is_read': false,
+          if (payloadMap['created_at'] == null)
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+        };
         final incoming = NotificationModel.fromJson(notificationMap);
         if (_shouldHideNotification(incoming)) return;
         final index = notifications.indexWhere((item) => item.id == incoming.id);
@@ -116,11 +147,27 @@ class NotificationService extends ChangeNotifier {
   void _cleanupRealtimeState() {
     _pingTimer?.cancel();
     _pingTimer = null;
+    _channelSub?.cancel();
+    _channelSub = null;
     _channel = null;
     if (_isRealtimeConnected) {
       _isRealtimeConnected = false;
       notifyListeners();
     }
+  }
+
+  void _scheduleReconnect() {
+    if (_isDisposed || _isReconnectScheduled || _channel != null) return;
+    _isReconnectScheduled = true;
+    _reconnectAttempts += 1;
+    final seconds = _reconnectAttempts <= 1
+        ? 1
+        : (_reconnectAttempts <= 3 ? 2 : 5);
+    _reconnectTimer = Timer(Duration(seconds: seconds), () {
+      _isReconnectScheduled = false;
+      if (_isDisposed || _channel != null) return;
+      ensureRealtimeConnected();
+    });
   }
 
   Future<void> fetchNotifications() async {
@@ -287,6 +334,11 @@ class NotificationService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _channelSub?.cancel();
+    _channelSub = null;
     _pingTimer?.cancel();
     _channel?.sink.close();
     super.dispose();

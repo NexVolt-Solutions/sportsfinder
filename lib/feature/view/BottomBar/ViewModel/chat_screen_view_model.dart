@@ -12,13 +12,35 @@ class ChatMessage {
   final String time;
   final String date;
   final bool isMe;
+  final bool isPending;
+  final String localId;
 
   const ChatMessage({
     required this.text,
     required this.time,
     required this.date,
     required this.isMe,
+    this.isPending = false,
+    this.localId = '',
   });
+
+  ChatMessage copyWith({
+    String? text,
+    String? time,
+    String? date,
+    bool? isMe,
+    bool? isPending,
+    String? localId,
+  }) {
+    return ChatMessage(
+      text: text ?? this.text,
+      time: time ?? this.time,
+      date: date ?? this.date,
+      isMe: isMe ?? this.isMe,
+      isPending: isPending ?? this.isPending,
+      localId: localId ?? this.localId,
+    );
+  }
 }
 
 class ChatScreenViewModel extends ChangeNotifier {
@@ -39,6 +61,7 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool _isConnected = false;
   String? _errorMessage;
   bool _isBindingRealtime = false;
+  int _localMessageCounter = 0;
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isEmpty => _messages.isEmpty;
@@ -54,8 +77,14 @@ class ChatScreenViewModel extends ChangeNotifier {
       return;
     }
 
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
     _errorMessage = null;
-    _matchChatService!.sendMessage(text);
+    final sent = _matchChatService!.sendMessage(trimmed);
+    if (sent) {
+      _appendPendingOutgoing(trimmed);
+    }
     notifyListeners();
   }
 
@@ -108,15 +137,18 @@ class ChatScreenViewModel extends ChangeNotifier {
 
     _connectedSub = service.onConnected.listen((_) {
       _isConnected = true;
+      _errorMessage = null;
       notifyListeners();
     });
 
     _messageSub = service.onMessage.listen((msg) {
       _appendRealtimeMessage(msg);
+      _errorMessage = null;
       notifyListeners();
     });
 
     _errorSub = service.onError.listen((err) {
+      _isConnected = false;
       _errorMessage = err;
       notifyListeners();
     });
@@ -134,14 +166,48 @@ class ChatScreenViewModel extends ChangeNotifier {
 
     final now = message.sentAt.toLocal();
     final myId = ProfileService().profile?.id.trim() ?? '';
+    final isMine = myId.isNotEmpty && message.senderId.trim() == myId;
+    if (isMine && _reconcilePendingOutgoing(message, now)) {
+      return;
+    }
     _messages.add(
       ChatMessage(
         text: message.content,
         time: DateFormat('h:mm a').format(now),
         date: DateFormat('d MMMM yyyy').format(now),
-        isMe: myId.isNotEmpty && message.senderId.trim() == myId,
+        isMe: isMine,
       ),
     );
+  }
+
+  void _appendPendingOutgoing(String content) {
+    final now = DateTime.now();
+    _localMessageCounter += 1;
+    _messages.add(
+      ChatMessage(
+        text: content,
+        time: DateFormat('h:mm a').format(now),
+        date: DateFormat('d MMMM yyyy').format(now),
+        isMe: true,
+        isPending: true,
+        localId: 'local_${_localMessageCounter}_${now.microsecondsSinceEpoch}',
+      ),
+    );
+  }
+
+  bool _reconcilePendingOutgoing(RealtimeChatMessage message, DateTime sentAtLocal) {
+    final content = message.content.trim();
+    if (content.isEmpty) return false;
+    final pendingIndex = _messages.indexWhere(
+      (item) => item.isMe && item.isPending && item.text.trim() == content,
+    );
+    if (pendingIndex < 0) return false;
+    _messages[pendingIndex] = _messages[pendingIndex].copyWith(
+      isPending: false,
+      time: DateFormat('h:mm a').format(sentAtLocal),
+      date: DateFormat('d MMMM yyyy').format(sentAtLocal),
+    );
+    return true;
   }
 
   Future<void> _disposeRealtimeOnly() async {
