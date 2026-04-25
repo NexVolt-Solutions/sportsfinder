@@ -82,6 +82,7 @@ class SeeAllInvatedPlayerScreen extends StatelessWidget {
                         final row = model.joinedPlayers[index];
                         final name = row.user.fullName;
                         return PersonInvitedCard(
+                          avatarUrl: row.user.avatarUrl,
                           ontap: () {},
                           cardOnTap: () {
                             Navigator.pushNamed(

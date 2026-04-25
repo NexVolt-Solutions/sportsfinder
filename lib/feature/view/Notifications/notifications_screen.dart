@@ -200,7 +200,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _handleClearMessages() async {
     final service = context.read<NotificationService>();
     if (service.notifications.isEmpty) return;
-    service.clearAllNotifications();
+    await service.clearAllNotifications();
     if (!mounted) return;
     setState(() {
       _actionLoading.clear();

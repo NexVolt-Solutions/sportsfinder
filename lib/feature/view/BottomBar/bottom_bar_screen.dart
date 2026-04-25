@@ -135,6 +135,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final service = context.read<NotificationService>();
+        service.ensureRealtimeConnected();
         if (!service.isLoading && service.notifications.isEmpty) {
           service.fetchNotifications();
         }

@@ -10,6 +10,7 @@ import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
@@ -142,8 +143,14 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.chatScreen:
+        final args = routeArguments is ChatRouteArgs
+            ? routeArguments
+            : const ChatRouteArgs(contactName: 'Match Chat', isOnline: true);
         return ChangeNotifierProvider(
-          create: (_) => ChatScreenViewModel(),
+          create: (_) => ChatScreenViewModel(
+            contactName: args.contactName,
+            isOnline: args.isOnline,
+          ),
           child: child,
         );
       case RoutesName.notificationsScreen:

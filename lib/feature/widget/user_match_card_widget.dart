@@ -9,6 +9,7 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 class UserMatchCard extends StatelessWidget {
   final String title;
   final String subTitle;
+  final String? avatarUrl;
   final bool showActionIcon;
   final VoidCallback? onActionTap; // 👈 new callback
   final VoidCallback? onCardTap; // 👈 new callback
@@ -17,6 +18,7 @@ class UserMatchCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.subTitle,
+    this.avatarUrl,
     this.showActionIcon = false,
     this.onActionTap,
     this.onCardTap, // 👈 receive from parent
@@ -30,6 +32,11 @@ class UserMatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedAvatarUrl = avatarUrl?.trim();
+    final showAvatar =
+        normalizedAvatarUrl != null &&
+        (normalizedAvatarUrl.startsWith('http://') ||
+            normalizedAvatarUrl.startsWith('https://'));
     return CardWidget(
       onTap: onCardTap,
       padding: context.padSym(h: 12, v: 12),
@@ -42,13 +49,17 @@ class UserMatchCard extends StatelessWidget {
                 CircleAvatar(
                   radius: context.radiusR(22),
                   backgroundColor: context.appColors.greyDark,
-                  child: Text(
-                    getInitials(title),
-                    style: TextStyle(
-                      color: context.appColors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundImage:
+                      showAvatar ? NetworkImage(normalizedAvatarUrl) : null,
+                  child: showAvatar
+                      ? null
+                      : Text(
+                          getInitials(title),
+                          style: TextStyle(
+                            color: context.appColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 SizedBox(width: context.w(12)),
                 Expanded(

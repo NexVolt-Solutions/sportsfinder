@@ -74,6 +74,7 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                                 : null;
 
                             return PersonInvitedCard(
+                              avatarUrl: user.avatarUrl,
                               cardOnTap: () => Navigator.pop(
                                 context,
                                 (user.fullName ?? '').trim(),

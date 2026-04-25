@@ -42,7 +42,8 @@ class NotificationModel {
       type: json['type'] ?? '',
       payload: mergedPayload,
       isRead: json['is_read'] ?? false,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt:
+          DateTime.tryParse('${json['created_at'] ?? ''}') ?? DateTime.now(),
     );
   }
 

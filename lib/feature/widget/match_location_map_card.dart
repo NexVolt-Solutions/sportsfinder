@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sport_finding/core/Constants/google_maps_config.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -68,7 +69,7 @@ class _MatchLocationMapCardState extends State<MatchLocationMapCard> {
   @override
   Widget build(BuildContext context) {
     final coords = _resolvedCoords;
-    final hasMap = GoogleMapsConfig.hasApiKey && coords != null;
+    final hasMap = !kIsWeb && GoogleMapsConfig.hasApiKey && coords != null;
     final mapCenter = coords != null
         ? LatLng(coords.$1, coords.$2)
         : const LatLng(0, 0);

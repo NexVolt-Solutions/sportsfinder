@@ -124,6 +124,7 @@ extension ToDiscoveryMatch on MatchModel {
       distanceKm: 0.0, // API doesn't provide distance, set to 0
       hostUserId: host?.id ?? '',
       hostDisplayName: host?.fullName ?? '',
+      hostAvatarUrl: host?.avatarUrl,
       skillLevel: skillLevel,
       matchDescription: description ?? '',
       hostBio: '', // API doesn't provide bio
