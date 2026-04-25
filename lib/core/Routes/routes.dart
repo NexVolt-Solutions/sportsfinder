@@ -11,6 +11,7 @@ import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/verifi
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
@@ -192,10 +193,16 @@ class Routes {
           ),
         );
       case RoutesName.chatScreen:
+        final args = settings.arguments is ChatRouteArgs
+            ? settings.arguments as ChatRouteArgs
+            : null;
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) =>
-              RouteProviders.wrapIfNeeded(RoutesName.chatScreen, ChatScreen()),
+          builder: (_) => RouteProviders.wrapIfNeeded(
+            RoutesName.chatScreen,
+            ChatScreen(matchId: args?.matchId),
+            routeArguments: settings.arguments,
+          ),
         );
       case RoutesName.notificationsScreen:
         return MaterialPageRoute(

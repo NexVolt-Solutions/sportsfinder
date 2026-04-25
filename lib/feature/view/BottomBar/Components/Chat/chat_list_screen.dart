@@ -6,9 +6,8 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
+import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -34,20 +33,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
     if (!mounted || selected is! String || selected.trim().isEmpty) return;
 
-    final user = selected.trim();
-    _safeVm.startOrOpenThread(user);
-
-    final chatVm = ChatScreenViewModel(contactName: user, isOnline: true);
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider.value(
-          value: chatVm,
-          child: const ChatScreen(),
-        ),
-      ),
+    AppSnackBar.show(
+      'Direct user chat is not connected yet. Open chat from a match to use live messaging.',
     );
-    _safeVm.updateThreadFromOutgoing(user, chatVm.lastMessageOrFallback);
   }
 
   @override
@@ -88,23 +76,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               final t = model.threads[index];
                               return GestureDetector(
                                 onTap: () async {
-                                  final chatVm = ChatScreenViewModel(
-                                    contactName: t.userName,
-                                    isOnline: t.isOnline,
-                                  );
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ChangeNotifierProvider.value(
-                                            value: chatVm,
-                                            child: const ChatScreen(),
-                                          ),
-                                    ),
-                                  );
-                                  model.updateThreadFromOutgoing(
-                                    t.userName,
-                                    chatVm.lastMessageOrFallback,
+                                  AppSnackBar.show(
+                                    'This thread is not connected to the backend yet. Open chat from a match to use live messaging.',
                                   );
                                 },
                                 child: Container(

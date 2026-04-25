@@ -13,6 +13,7 @@ class PersonInvitedCard extends StatelessWidget {
   final String? matchName;
   final String? matchLevel;
   final String? destance;
+  final String? avatarUrl;
   final VoidCallback ontap;
   final VoidCallback? cardOnTap; // whole card tap
   final bool isShow;
@@ -25,6 +26,7 @@ class PersonInvitedCard extends StatelessWidget {
     this.matchName,
     this.matchLevel,
     this.destance,
+    this.avatarUrl,
     required this.ontap,
     this.isShow = false,
     this.cardOnTap,
@@ -42,6 +44,11 @@ class PersonInvitedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedAvatarUrl = avatarUrl?.trim();
+    final showAvatar =
+        normalizedAvatarUrl != null &&
+        (normalizedAvatarUrl.startsWith('http://') ||
+            normalizedAvatarUrl.startsWith('https://'));
     return CardWidget(
       onTap: cardOnTap,
       padding: context.padAll(12),
@@ -55,13 +62,17 @@ class PersonInvitedCard extends StatelessWidget {
                 CircleAvatar(
                   radius: context.radiusR(22), // half of previous 42 height
                   backgroundColor: context.appColors.primary,
-                  child: Text(
-                    getInitials(playerName),
-                    style: TextStyle(
-                      color: context.appColors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundImage:
+                      showAvatar ? NetworkImage(normalizedAvatarUrl) : null,
+                  child: showAvatar
+                      ? null
+                      : Text(
+                          getInitials(playerName),
+                          style: TextStyle(
+                            color: context.appColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 SizedBox(width: context.w(12)),
                 Expanded(

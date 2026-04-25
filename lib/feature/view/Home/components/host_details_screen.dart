@@ -406,6 +406,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       SizedBox(height: context.h(16)),
                       if (model.selectedIndex == 0) ...[
                         UserGreetingWidget(
+                          imageUrl: match.hostAvatarUrl,
                           title: match.displayHostName,
                           locName: match.location,
                           subTitle: match.resolvedHostBio,
@@ -450,6 +451,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
                               return UserMatchCard(
+                                avatarUrl: model.rosterAvatarUrlAt(index),
                                 onActionTap: () async {
                                   final shouldRemove = await showDialog<bool>(
                                     context: context,
@@ -617,6 +619,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                 : null;
 
                             return PersonInvitedCard(
+                              avatarUrl: user.avatarUrl,
                               playerName: user.fullName,
                               matchName: sport?.sport ?? match.sportType,
                               matchLevel: sport?.skillLevel ?? match.skillLevel,

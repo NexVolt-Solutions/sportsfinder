@@ -89,6 +89,7 @@ class _MatchInvitePlayersScreenState extends State<MatchInvitePlayersScreen> {
                     return Padding(
                       padding: EdgeInsets.only(bottom: context.h(10)),
                       child: UserMatchCard(
+                        avatarUrl: model.rosterAvatarUrlAt(index),
                         title: model.rosterNameAt(index),
                         subTitle: model.rosterSkillAt(index),
                         onCardTap: userId.isEmpty
@@ -149,6 +150,7 @@ class _MatchInvitePlayersScreenState extends State<MatchInvitePlayersScreen> {
                     return Padding(
                       padding: EdgeInsets.only(bottom: context.h(10)),
                       child: PersonInvitedCard(
+                        avatarUrl: user.avatarUrl,
                         playerName: user.fullName,
                         matchName: sport?.sport ?? widget.match.sport,
                         matchLevel:

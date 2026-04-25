@@ -28,15 +28,17 @@ class UserGreetingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedImageUrl = imageUrl?.trim();
     return Row(
       children: [
         // 👇 Profile Image
         CircleAvatar(
           radius: context.radiusR(22),
           backgroundColor: context.appColors.greyDark,
-          backgroundImage:
-              _isNetworkHttpUrl(imageUrl) ? NetworkImage(imageUrl!.trim()) : null,
-          child: _isNetworkHttpUrl(imageUrl)
+          backgroundImage: _isNetworkHttpUrl(normalizedImageUrl)
+              ? NetworkImage(normalizedImageUrl!)
+              : null,
+          child: _isNetworkHttpUrl(normalizedImageUrl)
               ? null
               : Icon(Icons.person, color: context.appColors.white),
         ),

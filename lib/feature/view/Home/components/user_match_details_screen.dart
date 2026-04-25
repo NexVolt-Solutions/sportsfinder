@@ -156,6 +156,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       ),
                       SizedBox(height: context.h(16)),
                       UserGreetingWidget(
+                        imageUrl: match.hostAvatarUrl,
                         title: match.displayHostName,
                         locName: match.location,
                         subTitle: match.resolvedHostBio,
@@ -210,6 +211,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         ...List.generate(
                           model.rosterCount,
                           (index) => UserMatchCard(
+                            avatarUrl: model.rosterAvatarUrlAt(index),
                             onCardTap: () {
                               final uid = model.rosterUserIdAt(index).trim();
                               final name = model.rosterNameAt(index);

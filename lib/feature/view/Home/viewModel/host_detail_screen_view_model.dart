@@ -111,6 +111,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   List<String> _rosterNames = [];
   List<String> _rosterSkills = [];
   List<String> _rosterUserIds = [];
+  List<String> _rosterAvatarUrls = [];
 
   // ── Current match being displayed ──────────────────────────────────────────
   DiscoveryMatch? _currentMatch;
@@ -123,6 +124,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       i >= 0 && i < _rosterSkills.length ? _rosterSkills[i] : '';
   String rosterUserIdAt(int i) =>
       i >= 0 && i < _rosterUserIds.length ? _rosterUserIds[i] : '';
+  String rosterAvatarUrlAt(int i) =>
+      i >= 0 && i < _rosterAvatarUrls.length ? _rosterAvatarUrls[i] : '';
 
   // ── All users from the global service ─────────────────────────────────────
   List<Items> get allUsers => ListOfAllUserService().allUsers;
@@ -487,6 +490,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     if (index < _rosterUserIds.length) {
       _rosterUserIds.removeAt(index);
     }
+    if (index < _rosterAvatarUrls.length) {
+      _rosterAvatarUrls.removeAt(index);
+    }
     _syncCurrentMatchRoster();
     notifyListeners();
   }
@@ -524,6 +530,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       _rosterNames.removeAt(index);
       _rosterSkills.removeAt(index);
       _rosterUserIds.removeAt(index);
+      if (index < _rosterAvatarUrls.length) {
+        _rosterAvatarUrls.removeAt(index);
+      }
       _syncCurrentMatchRoster();
       return response.message;
     } catch (e) {
@@ -567,6 +576,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     final names = <String>[];
     final skills = <String>[];
     final userIds = <String>[];
+    final avatarUrls = <String>[];
 
     for (var i = 0; i < match.players.length; i++) {
       final playerName = match.players[i].trim();
@@ -577,11 +587,13 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       names.add(playerName);
       skills.add(match.playerSkillAt(i));
       userIds.add('');
+      avatarUrls.add('');
     }
 
     _rosterNames = names;
     _rosterSkills = skills;
     _rosterUserIds = userIds;
+    _rosterAvatarUrls = avatarUrls;
     AppLogger.debug(
       'Seeded participated roster from route for matchId=${match.id}: '
       'players=$_rosterNames',
@@ -596,6 +608,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     final names = <String>[];
     final skills = <String>[];
     final userIds = <String>[];
+    final avatarUrls = <String>[];
 
     for (final participant in detail.participants) {
       if (!participant.countsAsJoinedPlayer) continue;
@@ -610,11 +623,13 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         detail.skillLevel.trim().isNotEmpty ? detail.skillLevel : 'Intermediate',
       );
       userIds.add(userId);
+      avatarUrls.add(participant.user.avatarUrl?.trim() ?? '');
     }
 
     _rosterNames = names;
     _rosterSkills = skills;
     _rosterUserIds = userIds;
+    _rosterAvatarUrls = avatarUrls;
     AppLogger.info(
       'Stored participated players from backend for matchId=${detail.id}: '
       'players=$_rosterNames',
@@ -653,6 +668,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _rosterNames.add(rawName);
     _rosterSkills.add(_currentMatch?.skillLevel ?? 'Intermediate');
     _rosterUserIds.add(ProfileService().profile?.id.trim() ?? '');
+    _rosterAvatarUrls.add(ProfileService().profile?.avatarUrl?.trim() ?? '');
     AppLogger.success(
       'Accepted user stored in participated list: $rawName',
       tag: 'HostDetailVM',
@@ -681,6 +697,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     }
     if (index < _rosterUserIds.length) {
       _rosterUserIds.removeAt(index);
+    }
+    if (index < _rosterAvatarUrls.length) {
+      _rosterAvatarUrls.removeAt(index);
     }
     AppLogger.info(
       'User removed from participated list: $rawName',

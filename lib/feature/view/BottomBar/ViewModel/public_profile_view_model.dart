@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/Review/create_review_model.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
 import 'package:sport_finding/Data/Repositories/Review/review_repository.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
@@ -321,7 +322,23 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   void onMessageTap(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.chatScreen);
+    final matchId = initialMatchId.trim();
+    if (matchId.isEmpty) {
+      AppSnackBar.show(
+        'Direct user chat is not available yet. Open chat from a match instead.',
+      );
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      RoutesName.chatScreen,
+      arguments: ChatRouteArgs(
+        contactName: 'Match Chat',
+        matchId: matchId,
+        isOnline: true,
+      ),
+    );
   }
 
   Future<void> onFollowTap(BuildContext context) async {

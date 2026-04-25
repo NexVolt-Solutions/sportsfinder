@@ -16,6 +16,8 @@ class AppPreferences {
   static const String _keyCurrentLongitude = 'current_longitude';
   static const String _keyCurrentLocationName = 'current_location_name';
   static const String _keyLocationSearchHistory = 'location_search_history';
+  static const String _keyHiddenNotificationIds = 'hidden_notification_ids';
+  static const String _keyNotificationsClearedAt = 'notifications_cleared_at';
   static const int _maxLocationSearchHistory = 12;
 
   /// Recent location strings from [LocationSearchScreen] (newest first).
@@ -50,6 +52,50 @@ class AppPreferences {
   static Future<void> clearLocationSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyLocationSearchHistory);
+  }
+
+  static Future<List<String>> getHiddenNotificationIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_keyHiddenNotificationIds) ?? <String>[];
+  }
+
+  static Future<void> setHiddenNotificationIds(List<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cleaned = ids
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
+    await prefs.setStringList(_keyHiddenNotificationIds, cleaned);
+  }
+
+  static Future<void> addHiddenNotificationId(String id) async {
+    final trimmed = id.trim();
+    if (trimmed.isEmpty) return;
+    final current = await getHiddenNotificationIds();
+    if (current.contains(trimmed)) return;
+    await setHiddenNotificationIds(<String>[...current, trimmed]);
+  }
+
+  static Future<void> clearHiddenNotificationIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyHiddenNotificationIds);
+  }
+
+  static Future<DateTime?> getNotificationsClearedAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keyNotificationsClearedAt);
+    if (raw == null || raw.trim().isEmpty) return null;
+    return DateTime.tryParse(raw.trim());
+  }
+
+  static Future<void> setNotificationsClearedAt(DateTime? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) {
+      await prefs.remove(_keyNotificationsClearedAt);
+      return;
+    }
+    await prefs.setString(_keyNotificationsClearedAt, value.toUtc().toIso8601String());
   }
 
   static Future<void> saveAuthTokens({
@@ -169,6 +215,8 @@ class AppPreferences {
     await prefs.remove(_keyAccessToken);
     await prefs.remove(_keyRefreshToken);
     await prefs.remove(_keyTokenType);
+    await clearHiddenNotificationIds();
+    await setNotificationsClearedAt(null);
     await clearPendingOnboardingSportSkill();
   }
 }

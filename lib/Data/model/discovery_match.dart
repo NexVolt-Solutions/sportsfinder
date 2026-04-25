@@ -17,6 +17,7 @@ class DiscoveryMatch {
     required this.time,
     this.hostUserId = '',
     this.hostDisplayName = '',
+    this.hostAvatarUrl,
     this.skillLevel = 'Intermediate',
     this.matchDescription = '',
     this.hostBio = '',
@@ -42,6 +43,7 @@ class DiscoveryMatch {
 
   /// Shown in host-style blocks; falls back to [title] if empty.
   final String hostDisplayName;
+  final String? hostAvatarUrl;
   final String skillLevel;
   final String matchDescription;
   final String hostBio;
@@ -79,6 +81,7 @@ class DiscoveryMatch {
       players: const [],
       hostUserId: m.host.id,
       hostDisplayName: m.host.fullName,
+      hostAvatarUrl: m.host.avatarUrl,
       skillLevel: m.skillLevel,
       matchDescription: '',
       hostBio: '',
@@ -222,6 +225,7 @@ class DiscoveryMatch {
     List<String>? players,
     String? hostUserId,
     String? hostDisplayName,
+    String? hostAvatarUrl,
     String? skillLevel,
     String? matchDescription,
     String? hostBio,
@@ -243,6 +247,7 @@ class DiscoveryMatch {
       players: players ?? this.players,
       hostUserId: hostUserId ?? this.hostUserId,
       hostDisplayName: hostDisplayName ?? this.hostDisplayName,
+      hostAvatarUrl: hostAvatarUrl ?? this.hostAvatarUrl,
       skillLevel: skillLevel ?? this.skillLevel,
       matchDescription: matchDescription ?? this.matchDescription,
       hostBio: hostBio ?? this.hostBio,
