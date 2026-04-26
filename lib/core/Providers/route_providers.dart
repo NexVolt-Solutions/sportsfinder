@@ -39,6 +39,8 @@ import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/
 class RouteProviders {
   RouteProviders._();
 
+  static T? _argAs<T>(Object? arg) => arg is T ? arg : null;
+
   static Widget wrapIfNeeded(
     String routeName,
     Widget child, {
@@ -143,9 +145,8 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.chatScreen:
-        final args = routeArguments is ChatRouteArgs
-            ? routeArguments
-            : const ChatRouteArgs(contactName: 'Match Chat', isOnline: true);
+        final args = _argAs<ChatRouteArgs>(routeArguments) ??
+            const ChatRouteArgs(contactName: 'Match Chat', isOnline: true);
         return ChangeNotifierProvider(
           create: (_) => ChatScreenViewModel(
             contactName: args.contactName,

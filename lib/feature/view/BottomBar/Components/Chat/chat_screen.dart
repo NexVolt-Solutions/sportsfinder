@@ -184,7 +184,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                 children: [
                                   if (showDate)
                                     _buildDateChip(context, msg.date),
-                                  _buildMessageBubble(context, msg),
+                                  _buildMessageBubble(
+                                    context,
+                                    msg,
+                                    onRetry: msg.isFailed
+                                        ? () => model.retryMessage(msg.localId)
+                                        : null,
+                                  ),
                                 ],
                               );
                             },
@@ -250,7 +256,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, ChatMessage msg) {
+  Widget _buildMessageBubble(
+    BuildContext context,
+    ChatMessage msg, {
+    VoidCallback? onRetry,
+  }) {
     final isMe = msg.isMe;
 
     return Padding(
@@ -279,20 +289,28 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              NormalText(
-                titleText: msg.text,
-                titleColor: isMe
-                    ? context.appColors.onPrimary
-                    : context.appColors.onSurface,
-                titleFontWeight: FontWeight.w400,
-                titleFontSize: context.text(16),
-                sizeBoxheight: context.h(4),
-                subText: msg.isPending ? 'Sending...' : msg.time,
-                subColor: isMe
-                    ? context.appColors.onPrimary.withValues(alpha: 0.7)
-                    : context.appColors.greylight,
-                subFontSize: context.text(12),
-                subFontWeight: FontWeight.w400,
+              GestureDetector(
+                onTap: onRetry,
+                behavior: HitTestBehavior.opaque,
+                child: NormalText(
+                  titleText: msg.text,
+                  titleColor: isMe
+                      ? context.appColors.onPrimary
+                      : context.appColors.onSurface,
+                  titleFontWeight: FontWeight.w400,
+                  titleFontSize: context.text(16),
+                  sizeBoxheight: context.h(4),
+                  subText: msg.isFailed
+                      ? 'Failed • Tap to retry'
+                      : (msg.isPending ? 'Sending...' : msg.time),
+                  subColor: msg.isFailed
+                      ? context.appColors.error
+                      : (isMe
+                            ? context.appColors.onPrimary.withValues(alpha: 0.7)
+                            : context.appColors.greylight),
+                  subFontSize: context.text(12),
+                  subFontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
