@@ -136,7 +136,6 @@ class Routes {
               ),
         );
 
-      ////////////
       case RoutesName.userMatchDetailsScreen:
         return _route(
           settings,

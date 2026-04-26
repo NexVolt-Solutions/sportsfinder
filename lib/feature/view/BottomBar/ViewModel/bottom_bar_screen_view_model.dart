@@ -21,7 +21,7 @@ class BottomBarScreenViewModel extends ChangeNotifier {
   bool get isHomeSelected => _selectedIndex == homeIndex;
 
   UserProfileModel? profile;
-  // ✅ easy getters for the view
+  // Easy getters for the view.
   bool isLoading = false;
   String? errorMessage;
   String get userName => profile?.fullName ?? '';
