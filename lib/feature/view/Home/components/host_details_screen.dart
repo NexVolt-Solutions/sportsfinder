@@ -25,6 +25,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/person_invited_card.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
 import 'package:sport_finding/feature/widget/match_location_map_card.dart';
@@ -542,12 +543,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
 
                         // ── loading state ──────────────────────────────────────────
                         if (model.isLoadingUsers)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
+                          const _HostPlayersShimmer()
                         // ── error state ────────────────────────────────────────────
                         else if (model.usersFetchError != null)
                           Column(
@@ -780,13 +776,16 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     if (!context.mounted) return;
 
                                     if (success) {
-                                      debugPrint(
-                                        '✅ [HostDetailsScreen] Match status updated to ongoing',
-                                      );
                                       AppSnackBar.show(
                                         'Match started successfully!',
                                         backgroundColor:
                                             context.appColors.primary,
+                                      );
+                                      Navigator.pushNamedAndRemoveUntil(
+                                        context,
+                                        RoutesName.bottomBarScreen,
+                                        (route) => false,
+                                        arguments: 2,
                                       );
                                     } else {
                                       debugPrint(
@@ -890,6 +889,43 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _HostPlayersShimmer extends StatelessWidget {
+  const _HostPlayersShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: List.generate(
+          3,
+          (_) => Padding(
+            padding: EdgeInsets.only(bottom: context.h(12)),
+            child: Row(
+              children: const [
+                ShimmerBox(width: 52, height: 52, shape: BoxShape.circle),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShimmerBox(width: 140, height: 14),
+                      SizedBox(height: 8),
+                      ShimmerBox(width: 100, height: 12),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 12),
+                ShimmerBox(width: 72, height: 34, radius: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

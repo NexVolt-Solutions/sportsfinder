@@ -1,24 +1,17 @@
 class CreateReviewRequestModel {
-  final String? matchId;
   final int rating;
   final String comment;
 
   CreateReviewRequestModel({
-    this.matchId,
     required this.rating,
     required this.comment,
   });
 
   Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{
+    return <String, dynamic>{
       'rating': rating,
       'comment': comment,
     };
-    final trimmedMatchId = matchId?.trim();
-    if (trimmedMatchId != null && trimmedMatchId.isNotEmpty) {
-      data['match_id'] = trimmedMatchId;
-    }
-    return data;
   }
 }
 

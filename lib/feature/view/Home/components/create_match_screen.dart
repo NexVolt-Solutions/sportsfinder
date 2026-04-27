@@ -395,10 +395,15 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                               if (vm.isEditMode) {
                                 Navigator.pop(context, vm.updatedMatch);
                               } else {
-                                Navigator.pushNamed(
+                                final createdMatch = vm.createdMatch;
+                                if (createdMatch == null) {
+                                  AppSnackBar.show('Match created but details are unavailable');
+                                  return;
+                                }
+                                Navigator.pushReplacementNamed(
                                   context,
-                                  RoutesName.matchCreatedDoneScreen,
-                                  arguments: vm.createdMatch,
+                                  RoutesName.hostDetailsScreen,
+                                  arguments: createdMatch.toDiscoveryMatch(),
                                 );
                               }
                             } else {

@@ -13,6 +13,7 @@ import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   const PublicProfileScreen({super.key, this.args});
@@ -57,9 +58,7 @@ class PublicProfileScreen extends StatelessWidget {
                   ),
                   Expanded(
                     child: model.showSpinner
-                        ? Center(
-                            child: CircularProgressIndicator(color: c.primary),
-                          )
+                        ? const _ProfileScreenShimmer()
                         : model.showError
                         ? Padding(
                             padding: context.padSym(h: 20),
@@ -133,11 +132,7 @@ class PublicProfileScreen extends StatelessWidget {
                                     ? null
                                     : !model.canRateProfile
                                     ? null
-                                    : model.canRateForMatch
-                                    ? () => _showRateSheet(context, model)
-                                    : () => AppSnackBar.show(
-                                        model.rateUnavailableMessage,
-                                      ),
+                                    : () => _showRateSheet(context, model),
                               ),
                               SizedBox(height: context.h(16)),
                               NormalText(
@@ -180,6 +175,48 @@ class PublicProfileScreen extends StatelessWidget {
   }
 }
 
+class _ProfileScreenShimmer extends StatelessWidget {
+  const _ProfileScreenShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: context.padSym(h: 20).copyWith(bottom: context.h(32)),
+      children: [
+        const Center(
+          child: ShimmerBox(width: 96, height: 96, shape: BoxShape.circle),
+        ),
+        SizedBox(height: context.h(14)),
+        const Center(child: ShimmerBox(width: 170, height: 18)),
+        SizedBox(height: context.h(10)),
+        const Center(child: ShimmerBox(width: 140, height: 12)),
+        SizedBox(height: context.h(16)),
+        const ShimmerBox(height: 56, radius: 28),
+        SizedBox(height: context.h(12)),
+        const ShimmerBox(height: 44, radius: 24),
+        SizedBox(height: context.h(20)),
+        Row(
+          children: const [
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+          ],
+        ),
+        SizedBox(height: context.h(18)),
+        const ShimmerBox(width: 90, height: 16),
+        SizedBox(height: context.h(12)),
+        const ShimmerBox(height: 52),
+        SizedBox(height: context.h(10)),
+        const ShimmerBox(height: 52),
+      ],
+    );
+  }
+}
+
 class _RatePlayerSheet extends StatefulWidget {
   const _RatePlayerSheet({required this.model});
 
@@ -207,13 +244,9 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
 
   Future<void> _submit() async {
     if (_isSubmittingLocal || widget.model.isSubmittingReview) return;
-    final matchId = widget.model.initialMatchId.trim();
     final comment = _controller.text.trim();
     debugPrint('[RatePlayerSheet] Submit tapped for rating=$_selectedStars');
-    if (matchId.isEmpty) {
-      AppSnackBar.show(AppText.reviewValidationMatchId);
-      return;
-    }
+
     if (_selectedStars <= 0) {
       AppSnackBar.show(AppText.reviewValidationRating);
       return;
@@ -225,7 +258,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
 
     setState(() => _isSubmittingLocal = true);
     final ok = await widget.model.submitReview(
-      matchId: matchId,
       rating: _selectedStars,
       comment: comment,
     );

@@ -75,7 +75,10 @@ class MatchChatService {
 
     return items
         .whereType<Map>()
-        .map((item) => RealtimeChatMessage.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) =>
+              RealtimeChatMessage.fromJson(Map<String, dynamic>.from(item)),
+        )
         .toList();
   }
 
@@ -124,10 +127,7 @@ class MatchChatService {
     }
 
     _channel?.sink.add(
-      jsonEncode(<String, dynamic>{
-        'type': 'chat_message',
-        'content': trimmed,
-      }),
+      jsonEncode(<String, dynamic>{'type': 'chat_message', 'content': trimmed}),
     );
   }
 

@@ -393,6 +393,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 
 /// ================= AVATAR =================
 class ProfileDetailAvatar extends StatelessWidget {
@@ -422,7 +423,13 @@ class ProfileDetailAvatar extends StatelessWidget {
             if (progress == null) return child;
             return ColoredBox(
               color: c.blue10,
-              child: Center(child: CircularProgressIndicator(color: c.primary)),
+              child: Center(
+                child: ShimmerBox(
+                  width: size,
+                  height: size,
+                  shape: BoxShape.circle,
+                ),
+              ),
             );
           },
           errorBuilder: (_, _, _) => ColoredBox(
@@ -567,7 +574,7 @@ class ProfileDetailStatsRow extends StatelessWidget {
         child: GestureDetector(
           onTap: onTap,
           child: CardWidget(
-            padding: context.padSym(h: 12, v: 16),
+            // padding: context.padSym(h: 12, v: 16),
             child: Column(
               children: [
                 icon,
@@ -592,21 +599,31 @@ class ProfileDetailStatsRow extends StatelessWidget {
     return Row(
       children: [
         buildCard(
-          SvgPicture.asset(AppAssets.follow, width: 18, height: 18,color: c.greyDark,),
+          SvgPicture.asset(
+            AppAssets.follow,
+            width: 18,
+            height: 18,
+            color: c.greyDark,
+          ),
           "$followersCount",
           AppText.followers,
           onFollowersTap,
         ),
         SizedBox(width: 10),
         buildCard(
-          SvgPicture.asset(AppAssets.follower, width: 18, height: 18,color: c.greyDark,   ),
+          SvgPicture.asset(
+            AppAssets.follower,
+            width: 18,
+            height: 18,
+            color: c.greyDark,
+          ),
           "$followingCount",
           AppText.following,
           onFollowingTap,
         ),
         SizedBox(width: 10),
         buildCard(
-           Icon(Icons.star, color: c.greyDark, size: 18),
+          Icon(Icons.star, color: c.greyDark, size: 18),
           ratingValue,
           AppText.rating,
           onRatingTap,

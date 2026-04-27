@@ -24,6 +24,7 @@ import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/custom_seeting_card.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -187,19 +188,7 @@ class ProfileScreen extends StatelessWidget {
                 NormalText(titleText: AppText.profile),
                 SizedBox(height: context.h(16)),
                 if (model.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 16),
-                        Text("Loading profile..."),
-                      ],
-                    ),
-                  )
+                  const _ProfileGreetingShimmer()
                 else
                   UserGreetingWidget(
                     imageUrl: _safeAvatarUrl(model.avatarUrl),
@@ -294,19 +283,19 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                NormalText(titleText: AppText.mySports),
-                ListView.builder(
-                  itemCount: model.sportsList.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final sport = model.sportsList[index];
-                    return ProfilePrivateSportRow(
-                      sportName: sport.name,
-                      skillLabel: sport.skill,
-                    );
-                  },
-                ),
+                // NormalText(titleText: AppText.mySports),
+                // ListView.builder(
+                //   itemCount: model.sportsList.length,
+                //   shrinkWrap: true,
+                //   physics: const NeverScrollableScrollPhysics(),
+                //   itemBuilder: (context, index) {
+                //     final sport = model.sportsList[index];
+                //     return ProfilePrivateSportRow(
+                //       sportName: sport.name,
+                //       skillLabel: sport.skill,
+                //     );
+                //   },
+                // ),
                 SizedBox(height: context.h(16)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -375,6 +364,36 @@ class ProfileScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProfileGreetingShimmer extends StatelessWidget {
+  const _ProfileGreetingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: const [
+          ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ShimmerBox(width: 130, height: 14),
+                SizedBox(height: 10),
+                ShimmerBox(width: 110, height: 12),
+                SizedBox(height: 10),
+                ShimmerBox(width: 180, height: 12),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

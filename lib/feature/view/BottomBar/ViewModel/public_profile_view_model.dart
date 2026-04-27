@@ -99,9 +99,6 @@ class PublicProfileViewModel extends ChangeNotifier {
   String? get followError => _followError;
   String get selectedUserId => _args?.userId.trim() ?? '';
   String get initialMatchId => _args?.initialMatchId?.trim() ?? '';
-  bool get canRateForMatch => _args?.canRateForMatch ?? false;
-  String get rateUnavailableMessage =>
-      'You can rate players only after the match is completed.';
 
   /// Hide follow / message / rate when viewing your own public profile.
   bool get isOwnProfile =>
@@ -390,13 +387,12 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   Future<bool> submitReview({
-    required String matchId,
     required int rating,
     required String comment,
   }) async {
     log(
       '[PublicProfileVM] submitReview tapped for userId=$selectedUserId, '
-      'matchId=$matchId, rating=$rating',
+      'rating=$rating',
     );
     if (_submitReviewLoading) {
       return false;
@@ -416,17 +412,6 @@ class PublicProfileViewModel extends ChangeNotifier {
       _safeNotifyListeners();
       return false;
     }
-    if (matchId.trim().isEmpty) {
-      _submitReviewError = AppText.reviewValidationMatchId;
-      _safeNotifyListeners();
-      return false;
-    }
-    if (!canRateForMatch) {
-      _submitReviewError = rateUnavailableMessage;
-      _safeNotifyListeners();
-      return false;
-    }
-
     _submitReviewLoading = true;
     _submitReviewError = null;
     _safeNotifyListeners();
@@ -435,7 +420,6 @@ class PublicProfileViewModel extends ChangeNotifier {
       await _reviewRepository.createReview(
         userId: selectedUserId,
         request: CreateReviewRequestModel(
-          matchId: matchId.trim(),
           rating: rating,
           comment: comment.trim(),
         ),
