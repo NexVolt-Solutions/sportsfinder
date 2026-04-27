@@ -20,7 +20,6 @@ import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-
 import '../../../Data/Repositories/my_profile_Repository.dart'
     show MyProfileRepository;
 
@@ -229,6 +228,125 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     );
   }
 
+  Future<void> _handleNotificationTap(BuildContext context) async {
+    final service = Provider.of<NotificationService>(context, listen: false);
+    await service.fetchNotifications();
+    if (!context.mounted) return;
+    Navigator.pushNamed(context, RoutesName.notificationsScreen);
+  }
+
+  Widget _buildTopBar(BuildContext context) {
+    return Padding(
+      padding: context.padSym(h: 20),
+      child: AppBarWidget(
+        leading: NormalText(
+          titleText: AppText.sportFinding,
+          titleFontSize: 18,
+        ),
+        trailing: _buildNotificationBell(context),
+        onTrailingTap: () => _handleNotificationTap(context),
+      ),
+    );
+  }
+
+  Widget _buildTabStack(BottomBarScreenViewModel vm) {
+    return Expanded(
+      child: IndexedStack(
+        index: vm.selectedIndex.clamp(0, _tabChildren.length - 1),
+        sizing: StackFit.expand,
+        children: _tabChildren,
+      ),
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context, BottomBarScreenViewModel vm) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: _barBottomPadding),
+      child: SizedBox(
+        height: _bottomChromeHeight(context),
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            Positioned(
+              left: context.sw(20),
+              right: context.sw(20),
+              bottom: 0,
+              height: _barHeight,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: context.appColors.surface,
+                  borderRadius: BorderRadius.circular(context.radiusR(_barRadius)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.appColors.blue20,
+                      blurRadius: _barShadowBlur,
+                      offset: const Offset(0, _barShadowOffset),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _navItem(
+                        context: context,
+                        iconPath: AppAssets.matchesIcon,
+                        label: AppText.match,
+                        index: 0,
+                        selectedIndex: vm.selectedIndex,
+                        onTap: () => vm.setSelectedIndex(0),
+                      ),
+                    ),
+                    Expanded(
+                      child: _navItem(
+                        context: context,
+                        iconPath: AppAssets.searchBarIcon,
+                        label: AppText.discover,
+                        index: 1,
+                        selectedIndex: vm.selectedIndex,
+                        onTap: () => vm.setSelectedIndex(1),
+                      ),
+                    ),
+                    SizedBox(width: context.sw(12)),
+                    Expanded(child: SizedBox(width: context.sw(12))),
+                    Expanded(
+                      child: _navItem(
+                        context: context,
+                        iconPath: AppAssets.chatIcon,
+                        label: AppText.chat,
+                        index: 3,
+                        selectedIndex: vm.selectedIndex,
+                        onTap: () => vm.setSelectedIndex(3),
+                      ),
+                    ),
+                    Expanded(
+                      child: _navItem(
+                        context: context,
+                        iconPath: AppAssets.profileIcon,
+                        label: AppText.profile,
+                        index: 4,
+                        selectedIndex: vm.selectedIndex,
+                        onTap: () => vm.setSelectedIndex(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: _barHeight / 2 - _homeButtonSize / 1.1,
+              child: GestureDetector(
+                onTap: () => vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
+                child: SvgPicture.asset(AppAssets.homeIcon),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -239,126 +357,9 @@ class _BottomBarContentState extends State<_BottomBarContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: context.padSym(h: 20),
-                child: AppBarWidget(
-                  leading: NormalText(
-                    titleText: AppText.sportFinding,
-                    titleFontSize: 18,
-                  ),
-                  trailing: _buildNotificationBell(context),
-                  onTrailingTap: () async {
-                    final service = Provider.of<NotificationService>(
-                      context,
-                      listen: false,
-                    );
-                    await service.fetchNotifications();
-
-                    if (context.mounted) {
-                      Navigator.pushNamed(
-                        context,
-                        RoutesName.notificationsScreen,
-                      );
-                    }
-                  },
-                ),
-              ),
-              Expanded(
-                child: IndexedStack(
-                  index: vm.selectedIndex.clamp(0, _tabChildren.length - 1),
-                  sizing: StackFit.expand,
-                  children: _tabChildren,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(bottom: _barBottomPadding),
-                child: SizedBox(
-                  height: _bottomChromeHeight(context),
-                  width: double.infinity,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      Positioned(
-                        left: context.sw(20),
-                        right: context.sw(20),
-                        bottom: 0,
-                        height: _barHeight,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: context.appColors.surface,
-                            borderRadius: BorderRadius.circular(
-                              context.radiusR(_barRadius),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.appColors.blue20,
-                                blurRadius: _barShadowBlur,
-                                offset: const Offset(0, _barShadowOffset),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _navItem(
-                                  context: context,
-                                  iconPath: AppAssets.matchesIcon,
-                                  label: AppText.match,
-                                  index: 0,
-                                  selectedIndex: vm.selectedIndex,
-                                  onTap: () => vm.setSelectedIndex(0),
-                                ),
-                              ),
-                              Expanded(
-                                child: _navItem(
-                                  context: context,
-                                  iconPath: AppAssets.searchBarIcon,
-                                  label: AppText.discover,
-                                  index: 1,
-                                  selectedIndex: vm.selectedIndex,
-                                  onTap: () => vm.setSelectedIndex(1),
-                                ),
-                              ),
-                              SizedBox(width: context.sw(12)),
-                              Expanded(child: SizedBox(width: context.sw(12))),
-                              Expanded(
-                                child: _navItem(
-                                  context: context,
-                                  iconPath: AppAssets.chatIcon,
-                                  label: AppText.chat,
-                                  index: 3,
-                                  selectedIndex: vm.selectedIndex,
-                                  onTap: () => vm.setSelectedIndex(3),
-                                ),
-                              ),
-                              Expanded(
-                                child: _navItem(
-                                  context: context,
-                                  iconPath: AppAssets.profileIcon,
-                                  label: AppText.profile,
-                                  index: 4,
-                                  selectedIndex: vm.selectedIndex,
-                                  onTap: () => vm.setSelectedIndex(4),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: _barHeight / 2 - _homeButtonSize / 1.1,
-                        child: GestureDetector(
-                          onTap: () => vm.setSelectedIndex(
-                            BottomBarScreenViewModel.homeIndex,
-                          ),
-                          child: SvgPicture.asset(AppAssets.homeIcon),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildTopBar(context),
+              _buildTabStack(vm),
+              _buildBottomNav(context, vm),
             ],
           ),
         ),
