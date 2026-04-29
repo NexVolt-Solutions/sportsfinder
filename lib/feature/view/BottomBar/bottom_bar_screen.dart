@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -112,6 +113,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   static const double _barBottomPadding = 4;
   static const double _barRadius = 12;
   static const double _homeButtonSize = 48;
+  static const double _webSidebarWidth = 248;
   static const double _navIconSize = 22;
   static const double _barShadowBlur = 12;
   static const double _barShadowOffset = 4;
@@ -186,6 +188,59 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             style: context.appText.text12W500.copyWith(color: color),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _webNavItem({
+    required BuildContext context,
+    required String iconPath,
+    required String label,
+    required int index,
+    required int selectedIndex,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = selectedIndex == index;
+    final c = context.appColors;
+    final bg = isSelected ? c.primary.withValues(alpha: 0.12) : Colors.transparent;
+    final color = isSelected ? c.primary : c.greyDark;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.symmetric(
+          horizontal: context.w(16),
+          vertical: context.h(12),
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          border: Border.all(
+            color: isSelected ? c.primary.withValues(alpha: 0.18) : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          children: [
+            SvgPicture.asset(
+              iconPath,
+              width: _navIconSize,
+              height: _navIconSize,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            SizedBox(width: context.w(12)),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.appText.text14W500.copyWith(color: color),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -347,6 +402,142 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     );
   }
 
+  Widget _buildWebSidebar(BuildContext context, BottomBarScreenViewModel vm) {
+    final c = context.appColors;
+
+    return Container(
+      width: _webSidebarWidth,
+      margin: EdgeInsets.fromLTRB(
+        context.w(16),
+        context.h(16),
+        context.w(12),
+        context.h(16),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        context.w(16),
+        context.h(20),
+        context.w(16),
+        context.h(20),
+      ),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(context.radiusR(24)),
+        boxShadow: [
+          BoxShadow(
+            color: c.blue20,
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            AppText.sportFinding,
+            style: context.appText.text18Bold.copyWith(color: c.onSurface),
+          ),
+          SizedBox(height: context.h(6)),
+          Text(
+            'Dashboard',
+            style: context.appText.text12W400.copyWith(color: c.greylight),
+          ),
+          SizedBox(height: context.h(28)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.matchesIcon,
+            label: AppText.match,
+            index: 0,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(0),
+          ),
+          SizedBox(height: context.h(10)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.searchBarIcon,
+            label: AppText.discover,
+            index: 1,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(1),
+          ),
+          SizedBox(height: context.h(10)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.homeIcon,
+            label: 'Home',
+            index: BottomBarScreenViewModel.homeIndex,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
+          ),
+          SizedBox(height: context.h(10)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.chatIcon,
+            label: AppText.chat,
+            index: 3,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(3),
+          ),
+          SizedBox(height: context.h(10)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.profileIcon,
+            label: AppText.profile,
+            index: 4,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(4),
+          ),
+          const Spacer(),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.w(14),
+              vertical: context.h(12),
+            ),
+            decoration: BoxDecoration(
+              color: c.blue10,
+              borderRadius: BorderRadius.circular(context.radiusR(16)),
+            ),
+            child: Text(
+              'Web dashboard mode',
+              style: context.appText.text12W500.copyWith(color: c.greyDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context, BottomBarScreenViewModel vm) {
+    return Row(
+      children: [
+        _buildWebSidebar(context, vm),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              0,
+              context.h(16),
+              context.w(16),
+              context.h(16),
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.appColors.surface.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(context.radiusR(24)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildTopBar(context),
+                  _buildTabStack(vm),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -354,14 +545,16 @@ class _BottomBarContentState extends State<_BottomBarContent> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Consumer<BottomBarScreenViewModel>(
         builder: (context, vm, _) => MainFrame(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildTopBar(context),
-              _buildTabStack(vm),
-              _buildBottomNav(context, vm),
-            ],
-          ),
+          child: kIsWeb
+              ? _buildWebLayout(context, vm)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTopBar(context),
+                    _buildTabStack(vm),
+                    _buildBottomNav(context, vm),
+                  ],
+                ),
         ),
       ),
     );

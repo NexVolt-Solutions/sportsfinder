@@ -53,9 +53,7 @@ class LoginScreenViewModel extends ChangeNotifier {
   }
 
   static void _logGoogle(String message) {
-    debugPrint(
-      '[GoogleAuth] ${DateTime.now().toIso8601String()} $message',
-    );
+    debugPrint('[GoogleAuth] ${DateTime.now().toIso8601String()} $message');
   }
 
   /// OAuth client IDs are not secrets; still avoid dumping huge strings.
@@ -76,7 +74,11 @@ class LoginScreenViewModel extends ChangeNotifier {
         'GoogleSignIn.initialize: '
         'clientId=${_describeOAuthId(_googleClientId.isEmpty ? null : _googleClientId)} '
         'serverClientId=${_describeOAuthId(_resolvedServerClientId)} '
-        '(${_googleServerClientId.isNotEmpty ? "GOOGLE_SERVER_CLIENT_ID" : kGoogleOauth2WebClientId.isNotEmpty ? "kGoogleOauth2WebClientId" : "null (use default_web_client_id from google-services if present)"})',
+        '(${_googleServerClientId.isNotEmpty
+            ? "GOOGLE_SERVER_CLIENT_ID"
+            : kGoogleOauth2WebClientId.isNotEmpty
+            ? "kGoogleOauth2WebClientId"
+            : "null (use default_web_client_id from google-services if present)"})',
       );
     }
     return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
@@ -148,10 +150,8 @@ class LoginScreenViewModel extends ChangeNotifier {
       _logGoogle('loginWithGoogle: calling authenticate() with scopeHint');
       String? idToken;
       try {
-        final GoogleSignInAccount account =
-            await GoogleSignIn.instance.authenticate(
-              scopeHint: const ['email', 'profile', 'openid'],
-            );
+        final GoogleSignInAccount account = await GoogleSignIn.instance
+            .authenticate(scopeHint: const ['email', 'profile', 'openid']);
         idToken = account.authentication.idToken;
         _logGoogle(
           'loginWithGoogle: account id=${account.id} '
@@ -201,7 +201,9 @@ class LoginScreenViewModel extends ChangeNotifier {
         }
       }
 
-      _logGoogle('loginWithGoogle: POST /api/v1/auth/google (idToken not logged)');
+      _logGoogle(
+        'loginWithGoogle: POST /api/v1/auth/google (idToken not logged)',
+      );
       final response = await googleAuthRepository.loginWithGoogle(
         GoogleAuthRequestModel(idToken: idToken),
       );

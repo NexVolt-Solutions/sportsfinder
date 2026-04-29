@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key, this.embedInBottomBar = false});
@@ -44,6 +46,80 @@ class _ChatListScreenState extends State<ChatListScreen> {
       value: _safeVm,
       child: Consumer<ChatListScreenViewModel>(
         builder: (context, model, _) {
+          if (kIsWeb && widget.embedInBottomBar) {
+            return Padding(
+              padding: context.padSym(h: 20, v: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const WebDashboardTitle(
+                    title: 'Chat',
+                    subtitle: 'Manage your conversations and match messages.',
+                  ),
+                  SizedBox(height: context.h(16)),
+                  Expanded(
+                    child: WebDashboardPanel(
+                      child: model.hasThreads
+                          ? ListView.separated(
+                              itemCount: model.threads.length,
+                              separatorBuilder: (_, _) =>
+                                  SizedBox(height: context.h(10)),
+                              itemBuilder: (context, index) {
+                                final t = model.threads[index];
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                    child: Text(
+                                      t.userName.isNotEmpty
+                                          ? t.userName[0].toUpperCase()
+                                          : 'U',
+                                    ),
+                                  ),
+                                  title: Text(t.userName),
+                                  subtitle: Text(
+                                    t.lastMessage,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: Text(
+                                    t.lastTime,
+                                    style: context.appText.text12W500.copyWith(
+                                      color: context.appColors.greylight,
+                                    ),
+                                  ),
+                                  onTap: () => AppSnackBar.show(
+                                    'This thread is not connected to the backend yet. Open chat from a match to use live messaging.',
+                                  ),
+                                );
+                              },
+                            )
+                          : Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SvgPicture.asset(
+                                    AppAssets.invitedPeopleIcon,
+                                    fit: BoxFit.scaleDown,
+                                  ),
+                                  SizedBox(height: context.h(16)),
+                                  NormalText(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    titleText: AppText.players,
+                                    titleAlign: TextAlign.center,
+                                    subAlign: TextAlign.center,
+                                    subText:
+                                        AppText.discoverNearbyPeopleInYourArea,
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
           return Scaffold(
             backgroundColor: widget.embedInBottomBar
                 ? Colors.transparent

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
+import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
@@ -159,6 +161,90 @@ class ProfileScreen extends StatelessWidget {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           final notificationService = context.watch<NotificationService>();
+          if (kIsWeb && embedInBottomBar) {
+            return Padding(
+              padding: context.padSym(h: 20, v: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const WebDashboardTitle(
+                    title: 'Profile',
+                    subtitle: 'Manage your personal info and account settings.',
+                  ),
+                  SizedBox(height: context.h(16)),
+                  Expanded(
+                    child: WebDashboardPanel(
+                      child: ListView(
+                        children: [
+                          if (model.isLoading)
+                            const _ProfileGreetingShimmer()
+                          else
+                            UserGreetingWidget(
+                              imageUrl: _safeAvatarUrl(model.avatarUrl),
+                              title: model.fullName,
+                              locName: model.location,
+                              subTitle: model.bio,
+                              isShow: model.bio.isNotEmpty,
+                            ),
+                          SizedBox(height: context.h(16)),
+                          ProfileDetailStatsRow(
+                            followersCount: model.followersCount,
+                            followingCount: model.followingCount,
+                            ratingValue: model.ratingValue,
+                            matchesPlayedValue: model.matchesPlayedLabel,
+                            onFollowersTap: () => model.openFollowers(context),
+                            onFollowingTap: () => model.openFollowing(context),
+                          ),
+                          SizedBox(height: context.h(18)),
+                          ...model.profileData.map((item) {
+                            final index = model.profileData.indexOf(item);
+                            return CustomSettingCard(
+                              icon: item['leading'],
+                              title: item['title'],
+                              subtitle: item['subtitle'],
+                              trailingType: item['trailingType'],
+                              switchValue: index == 2
+                                  ? model.notificationsEnabled
+                                  : item['switchValue'],
+                              onSwitchChanged: index == 2
+                                  ? (val) async {
+                                      final previous = model.notificationsEnabled;
+                                      model.toggleSwitch(index, previous);
+                                      try {
+                                        final message = await notificationService
+                                            .updateNotificationPreference(val);
+                                        if (!context.mounted) return;
+                                        AppSnackBar.show(
+                                          message != null && message.isNotEmpty
+                                              ? message
+                                              : AppText.notificationsUpdated,
+                                        );
+                                      } catch (e) {
+                                        if (!context.mounted) return;
+                                        model.toggleSwitch(index, previous);
+                                        AppSnackBar.show(e.toString());
+                                      }
+                                    }
+                                  : (val) {
+                                      model.toggleSwitch(index, val);
+                                    },
+                              switchEnabled: index == 2
+                                  ? !notificationService.isUpdatingPreference
+                                  : true,
+                              switchLoading: index == 2
+                                  ? notificationService.isUpdatingPreference
+                                  : false,
+                              onTap: () => model.onTapFun(context, index),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
           return MainFrame(
             showDecorationLayer: !embedInBottomBar,
             child: ListView(

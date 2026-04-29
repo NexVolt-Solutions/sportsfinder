@@ -228,11 +228,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
         PopupMenuButton<_NotificationMenuAction>(
-          icon: Icon(
-            Icons.more_vert,
-            color: c.greyDark,
-            size: context.w(22),
-          ),
+          icon: Icon(Icons.more_vert, color: c.greyDark, size: context.w(22)),
           onSelected: (action) {
             switch (action) {
               case _NotificationMenuAction.readAll:
@@ -274,12 +270,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (items.isEmpty) return const <Widget>[];
     return <Widget>[
       if (addTopSpacing) SizedBox(height: context.h(8)),
-      NormalText(
-        titleText: title,
-        titleStyle: context.appText.text16W600,
-      ),
+      NormalText(titleText: title, titleStyle: context.appText.text16W600),
       SizedBox(height: context.h(10)),
-      ...items.map(_buildNotificationCard).toList(),
+      ...items.map(_buildNotificationCard),
       if (addBottomSpacing) SizedBox(height: context.h(8)),
     ];
   }
@@ -293,7 +286,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       isActionLoading: _actionLoading[n.id] == true,
       onTap: () => _handleNotificationTap(n),
-      onPrimaryTap: n.isInvitation ? () => _handleInvitationAction(n, true) : null,
+      onPrimaryTap: n.isInvitation
+          ? () => _handleInvitationAction(n, true)
+          : null,
       onSecondaryTap: n.isInvitation
           ? () => _handleInvitationAction(n, false)
           : null,
@@ -397,8 +392,7 @@ class _NotificationItem {
     _ResolvedInviteAction? resolvedInviteAction,
   }) {
     final subtitle = model.displaySubtitle;
-    final showActions =
-        model.isInvitation && resolvedInviteAction == null;
+    final showActions = model.isInvitation && resolvedInviteAction == null;
     return _NotificationItem(
       avatarLetter: model.avatarLetter,
       title: model.displayTitle,

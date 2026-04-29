@@ -123,19 +123,19 @@ class TextFormFieldWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.greylight, width: 1),
         ),
-    
+
         // ✅ ENABLED
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.greylight, width: 1),
         ),
-    
+
         // ✅ FOCUSED (Primary Color)
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.primary, width: 1),
         ),
-    
+
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.error, width: 1),
@@ -144,7 +144,7 @@ class TextFormFieldWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(context.radius(12)),
           borderSide: BorderSide(color: c.error, width: 1),
         ),
-    
+
         // (Optional) disable white hover issue
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(context.radius(12)),

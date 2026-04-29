@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
@@ -16,6 +17,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
+import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
 
 class AllUpcomingMatches extends StatefulWidget {
   const AllUpcomingMatches({
@@ -60,6 +62,84 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
   Widget build(BuildContext context) {
     return Consumer<AllUpcommingMatchesViewModel>(
       builder: (context, model, _) {
+        if (kIsWeb && widget.embedAsBottomTab) {
+          return Padding(
+            padding: context.padSym(h: 20, v: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                WebDashboardTitle(
+                  title: widget.listTitle ?? 'Matches Management',
+                  subtitle: '/ total matches',
+                ),
+                SizedBox(height: context.h(16)),
+                WebDashboardPanel(
+                  padding: context.padSym(h: 18, v: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SearchBarWidget(
+                        isShow: true,
+                        onChanged: model.searchMatches,
+                        onFilterTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) {
+                              return FilterBottomSheet(
+                                onApply: (filterData) {
+                                  model.applyFilters(filterData);
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      SizedBox(height: context.h(16)),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: model.matches.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final match = model.matches[index];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(match.title),
+                              subtitle: Text(
+                                '${match.sport} • ${match.locationName}',
+                              ),
+                              trailing: Container(
+                                padding: context.padSym(h: 10, v: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEAF4FF),
+                                  borderRadius: BorderRadius.circular(
+                                    context.radiusR(18),
+                                  ),
+                                ),
+                                child: Text(
+                                  match.status,
+                                  style: context.appText.text12W500.copyWith(
+                                    color: context.appColors.primary,
+                                  ),
+                                ),
+                              ),
+                              onTap: () => _openMatchDetails(
+                                context,
+                                model,
+                                DiscoveryMatch.fromAllMatches(match),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
         final content = Padding(
           padding: context.padSym(h: 20),
           child: Column(

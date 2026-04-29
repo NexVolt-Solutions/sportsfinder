@@ -26,7 +26,8 @@ class _StubMatchChatService extends MatchChatService {
   Stream<String> get onError => _error.stream;
 
   @override
-  Future<List<RealtimeChatMessage>> loadHistory() async => <RealtimeChatMessage>[];
+  Future<List<RealtimeChatMessage>> loadHistory() async =>
+      <RealtimeChatMessage>[];
 
   @override
   void connect() {
@@ -55,7 +56,7 @@ void main() {
       final vm = ChatScreenViewModel(
         accessTokenProvider: () async => 'token',
         currentUserIdProvider: () => 'me-1',
-        chatServiceFactory: (_, __) {
+        chatServiceFactory: (_, _) {
           service = _StubMatchChatService(sendResult: true);
           return service;
         },
@@ -75,7 +76,7 @@ void main() {
       final vm = ChatScreenViewModel(
         accessTokenProvider: () async => 'token',
         currentUserIdProvider: () => 'me-1',
-        chatServiceFactory: (_, __) => _StubMatchChatService(sendResult: false),
+        chatServiceFactory: (_, _) => _StubMatchChatService(sendResult: false),
       );
 
       await vm.bindMatchChat('match-1');
@@ -91,7 +92,7 @@ void main() {
       final vm = ChatScreenViewModel(
         accessTokenProvider: () async => 'token',
         currentUserIdProvider: () => 'me-1',
-        chatServiceFactory: (_, __) {
+        chatServiceFactory: (_, _) {
           service = _StubMatchChatService(sendResult: true);
           return service;
         },
@@ -121,7 +122,7 @@ void main() {
       final vm = ChatScreenViewModel(
         accessTokenProvider: () async => 'token',
         currentUserIdProvider: () => 'me-1',
-        chatServiceFactory: (_, __) {
+        chatServiceFactory: (_, _) {
           service = _StubMatchChatService(sendResult: false);
           return service;
         },
