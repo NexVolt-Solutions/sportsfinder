@@ -481,6 +481,7 @@ class _HomeMatchesShimmer extends StatelessWidget {
               padding: context.padSym(h: 16, v: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: const [
                   ShimmerBox(width: 140, height: 16),
                   SizedBox(height: 12),
@@ -489,11 +490,11 @@ class _HomeMatchesShimmer extends StatelessWidget {
                   ShimmerBox(height: 12),
                   SizedBox(height: 10),
                   ShimmerBox(width: 180, height: 12),
-                  Spacer(),
+                  SizedBox(height: 12),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ShimmerBox(width: 70, height: 12),
-                      Spacer(),
                       ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
                     ],
                   ),

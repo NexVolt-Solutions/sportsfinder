@@ -73,67 +73,69 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                   subtitle: '/ total matches',
                 ),
                 SizedBox(height: context.h(16)),
-                WebDashboardPanel(
-                  padding: context.padSym(h: 18, v: 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SearchBarWidget(
-                        isShow: true,
-                        onChanged: model.searchMatches,
-                        onFilterTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) {
-                              return FilterBottomSheet(
-                                onApply: (filterData) {
-                                  model.applyFilters(filterData);
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      SizedBox(height: context.h(16)),
-                      Expanded(
-                        child: ListView.separated(
-                          itemCount: model.matches.length,
-                          separatorBuilder: (_, _) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final match = model.matches[index];
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(match.title),
-                              subtitle: Text(
-                                '${match.sport} • ${match.locationName}',
-                              ),
-                              trailing: Container(
-                                padding: context.padSym(h: 10, v: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF4FF),
-                                  borderRadius: BorderRadius.circular(
-                                    context.radiusR(18),
-                                  ),
-                                ),
-                                child: Text(
-                                  match.status,
-                                  style: context.appText.text12W500.copyWith(
-                                    color: context.appColors.primary,
-                                  ),
-                                ),
-                              ),
-                              onTap: () => _openMatchDetails(
-                                context,
-                                model,
-                                DiscoveryMatch.fromAllMatches(match),
-                              ),
+                Expanded(
+                  child: WebDashboardPanel(
+                    padding: context.padSym(h: 18, v: 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SearchBarWidget(
+                          isShow: true,
+                          onChanged: model.searchMatches,
+                          onFilterTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) {
+                                return FilterBottomSheet(
+                                  onApply: (filterData) {
+                                    model.applyFilters(filterData);
+                                  },
+                                );
+                              },
                             );
                           },
                         ),
-                      ),
-                    ],
+                        SizedBox(height: context.h(16)),
+                        Expanded(
+                          child: ListView.separated(
+                            itemCount: model.matches.length,
+                            separatorBuilder: (_, _) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final match = model.matches[index];
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(match.title),
+                                subtitle: Text(
+                                  '${match.sport} • ${match.locationName}',
+                                ),
+                                trailing: Container(
+                                  padding: context.padSym(h: 10, v: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEAF4FF),
+                                    borderRadius: BorderRadius.circular(
+                                      context.radiusR(18),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    match.status,
+                                    style: context.appText.text12W500.copyWith(
+                                      color: context.appColors.primary,
+                                    ),
+                                  ),
+                                ),
+                                onTap: () => _openMatchDetails(
+                                  context,
+                                  model,
+                                  DiscoveryMatch.fromAllMatches(match),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

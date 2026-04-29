@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/Notification/notification_reop.dart';
 import 'package:sport_finding/Data/Repositories/NotificationRead/notification_read_repository.dart';
@@ -108,6 +109,7 @@ class NotificationService extends ChangeNotifier {
   }
 
   Future<void> ensureRealtimeConnected() async {
+    if (kIsWeb) return;
     if (_isDisposed || _channel != null) return;
     _reconnectScheduler.cancel();
     final token = await _tokenProvider();

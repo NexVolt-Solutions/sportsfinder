@@ -89,28 +89,30 @@ class _DiscoverTabContent extends StatelessWidget {
                   subtitle: 'Explore sports, players, and nearby games.',
                 ),
                 SizedBox(height: context.sh(20)),
-                WebDashboardPanel(
-                  padding: context.padSym(h: 18, v: 18),
-                  child: Column(
-                    children: [
-                      DiscoverySearchField(
-                        controller: model.searchController,
-                        hintText: AppText.searchMatches,
-                        onChanged: (_) => model.onSearchChanged(),
-                        onFilterTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) {
-                              return FilterBottomSheet(onApply: model.applyFilters);
-                            },
-                          );
-                        },
-                      ),
-                      SizedBox(height: context.sh(20)),
-                      Expanded(child: _MatchesList(model: model)),
-                    ],
+                Expanded(
+                  child: WebDashboardPanel(
+                    padding: context.padSym(h: 18, v: 18),
+                    child: Column(
+                      children: [
+                        DiscoverySearchField(
+                          controller: model.searchController,
+                          hintText: AppText.searchMatches,
+                          onChanged: (_) => model.onSearchChanged(),
+                          onFilterTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) {
+                                return FilterBottomSheet(onApply: model.applyFilters);
+                              },
+                            );
+                          },
+                        ),
+                        SizedBox(height: context.sh(20)),
+                        Expanded(child: _MatchesList(model: model)),
+                      ],
+                    ),
                   ),
                 ),
               ],

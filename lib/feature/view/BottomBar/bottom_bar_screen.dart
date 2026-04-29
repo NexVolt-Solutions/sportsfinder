@@ -18,6 +18,7 @@ import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_
 import 'package:sport_finding/feature/view/Home/home_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
+import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -109,11 +110,13 @@ class _BottomBarContent extends StatefulWidget {
 }
 
 class _BottomBarContentState extends State<_BottomBarContent> {
+  static const double _webDesignWidth = 1440;
+  static const double _webDesignHeight = 1169;
   static const double _barHeight = 64;
   static const double _barBottomPadding = 4;
   static const double _barRadius = 12;
   static const double _homeButtonSize = 48;
-  static const double _webSidebarWidth = 248;
+  static const double _webSidebarWidth = 280;
   static const double _navIconSize = 22;
   static const double _barShadowBlur = 12;
   static const double _barShadowOffset = 4;
@@ -121,6 +124,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
 
   bool _appliedRouteTab = false;
   bool _requestedInitialNotifications = false;
+  bool _requestedInitialProfile = false;
 
   late final List<Widget> _tabChildren = _bottomBarTabChildren();
 
@@ -140,6 +144,13 @@ class _BottomBarContentState extends State<_BottomBarContent> {
         if (!service.isLoading && service.notifications.isEmpty) {
           service.fetchNotifications();
         }
+      });
+    }
+    if (kIsWeb && !_requestedInitialProfile) {
+      _requestedInitialProfile = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<BottomBarScreenViewModel>().fetchMyProfile();
       });
     }
     if (_appliedRouteTab) return;
@@ -212,12 +223,12 @@ class _BottomBarContentState extends State<_BottomBarContent> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(
-          horizontal: context.w(16),
-          vertical: context.h(12),
+          horizontal: _webW(context, 16),
+          vertical: _webH(context, 12),
         ),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderRadius: BorderRadius.circular(_webW(context, 14)),
           border: Border.all(
             color: isSelected ? c.primary.withValues(alpha: 0.18) : Colors.transparent,
           ),
@@ -230,7 +241,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
               height: _navIconSize,
               colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
             ),
-            SizedBox(width: context.w(12)),
+            SizedBox(width: _webW(context, 12)),
             Expanded(
               child: Text(
                 label,
@@ -300,6 +311,80 @@ class _BottomBarContentState extends State<_BottomBarContent> {
         ),
         trailing: _buildNotificationBell(context),
         onTrailingTap: () => _handleNotificationTap(context),
+      ),
+    );
+  }
+
+  double _webScale(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final widthScale = size.width / _webDesignWidth;
+    final heightScale = size.height / _webDesignHeight;
+    return widthScale < heightScale ? widthScale : heightScale;
+  }
+
+  double _webW(BuildContext context, double value) => value * _webScale(context);
+  double _webH(BuildContext context, double value) => value * _webScale(context);
+
+  Widget _buildWebTopBar(BuildContext context, BottomBarScreenViewModel vm) {
+    final c = context.appColors;
+    final userName = vm.userName.trim().isNotEmpty ? vm.userName.trim() : 'User';
+    final email = vm.userEmail.trim().isNotEmpty
+        ? vm.userEmail.trim()
+        : 'user@sports.com';
+    final initial = userName.isNotEmpty ? userName.substring(0, 1) : 'U';
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: _webW(context, 32),
+        vertical: _webH(context, 22),
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: c.greylight.withValues(alpha: 0.4)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _buildTopBar(context)),
+          SizedBox(width: _webW(context, 20)),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: _webW(context, 12),
+              vertical: _webH(context, 8),
+            ),
+            decoration: BoxDecoration(
+              color: c.surface,
+              border: Border.all(color: c.greylight.withValues(alpha: 0.45)),
+              borderRadius: BorderRadius.circular(_webW(context, 24)),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: _webW(context, 18),
+                  backgroundColor: c.primary.withValues(alpha: 0.2),
+                  child: Text(
+                    initial.toUpperCase(),
+                    style: context.appText.text14W600.copyWith(color: c.primary),
+                  ),
+                ),
+                SizedBox(width: _webW(context, 10)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: context.appText.text14W600.copyWith(color: c.onSurface),
+                    ),
+                    Text(
+                      email,
+                      style: context.appText.text12W400.copyWith(color: c.greyDark),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -408,20 +493,20 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     return Container(
       width: _webSidebarWidth,
       margin: EdgeInsets.fromLTRB(
-        context.w(16),
-        context.h(16),
-        context.w(12),
-        context.h(16),
+        _webW(context, 16),
+        _webH(context, 16),
+        _webW(context, 12),
+        _webH(context, 16),
       ),
       padding: EdgeInsets.fromLTRB(
-        context.w(16),
-        context.h(20),
-        context.w(16),
-        context.h(20),
+        _webW(context, 16),
+        _webH(context, 20),
+        _webW(context, 16),
+        _webH(context, 20),
       ),
       decoration: BoxDecoration(
         color: c.surface,
-        borderRadius: BorderRadius.circular(context.radiusR(24)),
+        borderRadius: BorderRadius.circular(_webW(context, 24)),
         boxShadow: [
           BoxShadow(
             color: c.blue20,
@@ -437,30 +522,12 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             AppText.sportFinding,
             style: context.appText.text18Bold.copyWith(color: c.onSurface),
           ),
-          SizedBox(height: context.h(6)),
+          SizedBox(height: _webH(context, 6)),
           Text(
             'Dashboard',
             style: context.appText.text12W400.copyWith(color: c.greylight),
           ),
-          SizedBox(height: context.h(28)),
-          _webNavItem(
-            context: context,
-            iconPath: AppAssets.matchesIcon,
-            label: AppText.match,
-            index: 0,
-            selectedIndex: vm.selectedIndex,
-            onTap: () => vm.setSelectedIndex(0),
-          ),
-          SizedBox(height: context.h(10)),
-          _webNavItem(
-            context: context,
-            iconPath: AppAssets.searchBarIcon,
-            label: AppText.discover,
-            index: 1,
-            selectedIndex: vm.selectedIndex,
-            onTap: () => vm.setSelectedIndex(1),
-          ),
-          SizedBox(height: context.h(10)),
+          SizedBox(height: _webH(context, 28)),
           _webNavItem(
             context: context,
             iconPath: AppAssets.homeIcon,
@@ -469,37 +536,72 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             selectedIndex: vm.selectedIndex,
             onTap: () => vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
           ),
-          SizedBox(height: context.h(10)),
+          SizedBox(height: _webH(context, 10)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.searchBarIcon,
+            label: 'Discover Matches',
+            index: 1,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(1),
+          ),
+          SizedBox(height: _webH(context, 10)),
+          _webNavItem(
+            context: context,
+            iconPath: AppAssets.matchesIcon,
+            label: 'My Matches',
+            index: 0,
+            selectedIndex: vm.selectedIndex,
+            onTap: () => vm.setSelectedIndex(0),
+          ),
+          SizedBox(height: _webH(context, 10)),
           _webNavItem(
             context: context,
             iconPath: AppAssets.chatIcon,
-            label: AppText.chat,
+            label: 'Chat',
             index: 3,
             selectedIndex: vm.selectedIndex,
             onTap: () => vm.setSelectedIndex(3),
           ),
-          SizedBox(height: context.h(10)),
+          SizedBox(height: _webH(context, 10)),
           _webNavItem(
             context: context,
             iconPath: AppAssets.profileIcon,
-            label: AppText.profile,
+            label: 'Profile',
             index: 4,
             selectedIndex: vm.selectedIndex,
             onTap: () => vm.setSelectedIndex(4),
           ),
           const Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: context.w(14),
-              vertical: context.h(12),
-            ),
-            decoration: BoxDecoration(
-              color: c.blue10,
-              borderRadius: BorderRadius.circular(context.radiusR(16)),
-            ),
-            child: Text(
-              'Web dashboard mode',
-              style: context.appText.text12W500.copyWith(color: c.greyDark),
+          GestureDetector(
+            onTap: () async {
+              await LoginScreenViewModel.logout();
+              if (!mounted) return;
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                RoutesName.LoginScreen,
+                (route) => false,
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: _webW(context, 14),
+                vertical: _webH(context, 12),
+              ),
+              decoration: BoxDecoration(
+                color: c.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(_webW(context, 16)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.logout_rounded, size: _webW(context, 18), color: c.error),
+                  SizedBox(width: _webW(context, 8)),
+                  Text(
+                    AppText.logout,
+                    style: context.appText.text14W500.copyWith(color: c.error),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -508,33 +610,39 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   }
 
   Widget _buildWebLayout(BuildContext context, BottomBarScreenViewModel vm) {
-    return Row(
-      children: [
-        _buildWebSidebar(context, vm),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              0,
-              context.h(16),
-              context.w(16),
-              context.h(16),
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.appColors.surface.withValues(alpha: 0.82),
-                borderRadius: BorderRadius.circular(context.radiusR(24)),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: _webDesignWidth,
+          maxHeight: _webDesignHeight,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(_webW(context, 16)),
+          child: Row(
+            children: [
+              _buildWebSidebar(context, vm),
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: context.appColors.surface.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(_webW(context, 24)),
+                    border: Border.all(
+                      color: context.appColors.greylight.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildWebTopBar(context, vm),
+                      _buildTabStack(vm),
+                    ],
+                  ),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTopBar(context),
-                  _buildTabStack(vm),
-                ],
-              ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 

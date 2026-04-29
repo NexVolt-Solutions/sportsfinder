@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Figma design size (reference). Use sw() / sh() with Figma pixel values.
 const double kFigmaDesignWidth = 375;
@@ -39,7 +40,12 @@ extension SizeExtension on BuildContext {
         bottom: sh(bottom),
       );
   /// Responsive border radius from Figma value.
-  double radiusR(double figmaPx) => sw(figmaPx);
+  double radiusR(double figmaPx) {
+    // On web, keep radius as Figma logical px to avoid over-rounded UI
+    // on wide desktop screens. Mobile/tablet keep responsive scaling.
+    if (kIsWeb) return figmaPx;
+    return sw(figmaPx);
+  }
   /// Responsive font size from Figma value (scales with width so text stays readable).
   double sp(double figmaPx) => sw(figmaPx);
 
