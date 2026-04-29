@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
 import 'package:web_socket_channel/io.dart';
@@ -75,6 +76,11 @@ class MatchChatService {
     Uri uri,
     Map<String, dynamic> headers,
   ) {
+    if (kIsWeb) {
+      debugPrint('[MatchChatService] [WS] Web connector -> $uri');
+      return WebSocketChannel.connect(uri);
+    }
+    debugPrint('[MatchChatService] [WS] IO connector -> $uri');
     return IOWebSocketChannel.connect(uri, headers: headers);
   }
 
@@ -86,6 +92,7 @@ class MatchChatService {
 
   Future<List<RealtimeChatMessage>> loadHistory() async {
     final uri = Uri.parse('$_baseRest/matches/$matchId/messages');
+    debugPrint('[MatchChatService] [History] GET $uri');
     final response = await http.get(
       uri,
       headers: <String, String>{
@@ -95,6 +102,9 @@ class MatchChatService {
     );
 
     if (response.statusCode != 200) {
+      debugPrint(
+        '[MatchChatService] [History] failed status=${response.statusCode}',
+      );
       throw Exception('Failed to load chat history: ${response.statusCode}');
     }
 
@@ -105,22 +115,32 @@ class MatchChatService {
               ? decoded['items'] as List<dynamic>
               : <dynamic>[]);
 
-    return items
+    final history = items
         .whereType<Map>()
         .map(
           (item) =>
               RealtimeChatMessage.fromJson(Map<String, dynamic>.from(item)),
         )
         .toList();
+    debugPrint(
+      '[MatchChatService] [History] loaded count=${history.length} matchId=$matchId',
+    );
+    return history;
   }
 
   void connect() {
-    if (_isDisposed || _channel != null) return;
+    if (_isDisposed || _channel != null) {
+      debugPrint(
+        '[MatchChatService] [WS] skip connect (disposed=$_isDisposed hasChannel=${_channel != null}) matchId=$matchId',
+      );
+      return;
+    }
     _reconnectScheduler.cancel();
     final uri = Uri.parse(
       '$_baseWs/ws/matches/$matchId/chat?token=${Uri.encodeQueryComponent(accessToken)}',
     );
 
+    debugPrint('[MatchChatService] [WS] connecting matchId=$matchId uri=$uri');
     _channel = _wsConnector(
       uri,
       <String, dynamic>{HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
@@ -128,14 +148,17 @@ class MatchChatService {
     _channelSub = _channel!.stream.listen(
       (dynamic data) {
         if (data is! String) return;
+        debugPrint('[MatchChatService] [WS] event raw=$data');
         _handleServerEvent(jsonDecode(data) as Map<String, dynamic>);
       },
       onError: (Object error) {
+        debugPrint('[MatchChatService] [WS] error $error');
         _errorController.add('WebSocket error: $error');
         _resetSocket();
         _scheduleReconnect();
       },
       onDone: () {
+        debugPrint('[MatchChatService] [WS] done/closed');
         _errorController.add('Connection closed');
         _resetSocket();
         _scheduleReconnect();
@@ -145,16 +168,24 @@ class MatchChatService {
   }
 
   void _handleServerEvent(Map<String, dynamic> event) {
+    debugPrint(
+      '[MatchChatService] [WS] parsed event type=${event['type']} matchId=$matchId',
+    );
     switch ('${event['type'] ?? ''}') {
       case 'connected':
         _reconnectScheduler.resetAttempts();
         _connectedController.add(null);
+        debugPrint('[MatchChatService] [WS] connected acknowledged');
         break;
       case 'chat_message':
         _messageController.add(RealtimeChatMessage.fromJson(event));
+        debugPrint(
+          '[MatchChatService] [WS] incoming messageId=${event['message_id']} sender=${event['sender_id']}',
+        );
         break;
       case 'error':
         _errorController.add('${event['detail'] ?? 'Unknown error'}');
+        debugPrint('[MatchChatService] [WS] server error ${event['detail']}');
         break;
     }
   }
@@ -167,11 +198,15 @@ class MatchChatService {
       return false;
     }
     if (_channel == null) {
+      debugPrint(
+        '[MatchChatService] [WS] send blocked: no channel. scheduling reconnect',
+      );
       _errorController.add('Not connected. Reconnecting...');
       _scheduleReconnect();
       return false;
     }
 
+    debugPrint('[MatchChatService] [WS] send message len=${trimmed.length}');
     _channel?.sink.add(
       jsonEncode(<String, dynamic>{'type': 'chat_message', 'content': trimmed}),
     );
@@ -179,12 +214,14 @@ class MatchChatService {
   }
 
   void _resetSocket() {
+    debugPrint('[MatchChatService] [WS] reset socket');
     _channelSub?.cancel();
     _channelSub = null;
     _channel = null;
   }
 
   void _scheduleReconnect() {
+    debugPrint('[MatchChatService] [WS] schedule reconnect');
     _reconnectScheduler.schedule(
       canSchedule: () => !_isDisposed && _channel == null,
       onFire: connect,
@@ -192,6 +229,7 @@ class MatchChatService {
   }
 
   void dispose() {
+    debugPrint('[MatchChatService] dispose matchId=$matchId');
     _isDisposed = true;
     _reconnectScheduler.cancel();
     _channelSub?.cancel();

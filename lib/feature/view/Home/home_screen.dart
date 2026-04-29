@@ -479,26 +479,50 @@ class _HomeMatchesShimmer extends StatelessWidget {
           child: CardWidget(
             child: Padding(
               padding: context.padSym(h: 16, v: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  ShimmerBox(width: 140, height: 16),
-                  SizedBox(height: 12),
-                  ShimmerBox(width: 100, height: 12),
-                  SizedBox(height: 18),
-                  ShimmerBox(height: 12),
-                  SizedBox(height: 10),
-                  ShimmerBox(width: 180, height: 12),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ShimmerBox(width: 70, height: 12),
-                      ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxHeight < 130;
+                  if (compact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        ShimmerBox(width: 120, height: 14),
+                        ShimmerBox(width: 90, height: 10),
+                        ShimmerBox(width: 150, height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ShimmerBox(width: 60, height: 10),
+                            ShimmerBox(width: 28, height: 28, shape: BoxShape.circle),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      ShimmerBox(width: 140, height: 16),
+                      SizedBox(height: 12),
+                      ShimmerBox(width: 100, height: 12),
+                      SizedBox(height: 18),
+                      ShimmerBox(height: 12),
+                      SizedBox(height: 10),
+                      ShimmerBox(width: 180, height: 12),
+                      SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ShimmerBox(width: 70, height: 12),
+                          ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),

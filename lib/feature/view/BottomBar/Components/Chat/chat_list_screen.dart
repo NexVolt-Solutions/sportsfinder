@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -35,8 +35,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
     if (!mounted || selected is! String || selected.trim().isEmpty) return;
 
-    AppSnackBar.show(
-      'Direct user chat is not connected yet. Open chat from a match to use live messaging.',
+    _safeVm.startOrOpenThread(selected.trim());
+    await Navigator.pushNamed(
+      context,
+      RoutesName.chatScreen,
+      arguments: ChatRouteArgs(
+        contactName: selected.trim(),
+        // Direct chat uses UI-only thread until backend direct chat is integrated.
+        matchId: null,
+        isOnline: true,
+      ),
     );
   }
 
@@ -55,8 +63,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   const WebDashboardTitle(
                     title: 'Chat',
                     subtitle: 'Manage your conversations and match messages.',
+                    trailing: null,
                   ),
                   SizedBox(height: context.h(16)),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      tooltip: 'New chat',
+                      onPressed: _pickAndOpenUser,
+                      icon: const Icon(Icons.add_circle_outline),
+                    ),
+                  ),
                   Expanded(
                     child: WebDashboardPanel(
                       child: model.hasThreads
@@ -87,8 +104,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       color: context.appColors.greylight,
                                     ),
                                   ),
-                                  onTap: () => AppSnackBar.show(
-                                    'This thread is not connected to the backend yet. Open chat from a match to use live messaging.',
+                                  onTap: () => Navigator.pushNamed(
+                                    context,
+                                    RoutesName.chatScreen,
+                                    arguments: ChatRouteArgs(
+                                      contactName: t.userName,
+                                      matchId: t.matchId,
+                                      isOnline: t.isOnline,
+                                    ),
                                   ),
                                 );
                               },
@@ -152,8 +175,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               final t = model.threads[index];
                               return GestureDetector(
                                 onTap: () async {
-                                  AppSnackBar.show(
-                                    'This thread is not connected to the backend yet. Open chat from a match to use live messaging.',
+                                  Navigator.pushNamed(
+                                    context,
+                                    RoutesName.chatScreen,
+                                    arguments: ChatRouteArgs(
+                                      contactName: t.userName,
+                                      matchId: t.matchId,
+                                      isOnline: t.isOnline,
+                                    ),
                                   );
                                 },
                                 child: Container(

@@ -39,18 +39,13 @@ extension SizeExtension on BuildContext {
         top: sh(top),
         bottom: sh(bottom),
       );
-  /// Responsive border radius from Figma value.
-  double radiusR(double figmaPx) {
-    // On web, keep radius as Figma logical px to avoid over-rounded UI
-    // on wide desktop screens. Mobile/tablet keep responsive scaling.
-    if (kIsWeb) return figmaPx;
+   double radiusR(double figmaPx) {
+     if (kIsWeb) return figmaPx;
     return sw(figmaPx);
   }
-  /// Responsive font size from Figma value (scales with width so text stays readable).
-  double sp(double figmaPx) => sw(figmaPx);
+   double sp(double figmaPx) => sw(figmaPx);
 
-  // ----- Fixed (no scaling): raw logical pixels -----
-  double w(double value) => value;
+   double w(double value) => value;
   double h(double value) => value;
 
   // Padding — fixed pixels (standard spelling)

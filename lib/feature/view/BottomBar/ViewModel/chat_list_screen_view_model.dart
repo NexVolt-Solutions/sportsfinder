@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:intl/intl.dart';
 
 class ChatThreadPreview {
   const ChatThreadPreview({
     required this.userName,
+    this.matchId,
     required this.lastMessage,
     required this.lastTime,
     this.unreadCount = 0,
@@ -11,6 +13,7 @@ class ChatThreadPreview {
   });
 
   final String userName;
+  final String? matchId;
   final String lastMessage;
   final String lastTime;
   final int unreadCount;
@@ -18,6 +21,7 @@ class ChatThreadPreview {
 
   ChatThreadPreview copyWith({
     String? userName,
+    String? matchId,
     String? lastMessage,
     String? lastTime,
     int? unreadCount,
@@ -25,6 +29,7 @@ class ChatThreadPreview {
   }) {
     return ChatThreadPreview(
       userName: userName ?? this.userName,
+      matchId: matchId ?? this.matchId,
       lastMessage: lastMessage ?? this.lastMessage,
       lastTime: lastTime ?? this.lastTime,
       unreadCount: unreadCount ?? this.unreadCount,
@@ -34,56 +39,92 @@ class ChatThreadPreview {
 }
 
 class ChatListScreenViewModel extends ChangeNotifier {
-  final List<ChatThreadPreview> _threads = [];
+  static final List<ChatThreadPreview> _globalThreads = <ChatThreadPreview>[];
+  static final Set<ChatListScreenViewModel> _listeners =
+      <ChatListScreenViewModel>{};
 
-  List<ChatThreadPreview> get threads => List.unmodifiable(_threads);
-  bool get hasThreads => _threads.isNotEmpty;
-
-  void startOrOpenThread(String userName) {
-    final idx = _threads.indexWhere(
-      (t) => t.userName.toLowerCase() == userName.toLowerCase(),
-    );
-    final now = DateFormat('h:mm a').format(DateTime.now());
-    if (idx >= 0) return;
-    _threads.insert(
-      0,
-      ChatThreadPreview(
-        userName: userName,
-        lastMessage: 'Chat started',
-        lastTime: now,
-        unreadCount: 0,
-        isOnline: true,
-      ),
-    );
-    notifyListeners();
+  ChatListScreenViewModel() {
+    _listeners.add(this);
   }
 
-  void updateThreadFromOutgoing(String userName, String message) {
-    final idx = _threads.indexWhere(
-      (t) => t.userName.toLowerCase() == userName.toLowerCase(),
-    );
-    final now = DateFormat('h:mm a').format(DateTime.now());
+  List<ChatThreadPreview> get threads => List.unmodifiable(_globalThreads);
+  bool get hasThreads => _globalThreads.isNotEmpty;
+
+  static void _notifyAllListeners() {
+    for (final vm in _listeners) {
+      vm.notifyListeners();
+    }
+  }
+
+  static void upsertThread({
+    required String userName,
+    String? matchId,
+    String? lastMessage,
+    DateTime? lastAt,
+    int unreadCount = 0,
+    bool isOnline = true,
+  }) {
+    final trimmedName = userName.trim();
+    final trimmedMatchId = (matchId ?? '').trim();
+    if (trimmedName.isEmpty) return;
+    final now = lastAt ?? DateTime.now();
+    final formattedTime = DateFormat('h:mm a').format(now);
+    final previewMessage = (lastMessage ?? 'Chat started').trim();
+
+    final idx = _globalThreads.indexWhere((t) {
+      if (trimmedMatchId.isNotEmpty) {
+        return (t.matchId ?? '').trim() == trimmedMatchId;
+      }
+      return t.userName.toLowerCase() == trimmedName.toLowerCase();
+    });
     if (idx < 0) {
-      _threads.insert(
+      _globalThreads.insert(
         0,
         ChatThreadPreview(
-          userName: userName,
-          lastMessage: message,
-          lastTime: now,
-          unreadCount: 0,
-          isOnline: true,
+          userName: trimmedName,
+          matchId: trimmedMatchId.isNotEmpty ? trimmedMatchId : null,
+          lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
+          lastTime: formattedTime,
+          unreadCount: unreadCount,
+          isOnline: isOnline,
         ),
       );
     } else {
-      final updated = _threads[idx].copyWith(
-        lastMessage: message,
-        lastTime: now,
-        unreadCount: 0,
+      final updated = _globalThreads[idx].copyWith(
+        userName: trimmedName,
+        lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
+        lastTime: formattedTime,
+        unreadCount: unreadCount,
+        isOnline: isOnline,
       );
-      _threads
+      _globalThreads
         ..removeAt(idx)
         ..insert(0, updated);
     }
-    notifyListeners();
+    debugPrint(
+      '[ChatListVM] upsertThread user=$trimmedName matchId=${trimmedMatchId.isEmpty ? "direct" : trimmedMatchId} total=${_globalThreads.length}',
+    );
+    _notifyAllListeners();
+  }
+
+  void startOrOpenThread(String userName) {
+    upsertThread(
+      userName: userName,
+      matchId: null,
+      lastMessage: 'Chat started',
+      lastAt: DateTime.now(),
+      unreadCount: 0,
+      isOnline: true,
+    );
+  }
+
+  void updateThreadFromOutgoing(String userName, String message) {
+    // Legacy method kept for compatibility; no-op without match context.
+  }
+
+  @override
+  void dispose() {
+    _listeners.remove(this);
+    super.dispose();
   }
 }

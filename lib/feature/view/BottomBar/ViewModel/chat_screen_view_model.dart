@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Network/match_chat_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/date_time_formatters.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 
 import 'dart:async';
 
@@ -84,6 +85,7 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool _isConnected = false;
   String? _errorMessage;
   bool _isBindingRealtime = false;
+  String _boundMatchId = '';
   int _localMessageCounter = 0;
   final Map<String, Timer> _pendingFailTimers = <String, Timer>{};
   static const Duration _pendingFailureTimeout = Duration(seconds: 12);
@@ -94,10 +96,18 @@ class ChatScreenViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isRealtimeChatBound => _matchChatService != null;
 
+  void _log(String message) {
+    debugPrint('[ChatScreenVM] $message');
+  }
+
   void sendMessage(String text) {
+    _log(
+      'sendMessage called (bound=${_matchChatService != null}, connected=$_isConnected, len=${text.trim().length})',
+    );
     if (_matchChatService == null) {
       _errorMessage =
           'This chat is not connected to the backend yet. WebSocket chat is only active when a matchId is opened.';
+      _log('send blocked: service not bound');
       notifyListeners();
       return;
     }
@@ -108,14 +118,17 @@ class ChatScreenViewModel extends ChangeNotifier {
     _errorMessage = null;
     final sent = _matchChatService!.sendMessage(trimmed);
     if (sent) {
+      _log('message queued as pending');
       _appendPendingOutgoing(trimmed);
     } else {
+      _log('message send failed immediately');
       _appendFailedOutgoing(trimmed);
     }
     notifyListeners();
   }
 
   void retryMessage(String localId) {
+    _log('retryMessage localId=$localId');
     final index = _messages.indexWhere((item) => item.localId == localId);
     if (index < 0) return;
     final target = _messages[index];
@@ -124,10 +137,12 @@ class ChatScreenViewModel extends ChangeNotifier {
     final sent = _matchChatService?.sendMessage(target.text.trim()) ?? false;
     if (!sent) {
       _errorMessage = 'Retry failed. Still reconnecting...';
+      _log('retry failed: still disconnected');
       notifyListeners();
       return;
     }
 
+    _log('retry accepted; back to pending');
     _messages[index] = target.copyWith(isFailed: false, isPending: true);
     _schedulePendingFailure(localId);
     notifyListeners();
@@ -153,15 +168,21 @@ class ChatScreenViewModel extends ChangeNotifier {
   Future<void> bindMatchChat(String matchId) async {
     final trimmedMatchId = matchId.trim();
     if (trimmedMatchId.isEmpty || _isBindingRealtime) return;
+    _log('bindMatchChat start matchId=$trimmedMatchId');
+    _boundMatchId = trimmedMatchId;
 
     final token = await _accessTokenProvider();
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      _log('bindMatchChat aborted: access token missing');
+      return;
+    }
 
     _isBindingRealtime = true;
     _errorMessage = null;
     notifyListeners();
 
     await _disposeRealtimeOnly();
+    _log('old realtime state disposed');
 
     final service = _chatServiceFactory(token, trimmedMatchId);
     _matchChatService = service;
@@ -173,18 +194,40 @@ class ChatScreenViewModel extends ChangeNotifier {
       for (final item in history) {
         _appendRealtimeMessage(item);
       }
+      _log('history loaded count=${history.length}');
+      ChatListScreenViewModel.upsertThread(
+        userName: contactName,
+        matchId: _boundMatchId,
+        lastMessage: history.isNotEmpty ? history.last.content : 'Chat started',
+        lastAt: history.isNotEmpty ? history.last.sentAt : DateTime.now(),
+        unreadCount: 0,
+        isOnline: isOnline,
+      );
     } catch (e) {
       _errorMessage = 'Could not load chat history: $e';
+      _log('history load failed: $e');
     }
 
     _connectedSub = service.onConnected.listen((_) {
       _isConnected = true;
       _errorMessage = null;
+      _log('ws connected');
       notifyListeners();
     });
 
     _messageSub = service.onMessage.listen((msg) {
+      _log(
+        'ws message received id=${msg.messageId} sender=${msg.senderId} len=${msg.content.length}',
+      );
       _appendRealtimeMessage(msg);
+      ChatListScreenViewModel.upsertThread(
+        userName: contactName,
+        matchId: _boundMatchId,
+        lastMessage: msg.content,
+        lastAt: msg.sentAt,
+        unreadCount: 0,
+        isOnline: isOnline,
+      );
       _errorMessage = null;
       notifyListeners();
     });
@@ -192,11 +235,14 @@ class ChatScreenViewModel extends ChangeNotifier {
     _errorSub = service.onError.listen((err) {
       _isConnected = false;
       _errorMessage = err;
+      _log('ws error: $err');
       notifyListeners();
     });
 
+    _log('calling service.connect()');
     service.connect();
     _isBindingRealtime = false;
+    _log('bindMatchChat done');
     notifyListeners();
   }
 
@@ -236,6 +282,17 @@ class ChatScreenViewModel extends ChangeNotifier {
       ),
     );
     _schedulePendingFailure(_messages.last.localId);
+    if (_boundMatchId.isNotEmpty) {
+      ChatListScreenViewModel.upsertThread(
+        userName: contactName,
+        matchId: _boundMatchId,
+        lastMessage: content,
+        lastAt: DateTime.now(),
+        unreadCount: 0,
+        isOnline: isOnline,
+      );
+    }
+    _log('pending message added localId=${_messages.last.localId}');
   }
 
   void _appendFailedOutgoing(String content) {
@@ -251,6 +308,7 @@ class ChatScreenViewModel extends ChangeNotifier {
         localId: 'local_${_localMessageCounter}_${now.microsecondsSinceEpoch}',
       ),
     );
+    _log('failed message added (immediate)');
   }
 
   void _schedulePendingFailure(String localId) {
@@ -262,6 +320,7 @@ class ChatScreenViewModel extends ChangeNotifier {
       if (!item.isPending) return;
       _messages[index] = item.copyWith(isPending: false, isFailed: true);
       _errorMessage = 'A message failed to deliver. Tap to retry.';
+      _log('pending timed out -> failed localId=$localId');
       notifyListeners();
     });
   }
@@ -281,10 +340,12 @@ class ChatScreenViewModel extends ChangeNotifier {
       time: DateTimeFormatters.chatTime(sentAtLocal),
       date: DateTimeFormatters.chatDate(sentAtLocal),
     );
+    _log('pending reconciled with server ack localId=$localId');
     return true;
   }
 
   Future<void> _disposeRealtimeOnly() async {
+    _log('disposeRealtimeOnly start');
     for (final timer in _pendingFailTimers.values) {
       timer.cancel();
     }
@@ -298,10 +359,12 @@ class ChatScreenViewModel extends ChangeNotifier {
     _matchChatService?.dispose();
     _matchChatService = null;
     _isConnected = false;
+    _log('disposeRealtimeOnly done');
   }
 
   @override
   void dispose() {
+    _log('dispose called');
     _disposeRealtimeOnly();
     super.dispose();
   }
