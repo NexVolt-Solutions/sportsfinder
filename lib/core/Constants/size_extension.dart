@@ -15,8 +15,7 @@ extension SizeExtension on BuildContext {
   /// Scale factor: current height / Figma height. Use for vertical/height-related values.
   double get scaleHeight => screenHeight / kFigmaDesignHeight;
 
-  // ----- Responsive (Figma-based): use these for pixel-perfect scaling -----
-  /// Figma width → scaled. Use for: width, horizontal padding, horizontal spacing, font size, radius.
+   /// Figma width → scaled. Use for: width, horizontal padding, horizontal spacing, font size, radius.
   double sw(double figmaPx) => figmaPx * scaleWidth;
   /// Figma height → scaled. Use for: height, vertical padding, vertical spacing.
   double sh(double figmaPx) => figmaPx * scaleHeight;
