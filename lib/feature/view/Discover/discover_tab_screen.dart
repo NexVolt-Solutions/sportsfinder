@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import 'package:sport_finding/feature/widget/discovery_card.dart';
 import 'package:sport_finding/feature/widget/discovery_search_field.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
 
 /// Discover tab content: search, sport filters, and list of discovery match cards.
 class DiscoverTabScreen extends StatelessWidget {
@@ -76,6 +78,45 @@ class _DiscoverTabContent extends StatelessWidget {
     return Consumer<DiscoveryTabViewModel>(
       builder: (context, model, _) {
         final notificationService = context.watch<NotificationService>();
+        if (kIsWeb) {
+          return Padding(
+            padding: context.padSym(h: 20, v: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const WebDashboardTitle(
+                  title: 'Discover Matches',
+                  subtitle: 'Explore sports, players, and nearby games.',
+                ),
+                SizedBox(height: context.sh(20)),
+                WebDashboardPanel(
+                  padding: context.padSym(h: 18, v: 18),
+                  child: Column(
+                    children: [
+                      DiscoverySearchField(
+                        controller: model.searchController,
+                        hintText: AppText.searchMatches,
+                        onChanged: (_) => model.onSearchChanged(),
+                        onFilterTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) {
+                              return FilterBottomSheet(onApply: model.applyFilters);
+                            },
+                          );
+                        },
+                      ),
+                      SizedBox(height: context.sh(20)),
+                      Expanded(child: _MatchesList(model: model)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
         return Padding(
           padding: context.padSym(h: 20),
           child: Column(

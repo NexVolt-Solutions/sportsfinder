@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -11,10 +12,11 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/social_button_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
+import 'package:sport_finding/feature/widget/web_auth_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,146 +26,149 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<LoginScreenViewModel>(
-      builder: (context, model, child) => Scaffold(
-        body: MainFrame(
-          child: Form(
-            key: model.formKey,
-            child: ListView(
-              padding: context.padSym(h: 20),
-              children: [
-                AppBarWidget(title: AppText.sportFinding),
-                NormalText(
-                  titleText: AppText.welcomeBack,
-                  titleStyle: context.appText.text18W600,
-                  subText: AppText.loginToContinue,
-                  subStyle: context.appText.text16W400,
-                  subColor: context.appColors.greylight,
-                ),
-                SizedBox(height: context.h(20)),
-                TextFormFieldWidget(
-                  label: AppText.email,
-                  hintText: AppText.emailHit,
-                  controller: model.emailController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return AppText.emailValidation;
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: context.h(20)),
-                TextFormFieldWidget(
-                  label: AppText.password,
-                  hintText: AppText.passwordHit,
-                  controller: model.passwordController,
-                  validator: (value) => value == null || value.isEmpty
-                      ? AppText.passwordValidation
-                      : null,
-                ),
-                SizedBox(height: context.h(12)),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      RoutesName.forgotPasswordScreen,
-                    );
-                  },
-                  child: NormalText(
-                    titleText: AppText.forgotPassword,
-                    titleStyle: context.appText.text14W400,
-                    titleColor: context.appColors.greylight,
-                  ),
-                ),
-                SizedBox(height: context.h(12)),
+  Future<void> _submitLogin(
+    BuildContext context,
+    LoginScreenViewModel model,
+  ) async {
+    final result = await model.loginUser();
 
-                // CustomButton(
-                //   onTap: () async {
-                //     final error = await model.loginUser();
+    if (!context.mounted) return;
 
-                //     if (error != null) {
-                //       ScaffoldMessenger.of(
-                //         context,
-                //       ).showSnackBar(SnackBar(content: Text(error)));
-                //     } else {
-                //       // ✅ Navigate after successful login
-                //       Navigator.pushNamed(context, RoutesName.skillLevelScreen);
-                //     }
-                //   },
-                //   text: AppText.signIn,
-                //   color: context.appColors.primary,
-                // ),
-                CustomButton(
-                  text: "Login",
-                  isLoading: model.isLoading,
-                  onTap: () async {
-                    final result = await model.loginUser();
+    if (result == "SKILL_LEVEL") {
+      Navigator.pushReplacementNamed(context, RoutesName.skillLevelScreen);
+    } else if (result == "HOME") {
+      Navigator.pushReplacementNamed(
+        context,
+        RoutesName.bottomBarScreen,
+        arguments: BottomBarScreenViewModel.homeIndex,
+      );
+    } else {
+      AppSnackBar.show(
+        result ?? 'Login failed',
+        behavior: SnackBarBehavior.floating,
+      );
+    }
+  }
 
-                    if (!context.mounted) return;
+  Future<void> _submitGoogle(
+    BuildContext context,
+    LoginScreenViewModel model,
+  ) async {
+    final result = await model.loginWithGoogle();
 
-                    if (result == "SKILL_LEVEL") {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        RoutesName.skillLevelScreen,
-                      );
-                    } else if (result == "HOME") {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        RoutesName.bottomBarScreen,
-                        arguments: BottomBarScreenViewModel.homeIndex,
-                      );
-                    } else {
-                      AppSnackBar.show(
-                        result ?? 'Login failed',
-                        behavior: SnackBarBehavior.floating,
-                      );
-                    }
-                  },
-                ),
-                SizedBox(height: context.h(12)),
-                SocialButtonWidget(
-                  imagePath: AppAssets.gmailIcon,
-                  text: AppText.continueWithGoogle,
-                  isLoading: model.isGoogleLoading,
-                  onTap: () async {
-                    final result = await model.loginWithGoogle();
+    if (!context.mounted || result == null) return;
 
-                    if (!context.mounted || result == null) return;
+    if (result == "SKILL_LEVEL") {
+      Navigator.pushReplacementNamed(context, RoutesName.skillLevelScreen);
+    } else if (result == "HOME") {
+      Navigator.pushReplacementNamed(
+        context,
+        RoutesName.bottomBarScreen,
+        arguments: BottomBarScreenViewModel.homeIndex,
+      );
+    } else {
+      AppSnackBar.show(result, behavior: SnackBarBehavior.floating);
+    }
+  }
 
-                    if (result == "SKILL_LEVEL") {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        RoutesName.skillLevelScreen,
-                      );
-                    } else if (result == "HOME") {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        RoutesName.bottomBarScreen,
-                        arguments: BottomBarScreenViewModel.homeIndex,
-                      );
-                    } else {
-                      AppSnackBar.show(
-                        result,
-                        behavior: SnackBarBehavior.floating,
-                      );
-                    }
-                  },
-                ),
-                SizedBox(height: context.h(12)),
-                AuthFooterText(
-                  normalText: AppText.alreadyHaveAnAccountSignIn,
-                  actionText: AppText.signUp,
-                  onTap: () {
-                    Navigator.pushNamed(context, RoutesName.SignUp);
-                  },
-                ),
-              ],
+  Widget _buildForm(BuildContext context, LoginScreenViewModel model) {
+    return ListView(
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      children: [
+        if (!kIsWeb) AppBarWidget(title: AppText.sportFinding),
+        NormalText(
+          titleText: kIsWeb ? 'Sign In to your Account' : AppText.welcomeBack,
+          titleStyle: context.appText.text28W500,
+          subText: kIsWeb
+              ? 'Welcome back! please enter your details'
+              : AppText.loginToContinue,
+          subStyle: context.appText.text16W400,
+          subColor: context.appColors.greylight,
+          crossAxisAlignment: kIsWeb
+              ? CrossAxisAlignment.center
+              : CrossAxisAlignment.start,
+          subAlign: kIsWeb ? TextAlign.center : TextAlign.start,
+        ),
+        SizedBox(height: context.h(20)),
+        TextFormFieldWidget(
+          label: AppText.email,
+          hintText: AppText.emailHit,
+          controller: model.emailController,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return AppText.emailValidation;
+            }
+            return null;
+          },
+        ),
+        SizedBox(height: context.h(20)),
+        TextFormFieldWidget(
+          label: AppText.password,
+          hintText: AppText.passwordHit,
+          controller: model.passwordController,
+          validator: (value) => value == null || value.isEmpty
+              ? AppText.passwordValidation
+              : null,
+        ),
+        SizedBox(height: context.h(12)),
+        Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, RoutesName.forgotPasswordScreen);
+            },
+            child: NormalText(
+              titleText: AppText.forgotPassword,
+              titleStyle: context.appText.text14W400,
+              titleColor: context.appColors.greylight,
             ),
           ),
         ),
-      ),
+        SizedBox(height: context.h(12)),
+        CustomButton(
+          text: "Login",
+          isLoading: model.isLoading,
+          onTap: () => _submitLogin(context, model),
+        ),
+        SizedBox(height: context.h(12)),
+        SocialButtonWidget(
+          imagePath: AppAssets.gmailIcon,
+          text: AppText.continueWithGoogle,
+          isLoading: model.isGoogleLoading,
+          onTap: () => _submitGoogle(context, model),
+        ),
+        SizedBox(height: context.h(12)),
+        AuthFooterText(
+          normalText: kIsWeb
+              ? 'Don’t have an account? '
+              : AppText.alreadyHaveAnAccountSignIn,
+          actionText: AppText.signUp,
+          onTap: () {
+            Navigator.pushNamed(context, RoutesName.SignUp);
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<LoginScreenViewModel>(
+      builder: (context, model, child) {
+        final form = Form(
+          key: model.formKey,
+          child: _buildForm(context, model),
+        );
+        if (kIsWeb) {
+          return WebAuthSplitShell(child: form);
+        }
+        return Scaffold(
+          body: MainFrame(
+            child: Padding(padding: context.padSym(h: 20), child: form),
+          ),
+        );
+      },
     );
   }
 }

@@ -36,43 +36,46 @@ void main() {
       service.dispose();
     });
 
-    test('emits connected and chat message events from socket payloads', () async {
-      final fake = FakeWebSocketChannel();
-      final service = MatchChatService(
-        accessToken: 'token',
-        matchId: 'm1',
-        wsConnector: (_, __) => fake,
-      );
+    test(
+      'emits connected and chat message events from socket payloads',
+      () async {
+        final fake = FakeWebSocketChannel();
+        final service = MatchChatService(
+          accessToken: 'token',
+          matchId: 'm1',
+          wsConnector: (_, _) => fake,
+        );
 
-      final connectedFuture = service.onConnected.first;
-      final messageFuture = service.onMessage.first;
+        final connectedFuture = service.onConnected.first;
+        final messageFuture = service.onMessage.first;
 
-      service.connect();
-      fake.emitJson('{"type":"connected"}');
-      fake.emitJson(
-        jsonEncode(<String, dynamic>{
-          'type': 'chat_message',
-          'message_id': 'msg-1',
-          'sender_id': 'u1',
-          'sender_name': 'John',
-          'content': 'Hello',
-          'sent_at': '2026-04-24T12:34:56+00:00',
-        }),
-      );
+        service.connect();
+        fake.emitJson('{"type":"connected"}');
+        fake.emitJson(
+          jsonEncode(<String, dynamic>{
+            'type': 'chat_message',
+            'message_id': 'msg-1',
+            'sender_id': 'u1',
+            'sender_name': 'John',
+            'content': 'Hello',
+            'sent_at': '2026-04-24T12:34:56+00:00',
+          }),
+        );
 
-      await connectedFuture;
-      final message = await messageFuture;
-      expect(message.messageId, 'msg-1');
-      expect(message.content, 'Hello');
-      service.dispose();
-    });
+        await connectedFuture;
+        final message = await messageFuture;
+        expect(message.messageId, 'msg-1');
+        expect(message.content, 'Hello');
+        service.dispose();
+      },
+    );
 
     test('sendMessage writes expected payload to socket', () {
       final fake = FakeWebSocketChannel();
       final service = MatchChatService(
         accessToken: 'token',
         matchId: 'm1',
-        wsConnector: (_, __) => fake,
+        wsConnector: (_, _) => fake,
       );
       service.connect();
 
@@ -96,7 +99,7 @@ void main() {
       final service = MatchChatService(
         accessToken: 'token',
         matchId: 'm1',
-        wsConnector: (_, __) => channels[connectCalls++],
+        wsConnector: (_, _) => channels[connectCalls++],
         reconnectDelayForAttempt: (_) => Duration.zero,
       );
       service.connect();

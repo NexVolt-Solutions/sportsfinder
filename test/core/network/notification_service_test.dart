@@ -40,7 +40,7 @@ void main() {
       final service = NotificationService(
         autoConnect: false,
         tokenProvider: () async => 'token-1',
-        wsConnector: (_, __) => fake,
+        wsConnector: (_, _) => fake,
       );
 
       await service.ensureRealtimeConnected();
@@ -58,7 +58,7 @@ void main() {
       final service = NotificationService(
         autoConnect: false,
         tokenProvider: () async => 'token-1',
-        wsConnector: (_, __) => fake,
+        wsConnector: (_, _) => fake,
       );
 
       await service.ensureRealtimeConnected();
@@ -83,7 +83,7 @@ void main() {
       final service = NotificationService(
         autoConnect: false,
         tokenProvider: () async => 'token-1',
-        wsConnector: (_, __) => channels[connectCalls++],
+        wsConnector: (_, _) => channels[connectCalls++],
         reconnectDelayForAttempt: (_) => Duration.zero,
       );
 
