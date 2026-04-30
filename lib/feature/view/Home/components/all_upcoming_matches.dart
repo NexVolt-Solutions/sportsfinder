@@ -181,7 +181,9 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
               // Categories tabs removed (All / Football / Basketball / etc.).
               SizedBox.shrink(),
               Expanded(
-                child: model.matches.isEmpty
+                child: (!model.hasFetchedOnce && model.matches.isEmpty) || model.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : model.matches.isEmpty
                     ? Center(
                         child: Padding(
                           padding: context.padSym(h: 16),

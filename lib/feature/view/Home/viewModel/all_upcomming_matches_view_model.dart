@@ -17,6 +17,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   // ================= STATE =================
   bool isLoading = false;
   String? error;
+  bool hasFetchedOnce = false;
 
   // ================= FILTERS =================
   int selectedIndex = 0;
@@ -53,6 +54,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     page = 1;
     this.hasNext = hasNext ?? items.length >= 20;
     isLoading = false;
+    hasFetchedOnce = true;
     error = null;
     notifyListeners();
   }
@@ -119,6 +121,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       error = e.toString();
     } finally {
       isLoading = false;
+      hasFetchedOnce = true;
       notifyListeners();
     }
   }

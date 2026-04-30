@@ -554,6 +554,8 @@ class CreateMatchViewModel extends ChangeNotifier {
         'sport': selectedSportType,
         'skill_level': selectedSkillLevel,
         'scheduled_at': _buildScheduledAt(),
+        'scheduled_date': dateController.text.trim(),
+        'scheduled_time': timeController.text.trim(),
         'duration_minutes': duration,
         'location': resolvedLocation,
         'latitude': _selectedLatitude,
