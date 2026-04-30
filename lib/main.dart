@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Constants/google_maps_config.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
@@ -18,6 +19,11 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GoogleMapsConfig.loadEnv();
+  final notificationService = NotificationService();
+  await FcmService.instance.initialize(
+    notificationService: notificationService,
+    navigatorKey: rootNavigatorKey,
+  );
   ApiService.onUnauthorized = () {
     ProfileService().clear();
     final nav = rootNavigatorKey.currentState;
@@ -26,7 +32,7 @@ Future<void> main() async {
   };
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => NotificationService())],
+      providers: [ChangeNotifierProvider(create: (_) => notificationService)],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
