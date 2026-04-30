@@ -61,6 +61,7 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  TimeOfDay get pickerInitialTime => _selectedTime ?? _parseTimeText(timeController.text) ?? TimeOfDay.now();
   double? _selectedLatitude;
   double? _selectedLongitude;
   int duration = 60;
