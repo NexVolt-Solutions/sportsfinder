@@ -7,9 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/Notification/notification_reop.dart';
 import 'package:sport_finding/Data/Repositories/NotificationRead/notification_read_repository.dart';
 import 'package:sport_finding/Data/Repositories/NotificationReadAll/notification_read_all_repository.dart';
-import 'package:sport_finding/Data/Repositories/NotificationSettings/notification_settings_repository.dart';
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
-import 'package:sport_finding/Data/model/NotificationSettings/notification_settings_model.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
@@ -27,8 +25,6 @@ class NotificationService extends ChangeNotifier {
   final NotificationReadRepository _readRepository = NotificationReadRepository();
   final NotificationReadAllRepository _readAllRepository =
       NotificationReadAllRepository();
-  final NotificationSettingsRepository _settingsRepository =
-      NotificationSettingsRepository();
   final NotificationWsConnector _wsConnector;
   final NotificationTokenProvider _tokenProvider;
   final Duration _pingInterval;
@@ -360,18 +356,11 @@ class NotificationService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _settingsRepository.updateNotificationPreference(
-        request: NotificationSettingsRequestModel(
-          notificationsEnabled: enabled,
-        ),
-      );
-      ProfileService().updateNotificationPreference(
-        response.notificationsEnabled ?? enabled,
-      );
-      return response.message;
+      ProfileService().updateNotificationPreference(enabled);
+      return 'Notification preference updated';
     } catch (e) {
       AppLogger.error(
-        'Failed to update notification preference',
+        'Failed to update local notification preference',
         tag: 'NotificationService',
         error: e,
       );

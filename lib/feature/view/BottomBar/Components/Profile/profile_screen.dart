@@ -208,22 +208,14 @@ class ProfileScreen extends StatelessWidget {
                                   : item['switchValue'],
                               onSwitchChanged: index == 2
                                   ? (val) async {
-                                      final previous = model.notificationsEnabled;
-                                      model.toggleSwitch(index, previous);
-                                      try {
-                                        final message = await notificationService
-                                            .updateNotificationPreference(val);
-                                        if (!context.mounted) return;
-                                        AppSnackBar.show(
-                                          message != null && message.isNotEmpty
-                                              ? message
-                                              : AppText.notificationsUpdated,
-                                        );
-                                      } catch (e) {
-                                        if (!context.mounted) return;
-                                        model.toggleSwitch(index, previous);
-                                        AppSnackBar.show(e.toString());
-                                      }
+                                      final message = await notificationService
+                                          .updateNotificationPreference(val);
+                                      if (!context.mounted) return;
+                                      AppSnackBar.show(
+                                        message != null && message.isNotEmpty
+                                            ? message
+                                            : AppText.notificationsUpdated,
+                                      );
                                     }
                                   : (val) {
                                       model.toggleSwitch(index, val);
@@ -308,22 +300,14 @@ class ProfileScreen extends StatelessWidget {
                           : item['switchValue'],
                       onSwitchChanged: index == 2
                           ? (val) async {
-                              final previous = model.notificationsEnabled;
-                              model.toggleSwitch(index, previous);
-                              try {
-                                final message = await notificationService
-                                    .updateNotificationPreference(val);
-                                if (!context.mounted) return;
-                                AppSnackBar.show(
-                                  message != null && message.isNotEmpty
-                                      ? message
-                                      : AppText.notificationsUpdated,
-                                );
-                              } catch (e) {
-                                if (!context.mounted) return;
-                                model.toggleSwitch(index, previous);
-                                AppSnackBar.show(e.toString());
-                              }
+                              final message = await notificationService
+                                  .updateNotificationPreference(val);
+                              if (!context.mounted) return;
+                              AppSnackBar.show(
+                                message != null && message.isNotEmpty
+                                    ? message
+                                    : AppText.notificationsUpdated,
+                              );
                             }
                           : (val) {
                               model.toggleSwitch(index, val);

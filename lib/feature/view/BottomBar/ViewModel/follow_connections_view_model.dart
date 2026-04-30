@@ -65,11 +65,18 @@ class FollowConnectionsViewModel extends ChangeNotifier {
     return ProfileService().profile?.id ?? '';
   }
 
+  String get _currentUserId => ProfileService().profile?.id ?? '';
+
+  bool get canManageFollowingActions =>
+      mode == FollowConnectionsMode.following &&
+      _targetUserId.isNotEmpty &&
+      _targetUserId == _currentUserId;
+
   // ── Getters ────────────────────────────────────────────────────────────────
   List<FollowConnectionUser> get visibleUsers => List.unmodifiable(_visible);
 
   bool didFollowBack(FollowConnectionUser user) =>
-      _followedBackIds.contains(user.id);
+      _activeFollowingIds.contains(user.id);
 
   bool isStillFollowing(FollowConnectionUser user) =>
       _activeFollowingIds.contains(user.id);
@@ -113,14 +120,6 @@ class FollowConnectionsViewModel extends ChangeNotifier {
         log('ℹ️ [FollowConnectionsVM] No followers found for userId: $userId');
       }
 
-      _followedBackIds
-        ..clear()
-        ..addAll(
-          followersModel.items
-              .where((follower) => follower.isFollowing)
-              .map((follower) => follower.id),
-        );
-
       // Convert FollowerItem to FollowConnectionUser
       _allUsers = followersModel.items
           .map(
@@ -131,6 +130,10 @@ class FollowConnectionsViewModel extends ChangeNotifier {
             ),
           )
           .toList();
+
+      // Use current user's real following graph as source of truth
+      // for "Follow Back" / "Following" button state.
+      await _hydrateCurrentUserFollowingIds();
 
       _rebuildVisible();
       _isLoading = false;
@@ -146,6 +149,26 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       }
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _hydrateCurrentUserFollowingIds() async {
+    final me = _currentUserId;
+    if (me.isEmpty) {
+      _activeFollowingIds.clear();
+      return;
+    }
+    try {
+      final followingModel = await FollowingRepo().getFollowing(
+        userId: me,
+        page: 1,
+        limit: 200,
+      );
+      _activeFollowingIds
+        ..clear()
+        ..addAll(followingModel.items.map((e) => e.id));
+    } catch (_) {
+      // Keep previous state if this side-call fails; do not block followers UI.
     }
   }
 
@@ -241,6 +264,7 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       log('📝 [FollowConnectionsVM] Follow-back response: ${result.message}');
 
       _followedBackIds.add(userId);
+      _activeFollowingIds.add(userId);
       _followingUserIds.remove(userId);
       notifyListeners();
 

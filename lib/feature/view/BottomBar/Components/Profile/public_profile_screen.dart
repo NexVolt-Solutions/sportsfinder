@@ -155,11 +155,21 @@ class PublicProfileScreen extends StatelessWidget {
                                     color: c.greyDark,
                                   ),
                                 ),
-                                ProfileDetailReviewCard(
-                                  reviewAuthor: model.reviewAuthorForDisplay,
-                                  reviewDate: model.reviewDateForDisplay,
-                                  reviewBody: model.reviewBodyForDisplay,
-                                  reviewInitial: model.reviewInitial,
+                                SizedBox(height: context.h(8)),
+                                ...model.parsedReviews.map(
+                                  (review) => Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: context.h(10),
+                                    ),
+                                    child: ProfileDetailReviewCard(
+                                      reviewAuthor: review['author'] ?? '—',
+                                      reviewDate: review['date'] ?? '',
+                                      reviewBody:
+                                          review['body'] ??
+                                          AppText.profilePlaceholderReview,
+                                      reviewInitial: review['initial'] ?? '?',
+                                    ),
+                                  ),
                                 ),
                               ],
                             ],

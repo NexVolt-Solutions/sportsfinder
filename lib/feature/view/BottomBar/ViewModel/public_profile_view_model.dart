@@ -221,6 +221,46 @@ class PublicProfileViewModel extends ChangeNotifier {
     return null;
   }
 
+  List<Map<String, String>> get parsedReviews {
+    final list = _active?.reviews;
+    if (list == null || list.isEmpty) return const <Map<String, String>>[];
+
+    final out = <Map<String, String>>[];
+    for (final item in list) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final authorRaw =
+          m['author_name'] ??
+          m['reviewer_name'] ??
+          m['reviewer'] ??
+          m['author'] ??
+          m['user'];
+      final author = authorRaw is Map
+          ? '${authorRaw['full_name'] ?? authorRaw['name'] ?? ''}'.trim()
+          : '${authorRaw ?? ''}'.trim();
+
+      final body = '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+      final rawDate = m['created_at'] ?? m['date'] ?? m['reviewed_at'];
+      String date = '';
+      if (rawDate != null) {
+        final parsed = DateTime.tryParse(rawDate.toString());
+        date = parsed == null
+            ? rawDate.toString()
+            : '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+      }
+
+      if (author.isEmpty && body.isEmpty) continue;
+      out.add(<String, String>{
+        'author': author.isEmpty ? '—' : author,
+        'body': body.isEmpty ? AppText.profilePlaceholderReview : body,
+        'date': date,
+        'initial': author.isEmpty ? '?' : author[0].toUpperCase(),
+      });
+    }
+
+    return out;
+  }
+
   bool get hasReviews {
     final total = _active?.totalReviews ?? 0;
     if (total > 0) return true;
