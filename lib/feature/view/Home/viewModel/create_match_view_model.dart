@@ -20,6 +20,8 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/location_selection_result.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
+  bool _isDisposed = false;
+
   List<String> _normalizeOptions(List<String> raw) {
     final dedup = <String>{};
     final result = <String>[];
@@ -36,6 +38,7 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   void _safeNotifyListeners() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (_isDisposed) return;
       notifyListeners();
     });
   }
@@ -398,7 +401,9 @@ class CreateMatchViewModel extends ChangeNotifier {
       }
       if (locationController.text.trim() != typedLocation) {
         locationController.text = typedLocation;
-        notifyListeners();
+        if (!_isDisposed) {
+          notifyListeners();
+        }
       }
       _selectedLatitude ??= _tryParseLatLngPair(typedLocation)?.$1;
       _selectedLongitude ??= _tryParseLatLngPair(typedLocation)?.$2;
@@ -459,16 +464,21 @@ class CreateMatchViewModel extends ChangeNotifier {
   }
 
   Future<bool> createMatchApi() async {
+    if (isLoading) return false;
     if (!formKey.currentState!.validate()) return false;
     if (_buildScheduledAt() == null) {
       error = AppText.scheduleDateTimeRequired;
-      notifyListeners();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
       return false;
     }
 
     error = null;
     isLoading = true;
-    notifyListeners();
+    if (!_isDisposed) {
+      notifyListeners();
+    }
 
     try {
       final resolvedLocation = await _resolveLocationForRequest();
@@ -502,11 +512,14 @@ class CreateMatchViewModel extends ChangeNotifier {
       return false;
     } finally {
       isLoading = false;
-      notifyListeners();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
     }
   }
 
   Future<bool> updateMatchApi() async {
+    if (isLoading) return false;
     if (!formKey.currentState!.validate()) return false;
     if (matchId == null || matchId!.isEmpty) {
       error = 'Match ID is missing';
@@ -514,13 +527,17 @@ class CreateMatchViewModel extends ChangeNotifier {
     }
     if (_buildScheduledAt() == null) {
       error = AppText.scheduleDateTimeRequired;
-      notifyListeners();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
       return false;
     }
 
     error = null;
     isLoading = true;
-    notifyListeners();
+    if (!_isDisposed) {
+      notifyListeners();
+    }
 
     try {
       final resolvedLocation = await _resolveLocationForRequest();
@@ -553,7 +570,9 @@ class CreateMatchViewModel extends ChangeNotifier {
       return false;
     } finally {
       isLoading = false;
-      notifyListeners();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
     }
   }
 
@@ -567,6 +586,7 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     matchTitleController.dispose();
     descriptionController.dispose();
     dateController.dispose();

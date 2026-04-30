@@ -218,6 +218,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       return;
     }
 
+    // Mark as deleted immediately so all list view models remove it at once.
+    DeletedMatchesService().markDeleted(result.matchId);
+
     AppLogger.info(
       'Delete API succeeded. Refreshing notifications for current user.',
       tag: 'HostDetailsScreen',
@@ -233,8 +236,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       'Participant notifications depend on backend support. The app can only show notifications already created by the server.',
       tag: 'HostDetailsScreen',
     );
-
-    DeletedMatchesService().markDeleted(result.matchId);
     Navigator.pop(context, result);
   }
 

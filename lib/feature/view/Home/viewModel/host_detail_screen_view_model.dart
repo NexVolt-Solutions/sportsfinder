@@ -844,6 +844,11 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
   String _normalizeMatchStatus(String? rawStatus) {
     final value = rawStatus?.trim().toLowerCase() ?? '';
+    // Backend may send "Open" for not-started matches.
+    // Keep a single internal pre-start status to avoid UI branching issues.
+    if (value == 'open') {
+      return 'pending';
+    }
     if (value == 'ongoing' ||
         value == 'completed' ||
         value == 'pending' ||

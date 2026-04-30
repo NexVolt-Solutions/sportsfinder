@@ -94,12 +94,26 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
         allMatches.addAll(merged.values);
         hasNext = allRes.hasNext || myRes.hasNext;
       } else {
-        final res = await _repo.getAllMatches(page: page, type: 'my');
-        allMatches.addAll(
-          res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
-        );
-        hasNext = res.hasNext;
+        // Fallback for backends that omit completed/cancelled hosted matches
+        // from `type=my`. We merge current page of `type=my` + `type=all`,
+        // then host-filter in `_scopedBaseMatches()`.
+        final myRes = await _repo.getAllMatches(page: page, type: 'my');
+        final allRes = await _repo.getAllMatches(page: page, type: 'all');
+        final merged = <String, AllMatches>{};
+        for (final m in myRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        for (final m in allRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        allMatches.addAll(merged.values);
+        hasNext = myRes.hasNext || allRes.hasNext;
       }
+      _dedupeAllMatchesById();
       _rebuildVisibleMatches();
     } catch (e) {
       error = e.toString();
@@ -200,12 +214,24 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
         allMatches.addAll(merged.values);
         hasNext = allRes.hasNext || myRes.hasNext;
       } else {
-        final res = await _repo.getAllMatches(page: page, type: 'my');
-        allMatches.addAll(
-          res.items.where((m) => !DeletedMatchesService().isDeleted(m.id)),
-        );
-        hasNext = res.hasNext;
+        // Keep behavior consistent with initial fetch for My Matches.
+        final myRes = await _repo.getAllMatches(page: page, type: 'my');
+        final allRes = await _repo.getAllMatches(page: page, type: 'all');
+        final merged = <String, AllMatches>{};
+        for (final m in myRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        for (final m in allRes.items) {
+          if (!DeletedMatchesService().isDeleted(m.id)) {
+            merged[m.id] = m;
+          }
+        }
+        allMatches.addAll(merged.values);
+        hasNext = myRes.hasNext || allRes.hasNext;
       }
+      _dedupeAllMatchesById();
       _rebuildVisibleMatches();
     } catch (e) {
       error = e.toString();
@@ -254,6 +280,15 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   void _rebuildVisibleMatches() {
     final base = _baseListForChips();
     matches = currentFilters != null ? _applyFilters(base) : List.from(base);
+  }
+
+  void _dedupeAllMatchesById() {
+    if (allMatches.isEmpty) return;
+    final deduped = <String, AllMatches>{};
+    for (final match in allMatches) {
+      deduped[match.id] = match;
+    }
+    allMatches = deduped.values.toList();
   }
 
   @override

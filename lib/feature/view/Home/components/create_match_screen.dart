@@ -404,14 +404,18 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       },
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<CreateMatchViewModel, bool>(
-                      selector: (_, m) => m.isEditMode,
-                      builder: (context, isEditMode, _) {
+                    Selector<CreateMatchViewModel, (bool, bool)>(
+                      selector: (_, m) => (m.isEditMode, m.isLoading),
+                      builder: (context, state, _) {
+                        final isEditMode = state.$1;
+                        final isSubmitting = state.$2;
                         return CustomButton(
                           text: isEditMode ? 'Save' : AppText.createMatch,
                           color: context.appColors.primary,
+                          isLoading: isSubmitting,
                           onTap: () async {
                             final vm = context.read<CreateMatchViewModel>();
+                            if (vm.isLoading) return;
                             final success = await vm.submitMatch();
 
                             if (!context.mounted) return;
