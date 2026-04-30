@@ -85,8 +85,17 @@ class FcmService {
   }
 
   Future<void> _syncCurrentToken() async {
-    final token = await FirebaseMessaging.instance.getToken();
-    await _syncTokenToBackend(token);
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      await _syncTokenToBackend(token);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'FCM getToken failed. Will continue without token for now.',
+        tag: 'FcmService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<void> _syncTokenToBackend(String? token) async {
