@@ -190,6 +190,8 @@ class CreateMatchViewModel extends ChangeNotifier {
     } else {
       dateController.text = match.date;
       timeController.text = match.time;
+      _selectedDate = _parseDateText(match.date);
+      _selectedTime = _parseTimeText(match.time);
     }
 
     notifyListeners();
@@ -214,8 +216,60 @@ class CreateMatchViewModel extends ChangeNotifier {
   }
 
   void setTime(TimeOfDay time, BuildContext context) {
+    _selectedDate ??= _parseDateText(dateController.text);
     _selectedTime = time;
     timeController.text = time.format(context);
+  }
+
+  DateTime? _parseDateText(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+    final slash = RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})$').firstMatch(text);
+    if (slash != null) {
+      final day = int.tryParse(slash.group(1)!);
+      final month = int.tryParse(slash.group(2)!);
+      final year = int.tryParse(slash.group(3)!);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+    final iso = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(text);
+    if (iso != null) {
+      final year = int.tryParse(iso.group(1)!);
+      final month = int.tryParse(iso.group(2)!);
+      final day = int.tryParse(iso.group(3)!);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+    return null;
+  }
+
+  TimeOfDay? _parseTimeText(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+    final twelve = RegExp(
+      r'^(\d{1,2}):(\d{2})\s*(AM|PM)$',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (twelve != null) {
+      var hour = int.tryParse(twelve.group(1)!);
+      final minute = int.tryParse(twelve.group(2)!) ?? 0;
+      final period = twelve.group(3)!.toUpperCase();
+      if (hour == null) return null;
+      if (period == 'PM' && hour != 12) hour += 12;
+      if (period == 'AM' && hour == 12) hour = 0;
+      return TimeOfDay(hour: hour, minute: minute);
+    }
+    final twentyFour = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(text);
+    if (twentyFour != null) {
+      final hour = int.tryParse(twentyFour.group(1)!);
+      final minute = int.tryParse(twentyFour.group(2)!);
+      if (hour != null && minute != null) {
+        return TimeOfDay(hour: hour, minute: minute);
+      }
+    }
+    return null;
   }
 
   void setSelectedLocation(LocationSelectionResult selected) {

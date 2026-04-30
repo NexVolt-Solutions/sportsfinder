@@ -25,6 +25,7 @@ class DiscoveryMatch {
     this.hostMatchesPlayed = 0,
     this.latitude,
     this.longitude,
+    this.status = 'pending',
   });
 
   final String id;
@@ -55,6 +56,7 @@ class DiscoveryMatch {
   final int hostMatchesPlayed;
   final double? latitude;
   final double? longitude;
+  final String status;
 
   /// Maps API match data into [DiscoveryMatch] (date/time formatted for [matchScheduledStart]).
   factory DiscoveryMatch.fromAllMatches(AllMatches m) {
@@ -89,6 +91,7 @@ class DiscoveryMatch {
       hostMatchesPlayed: 0,
       latitude: m.latitude,
       longitude: m.longitude,
+      status: m.status,
     );
   }
 
@@ -233,6 +236,7 @@ class DiscoveryMatch {
     int? hostMatchesPlayed,
     double? latitude,
     double? longitude,
+    String? status,
   }) {
     return DiscoveryMatch(
       id: id ?? this.id,
@@ -255,6 +259,7 @@ class DiscoveryMatch {
       hostMatchesPlayed: hostMatchesPlayed ?? this.hostMatchesPlayed,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      status: status ?? this.status,
     );
   }
 }

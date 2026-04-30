@@ -479,7 +479,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     if (cachedStatus != null && cachedStatus.isNotEmpty) {
       _matchStatus = cachedStatus;
     } else {
-      _matchStatus = 'pending';
+      _matchStatus = _normalizeMatchStatus(match.status);
+      _sessionStatusByMatchId[match.id.trim()] = _matchStatus;
     }
     _inviteErrorMessage = null;
     if (match.id.trim().isNotEmpty) {

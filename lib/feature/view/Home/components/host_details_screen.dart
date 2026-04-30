@@ -260,6 +260,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         }
 
         final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
+        final isMatchLocked =
+            model.matchStatus == 'completed' || model.matchStatus == 'cancelled';
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -296,11 +298,13 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           ),
 
                           GestureDetector(
-                            onTap: _navigateToEditScreen,
+                            onTap: isMatchLocked ? null : _navigateToEditScreen,
                             behavior: HitTestBehavior.opaque,
                             child: Icon(
                               Icons.edit,
-                              color: context.appColors.greyDark,
+                              color: isMatchLocked
+                                  ? context.appColors.greylight
+                                  : context.appColors.greyDark,
                               size: 20,
                             ),
                           ),
@@ -404,6 +408,30 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         maxLines: 3,
                       ),
                       SizedBox(height: context.h(16)),
+                      if (isMatchLocked) ...[
+                        CardWidget(
+                          padding: context.padSym(h: 12, v: 10),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 18,
+                                color: context.appColors.greylight,
+                              ),
+                              SizedBox(width: context.w(8)),
+                              Expanded(
+                                child: Text(
+                                  'Match is ${model.matchStatusLabel.toLowerCase()}. Actions are read-only.',
+                                  style: context.appText.text12W600.copyWith(
+                                    color: context.appColors.greylight,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: context.h(16)),
+                      ],
                       Card(
                         child: Padding(
                           padding: context.padSym(h: 12),
@@ -554,7 +582,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                 },
                                 title: model.rosterNameAt(index),
                                 subTitle: model.rosterSkillAt(index),
-                                showActionIcon: true,
+                                showActionIcon: !isMatchLocked,
                               );
                             },
                           ),
@@ -669,10 +697,12 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                               isInvited: model.isUserAlreadyInvited(
                                 user.id?.trim() ?? '',
                               ),
-                              isLoading: model.isInvitingUser(
+                              isLoading: !isMatchLocked && model.isInvitingUser(
                                 user.id?.trim() ?? '',
                               ),
+                              isActionDisabled: isMatchLocked,
                               ontap: () async {
+                                if (isMatchLocked) return;
                                 final userId = user.id?.trim() ?? '';
                                 AppLogger.info(
                                   'Invite button tapped from HostDetailsScreen',
