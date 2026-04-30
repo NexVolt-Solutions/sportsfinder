@@ -9,8 +9,8 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
-import 'package:sport_finding/core/utils/onboarding_profile_sync.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/onboarding_profile_sync.dart';
 import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
@@ -62,6 +62,10 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
     if (!context.mounted) return;
 
     if (!success) {
+      if (model.shouldOpenLocationSettings) {
+        final openedSettings = await model.openDeviceLocationSettings();
+        if (!context.mounted || openedSettings) return;
+      }
       AppSnackBar.show(
         model.errorMessage ?? 'Unable to get your current location.',
         backgroundColor: context.appColors.error,

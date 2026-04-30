@@ -481,7 +481,8 @@ class _HomeMatchesShimmer extends StatelessWidget {
               padding: context.padSym(h: 16, v: 16),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final compact = constraints.maxHeight < 130;
+                 
+                  final compact = constraints.maxHeight <= 150;
                   if (compact) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

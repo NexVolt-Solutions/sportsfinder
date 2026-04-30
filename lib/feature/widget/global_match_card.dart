@@ -139,6 +139,11 @@ class GlobalMatchCard extends StatelessWidget {
     final primary = context.appColors.primary;
     final showHostingChip = isHostedByCurrentUser && showHostingBadge;
     final innerH = contentHeight(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final isCompactCard = innerH <= 155 || textScale > 1.0;
+    final chipTopGap = isCompactCard ? 2.0 : context.sh(showHostingChip ? 4 : 6);
+    final sectionGap = isCompactCard ? 4.0 : context.sh(showHostingChip ? 4 : 8);
+    final metaGap = isCompactCard ? 2.0 : context.sh(showHostingChip ? 3 : 4);
 
     return CardWidget(
       onTap: cardOnTap,
@@ -165,24 +170,27 @@ class GlobalMatchCard extends StatelessWidget {
 
                   // "You are hosting" chip
                   if (showHostingChip) ...[
-                    SizedBox(height: context.sh(6)),
+                    SizedBox(height: chipTopGap),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: _HostingChip(primary: primary),
+                      child: _HostingChip(
+                        primary: primary,
+                        compact: isCompactCard,
+                      ),
                     ),
                   ],
 
-                  SizedBox(height: context.sh(8)),
+                  SizedBox(height: sectionGap),
 
                   // Location row
                   _IconLabelRow(icon: AppAssets.homeLocIcon, label: loc),
 
-                  SizedBox(height: context.sh(4)),
+                  SizedBox(height: metaGap),
 
                   // Time row
                   _IconLabelRow(icon: AppAssets.homeTimeIcon, label: time),
 
-                  SizedBox(height: context.sh(8)),
+                  SizedBox(height: sectionGap),
 
                   // Player count
                   PlayerCountWidget(
@@ -226,16 +234,17 @@ class GlobalMatchCard extends StatelessWidget {
 
 /// "You are hosting" badge shown on cards owned by the current user.
 class _HostingChip extends StatelessWidget {
-  const _HostingChip({required this.primary});
+  const _HostingChip({required this.primary, required this.compact});
 
   final Color primary;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: context.sw(8),
-        vertical: context.sh(4),
+        vertical: compact ? 2.0 : context.sh(4),
       ),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.12),
@@ -245,11 +254,15 @@ class _HostingChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.verified_rounded, size: 15, color: primary),
+          Icon(Icons.verified_rounded, size: compact ? 13 : 15, color: primary),
           SizedBox(width: context.sw(4)),
           Text(
             AppText.youAreHosting,
-            style: context.appText.text12W600.copyWith(color: primary),
+            style:
+                (compact
+                        ? context.appText.text12W600.copyWith(fontSize: 10)
+                        : context.appText.text12W600)
+                    .copyWith(color: primary),
           ),
         ],
       ),

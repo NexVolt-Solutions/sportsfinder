@@ -62,10 +62,22 @@ class PersonInvitedCard extends StatelessWidget {
                 CircleAvatar(
                   radius: context.radiusR(22), // half of previous 42 height
                   backgroundColor: context.appColors.primary,
-                  backgroundImage:
-                      showAvatar ? NetworkImage(normalizedAvatarUrl) : null,
                   child: showAvatar
-                      ? null
+                      ? ClipOval(
+                          child: Image.network(
+                            normalizedAvatarUrl,
+                            width: context.w(44),
+                            height: context.w(44),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Text(
+                              getInitials(playerName),
+                              style: TextStyle(
+                                color: context.appColors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
                       : Text(
                           getInitials(playerName),
                           style: TextStyle(

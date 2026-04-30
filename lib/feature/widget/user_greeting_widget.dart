@@ -35,11 +35,17 @@ class UserGreetingWidget extends StatelessWidget {
         CircleAvatar(
           radius: context.radiusR(22),
           backgroundColor: context.appColors.greyDark,
-          backgroundImage: _isNetworkHttpUrl(normalizedImageUrl)
-              ? NetworkImage(normalizedImageUrl!)
-              : null,
           child: _isNetworkHttpUrl(normalizedImageUrl)
-              ? null
+              ? ClipOval(
+                  child: Image.network(
+                    normalizedImageUrl!,
+                    width: context.w(44),
+                    height: context.w(44),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Icon(Icons.person, color: context.appColors.white),
+                  ),
+                )
               : Icon(Icons.person, color: context.appColors.white),
         ),
 

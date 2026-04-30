@@ -86,6 +86,16 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
       builder: (context, model, _) {
         final match = model.currentMatch ?? routeMatch;
         final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
+        final isHostedByCurrentUser = match.isHostedByCurrentUser;
+        final status = model.matchStatus;
+        final isPending = status == 'pending';
+        final isOngoing = status == 'ongoing';
+        final isCompleted = status == 'completed';
+        final isCancelled = status == 'cancelled';
+        final joinDisabledByStatus =
+            !isHostedByCurrentUser &&
+            !model.hasJoined &&
+            (!isOngoing || isCancelled || isCompleted);
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -243,23 +253,33 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                   child: model.isJoinLeaveLoading
                       ? const Center(child: CircularProgressIndicator())
                       : CustomButton(
-                          text: match.isHostedByCurrentUser
+                          text: isHostedByCurrentUser
                               ? AppText.startMatch
+                              : isCancelled
+                              ? 'Match Cancelled'
+                              : isCompleted
+                              ? 'Match Completed'
+                              : isPending && !model.hasJoined
+                              ? 'Match Not Started'
                               : model.hasJoined
                               ? AppText.leaveMatch
                               : AppText.joinMatch,
-                          color: match.isHostedByCurrentUser
+                          color: isHostedByCurrentUser
                               ? context.appColors.primary
+                              : joinDisabledByStatus
+                              ? context.appColors.greylight
                               : model.hasJoined
                               ? context.appColors.error
                               : context.appColors.primary,
-                          onTap: () async {
+                          onTap: joinDisabledByStatus
+                              ? null
+                              : () async {
                             final matchId = match.id;
                             if (matchId.isEmpty) {
                               return;
                             }
 
-                            if (match.isHostedByCurrentUser) {
+                            if (isHostedByCurrentUser) {
                               if (!context.mounted) return;
                               AppSnackBar.show('You are hosting this match.');
                               return;

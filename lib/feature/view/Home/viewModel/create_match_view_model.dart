@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
@@ -18,6 +20,20 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/location_selection_result.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
+  List<String> _normalizeOptions(List<String> raw) {
+    final dedup = <String>{};
+    final result = <String>[];
+    for (final item in raw) {
+      final trimmed = item.trim();
+      if (trimmed.isEmpty) continue;
+      final key = trimmed.toLowerCase();
+      if (dedup.add(key)) {
+        result.add(trimmed);
+      }
+    }
+    return result;
+  }
+
   void _safeNotifyListeners() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
@@ -58,6 +74,7 @@ class CreateMatchViewModel extends ChangeNotifier {
   CreateMatchViewModel() {
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
     _hydrateSavedLocation();
+    unawaited(ensureOptionsLoaded());
   }
 
   /// From [GET /api/v1/options/] via [PlatformOptionsStore].
@@ -79,13 +96,27 @@ class CreateMatchViewModel extends ChangeNotifier {
     _safeNotifyListeners();
     try {
       final o = await PlatformOptionsStore.instance.load();
-      sportTypes = List<String>.from(o.sports);
-      skillLevels = List<String>.from(o.skills);
-      optionsLoaded = true;
+      sportTypes = _normalizeOptions(o.sports);
+      skillLevels = _normalizeOptions(o.skills);
+      optionsLoaded = sportTypes.isNotEmpty && skillLevels.isNotEmpty;
+      if (!optionsLoaded) {
+        optionsError =
+            'Options API returned empty sports/skills. Please try again.';
+        AppLogger.warning(optionsError!, tag: 'CreateMatchVM');
+      }
+      if (selectedSportType != null && !sportTypes.contains(selectedSportType)) {
+        selectedSportType = null;
+      }
+      if (selectedSkillLevel != null &&
+          !skillLevels.contains(selectedSkillLevel)) {
+        selectedSkillLevel = null;
+      }
     } catch (e) {
       optionsError = e.toString();
-      sportTypes = [];
-      skillLevels = [];
+      sportTypes = <String>[];
+      skillLevels = <String>[];
+      optionsLoaded = false;
+      AppLogger.warning('Options API failed: $e', tag: 'CreateMatchVM');
     } finally {
       optionsLoading = false;
       _safeNotifyListeners();

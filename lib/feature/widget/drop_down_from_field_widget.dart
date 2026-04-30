@@ -20,7 +20,7 @@ class DropdownFormFieldWidget extends StatelessWidget {
   final List<String> items;
 
   final String? value;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String?>? onChanged;
   final String? Function(String?)? validator;
 
   final bool includeHorizontalPadding;
@@ -39,7 +39,7 @@ class DropdownFormFieldWidget extends StatelessWidget {
       builder: (state) {
         void handleChanged(String? v) {
           state.didChange(v);
-          onChanged(v);
+          onChanged?.call(v);
         }
 
         return InputDecorator(
@@ -101,7 +101,7 @@ class DropdownFormFieldWidget extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              onChanged: handleChanged,
+              onChanged: onChanged == null ? null : handleChanged,
             ),
           ),
         );

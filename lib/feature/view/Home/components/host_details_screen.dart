@@ -306,9 +306,52 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           ),
                         ],
                       ),
-                      NormalText(
-                        titleText: match.title,
-                        subText: match.sportType,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: NormalText(
+                              titleText: match.title,
+                              subText: match.sportType,
+                            ),
+                          ),
+                          SizedBox(width: context.w(8)),
+                          Container(
+                            padding: context.padSym(h: 10, v: 5),
+                            decoration: BoxDecoration(
+                              color:
+                                  model.matchStatus == 'cancelled'
+                                  ? context.appColors.error.withValues(
+                                      alpha: 0.12,
+                                    )
+                                  : model.matchStatus == 'completed'
+                                  ? context.appColors.greylight.withValues(
+                                      alpha: 0.35,
+                                    )
+                                  : model.matchStatus == 'ongoing'
+                                  ? context.appColors.primary.withValues(
+                                      alpha: 0.14,
+                                    )
+                                  : context.appColors.surface.withValues(
+                                      alpha: 0.12,
+                                    ),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              model.matchStatusLabel,
+                              style: context.appText.text12W600.copyWith(
+                                color:
+                                    model.matchStatus == 'cancelled'
+                                    ? context.appColors.error
+                                    : model.matchStatus == 'completed'
+                                    ? context.appColors.greyDark
+                                    : model.matchStatus == 'ongoing'
+                                    ? context.appColors.primary
+                                    : context.appColors.greylight,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: context.h(20)),
                       Row(
@@ -727,80 +770,120 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                               match.isHostedByCurrentUser)
                       // ── Loading state ─────────────────────────────────────────
                       ? const Center(child: CircularProgressIndicator())
-                      // ── Join / Leave button ───────────────────────────────────
-                      : CustomButton(
-                          text: match.isHostedByCurrentUser
-                              ? model.matchStatus == 'ongoing'
-                                    ? 'Ongoing'
-                                    : model.matchStatus == 'completed'
-                                    ? 'Completed'
-                                    : AppText.startMatching
-                              : model.hasJoined
-                              ? AppText.leaveMatch
-                              : AppText.joinMatch,
-                          color: match.isHostedByCurrentUser
-                              ? model.matchStatus == 'completed'
-                                    ? context.appColors.greyDark
-                                    : context.appColors.primary
-                              : model.hasJoined
-                              ? context
-                                    .appColors
-                                    .error // red for Leave
-                              : context.appColors.primary, // primary for Join
-                          onTap:
-                              model.matchStatus == 'completed' &&
-                                  match.isHostedByCurrentUser
-                              ? null
-                              : () async {
-                                  final matchId = match.id;
-                                  if (matchId.isEmpty) {
+                      : match.isHostedByCurrentUser
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CustomButton(
+                              text: model.matchStatus == 'pending'
+                                  ? AppText.startMatching
+                                  : model.matchStatus == 'ongoing'
+                                  ? 'Complete Match'
+                                  : model.matchStatusLabel,
+                              color: model.matchStatus == 'pending' ||
+                                      model.matchStatus == 'ongoing'
+                                  ? context.appColors.primary
+                                  : context.appColors.greyDark,
+                              onTap:
+                                  model.matchStatus == 'completed' ||
+                                          model.matchStatus == 'cancelled'
+                                      ? null
+                                      : () async {
+                                          final matchId = match.id;
+                                          if (matchId.isEmpty) return;
+                                          final success = model.matchStatus ==
+                                                  'ongoing'
+                                              ? await model.completeMatch(
+                                                  matchId,
+                                                )
+                                              : await model.startMatch(matchId);
+                                          if (!context.mounted) return;
+                                          if (!success) {
+                                            AppSnackBar.show(
+                                              model.matchStatusError ??
+                                                  'Failed to update match status',
+                                              backgroundColor:
+                                                  context.appColors.error,
+                                            );
+                                            return;
+                                          }
+                                          AppSnackBar.show(
+                                            model.matchStatus == 'completed'
+                                                ? 'Match completed successfully!'
+                                                : 'Match started successfully!',
+                                            backgroundColor:
+                                                context.appColors.primary,
+                                          );
+                                        },
+                            ),
+                            if (model.matchStatus == 'pending') ...[
+                              SizedBox(height: context.h(10)),
+                              GestureDetector(
+                                onTap: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (dialogContext) => AlertDialog(
+                                      title: const Text('Cancel Match'),
+                                      content: const Text(
+                                        'This will notify participants that this match was cancelled.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogContext, false),
+                                          child: const Text(AppText.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogContext, true),
+                                          child: const Text('Cancel Match'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed != true || !context.mounted) {
                                     return;
                                   }
-
-                                  // ── START MATCH flow (host) ────────────────────────
-                                  if (match.isHostedByCurrentUser) {
-                                    debugPrint(
-                                      '🟡 [HostDetailsScreen] Start Match button tapped',
+                                  final ok = await model.cancelMatch(match.id);
+                                  if (!context.mounted) return;
+                                  if (ok) {
+                                    AppSnackBar.show(
+                                      'Match cancelled. Participants will be notified.',
+                                      backgroundColor: context.appColors.error,
                                     );
-                                    debugPrint(
-                                      '🟡 [HostDetailsScreen] Match ID: $matchId',
+                                  } else {
+                                    AppSnackBar.show(
+                                      model.matchStatusError ??
+                                          'Failed to cancel match',
+                                      backgroundColor: context.appColors.error,
                                     );
-                                    debugPrint(
-                                      '🟡 [HostDetailsScreen] Current match status: ${model.matchStatus}',
-                                    );
-
-                                    final success = await model.startMatch(
-                                      matchId,
-                                    );
-
-                                    if (!context.mounted) return;
-
-                                    if (success) {
-                                      AppSnackBar.show(
-                                        'Match started successfully!',
-                                        backgroundColor:
-                                            context.appColors.primary,
-                                      );
-                                      Navigator.pushNamedAndRemoveUntil(
-                                        context,
-                                        RoutesName.bottomBarScreen,
-                                        (route) => false,
-                                        arguments: 2,
-                                      );
-                                    } else {
-                                      debugPrint(
-                                        '❌ [HostDetailsScreen] Failed to start match',
-                                      );
-                                      debugPrint(
-                                        '❌ [HostDetailsScreen] Error: ${model.matchStatusError}',
-                                      );
-                                      AppSnackBar.show(
-                                        model.matchStatusError ??
-                                            'Failed to start match',
-                                        backgroundColor:
-                                            context.appColors.error,
-                                      );
-                                    }
+                                  }
+                                },
+                                child: Padding(
+                                  padding: context.padSym(v: 6),
+                                  child: Text(
+                                    'Cancel Match',
+                                    style: context.appText.text14W600.copyWith(
+                                      color: context.appColors.error,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        )
+                      // ── Join / Leave button ───────────────────────────────────
+                      : CustomButton(
+                          text: model.hasJoined
+                              ? AppText.leaveMatch
+                              : AppText.joinMatch,
+                          color: model.hasJoined
+                              ? context.appColors.error
+                              : context.appColors.primary,
+                          onTap: () async {
+                                  final matchId = match.id;
+                                  if (matchId.isEmpty) {
                                     return;
                                   }
                                   if (model.hasJoined) {

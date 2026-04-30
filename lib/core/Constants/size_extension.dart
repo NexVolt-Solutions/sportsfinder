@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-/// Figma design size (reference). Use sw() / sh() with Figma pixel values.
-const double kFigmaDesignWidth = 375;
+ const double kFigmaDesignWidth = 375;
 const double kFigmaDesignHeight = 844;
 
 extension SizeExtension on BuildContext {
@@ -10,18 +9,13 @@ extension SizeExtension on BuildContext {
   double get screenWidth => MediaQuery.of(this).size.width;
   double get screenHeight => MediaQuery.of(this).size.height;
 
-  /// Scale factor: current width / Figma width. Use for horizontal/width-related values.
-  double get scaleWidth => screenWidth / kFigmaDesignWidth;
-  /// Scale factor: current height / Figma height. Use for vertical/height-related values.
-  double get scaleHeight => screenHeight / kFigmaDesignHeight;
+   double get scaleWidth => screenWidth / kFigmaDesignWidth;
+   double get scaleHeight => screenHeight / kFigmaDesignHeight;
 
-   /// Figma width → scaled. Use for: width, horizontal padding, horizontal spacing, font size, radius.
-  double sw(double figmaPx) => figmaPx * scaleWidth;
-  /// Figma height → scaled. Use for: height, vertical padding, vertical spacing.
-  double sh(double figmaPx) => figmaPx * scaleHeight;
+   double sw(double figmaPx) => figmaPx * scaleWidth;
+   double sh(double figmaPx) => figmaPx * scaleHeight;
 
-  /// Responsive symmetric padding from Figma values (h,v in Figma px).
-  EdgeInsets paddingSymmetricR({double horizontal = 0, double vertical = 0}) =>
+   EdgeInsets paddingSymmetricR({double horizontal = 0, double vertical = 0}) =>
       EdgeInsets.symmetric(horizontal: sw(horizontal), vertical: sh(vertical));
   /// Responsive all-side padding from Figma value.
   EdgeInsets paddingAllR(double figmaPx) => EdgeInsets.all(sw(figmaPx));
@@ -77,8 +71,7 @@ extension SizeExtension on BuildContext {
   double radius(double value) => value;
   double text(double value) => value;
 
-  // Spacing constants (fixed)
-  double get s4 => 4;
+   double get s4 => 4;
   double get s8 => 8;
   double get s12 => 12;
   double get s16 => 16;

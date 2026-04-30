@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -208,16 +207,28 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       maxLines: 5,
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<CreateMatchViewModel, String?>(
-                      selector: (_, m) => m.selectedSportType,
-                      builder: (context, selectedSport, _) {
+                    Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
+                      selector: (_, m) => (
+                        m.selectedSportType,
+                        m.sportTypes,
+                        m.optionsLoading,
+                      ),
+                      builder: (context, state, _) {
+                        final selectedSport = state.$1;
+                        final sportTypes = state.$2;
+                        final optionsLoading = state.$3;
                         final vm = context.read<CreateMatchViewModel>();
+                        final hasSportOptions = sportTypes.isNotEmpty;
                         return DropdownFormFieldWidget(
                           label: AppText.sportType,
-                          hintText: AppText.selectSportType,
-                          items: vm.sportTypes,
+                          hintText: optionsLoading
+                              ? 'Loading sports...'
+                              : hasSportOptions
+                              ? AppText.selectSportType
+                              : 'No sports available',
+                          items: sportTypes,
                           value: selectedSport,
-                          onChanged: vm.setSportType,
+                          onChanged: hasSportOptions ? vm.setSportType : null,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return AppText.sportTypeValidation;
@@ -228,16 +239,28 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       },
                     ),
                     SizedBox(height: context.h(16)),
-                    Selector<CreateMatchViewModel, String?>(
-                      selector: (_, m) => m.selectedSkillLevel,
-                      builder: (context, selectedSkill, _) {
+                    Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
+                      selector: (_, m) => (
+                        m.selectedSkillLevel,
+                        m.skillLevels,
+                        m.optionsLoading,
+                      ),
+                      builder: (context, state, _) {
+                        final selectedSkill = state.$1;
+                        final skillLevels = state.$2;
+                        final optionsLoading = state.$3;
                         final vm = context.read<CreateMatchViewModel>();
+                        final hasSkillOptions = skillLevels.isNotEmpty;
                         return DropdownFormFieldWidget(
                           label: AppText.skillLevel,
-                          hintText: AppText.selectYourSkill,
-                          items: vm.skillLevels,
+                          hintText: optionsLoading
+                              ? 'Loading skills...'
+                              : hasSkillOptions
+                              ? AppText.selectYourSkill
+                              : 'No skill levels available',
+                          items: skillLevels,
                           value: selectedSkill,
-                          onChanged: vm.setSkillLevel,
+                          onChanged: hasSkillOptions ? vm.setSkillLevel : null,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return AppText.skillLevelValidation;
@@ -403,8 +426,8 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                 }
                                 Navigator.pushReplacementNamed(
                                   context,
-                                  RoutesName.hostDetailsScreen,
-                                  arguments: createdMatch.toDiscoveryMatch(),
+                                  RoutesName.matchCreatedDoneScreen,
+                                  arguments: createdMatch,
                                 );
                               }
                             } else {

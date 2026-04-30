@@ -44,6 +44,8 @@ class NotificationService extends ChangeNotifier {
   Timer? _pingTimer;
   late final ReconnectScheduler _reconnectScheduler;
   bool _isDisposed = false;
+  DateTime? _retryAfter;
+  String? _lastSocketErrorFingerprint;
   final Set<String> _hiddenNotificationIds = <String>{};
   DateTime? _notificationsClearedAt;
 
@@ -111,6 +113,7 @@ class NotificationService extends ChangeNotifier {
   Future<void> ensureRealtimeConnected() async {
     if (kIsWeb) return;
     if (_isDisposed || _channel != null) return;
+    if (_retryAfter != null && DateTime.now().isBefore(_retryAfter!)) return;
     _reconnectScheduler.cancel();
     final token = await _tokenProvider();
     if (token == null || token.isEmpty) return;
@@ -135,8 +138,21 @@ class NotificationService extends ChangeNotifier {
       );
 
       _pingTimer = Timer.periodic(_pingInterval, (_) {
-        _channel?.sink.add(jsonEncode(<String, dynamic>{'type': 'ping'}));
+        try {
+          _channel?.sink.add(jsonEncode(<String, dynamic>{'type': 'ping'}));
+        } catch (e) {
+          _handleSocketError(e);
+        }
       });
+      final dynamic dynamicChannel = _channel;
+      final dynamic readyFuture = dynamicChannel?.ready;
+      if (readyFuture is Future) {
+        unawaited(
+          readyFuture.catchError((Object e) {
+            _handleSocketError(e);
+          }),
+        );
+      }
     } catch (e) {
       AppLogger.error(
         'Failed to connect notification WebSocket',
@@ -181,6 +197,14 @@ class NotificationService extends ChangeNotifier {
   }
 
   void _handleSocketError(Object error) {
+    _applyTemporaryBackoffIfNeeded(error);
+    final fingerprint = error.toString();
+    if (_lastSocketErrorFingerprint == fingerprint) {
+      _cleanupRealtimeState();
+      _scheduleReconnect();
+      return;
+    }
+    _lastSocketErrorFingerprint = fingerprint;
     AppLogger.error(
       'Notification WebSocket error',
       tag: 'NotificationService',
@@ -197,6 +221,19 @@ class NotificationService extends ChangeNotifier {
     );
     _cleanupRealtimeState();
     _scheduleReconnect();
+  }
+
+  void _applyTemporaryBackoffIfNeeded(Object error) {
+    if (error is SocketException &&
+        error.message.toLowerCase().contains('failed host lookup')) {
+      _retryAfter = DateTime.now().add(const Duration(seconds: 30));
+      AppLogger.warning(
+        'Notification WebSocket host lookup failed; retrying in 30s.',
+        tag: 'NotificationService',
+      );
+    } else {
+      _retryAfter = null;
+    }
   }
 
   NotificationModel _notificationFromRealtimeEvent(Map<String, dynamic> event) {

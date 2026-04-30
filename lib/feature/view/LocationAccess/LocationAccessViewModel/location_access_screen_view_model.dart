@@ -15,6 +15,9 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  bool _shouldOpenLocationSettings = false;
+  bool get shouldOpenLocationSettings => _shouldOpenLocationSettings;
+
   /// Location is on, device already has while-in-use (or always) — skip onboarding.
   Future<bool> hasUsableLocationPermission() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
@@ -73,10 +76,7 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
     );
   }
 
-  /// "Allow location" — requests the system dialog only when [checkPermission] is [denied].
-  /// If permission was already granted, returns success without re-requesting; location is
-  /// saved in the background. If the user just granted, waits for a fix before returning.
-  Future<bool> runAllowLocationFlow() async {
+   Future<bool> runAllowLocationFlow() async {
     AppLogger.info(
       'Allow location button tapped. Starting location flow.',
       tag: 'LocationAccessScreen',
@@ -84,12 +84,14 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
 
     _isRequestingLocation = true;
     _errorMessage = null;
+    _shouldOpenLocationSettings = false;
     notifyListeners();
 
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _errorMessage = 'Location services are disabled. Please turn them on.';
+        _shouldOpenLocationSettings = true;
         AppLogger.warning(_errorMessage!, tag: 'LocationAccessScreen');
         return false;
       }
@@ -152,6 +154,25 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
     } finally {
       _isRequestingLocation = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> openDeviceLocationSettings() async {
+    try {
+      final opened = await Geolocator.openLocationSettings();
+      AppLogger.info(
+        'Open device location settings result: $opened',
+        tag: 'LocationAccessScreen',
+      );
+      return opened;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to open device location settings.',
+        tag: 'LocationAccessScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return false;
     }
   }
 }

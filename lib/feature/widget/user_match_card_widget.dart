@@ -49,10 +49,22 @@ class UserMatchCard extends StatelessWidget {
                 CircleAvatar(
                   radius: context.radiusR(22),
                   backgroundColor: context.appColors.greyDark,
-                  backgroundImage:
-                      showAvatar ? NetworkImage(normalizedAvatarUrl) : null,
                   child: showAvatar
-                      ? null
+                      ? ClipOval(
+                          child: Image.network(
+                            normalizedAvatarUrl,
+                            width: context.w(44),
+                            height: context.w(44),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Text(
+                              getInitials(title),
+                              style: TextStyle(
+                                color: context.appColors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
                       : Text(
                           getInitials(title),
                           style: TextStyle(
