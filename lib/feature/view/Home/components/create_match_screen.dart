@@ -333,12 +333,13 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         return null;
                       },
                       onTap: () async {
+                        final vm = context.read<CreateMatchViewModel>();
                         final time = await showTimePicker(
                           context: context,
-                          initialTime: model.pickerInitialTime,
+                          initialTime: vm.pickerInitialTime,
                         );
                         if (time != null && context.mounted) {
-                          model.setTime(time, context);
+                          vm.setTime(time, context);
                         }
                       },
                     ),

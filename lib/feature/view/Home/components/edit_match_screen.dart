@@ -354,7 +354,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                       onTap: () async {
                         final time = await showTimePicker(
                           context: context,
-                          initialTime: TimeOfDay.now(),
+                          initialTime: model.pickerInitialTime,
                         );
                         if (time != null && context.mounted) {
                           model.setTime(time, context);
