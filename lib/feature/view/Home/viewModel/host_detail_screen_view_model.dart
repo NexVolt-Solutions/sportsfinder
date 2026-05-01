@@ -95,10 +95,14 @@ import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/Data/model/match_detail_model.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailScreenViewModel extends ChangeNotifier {
   static final Map<String, bool> _sessionJoinStateByMatchId = <String, bool>{};
+  static final Map<String, Set<String>> _sessionInvitedUserIdsByMatchId =
+      <String, Set<String>>{};
+  static final Map<String, String> _sessionStatusByMatchId = <String, String>{};
   int selectedIndex = 0;
   final List<String> buttonName = [
     AppText.overview,
@@ -110,6 +114,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   List<String> _rosterNames = [];
   List<String> _rosterSkills = [];
   List<String> _rosterUserIds = [];
+  List<String> _rosterAvatarUrls = [];
 
   // ── Current match being displayed ──────────────────────────────────────────
   DiscoveryMatch? _currentMatch;
@@ -122,6 +127,8 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       i >= 0 && i < _rosterSkills.length ? _rosterSkills[i] : '';
   String rosterUserIdAt(int i) =>
       i >= 0 && i < _rosterUserIds.length ? _rosterUserIds[i] : '';
+  String rosterAvatarUrlAt(int i) =>
+      i >= 0 && i < _rosterAvatarUrls.length ? _rosterAvatarUrls[i] : '';
 
   // ── All users from the global service ─────────────────────────────────────
   List<Items> get allUsers => ListOfAllUserService().allUsers;
@@ -170,6 +177,10 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
   String _matchStatus = 'pending'; // pending, ongoing, completed
   String get matchStatus => _matchStatus;
+  String get matchStatusLabel =>
+      _matchStatus.isNotEmpty
+          ? _matchStatus[0].toUpperCase() + _matchStatus.substring(1)
+          : 'Pending';
 
   String? _matchStatusError;
   String? get matchStatusError => _matchStatusError;
@@ -276,9 +287,10 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         tag: 'HostDetailVM',
       );
       invitedIds.add(trimmedUserId);
+      _cacheInvitedUserIdsForMatch(trimmedMatchId);
       return response.message;
     } catch (e) {
-      _inviteErrorMessage = e.toString();
+      _inviteErrorMessage = messageFromApiException(e);
       AppLogger.error('Invite API call failed', tag: 'HostDetailVM', error: e);
       return _inviteErrorMessage;
     } finally {
@@ -319,7 +331,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       );
       return result;
     } catch (e) {
-      _deleteMatchError = e.toString();
+      _deleteMatchError = messageFromApiException(e);
       AppLogger.error(
         'Delete match failed for matchId: $matchId',
         tag: 'HostDetailVM',
@@ -367,7 +379,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] joinMatch failed — error: $e');
       log('📍 [ViewModel] joinMatch stacktrace: $stack');
 
-      final errorStr = e.toString();
+      final errorStr = messageFromApiException(e);
       _joinLeaveError = errorStr;
 
       // If user already joined, still show Leave button
@@ -446,7 +458,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('❌ [ViewModel] leaveMatch failed — error: $e');
       log('📍 [ViewModel] leaveMatch stacktrace: $stack');
 
-      final errorStr = e.toString();
+      final errorStr = messageFromApiException(e);
       _joinLeaveError = errorStr;
 
       // If user is the host, they cannot leave
@@ -499,7 +511,14 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _joinLeaveError = null;
     _isJoinLeaveLoading = false;
     _safeInvitingUserIds.clear();
-    _safeInvitedUserIds.clear();
+    _restoreInvitedUserIdsForMatch(match.id);
+    final cachedStatus = _sessionStatusByMatchId[match.id.trim()];
+    if (cachedStatus != null && cachedStatus.isNotEmpty) {
+      _matchStatus = cachedStatus;
+    } else {
+      _matchStatus = _normalizeMatchStatus(match.status);
+      _sessionStatusByMatchId[match.id.trim()] = _matchStatus;
+    }
     _inviteErrorMessage = null;
     if (match.id.trim().isNotEmpty) {
       unawaited(refreshRoster());
@@ -522,6 +541,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _rosterSkills.removeAt(index);
     if (index < _rosterUserIds.length) {
       _rosterUserIds.removeAt(index);
+    }
+    if (index < _rosterAvatarUrls.length) {
+      _rosterAvatarUrls.removeAt(index);
     }
     _syncCurrentMatchRoster();
     notifyListeners();
@@ -560,10 +582,13 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       _rosterNames.removeAt(index);
       _rosterSkills.removeAt(index);
       _rosterUserIds.removeAt(index);
+      if (index < _rosterAvatarUrls.length) {
+        _rosterAvatarUrls.removeAt(index);
+      }
       _syncCurrentMatchRoster();
       return response.message;
     } catch (e) {
-      _joinLeaveError = e.toString();
+      _joinLeaveError = messageFromApiException(e);
       return null;
     } finally {
       _isJoinLeaveLoading = false;
@@ -603,6 +628,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     final names = <String>[];
     final skills = <String>[];
     final userIds = <String>[];
+    final avatarUrls = <String>[];
 
     for (var i = 0; i < match.players.length; i++) {
       final playerName = match.players[i].trim();
@@ -613,11 +639,13 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       names.add(playerName);
       skills.add(match.playerSkillAt(i));
       userIds.add('');
+      avatarUrls.add('');
     }
 
     _rosterNames = names;
     _rosterSkills = skills;
     _rosterUserIds = userIds;
+    _rosterAvatarUrls = avatarUrls;
     AppLogger.debug(
       'Seeded participated roster from route for matchId=${match.id}: '
       'players=$_rosterNames',
@@ -633,11 +661,16 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     final names = <String>[];
     final skills = <String>[];
     final userIds = <String>[];
-    var isCurrentUserInParticipants = false;
+    final avatarUrls = <String>[];
+    final invitedUserIdsFromDetail = <String>{};
 
     for (final participant in detail.participants) {
-      if (!participant.countsAsJoinedPlayer) continue;
       final userId = participant.user.id.trim();
+      final role = participant.role.trim().toLowerCase();
+      if (role.contains('invit') && role.contains('pend') && userId.isNotEmpty) {
+        invitedUserIdsFromDetail.add(userId);
+      }
+      if (!participant.countsAsJoinedPlayer) continue;
       final fullName = participant.user.fullName.trim();
       if (myId.isNotEmpty && userId == myId) {
         isCurrentUserInParticipants = true;
@@ -651,17 +684,23 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         detail.skillLevel.trim().isNotEmpty ? detail.skillLevel : 'Intermediate',
       );
       userIds.add(userId);
+      avatarUrls.add(participant.user.avatarUrl?.trim() ?? '');
     }
 
     _rosterNames = names;
     _rosterSkills = skills;
     _rosterUserIds = userIds;
-    if ((_currentMatch?.id.trim().isNotEmpty ?? false)) {
-      final matchId = _currentMatch!.id.trim();
-      _hasJoined = isCurrentUserInParticipants;
-      _sessionJoinStateByMatchId[matchId] = isCurrentUserInParticipants;
-    } else {
-      _hasJoined = isCurrentUserInParticipants;
+    _rosterAvatarUrls = avatarUrls;
+    if (invitedUserIdsFromDetail.isNotEmpty) {
+      _safeInvitedUserIds
+        ..clear()
+        ..addAll(invitedUserIdsFromDetail);
+      _cacheInvitedUserIdsForMatch(detail.id);
+    }
+    final resolvedStatus = _normalizeMatchStatus(detail.status);
+    _matchStatus = resolvedStatus;
+    if (detail.id.trim().isNotEmpty) {
+      _sessionStatusByMatchId[detail.id.trim()] = resolvedStatus;
     }
     AppLogger.info(
       'Stored participated players from backend for matchId=${detail.id}: '
@@ -686,6 +725,20 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     );
   }
 
+  void _cacheInvitedUserIdsForMatch(String matchId) {
+    final key = matchId.trim();
+    if (key.isEmpty) return;
+    _sessionInvitedUserIdsByMatchId[key] = Set<String>.from(_safeInvitedUserIds);
+  }
+
+  void _restoreInvitedUserIdsForMatch(String matchId) {
+    final key = matchId.trim();
+    final cached = _sessionInvitedUserIdsByMatchId[key];
+    _safeInvitedUserIds
+      ..clear()
+      ..addAll(cached ?? const <String>{});
+  }
+
   void _addCurrentUserToRoster() {
     final rawName = ProfileService().profile?.fullName.trim() ?? '';
     if (rawName.isEmpty) return;
@@ -701,6 +754,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _rosterNames.add(rawName);
     _rosterSkills.add(_currentMatch?.skillLevel ?? 'Intermediate');
     _rosterUserIds.add(ProfileService().profile?.id.trim() ?? '');
+    _rosterAvatarUrls.add(ProfileService().profile?.avatarUrl?.trim() ?? '');
     AppLogger.success(
       'Accepted user stored in participated list: $rawName',
       tag: 'HostDetailVM',
@@ -730,6 +784,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     if (index < _rosterUserIds.length) {
       _rosterUserIds.removeAt(index);
     }
+    if (index < _rosterAvatarUrls.length) {
+      _rosterAvatarUrls.removeAt(index);
+    }
     AppLogger.info(
       'User removed from participated list: $rawName',
       tag: 'HostDetailVM',
@@ -744,18 +801,63 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     log('🟡 [ViewModel] startMatch called — matchId: $matchId');
     log('🟡 [ViewModel] Current match status: $_matchStatus');
 
+    if (_matchStatus == 'ongoing') {
+      log('ℹ️ [ViewModel] Match is already ongoing. Skipping status update call.');
+      return true;
+    }
+    if (_matchStatus == 'completed') {
+      _matchStatusError = 'Match is already completed';
+      log('ℹ️ [ViewModel] Match is already completed. Start is not allowed.');
+      return false;
+    }
+
+    return _updateMatchStatus(matchId: matchId, nextStatus: 'Ongoing');
+  }
+
+  Future<bool> completeMatch(String matchId) async {
+    if (_matchStatus == 'completed') {
+      return true;
+    }
+    if (_matchStatus == 'cancelled') {
+      _matchStatusError = 'Cancelled match cannot be completed';
+      return false;
+    }
+    return _updateMatchStatus(matchId: matchId, nextStatus: 'Completed');
+  }
+
+  Future<bool> cancelMatch(String matchId) async {
+    if (_matchStatus == 'cancelled') {
+      return true;
+    }
+    if (_matchStatus == 'ongoing') {
+      _matchStatusError =
+          'This match is already ongoing and can only be completed right now.';
+      return false;
+    }
+    if (_matchStatus == 'completed') {
+      _matchStatusError = 'Completed match cannot be cancelled';
+      return false;
+    }
+    return _updateMatchStatus(matchId: matchId, nextStatus: 'Cancelled');
+  }
+
+  Future<bool> _updateMatchStatus({
+    required String matchId,
+    required String nextStatus,
+  }) async {
+    final previousStatus = _matchStatus;
     _isUpdatingMatchStatus = true;
     _matchStatusError = null;
-    _matchStatus = 'ongoing';
+    _matchStatus = _normalizeMatchStatus(nextStatus);
     notifyListeners();
 
     try {
       log('🚀 [ViewModel] Calling UpdateMatchStatusRepo.updateMatchStatus...');
       log('🚀 [ViewModel] Endpoint: /api/v1/matches/$matchId/status');
-      log('🚀 [ViewModel] New status: Ongoing (capitalized)');
+      log('🚀 [ViewModel] New status: $nextStatus');
 
       final UpdateMatchStatusRequestModel requestData =
-          UpdateMatchStatusRequestModel(status: 'Ongoing');
+          UpdateMatchStatusRequestModel(status: nextStatus);
 
       final UpdateMatchStatusModel result = await _updateMatchStatusRepo
           .updateMatchStatus(matchId: matchId, data: requestData);
@@ -764,22 +866,38 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       log('✅ [ViewModel] Response status: ${result.status}');
       log('✅ [ViewModel] Match ID: ${result.id}');
 
-      _matchStatus = result.status ?? 'ongoing';
+      final resolvedStatus = _normalizeMatchStatus(result.status);
+      _matchStatus = resolvedStatus;
+      _sessionStatusByMatchId[matchId.trim()] = resolvedStatus;
       _isUpdatingMatchStatus = false;
       notifyListeners();
-
       return true;
     } catch (e, stack) {
       log('❌ [ViewModel] Failed to update match status — error: $e');
       log('📍 [ViewModel] Stacktrace: $stack');
-
-      _matchStatusError = e.toString();
-      _matchStatus = 'pending'; // Revert to pending on error
+      _matchStatusError = messageFromApiException(e);
+      _matchStatus = previousStatus;
       _isUpdatingMatchStatus = false;
       notifyListeners();
-
       return false;
     }
+  }
+
+  String _normalizeMatchStatus(String? rawStatus) {
+    final value = rawStatus?.trim().toLowerCase() ?? '';
+    // Backend may send "Open" for not-started matches.
+    // Keep a single internal pre-start status to avoid UI branching issues.
+    if (value == 'open') {
+      return 'pending';
+    }
+    if (value == 'ongoing' ||
+        value == 'completed' ||
+        value == 'pending' ||
+        value == 'cancelled') {
+      return value;
+    }
+    if (value.isEmpty) return 'pending';
+    return value;
   }
 
   // ── Dispose ────────────────────────────────────────────────────────────────

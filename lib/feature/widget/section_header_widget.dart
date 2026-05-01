@@ -21,32 +21,44 @@ class SectionHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasAction = actionText != null;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        NormalText(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          titleText: title,
-          maxLines: 2,
+        Expanded(
+          child: NormalText(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            titleText: title,
+            maxLines: hasAction ? 1 : 3,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
 
-        if (actionText != null)
-          GestureDetector(
-            onTap: onTap,
-            child: Row(
-              children: [
-                NormalText(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  titleText: actionText!,
-                  maxLines: 2,
-                  titleColor: context.appColors.primary,
-                ),
+        if (actionText != null) ...[
+          SizedBox(width: context.w(12)),
+          Flexible(
+            child: GestureDetector(
+              onTap: onTap,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: NormalText(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      titleText: actionText!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      titleColor: context.appColors.primary,
+                    ),
+                  ),
 
-                SizedBox(width: context.w(10)),
-                SvgPicture.asset(icon ?? AppAssets.nextIcon),
-              ],
+                  SizedBox(width: context.w(10)),
+                  SvgPicture.asset(icon ?? AppAssets.nextIcon),
+                ],
+              ),
             ),
           ),
+        ],
       ],
     );
   }

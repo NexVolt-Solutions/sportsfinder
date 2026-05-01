@@ -269,10 +269,12 @@ class _FollowingTrailing extends StatelessWidget {
     final isUnfollowing = vm.isUnfollowingUser(user.id);
     final error = vm.getUnfollowUserError(user.id);
 
+    final canUnfollow = vm.canManageFollowingActions;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: isUnfollowing ? null : () => vm.unfollowUserApi(user),
+        onTap: !canUnfollow || isUnfollowing ? null : () => vm.unfollowUserApi(user),
         borderRadius: BorderRadius.circular(context.radiusR(10)),
         child: Ink(
           decoration: BoxDecoration(
@@ -316,7 +318,7 @@ class _FollowingTrailing extends StatelessWidget {
                       ? 'Retry'
                       : isUnfollowing
                       ? 'Unfollowing...'
-                      : AppText.followed,
+                      : AppText.following,
                   style: context.appText.style(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

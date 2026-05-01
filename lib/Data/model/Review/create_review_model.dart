@@ -1,17 +1,14 @@
 class CreateReviewRequestModel {
-  final String matchId;
   final int rating;
   final String comment;
 
   CreateReviewRequestModel({
-    required this.matchId,
     required this.rating,
     required this.comment,
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'match_id': matchId,
+    return <String, dynamic>{
       'rating': rating,
       'comment': comment,
     };

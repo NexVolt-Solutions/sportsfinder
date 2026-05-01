@@ -19,6 +19,7 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
+import 'package:sport_finding/feature/widget/match_location_map_card.dart';
 
 /// Match detail UI. Reads [DiscoveryMatch] from [ModalRoute.settings.arguments]
 /// only in [build] so we never call [notifyListeners] during dependency changes.
@@ -88,6 +89,16 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
       builder: (context, model, _) {
         final match = model.currentMatch ?? routeMatch;
         final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
+        final isHostedByCurrentUser = match.isHostedByCurrentUser;
+        final status = model.matchStatus;
+        final isPending = status == 'pending';
+        final isOngoing = status == 'ongoing';
+        final isCompleted = status == 'completed';
+        final isCancelled = status == 'cancelled';
+        final joinDisabledByStatus =
+            !isHostedByCurrentUser &&
+            !model.hasJoined &&
+            (!isOngoing || isCancelled || isCompleted);
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -110,32 +121,20 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.calendarIcon,
-                            title: 'Date',
-                            value: match.date,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.calendarIcon,
+                              title: 'Date',
+                              value: match.date,
+                            ),
                           ),
-                          InfoItem(
-                            icon: AppAssets.clockIcon,
-                            title: 'Time',
-                            value: match.time,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: context.h(16)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InfoItem(
-                            icon: AppAssets.matchesIcon,
-                            title: AppText.skillLevel,
-                            value: match.skillLevel,
-                          ),
-                          InfoItem(
-                            icon: AppAssets.playerIcon,
-                            title: AppText.players,
-                            value:
-                                '${model.rosterCount}/${match.participantsTotal}',
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.clockIcon,
+                              title: 'Time',
+                              value: match.time,
+                            ),
                           ),
                         ],
                       ),
@@ -143,15 +142,34 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.locationIcon,
-                            title: AppText.location,
-                            value: match.location,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.matchesIcon,
+                              title: AppText.skillLevel,
+                              value: match.skillLevel,
+                            ),
+                          ),
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.playerIcon,
+                              title: AppText.players,
+                              value:
+                                  '${model.rosterCount}/${match.participantsTotal}',
+                            ),
                           ),
                         ],
+                      ),
+                      SizedBox(height: context.h(16)),
+                      InfoItem(
+                        icon: AppAssets.locationIcon,
+                        title: AppText.location,
+                        value: match.location,
+                        maxLines: 3,
                       ),
                       SizedBox(height: context.h(16)),
                       UserGreetingWidget(
+                        imageUrl: match.hostAvatarUrl,
                         title: match.displayHostName,
                         locName: match.location,
                         subTitle: match.resolvedHostBio,
@@ -177,6 +195,12 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                           ),
                       ],
                       SizedBox(height: context.h(16)),
+                      MatchLocationMapCard(
+                        location: match.location,
+                        latitude: match.latitude,
+                        longitude: match.longitude,
+                      ),
+                      SizedBox(height: context.h(16)),
                       NormalText(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         titleText: AppText.aboutThisMatch,
@@ -200,19 +224,15 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         ...List.generate(
                           model.rosterCount,
                           (index) => UserMatchCard(
+                            avatarUrl: model.rosterAvatarUrlAt(index),
                             onCardTap: () {
-                              final userId = model.rosterUserIdAt(index).trim();
-                              final displayName = model.rosterNameAt(index);
-                              if (_uuidPattern.hasMatch(userId)) {
-                                match.pushPublicProfileForUser(
-                                  context,
-                                  userId: userId,
-                                  displayName: displayName,
-                                );
-                                return;
-                              }
-                              AppSnackBar.show(
-                                'Player profile is not available yet. Please try again in a moment.',
+                              final uid = model.rosterUserIdAt(index).trim();
+                              final name = model.rosterNameAt(index);
+                              if (uid.isEmpty || name.trim().isEmpty) return;
+                              match.pushPublicProfileForUser(
+                                context,
+                                userId: uid,
+                                displayName: name,
                               );
                             },
                             title: model.rosterNameAt(index),
@@ -236,23 +256,33 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                   child: model.isJoinLeaveLoading
                       ? const Center(child: CircularProgressIndicator())
                       : CustomButton(
-                          text: match.isHostedByCurrentUser
+                          text: isHostedByCurrentUser
                               ? AppText.startMatch
+                              : isCancelled
+                              ? 'Match Cancelled'
+                              : isCompleted
+                              ? 'Match Completed'
+                              : isPending && !model.hasJoined
+                              ? 'Match Not Started'
                               : model.hasJoined
                               ? AppText.leaveMatch
                               : AppText.joinMatch,
-                          color: match.isHostedByCurrentUser
+                          color: isHostedByCurrentUser
                               ? context.appColors.primary
+                              : joinDisabledByStatus
+                              ? context.appColors.greylight
                               : model.hasJoined
                               ? context.appColors.error
                               : context.appColors.primary,
-                          onTap: () async {
+                          onTap: joinDisabledByStatus
+                              ? null
+                              : () async {
                             final matchId = match.id;
                             if (matchId.isEmpty) {
                               return;
                             }
 
-                            if (match.isHostedByCurrentUser) {
+                            if (isHostedByCurrentUser) {
                               if (!context.mounted) return;
                               AppSnackBar.show('You are hosting this match.');
                               return;

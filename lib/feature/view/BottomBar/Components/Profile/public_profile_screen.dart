@@ -13,11 +13,11 @@ import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   const PublicProfileScreen({super.key, this.args});
 
-  /// From [RouteSettings.arguments]; avoids [ModalRoute.of] inside Provider `create`.
   final PublicProfileArgs? args;
 
   void _showRateSheet(BuildContext context, PublicProfileViewModel model) {
@@ -58,9 +58,7 @@ class PublicProfileScreen extends StatelessWidget {
                   ),
                   Expanded(
                     child: model.showSpinner
-                        ? Center(
-                            child: CircularProgressIndicator(color: c.primary),
-                          )
+                        ? const _ProfileScreenShimmer()
                         : model.showError
                         ? Padding(
                             padding: context.padSym(h: 20),
@@ -99,29 +97,40 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: context.h(20)),
-                              if (!model.isOwnProfile) ...[
-                                _FollowMessageRow(
-                                  onFollow: () => model.onFollowTap(context),
-                                  onMessage: () => model.onMessageTap(context),
-                                  isFollowing: model.isFollowing,
-                                  isFollowLoading: model.isFollowLoading,
-                                ),
-                                SizedBox(height: context.h(12)),
-                                _RatePlayerButton(
-                                  onTap: () => _showRateSheet(context, model),
-                                ),
-                                SizedBox(height: context.h(20)),
-                              ] else
-                                SizedBox(height: context.h(20)),
+
+                              _FollowMessageRow(
+                                onFollow: () async => !model.isOwnProfile
+                                    ? await model.onFollowTap(context)
+                                    : null,
+                                onMessage: () => !model.isOwnProfile
+                                    ? model.onMessageTap(context)
+                                    : null,
+                                isFollowing: model.isFollowing,
+                                isFollowLoading: model.isFollowLoading,
+                              ),
+                              SizedBox(height: context.h(12)),
+                              _RatePlayerButton(
+                                onTap: model.canRateProfile
+                                    ? () => _showRateSheet(context, model)
+                                    : null,
+                              ),
+                              SizedBox(height: context.h(20)),
+
+                              SizedBox(height: context.h(20)),
                               ProfileDetailStatsRow(
                                 followersCount: model.followersCount,
                                 followingCount: model.followingCount,
                                 ratingValue: model.ratingValue,
-                                onFollowersTap: () =>
-                                    model.openFollowers(context),
-                                onFollowingTap: () =>
-                                    model.openFollowing(context),
+                                matchesPlayedValue: model.matchesPlayedValue,
+                                onFollowersTap: model.isOwnProfile
+                                    ? null
+                                    : () => model.openFollowers(context),
+                                onFollowingTap: model.isOwnProfile
+                                    ? null
+                                    : () => model.openFollowing(context),
                                 onRatingTap: model.isOwnProfile
+                                    ? null
+                                    : !model.canRateProfile
                                     ? null
                                     : () => _showRateSheet(context, model),
                               ),
@@ -138,19 +147,31 @@ class PublicProfileScreen extends StatelessWidget {
                                   skillLabel: s.skill,
                                 ),
                               ),
-                              SizedBox(height: context.h(8)),
-                              NormalText(
-                                titleText: AppText.reviews,
-                                titleStyle: t.text16Bold.copyWith(
-                                  color: c.greyDark,
+                              if (model.hasReviews) ...[
+                                SizedBox(height: context.h(8)),
+                                NormalText(
+                                  titleText: AppText.reviews,
+                                  titleStyle: t.text16Bold.copyWith(
+                                    color: c.greyDark,
+                                  ),
                                 ),
-                              ),
-                              ProfileDetailReviewCard(
-                                reviewAuthor: model.reviewAuthorForDisplay,
-                                reviewDate: model.reviewDateForDisplay,
-                                reviewBody: model.reviewBodyForDisplay,
-                                reviewInitial: model.reviewInitial,
-                              ),
+                                SizedBox(height: context.h(8)),
+                                ...model.parsedReviews.map(
+                                  (review) => Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: context.h(10),
+                                    ),
+                                    child: ProfileDetailReviewCard(
+                                      reviewAuthor: review['author'] ?? '—',
+                                      reviewDate: review['date'] ?? '',
+                                      reviewBody:
+                                          review['body'] ??
+                                          AppText.profilePlaceholderReview,
+                                      reviewInitial: review['initial'] ?? '?',
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                   ),
@@ -160,6 +181,48 @@ class PublicProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileScreenShimmer extends StatelessWidget {
+  const _ProfileScreenShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: context.padSym(h: 20).copyWith(bottom: context.h(32)),
+      children: [
+        const Center(
+          child: ShimmerBox(width: 96, height: 96, shape: BoxShape.circle),
+        ),
+        SizedBox(height: context.h(14)),
+        const Center(child: ShimmerBox(width: 170, height: 18)),
+        SizedBox(height: context.h(10)),
+        const Center(child: ShimmerBox(width: 140, height: 12)),
+        SizedBox(height: context.h(16)),
+        const ShimmerBox(height: 56, radius: 28),
+        SizedBox(height: context.h(12)),
+        const ShimmerBox(height: 44, radius: 24),
+        SizedBox(height: context.h(20)),
+        Row(
+          children: const [
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+          ],
+        ),
+        SizedBox(height: context.h(18)),
+        const ShimmerBox(width: 90, height: 16),
+        SizedBox(height: context.h(12)),
+        const ShimmerBox(height: 52),
+        SizedBox(height: context.h(10)),
+        const ShimmerBox(height: 52),
+      ],
     );
   }
 }
@@ -174,37 +237,26 @@ class _RatePlayerSheet extends StatefulWidget {
 }
 
 class _RatePlayerSheetState extends State<_RatePlayerSheet> {
-  final TextEditingController _matchIdController = TextEditingController();
   final TextEditingController _controller = TextEditingController();
   int _selectedStars = 0;
+  bool _isSubmittingLocal = false;
 
   @override
   void initState() {
     super.initState();
-    final initialMatchId = widget.model.initialMatchId;
-    if (initialMatchId.isNotEmpty) {
-      _matchIdController.text = initialMatchId;
-    }
   }
 
   @override
   void dispose() {
-    _matchIdController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final matchId = _matchIdController.text.trim();
+    if (_isSubmittingLocal || widget.model.isSubmittingReview) return;
     final comment = _controller.text.trim();
-    debugPrint(
-      '[RatePlayerSheet] Submit tapped for matchId=$matchId, '
-      'rating=$_selectedStars',
-    );
-    if (matchId.isEmpty) {
-      AppSnackBar.show(AppText.reviewValidationMatchId);
-      return;
-    }
+    debugPrint('[RatePlayerSheet] Submit tapped for rating=$_selectedStars');
+
     if (_selectedStars <= 0) {
       AppSnackBar.show(AppText.reviewValidationRating);
       return;
@@ -214,11 +266,14 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
       return;
     }
 
+    setState(() => _isSubmittingLocal = true);
     final ok = await widget.model.submitReview(
-      matchId: matchId,
       rating: _selectedStars,
       comment: comment,
     );
+    if (mounted) {
+      setState(() => _isSubmittingLocal = false);
+    }
     if (!mounted) return;
 
     if (ok) {
@@ -295,24 +350,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(20)),
             Container(
-              padding: context.padSym(h: 14, v: 4),
-              decoration: BoxDecoration(
-                color: c.blue10,
-                borderRadius: BorderRadius.circular(context.radiusR(12)),
-              ),
-              child: TextField(
-                controller: _matchIdController,
-                style: t.text16W500.copyWith(color: c.onSurface),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  labelText: AppText.matchId,
-                  hintText: AppText.matchIdHint,
-                  hintStyle: t.text14W400.copyWith(color: c.greylight),
-                ),
-              ),
-            ),
-            SizedBox(height: context.h(12)),
-            Container(
               height: context.h(120),
               padding: context.padAll(16),
               decoration: BoxDecoration(
@@ -335,12 +372,17 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(18)),
             CustomButton(
-              text: widget.model.isSubmittingReview
+              text: (widget.model.isSubmittingReview || _isSubmittingLocal)
                   ? '${AppText.submitReview}...'
                   : AppText.submitReview,
               color: c.primary,
               colorText: c.onPrimary,
-              onTap: widget.model.isSubmittingReview ? null : _submit,
+              onTap:
+                  (widget.model.isSubmittingReview ||
+                      _isSubmittingLocal ||
+                      !widget.model.canRateProfile)
+                  ? null
+                  : _submit,
             ),
           ],
         ),
@@ -440,7 +482,7 @@ class _FollowMessageRow extends StatelessWidget {
 class _RatePlayerButton extends StatelessWidget {
   const _RatePlayerButton({required this.onTap});
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

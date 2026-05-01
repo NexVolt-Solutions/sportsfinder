@@ -1,5 +1,5 @@
 name: sport_finding
-description: "A new Flutter project."
+description: "SportFinding — find players and matches near you."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -19,6 +19,7 @@ dependencies:
   image_picker: ^1.2.1
   http: ^1.6.0
   firebase_core: ^4.6.0
+  firebase_messaging: ^16.0.2
   firebase_auth: ^6.3.0
   google_sign_in: ^7.2.0
   file_picker: ^11.0.2
@@ -26,17 +27,32 @@ dependencies:
   http_parser: ^4.1.2
   shared_preferences: ^2.5.5
   geolocator: ^14.0.2
+  flutter_dotenv: ^6.0.1
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.4
+  web_socket_channel: ^3.0.3
+  google_maps_flutter: ^2.12.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  remove_alpha_ios: true
 
 flutter:
 
   uses-material-design: true
 
   assets:
+    - assets/config/maps.env
     - assets/logo/
     - assets/icon/
     - assets/sport/

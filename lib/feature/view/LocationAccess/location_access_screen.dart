@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,8 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/onboarding_profile_sync.dart';
+import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -23,8 +27,14 @@ class LocationAccessScreen extends StatefulWidget {
 }
 
 class _LocationAccessScreenState extends State<LocationAccessScreen> {
+  bool _navigated = false;
+
   Future<void> _finishOnboardingAndOpenHome(BuildContext context) async {
-    await AppPreferences.setOnboardingCompleted(true);
+    if (_navigated) return;
+    _navigated = true;
+    await syncPendingOnboardingToServer();
+    final isComplete = await AuthRouteResolver.isCurrentUserProfileComplete();
+    await AppPreferences.setOnboardingCompleted(isComplete);
     if (!context.mounted) return;
     Navigator.pushReplacementNamed(
       context,
@@ -33,13 +43,29 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
     );
   }
 
-  Future<void> _handleAllowLocationTap(BuildContext context) async {
+  Future<void> _tryAutoCompleteIfLocationAllowed() async {
+    if (_navigated) return;
+    if (!mounted) return;
     final model = context.read<LocationAccessScreenViewModel>();
-    final success = await model.requestCurrentLocation();
+    final ok = await model.hasUsableLocationPermission();
+    if (!ok || _navigated || !mounted) return;
+    await model.saveLocationInBackground();
+    if (_navigated || !mounted) return;
+    await _finishOnboardingAndOpenHome(context);
+  }
+
+  Future<void> _handleAllowLocationTap(BuildContext context) async {
+    if (_navigated) return;
+    final model = context.read<LocationAccessScreenViewModel>();
+    final success = await model.runAllowLocationFlow();
 
     if (!context.mounted) return;
 
     if (!success) {
+      if (model.shouldOpenLocationSettings) {
+        final openedSettings = await model.openDeviceLocationSettings();
+        if (!context.mounted || openedSettings) return;
+      }
       AppSnackBar.show(
         model.errorMessage ?? 'Unable to get your current location.',
         backgroundColor: context.appColors.error,
@@ -47,23 +73,18 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
       return;
     }
 
-    final position = model.currentPosition;
-    if (position != null) {
-      await AppPreferences.saveCurrentLocation(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        locationName: model.currentAddress,
-      );
-    }
-
-    AppSnackBar.show(
-      model.currentAddress != null && model.currentAddress!.isNotEmpty
-          ? 'Location captured: ${model.currentAddress}'
-          : 'Location captured: ${model.currentPosition?.latitude}, ${model.currentPosition?.longitude}',
-      backgroundColor: context.appColors.primary,
-    );
-
+    if (_navigated) return;
     await _finishOnboardingAndOpenHome(context);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_tryAutoCompleteIfLocationAllowed());
+      }
+    });
   }
 
   @override
@@ -146,35 +167,6 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
                               maxLines: 4,
                               subColor: context.appColors.greyDark,
                             ),
-                            if (model.currentPosition != null) ...[
-                              SizedBox(height: context.h(16)),
-                              if (model.currentAddress != null &&
-                                  model.currentAddress!.isNotEmpty)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: context.h(8),
-                                  ),
-                                  child: NormalText(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    titleText: model.currentAddress!,
-                                    titleStyle: context.appText.text14W600,
-                                    titleAlign: TextAlign.center,
-                                  ),
-                                ),
-                              NormalText(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.center,
-                                titleText:
-                                    'Lat: ${model.currentPosition!.latitude}',
-                                subText:
-                                    'Lng: ${model.currentPosition!.longitude}',
-                                titleStyle: context.appText.text14W600,
-                                subStyle: context.appText.text14W400,
-                                titleAlign: TextAlign.center,
-                                subAlign: TextAlign.center,
-                              ),
-                            ],
                           ],
                         ),
                       ),

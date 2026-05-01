@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
@@ -12,10 +13,11 @@ import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
-import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/global_match_card.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
+import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
 class AllUpcomingMatches extends StatefulWidget {
   const AllUpcomingMatches({
@@ -25,7 +27,6 @@ class AllUpcomingMatches extends StatefulWidget {
   });
 
   final bool embedAsBottomTab;
-
   final String? listTitle;
 
   @override
@@ -60,6 +61,93 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
   Widget build(BuildContext context) {
     return Consumer<AllUpcommingMatchesViewModel>(
       builder: (context, model, _) {
+        if (kIsWeb && widget.embedAsBottomTab) {
+          final rows = model.matches
+              .map(
+                (match) => WebMatchTableRowData(
+                  title: match.title,
+                  sport: match.sport,
+                  players:
+                      '${match.currentPlayers}/${match.maxPlayers}',
+                  location: match.locationName.isNotEmpty
+                      ? match.locationName
+                      : match.location,
+                  status: _formatWebStatus(match.status),
+                  onView: () => _openMatchDetails(
+                    context,
+                    model,
+                    DiscoveryMatch.fromAllMatches(match),
+                  ),
+                  onEdit: () {
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.createMatchScreen,
+                      arguments: DiscoveryMatch.fromAllMatches(match),
+                    );
+                  },
+                  onDelete: () => _openMatchDetails(
+                    context,
+                    model,
+                    DiscoveryMatch.fromAllMatches(match),
+                  ),
+                ),
+              )
+              .toList();
+          return WebMatchesManagementSection(
+            title: widget.listTitle ?? 'Matches Management',
+            subtitle: '${rows.length} total matches',
+            onSearchChanged: model.searchMatches,
+            onSportsTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(
+                    onApply: (filterData) {
+                      model.applyFilters(filterData);
+                    },
+                  );
+                },
+              );
+            },
+            onDateTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(
+                    onApply: (filterData) {
+                      model.applyFilters(filterData);
+                    },
+                  );
+                },
+              );
+            },
+            onLocationTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(
+                    onApply: (filterData) {
+                      model.applyFilters(filterData);
+                    },
+                  );
+                },
+              );
+            },
+            rows: rows,
+            emptyLabel: model.isLoading
+                ? 'Loading matches...'
+                : model.listScope == UpcomingMatchesScope.myMatches
+                ? AppText.noHostedMatchesYet
+                : AppText.noMatchesFound,
+          );
+        }
+
         final content = Padding(
           padding: context.padSym(h: 20),
           child: Column(
@@ -77,9 +165,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
               SizedBox(height: context.h(16)),
               SearchBarWidget(
                 isShow: true,
-                onChanged: (text) {
-                  model.searchMatches(text);
-                },
+                onChanged: model.searchMatches,
                 onFilterTap: () {
                   showModalBottomSheet(
                     context: context,
@@ -96,10 +182,13 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                 },
               ),
               SizedBox(height: context.h(16)),
-              // Categories tabs removed (All / Football / Basketball / etc.).
-              SizedBox.shrink(),
+              const SizedBox.shrink(),
               Expanded(
-                child: model.matches.isEmpty
+                child:
+                    (!model.hasFetchedOnce && model.matches.isEmpty) ||
+                        model.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : model.matches.isEmpty
                     ? Center(
                         child: Padding(
                           padding: context.padSym(h: 16),
@@ -117,30 +206,56 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                     : ListenableBuilder(
                         listenable: ProfileService(),
                         builder: (context, _) {
-                          return ListView.separated(
-                            itemCount: model.matches.length,
-                            padding: context.padSym(h: 0),
-                            itemBuilder: (context, index) {
-                              final match = model.matches[index];
-
-                              return GlobalMatchCard.fromAllMatches(
-                                match,
-                                onCardTap: () => _openMatchDetails(
-                                  context,
-                                  model,
-                                  DiscoveryMatch.fromAllMatches(match),
-                                ),
-                                onSeeAllTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.seeAllInvatedPlayerScreen,
-                                    arguments: match,
-                                  );
-                                },
-                              );
+                          return NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              final metrics = notification.metrics;
+                              final shouldLoadMore =
+                                  metrics.pixels >=
+                                      metrics.maxScrollExtent - 200 &&
+                                  model.hasNext &&
+                                  !model.isLoading;
+                              if (shouldLoadMore) {
+                                model.loadMore();
+                              }
+                              return false;
                             },
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: context.h(12)),
+                            child: ListView.separated(
+                              itemCount:
+                                  model.matches.length +
+                                  (model.hasNext ? 1 : 0),
+                              padding: context.padSym(h: 0),
+                              itemBuilder: (context, index) {
+                                if (index >= model.matches.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                final match = model.matches[index];
+
+                                return GlobalMatchCard.fromAllMatches(
+                                  match,
+                                  onCardTap: () => _openMatchDetails(
+                                    context,
+                                    model,
+                                    DiscoveryMatch.fromAllMatches(match),
+                                  ),
+                                  onSeeAllTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      RoutesName.seeAllInvatedPlayerScreen,
+                                      arguments: match,
+                                    );
+                                  },
+                                );
+                              },
+                              separatorBuilder: (context, index) =>
+                                  SizedBox(height: context.h(12)),
+                            ),
                           );
                         },
                       ),
@@ -156,4 +271,10 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
       },
     );
   }
+}
+
+String _formatWebStatus(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return 'Upcoming';
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }

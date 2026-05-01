@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_Repository.dart';
 import 'package:sport_finding/Data/model/UpdateProfile/update_profile_model.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 
 class ProfileService extends ChangeNotifier {
   static final ProfileService _instance = ProfileService._internal();
   factory ProfileService() => _instance;
-  ProfileService._internal();
+  ProfileService._internal() {
+    Future<void>.microtask(_hydrateFallbackLocation);
+  }
 
   final MyProfileRepository _repository = MyProfileRepository(
     apiService: ApiService(),
@@ -17,12 +21,19 @@ class ProfileService extends ChangeNotifier {
   UserProfileModel? profile;
   bool isLoading = false;
   String? errorMessage;
+  String? _fallbackLocation;
 
   String get id => profile?.id ?? 'default id';
   String get fullName => profile?.fullName ?? 'default name';
   String get email => profile?.email ?? 'default email';
   String get bio => profile?.bio ?? 'default bio';
-  String get location => profile?.location ?? 'default location';
+  String get location {
+    final apiLocation = profile?.location?.trim();
+    if (apiLocation != null && apiLocation.isNotEmpty) return apiLocation;
+    final fallback = _fallbackLocation?.trim();
+    if (fallback != null && fallback.isNotEmpty) return fallback;
+    return AppText.profilePlaceholderLocation;
+  }
 
   String get avatarUrl => profile?.avatarUrl ?? '';
   bool get hasProfile => profile != null;
@@ -52,6 +63,7 @@ class ProfileService extends ChangeNotifier {
         profile = UserProfileModel.fromJson(
           Map<String, dynamic>.from(response),
         );
+        await _hydrateFallbackLocation();
         log('✅ Profile loaded: ${profile?.fullName}', name: 'ProfileService');
         errorMessage = null;
       } else {
@@ -92,7 +104,9 @@ class ProfileService extends ChangeNotifier {
       fullName: u.fullName.isNotEmpty ? u.fullName : p.fullName,
       email: p.email,
       bio: u.bio ?? p.bio,
-      location: p.location,
+      location: (u.location != null && u.location!.trim().isNotEmpty)
+          ? u.location
+          : p.location,
       avatarUrl: u.avatarUrl ?? p.avatarUrl,
       isAdmin: p.isAdmin,
       status: p.status,
@@ -137,8 +151,22 @@ class ProfileService extends ChangeNotifier {
   // --- call this on logout to wipe cached profile ---
   void clear() {
     profile = null;
+    _fallbackLocation = null;
     errorMessage = null;
     isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> _hydrateFallbackLocation() async {
+    final prev = _fallbackLocation;
+    final fromStorage =
+        await AppPreferences.getCurrentLocationName() ??
+        await AppPreferences.getCurrentLocationText();
+    _fallbackLocation = fromStorage?.trim();
+    final changed = (prev ?? '') != (_fallbackLocation ?? '');
+    final apiLocation = profile?.location?.trim() ?? '';
+    if (changed && apiLocation.isEmpty) {
+      notifyListeners();
+    }
   }
 }

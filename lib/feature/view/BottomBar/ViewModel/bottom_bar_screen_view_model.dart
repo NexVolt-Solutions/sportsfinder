@@ -1,8 +1,7 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
+import 'package:sport_finding/core/utils/logger.dart';
 
 class BottomBarScreenViewModel extends ChangeNotifier {
   final MyProfileRepository repository;
@@ -22,7 +21,7 @@ class BottomBarScreenViewModel extends ChangeNotifier {
   bool get isHomeSelected => _selectedIndex == homeIndex;
 
   UserProfileModel? profile;
-  // ✅ easy getters for the view
+  // Easy getters for the view.
   bool isLoading = false;
   String? errorMessage;
   String get userName => profile?.fullName ?? '';
@@ -32,18 +31,21 @@ class BottomBarScreenViewModel extends ChangeNotifier {
   String get userLocation => profile?.location ?? '';
 
   Future<void> fetchMyProfile() async {
-    isLoading = true;
+    _setProfileLoading(true);
     errorMessage = null;
-    notifyListeners();
     try {
       final response = await repository.getMyProfile();
-      log(response.toString(), name: "response");
+      AppLogger.debug('Fetched profile response', tag: 'BottomBarScreenVM');
       profile = UserProfileModel.fromJson(response);
     } catch (e) {
       errorMessage = e.toString();
     } finally {
-      isLoading = false;
-      notifyListeners();
+      _setProfileLoading(false);
     }
+  }
+
+  void _setProfileLoading(bool value) {
+    isLoading = value;
+    notifyListeners();
   }
 }

@@ -96,10 +96,11 @@ class DiscoveryTabViewModel extends ChangeNotifier {
           (m) =>
               myId == null ||
               myId.isEmpty ||
-              m.host.id.isEmpty ||
-              m.host.id != myId,
+              m.host.id.trim().isEmpty ||
+              m.host.id.trim() != myId,
         )
         .map(DiscoveryMatch.fromAllMatches)
+        .where((m) => !m.isHostedByCurrentUser)
         .toList();
   }
 

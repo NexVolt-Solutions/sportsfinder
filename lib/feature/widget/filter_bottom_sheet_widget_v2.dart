@@ -34,8 +34,55 @@ class _FilterBottomSheetBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<FilterBottomSheetViewModel>(
+        return Consumer<FilterBottomSheetViewModel>(
       builder: (context, vm, _) {
+        if (vm.isLoading) {
+          return Container(
+            padding: context.padSym(h: 20, v: 40),
+            decoration: BoxDecoration(
+              color: context.appColors.onPrimary,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(context.radiusR(12)),
+              ),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: context.w(28),
+                height: context.h(28),
+                child: CircularProgressIndicator(
+                  color: context.appColors.primary,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          );
+        }
+        if (vm.loadError != null) {
+          return Container(
+            padding: context.padSym(h: 20, v: 24),
+            decoration: BoxDecoration(
+              color: context.appColors.onPrimary,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(context.radiusR(12)),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NormalText(
+                  titleText: vm.loadError!,
+                  titleStyle: context.appText.text12W400,
+                  titleColor: context.appColors.error,
+                ),
+                SizedBox(height: context.h(8)),
+                TextButton(
+                  onPressed: vm.retryOptionsLoad,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
         return Container(
           decoration: BoxDecoration(
             color: context.appColors.onPrimary,
@@ -290,7 +337,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                                   context: context,
                                   initialTime: TimeOfDay.now(),
                                 );
-                                if (t != null) {
+                                if (t != null && context.mounted) {
                                   vm.setTime(t, context);
                                 }
                               },

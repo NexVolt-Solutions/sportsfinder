@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repository.dart';
 import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
+import 'package:sport_finding/Data/Repositories/list_of_all_user_repository.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/new_password_screen_view_model.dart';
-import 'package:sport_finding/feature/view/Auth/ForgotPassword/ViewModel/verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
@@ -31,11 +33,12 @@ import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboar
 import 'package:sport_finding/feature/view/Auth/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
-import 'package:sport_finding/feature/view/SplashScreen/SplashScreenViewModel/splash_screen_view_model.dart';
 
 /// Central place for all route-level ChangeNotifier wiring.
 class RouteProviders {
   RouteProviders._();
+
+  static T? _argAs<T>(Object? arg) => arg is T ? arg : null;
 
   static Widget wrapIfNeeded(
     String routeName,
@@ -43,11 +46,6 @@ class RouteProviders {
     Object? routeArguments,
   }) {
     switch (routeName) {
-      case RoutesName.splashScreen:
-        return ChangeNotifierProvider(
-          create: (_) => SplashScreenViewModel(),
-          child: child,
-        );
       case RoutesName.onboardingScreen:
         return ChangeNotifierProvider(
           create: (_) => OnboardingScreenViewModel(),
@@ -57,6 +55,7 @@ class RouteProviders {
         return ChangeNotifierProvider(
           create: (_) => LoginScreenViewModel(
             repository: LoginRepository(apiService: ApiService()),
+            googleAuthRepository: GoogleAuthRepository(apiService: ApiService()),
           ),
           child: child,
         );
@@ -64,6 +63,7 @@ class RouteProviders {
         return ChangeNotifierProvider(
           create: (_) => SignUpViewModel(
             repository: SignUpRepository(apiService: ApiService()),
+            googleAuthRepository: GoogleAuthRepository(apiService: ApiService()),
           ),
           child: child,
         );
@@ -138,12 +138,19 @@ class RouteProviders {
         );
       case RoutesName.allMemberScreen:
         return ChangeNotifierProvider(
-          create: (_) => AllMemberScreenViewModel(),
+          create: (_) => AllMemberScreenViewModel(
+            repository: ListOfAllUserRepository(apiService: ApiService()),
+          ),
           child: child,
         );
       case RoutesName.chatScreen:
+        final args = _argAs<ChatRouteArgs>(routeArguments) ??
+            const ChatRouteArgs(contactName: 'Match Chat', isOnline: true);
         return ChangeNotifierProvider(
-          create: (_) => ChatScreenViewModel(),
+          create: (_) => ChatScreenViewModel(
+            contactName: args.contactName,
+            isOnline: args.isOnline,
+          ),
           child: child,
         );
       case RoutesName.notificationsScreen:
@@ -191,17 +198,19 @@ class RouteProviders {
   ) {
     var scope = UpcomingMatchesScope.allUpcoming;
     List<AllMatches>? prefetched;
+    bool? hasNext;
 
     if (routeArguments is AllUpcomingMatchesRouteArgs) {
       scope = routeArguments.scope;
       prefetched = routeArguments.prefetchedMatches;
+      hasNext = routeArguments.hasNext;
     } else if (routeArguments is UpcomingMatchesScope) {
       scope = routeArguments;
     }
 
     final vm = AllUpcommingMatchesViewModel(scope: scope);
     if (prefetched != null) {
-      vm.applyPrefetchedMatches(prefetched);
+      vm.applyPrefetchedMatches(prefetched, hasNext: hasNext);
     } else {
       Future.microtask(() => vm.fetchMatches());
     }

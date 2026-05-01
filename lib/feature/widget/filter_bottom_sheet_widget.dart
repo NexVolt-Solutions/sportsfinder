@@ -342,6 +342,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             widget.onApply(
                               FilterData(
                                 sportIndex: null,
+                                sportName: null,
                                 skillLevel: null,
                                 distance: kMaxFilterDistanceKm,
                                 time: null,
@@ -386,6 +387,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           onTap: () {
                             final filterData = FilterData(
                               sportIndex: selectedSportIndex,
+                              sportName: selectedSportIndex != null
+                                  ? sports[selectedSportIndex!].name
+                                  : null,
                               skillLevel: selectedSkillIndex != null
                                   ? skillLevels[selectedSkillIndex!]
                                   : null,

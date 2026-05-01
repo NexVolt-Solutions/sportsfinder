@@ -17,11 +17,15 @@ class DiscoveryMatch {
     required this.time,
     this.hostUserId = '',
     this.hostDisplayName = '',
+    this.hostAvatarUrl,
     this.skillLevel = 'Intermediate',
     this.matchDescription = '',
     this.hostBio = '',
     this.playerSkills = const [],
     this.hostMatchesPlayed = 0,
+    this.latitude,
+    this.longitude,
+    this.status = 'pending',
   });
 
   final String id;
@@ -40,6 +44,7 @@ class DiscoveryMatch {
 
   /// Shown in host-style blocks; falls back to [title] if empty.
   final String hostDisplayName;
+  final String? hostAvatarUrl;
   final String skillLevel;
   final String matchDescription;
   final String hostBio;
@@ -49,6 +54,9 @@ class DiscoveryMatch {
 
   /// Shown on host profile card; if 0, [resolvedHostMatchesPlayed] derives a value.
   final int hostMatchesPlayed;
+  final double? latitude;
+  final double? longitude;
+  final String status;
 
   /// Maps API match data into [DiscoveryMatch] (date/time formatted for [matchScheduledStart]).
   factory DiscoveryMatch.fromAllMatches(AllMatches m) {
@@ -75,11 +83,15 @@ class DiscoveryMatch {
       players: const [],
       hostUserId: m.host.id,
       hostDisplayName: m.host.fullName,
+      hostAvatarUrl: m.host.avatarUrl,
       skillLevel: m.skillLevel,
       matchDescription: '',
       hostBio: '',
       playerSkills: const [],
       hostMatchesPlayed: 0,
+      latitude: m.latitude,
+      longitude: m.longitude,
+      status: m.status,
     );
   }
 
@@ -216,11 +228,15 @@ class DiscoveryMatch {
     List<String>? players,
     String? hostUserId,
     String? hostDisplayName,
+    String? hostAvatarUrl,
     String? skillLevel,
     String? matchDescription,
     String? hostBio,
     List<String>? playerSkills,
     int? hostMatchesPlayed,
+    double? latitude,
+    double? longitude,
+    String? status,
   }) {
     return DiscoveryMatch(
       id: id ?? this.id,
@@ -235,11 +251,15 @@ class DiscoveryMatch {
       players: players ?? this.players,
       hostUserId: hostUserId ?? this.hostUserId,
       hostDisplayName: hostDisplayName ?? this.hostDisplayName,
+      hostAvatarUrl: hostAvatarUrl ?? this.hostAvatarUrl,
       skillLevel: skillLevel ?? this.skillLevel,
       matchDescription: matchDescription ?? this.matchDescription,
       hostBio: hostBio ?? this.hostBio,
       playerSkills: playerSkills ?? this.playerSkills,
       hostMatchesPlayed: hostMatchesPlayed ?? this.hostMatchesPlayed,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      status: status ?? this.status,
     );
   }
 }

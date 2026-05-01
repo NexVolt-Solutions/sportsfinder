@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:sport_finding/Data/model/Option/options_model.dart';
-import 'package:sport_finding/Data/repositories/options_repository.dart';
+import 'package:sport_finding/core/Network/platform_options_store.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 
 class SkillLevelScreenViewModel extends ChangeNotifier {
-  final OptionsRepository _repository = OptionsRepository();
 
   void _log(String message) {
     if (kDebugMode) {
@@ -34,7 +33,7 @@ class SkillLevelScreenViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _repository.getOptions();
+      final response = await PlatformOptionsStore.instance.load();
 
       _optionsModel = response;
       skills = response.skills;

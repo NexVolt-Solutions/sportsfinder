@@ -84,7 +84,8 @@ class CustomButton extends StatelessWidget {
         padding: padding ?? context.padSym(v: 10),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: radius ?? BorderRadius.circular(context.radiusR(12)),
+          // Keep default radius fixed across platforms (mobile + web).
+          borderRadius: radius ?? BorderRadius.circular(context.radius(12)),
           border: outlined
               ? Border.all(color: borderColor ?? AppColors.greylight, width: 1)
               : null,

@@ -15,8 +15,9 @@ class ProfileScreenViewModel extends ChangeNotifier {
     _listener = () => notifyListeners();
     // ✅ Forward ProfileService rebuilds into this ViewModel
     ProfileService().addListener(_listener);
-    // ✅ Fetch — skips if already loaded by HomeScreen
-    ProfileService().fetchMyProfile();
+    // Defer so [ProfileService.notifyListeners] does not run during first profile build
+    // (avoids "setState during build" on [AllUpcommingMatchesViewModel]).
+    Future<void>.microtask(() => ProfileService().fetchMyProfile());
   }
 
   @override
@@ -43,6 +44,11 @@ class ProfileScreenViewModel extends ChangeNotifier {
   String get followersCountLabel => '$followersCount';
   String get followingCountLabel => '$followingCount';
   String get matchesPlayedLabel => '$matchesPlayedCount';
+  String get ratingValue {
+    final r = _ps.profile?.stats.rating;
+    if (r == null) return '—';
+    return r.toStringAsFixed(1);
+  }
   bool get notificationsEnabled => _ps.notificationsEnabled;
 
   // --- unchanged below ---

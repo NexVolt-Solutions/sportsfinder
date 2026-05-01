@@ -14,7 +14,12 @@ class SportType {
 
 /// Filter criteria coming from the filter bottom sheet.
 class FilterData {
+  /// Index of the selected sport in the sheet's list (API order).
   final int? sportIndex;
+
+  /// Resolved sport label from [GET /api/v1/options/] (used for filtering).
+  final String? sportName;
+
   final String? skillLevel;
   final double distance;
   final TimeOfDay? time;
@@ -22,6 +27,7 @@ class FilterData {
 
   FilterData({
     this.sportIndex,
+    this.sportName,
     this.skillLevel,
     required this.distance,
     this.time,
@@ -29,12 +35,15 @@ class FilterData {
   });
 
   /// True when sheet choices impose no extra filtering.
-  bool get isEffectivelyEmpty =>
-      sportIndex == null &&
-      (skillLevel == null || skillLevel!.trim().isEmpty) &&
-      date == null &&
-      time == null &&
-      distance >= kMaxFilterDistanceKm - 0.5;
+  bool get isEffectivelyEmpty {
+    final hasSport = sportName != null && sportName!.trim().isNotEmpty;
+    final hasSkill = skillLevel != null && skillLevel!.trim().isNotEmpty;
+    return !hasSport &&
+        !hasSkill &&
+        date == null &&
+        time == null &&
+        distance >= kMaxFilterDistanceKm - 0.5;
+  }
 }
 
 /// Applies filter sheet criteria to [source] (AND). Used by list view models.
@@ -46,15 +55,13 @@ List<DiscoveryMatch> applyFilterDataToMatches(
     return List<DiscoveryMatch>.from(source);
   }
 
-  // Must match the sports order shown in the filter sheet.
-  const sheetSports = ['Football', 'Basketball', 'Volleyball', 'Tennis'];
-
   Iterable<DiscoveryMatch> q = source;
 
-  if (data.sportIndex != null) {
-    final i = data.sportIndex!.clamp(0, sheetSports.length - 1);
-    final name = sheetSports[i];
-    q = q.where((m) => m.sportType == name);
+  final sport = data.sportName?.trim();
+  if (sport != null && sport.isNotEmpty) {
+    q = q.where(
+      (m) => m.sportType.toLowerCase() == sport.toLowerCase(),
+    );
   }
 
   final skill = data.skillLevel?.trim();

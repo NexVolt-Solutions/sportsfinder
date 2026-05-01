@@ -16,6 +16,7 @@ class UpdateProfileRepo {
     required String bio,
     String? sportUi,
     String? skillUi,
+    String? location,
     File? imageFile,
     List<int>? imageBytes,
     String? imageFileName,
@@ -25,6 +26,10 @@ class UpdateProfileRepo {
         'full_name': fullName,
         'bio': bio,
       };
+
+      if (location != null && location.trim().isNotEmpty) {
+        fields['location'] = location.trim();
+      }
 
       if (sportUi != null &&
           sportUi.isNotEmpty &&

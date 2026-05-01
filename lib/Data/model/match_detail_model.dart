@@ -47,6 +47,8 @@ class MatchDetailResponse {
     final sportStr = sportRaw is String
         ? sportRaw
         : (sportRaw is Map ? sportRaw['value']?.toString() : null) ?? '';
+    final rawParticipants = json['participants'];
+    final participantsList = rawParticipants is List ? rawParticipants : const [];
 
     return MatchDetailResponse(
       id: json['id']?.toString() ?? '',
@@ -55,18 +57,21 @@ class MatchDetailResponse {
       skillLevel: json['skill_level']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       scheduledAt: json['scheduled_at'] ?? '',
-      durationMinutes: json['duration_minutes'] ?? 0,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
       scheduledDate: json['scheduled_date'] ?? '',
       scheduledTime: json['scheduled_time'] ?? '',
       facilityAddress: json['facility_address'] ?? '',
       location: json['location'] ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
-      maxPlayers: json['max_players'] ?? 0,
-      currentPlayers: json['current_players'] ?? 0,
-      host: MatchHost.fromJson(json['host'] is Map ? json['host'] as Map<String, dynamic> : {}),
-      participants: (json['participants'] as List<dynamic>? ?? [])
-          .map((e) => MatchPlayerResponse.fromJson(e as Map<String, dynamic>))
+      maxPlayers: (json['max_players'] as num?)?.toInt() ?? 0,
+      currentPlayers: (json['current_players'] as num?)?.toInt() ?? 0,
+      host: MatchHost.fromJson(
+        json['host'] is Map ? Map<String, dynamic>.from(json['host'] as Map) : {},
+      ),
+      participants: participantsList
+          .whereType<Map>()
+          .map((e) => MatchPlayerResponse.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       createdAt: json['created_at'] ?? '',
     );
@@ -88,7 +93,9 @@ class MatchPlayerResponse {
   factory MatchPlayerResponse.fromJson(Map<String, dynamic> json) {
     final u = json['user'];
     return MatchPlayerResponse(
-      user: MatchHost.fromJson(u is Map ? u as Map<String, dynamic> : {}),
+      user: MatchHost.fromJson(
+        u is Map ? Map<String, dynamic>.from(u) : {},
+      ),
       role: json['role']?.toString() ?? '',
       joinedAt: json['joined_at']?.toString() ?? '',
     );

@@ -1,17 +1,18 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/webwidget/web_chat_content.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key, this.embedInBottomBar = false});
@@ -26,28 +27,38 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   ChatListScreenViewModel? _vm;
   ChatListScreenViewModel get _safeVm => _vm ??= ChatListScreenViewModel();
+  final TextEditingController _webMessageController = TextEditingController();
+  int _selectedWebThreadIndex = 0;
 
   Future<void> _pickAndOpenUser() async {
     final selected = await Navigator.pushNamed(
       context,
       RoutesName.allMemberScreen,
     );
-    if (!mounted || selected is! String || selected.trim().isEmpty) return;
+    if (!mounted || selected is! ChatRouteArgs) return;
+    final selectedName = selected.contactName.trim();
+    final selectedTargetUserId = (selected.targetUserId ?? '').trim();
+    if (selectedName.isEmpty || selectedTargetUserId.isEmpty) return;
 
-    final user = selected.trim();
-    _safeVm.startOrOpenThread(user);
-
-    final chatVm = ChatScreenViewModel(contactName: user, isOnline: true);
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider.value(
-          value: chatVm,
-          child: const ChatScreen(),
-        ),
-      ),
+    _safeVm.startOrOpenThread(
+      selectedName,
+      targetUserId: selectedTargetUserId,
     );
-    _safeVm.updateThreadFromOutgoing(user, chatVm.lastMessageOrFallback);
+    if (kIsWeb && widget.embedInBottomBar) {
+      setState(() => _selectedWebThreadIndex = 0);
+      return;
+    }
+    await Navigator.pushNamed(
+      context,
+      RoutesName.chatScreen,
+      arguments: selected,
+    );
+  }
+
+  @override
+  void dispose() {
+    _webMessageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,6 +67,36 @@ class _ChatListScreenState extends State<ChatListScreen> {
       value: _safeVm,
       child: Consumer<ChatListScreenViewModel>(
         builder: (context, model, _) {
+          if (kIsWeb && widget.embedInBottomBar) {
+            return WebChatContent(
+              model: model,
+              selectedThreadIndex: _selectedWebThreadIndex,
+              messageController: _webMessageController,
+              onThreadSelected: (index) {
+                setState(() => _selectedWebThreadIndex = index);
+              },
+              onPickUser: _pickAndOpenUser,
+              onSendMessage: () {
+                final hasThreads = model.hasThreads;
+                if (!hasThreads) return;
+                final safeSelected = _selectedWebThreadIndex.clamp(
+                  0,
+                  model.threads.length - 1,
+                );
+                final activeThread = model.threads[safeSelected];
+                final text = _webMessageController.text.trim();
+                if (text.isEmpty) return;
+                ChatListScreenViewModel.upsertThread(
+                  userName: activeThread.userName,
+                  matchId: activeThread.matchId,
+                  lastMessage: text,
+                  lastAt: DateTime.now(),
+                );
+                _webMessageController.clear();
+              },
+
+            );
+          }
           return Scaffold(
             backgroundColor: widget.embedInBottomBar
                 ? Colors.transparent
@@ -88,23 +129,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               final t = model.threads[index];
                               return GestureDetector(
                                 onTap: () async {
-                                  final chatVm = ChatScreenViewModel(
-                                    contactName: t.userName,
-                                    isOnline: t.isOnline,
-                                  );
-                                  await Navigator.push(
+                                  Navigator.pushNamed(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ChangeNotifierProvider.value(
-                                            value: chatVm,
-                                            child: const ChatScreen(),
-                                          ),
+                                    RoutesName.chatScreen,
+                                    arguments: ChatRouteArgs(
+                                      contactName: t.userName,
+                                      matchId: t.matchId,
+                                      targetUserId: t.targetUserId,
+                                      isOnline: t.isOnline,
                                     ),
-                                  );
-                                  model.updateThreadFromOutgoing(
-                                    t.userName,
-                                    chatVm.lastMessageOrFallback,
                                   );
                                 },
                                 child: Container(

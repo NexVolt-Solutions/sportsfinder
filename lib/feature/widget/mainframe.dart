@@ -1,15 +1,15 @@
 // splash_background.dart
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_theme.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 
 class MainFrame extends StatelessWidget {
   const MainFrame({super.key, this.child, this.showDecorationLayer = true});
 
   final Widget? child;
 
-  /// When false, only [child] is built — no glow layer or [SafeArea].
-  /// Use inside [BottomBarScreen] tabs so one outer [MainFrame] owns the decoration.
+  /// When false, only [child] is built — no [SafeArea] or full-screen fill.
+  /// Use inside [BottomBarScreen] tabs so one outer [MainFrame] owns the layout.
   final bool showDecorationLayer;
 
   @override
@@ -24,33 +24,35 @@ class MainFrame extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-            child: DecoratedBox(decoration: BoxDecoration(color: canvas)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: kIsWeb ? AppColors.whitecolor : canvas,
+                // gradient: kIsWeb
+                //     ? const LinearGradient(
+                //         begin: Alignment.topLeft,
+                //         end: Alignment.bottomRight,
+                //         colors: [
+                //           Color(0xFFF8FBFF),
+                //           Color(0xFFEFF7FF),
+                //           Color(0xFFF7FBFF),
+                //         ],
+                //       )
+                //     : null,
+              ),
+            ),
           ),
-          // Top-left circle
-          Positioned(
-            top: 0,
-            left: -context.w(55),
-            child: _GlowCircle(context: context),
-          ),
-          // Mid-right circle
-          Positioned(
-            top: context.h(144),
-            right: -context.w(55),
-            child: _GlowCircle(context: context),
-          ),
-          // Mid-left circle
-          Positioned(
-            top: context.h(490),
-            left: -context.w(55),
-            child: _GlowCircle(context: context),
-          ),
-          // Bottom-right circle
-          Positioned(
-            bottom: context.h(0),
-            right: -context.w(55),
-            child: _GlowCircle(context: context),
-          ),
-
+          if (kIsWeb)
+            Positioned(
+              top: 80,
+              right: -80,
+              child: _GlowCircle(size: 220, color: const Color(0x223DA5FF)),
+            ),
+          if (kIsWeb)
+            Positioned(
+              bottom: 40,
+              left: -80,
+              child: _GlowCircle(size: 180, color: const Color(0x1A8FD3FF)),
+            ),
           Positioned.fill(child: content),
         ],
       ),
@@ -59,25 +61,23 @@ class MainFrame extends StatelessWidget {
 }
 
 class _GlowCircle extends StatelessWidget {
-  final BuildContext context;
+  const _GlowCircle({required this.size, required this.color});
 
-  const _GlowCircle({required this.context});
+  final double size;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
-    return Container(
-      height: context.h(150),
-      width: context.w(150),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: c.blue20,
-            offset: const Offset(5, 5),
-            blurRadius: 40,
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [color, color.withValues(alpha: 0.0)],
           ),
-        ],
+        ),
       ),
     );
   }

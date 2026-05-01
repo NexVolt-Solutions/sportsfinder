@@ -25,10 +25,9 @@ import 'package:flutter/foundation.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/sport.dart';
-import 'package:sport_finding/Data/repositories/options_repository.dart';
+import 'package:sport_finding/core/Network/platform_options_store.dart';
 
 class ChooseSportScreenViewModel extends ChangeNotifier {
-  final OptionsRepository _repository = OptionsRepository();
 
   void _log(String message) {
     if (kDebugMode) {
@@ -55,7 +54,8 @@ class ChooseSportScreenViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final sportsList = await _repository.getSports();
+      final o = await PlatformOptionsStore.instance.load();
+      final sportsList = o.sports;
 
       _log("Raw Sports Response: $sportsList");
 

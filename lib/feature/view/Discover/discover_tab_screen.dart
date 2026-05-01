@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import 'package:sport_finding/feature/widget/discovery_card.dart';
 import 'package:sport_finding/feature/widget/discovery_search_field.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
 /// Discover tab content: search, sport filters, and list of discovery match cards.
 class DiscoverTabScreen extends StatelessWidget {
@@ -76,6 +78,62 @@ class _DiscoverTabContent extends StatelessWidget {
     return Consumer<DiscoveryTabViewModel>(
       builder: (context, model, _) {
         final notificationService = context.watch<NotificationService>();
+        if (kIsWeb) {
+          final rows = model.filteredMatches
+              .map(
+                (match) => WebMatchTableRowData(
+                  title: match.title,
+                  sport: match.sportType,
+                  players: match.participantsLabel,
+                  location: match.location,
+                  status: _formatStatus(match.status),
+                  onView: () => match.pushMatchOrHostScreen(context),
+                ),
+              )
+              .toList();
+          return WebMatchesManagementSection(
+            title: 'Matches Management',
+            subtitle: '${rows.length} total matches',
+            onSearchChanged: (value) {
+              model.searchController.text = value;
+              model.onSearchChanged();
+            },
+            onSportsTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(onApply: model.applyFilters);
+                },
+              );
+            },
+            onDateTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(onApply: model.applyFilters);
+                },
+              );
+            },
+            onLocationTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(onApply: model.applyFilters);
+                },
+              );
+            },
+            rows: rows,
+            emptyLabel: model.isLoading
+                ? 'Loading matches...'
+                : (model.error ?? AppText.noMatchesFound),
+          );
+        }
         return Padding(
           padding: context.padSym(h: 20),
           child: Column(
@@ -122,6 +180,12 @@ class _DiscoverTabContent extends StatelessWidget {
       },
     );
   }
+}
+
+String _formatStatus(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return 'Upcoming';
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }
 
 /// Match rows use [GlobalMatchCard] via [DiscoveryCard] — keep in sync with Home.

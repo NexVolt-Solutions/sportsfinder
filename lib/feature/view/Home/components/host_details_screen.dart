@@ -25,8 +25,10 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/person_invited_card.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
+import 'package:sport_finding/feature/widget/match_location_map_card.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class HostDetailsScreen extends StatefulWidget {
@@ -48,6 +50,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
     if (_scheduledInitialBind) return;
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is DiscoveryMatch &&
+        !DeletedMatchesService().isDeleted(args.id) &&
         context.read<HostDetailScreenViewModel>().currentMatch == null) {
       _scheduledInitialBind = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -71,6 +74,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       RoutesName.editMatchScreen,
       arguments: match,
     );
+    if (!mounted) return;
 
     debugPrint(
       '🔵 [HostDetailsScreen] Navigation returned with result: $result',
@@ -86,30 +90,29 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         '📝 [HostDetailsScreen] Current match sport BEFORE: ${match.sportType}',
       );
 
-      // Extract time from scheduledAt with AM/PM format
+      String dateStr = match.date;
       String timeStr = match.time;
       if (result.scheduledAt != null && result.scheduledAt!.isNotEmpty) {
         try {
           final dt = DateTime.parse(result.scheduledAt!).toLocal();
+          final dd = dt.day.toString().padLeft(2, '0');
+          final mm = dt.month.toString().padLeft(2, '0');
+          dateStr = '$dd/$mm/${dt.year}';
           final timeOfDay = TimeOfDay.fromDateTime(dt);
           timeStr = timeOfDay.format(context);
         } catch (e) {
+          dateStr = match.date;
           timeStr = match.time;
         }
       }
 
-      // Convert UpdateMatchModel to updated DiscoveryMatch
-      final updatedMatch = DiscoveryMatch(
+       final updatedMatch = DiscoveryMatch(
         id: result.id ?? match.id,
         title: result.title ?? match.title,
         distanceKm: match.distanceKm,
         sportType: result.sport ?? match.sportType,
         location: result.location ?? match.location,
-        date: result.scheduledAt != null
-            ? DateTime.parse(
-                result.scheduledAt!,
-              ).toLocal().toString().split(' ')[0]
-            : match.date,
+        date: dateStr,
         time: timeStr,
         participantsJoined: match.participantsJoined,
         participantsTotal: result.maxPlayers ?? match.participantsTotal,
@@ -121,6 +124,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         hostBio: match.hostBio,
         playerSkills: match.playerSkills,
         hostMatchesPlayed: match.hostMatchesPlayed,
+        latitude: result.latitude ?? match.latitude,
+        longitude: result.longitude ?? match.longitude,
       );
 
       debugPrint(
@@ -215,6 +220,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       return;
     }
 
+    // Mark as deleted immediately so all list view models remove it at once.
+    DeletedMatchesService().markDeleted(result.matchId);
+
     AppLogger.info(
       'Delete API succeeded. Refreshing notifications for current user.',
       tag: 'HostDetailsScreen',
@@ -230,8 +238,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       'Participant notifications depend on backend support. The app can only show notifications already created by the server.',
       tag: 'HostDetailsScreen',
     );
-
-    DeletedMatchesService().markDeleted(result.matchId);
     Navigator.pop(context, result);
   }
 
@@ -257,6 +263,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         }
 
         final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
+        final isMatchLocked =
+            model.matchStatus == 'completed' || model.matchStatus == 'cancelled';
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -293,50 +301,83 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           ),
 
                           GestureDetector(
-                            onTap: _navigateToEditScreen,
+                            onTap: isMatchLocked ? null : _navigateToEditScreen,
                             behavior: HitTestBehavior.opaque,
                             child: Icon(
                               Icons.edit,
-                              color: context.appColors.greyDark,
+                              color: isMatchLocked
+                                  ? context.appColors.greylight
+                                  : context.appColors.greyDark,
                               size: 20,
                             ),
                           ),
                         ],
                       ),
-                      NormalText(
-                        titleText: match.title,
-                        subText: match.sportType,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: NormalText(
+                              titleText: match.title,
+                              subText: match.sportType,
+                            ),
+                          ),
+                          SizedBox(width: context.w(8)),
+                          Container(
+                            padding: context.padSym(h: 10, v: 5),
+                            decoration: BoxDecoration(
+                              color:
+                                  model.matchStatus == 'cancelled'
+                                  ? context.appColors.error.withValues(
+                                      alpha: 0.12,
+                                    )
+                                  : model.matchStatus == 'completed'
+                                  ? context.appColors.greylight.withValues(
+                                      alpha: 0.35,
+                                    )
+                                  : model.matchStatus == 'ongoing'
+                                  ? context.appColors.primary.withValues(
+                                      alpha: 0.14,
+                                    )
+                                  : context.appColors.surface.withValues(
+                                      alpha: 0.12,
+                                    ),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              model.matchStatusLabel,
+                              style: context.appText.text12W600.copyWith(
+                                color:
+                                    model.matchStatus == 'cancelled'
+                                    ? context.appColors.error
+                                    : model.matchStatus == 'completed'
+                                    ? context.appColors.greyDark
+                                    : model.matchStatus == 'ongoing'
+                                    ? context.appColors.primary
+                                    : context.appColors.greylight,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: context.h(20)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.calendarIcon,
-                            title: 'Date',
-                            value: match.date,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.calendarIcon,
+                              title: 'Date',
+                              value: match.date,
+                            ),
                           ),
-                          InfoItem(
-                            icon: AppAssets.clockIcon,
-                            title: 'Time',
-                            value: match.time,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: context.h(16)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InfoItem(
-                            icon: AppAssets.matchesIcon,
-                            title: AppText.skillLevel,
-                            value: match.skillLevel,
-                          ),
-                          InfoItem(
-                            icon: AppAssets.playerIcon,
-                            title: AppText.players,
-                            value:
-                                '${model.rosterCount}/${match.participantsTotal}',
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.clockIcon,
+                              title: 'Time',
+                              value: match.time,
+                            ),
                           ),
                         ],
                       ),
@@ -344,14 +385,56 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InfoItem(
-                            icon: AppAssets.locationIcon,
-                            title: AppText.location,
-                            value: match.location,
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.matchesIcon,
+                              title: AppText.skillLevel,
+                              value: match.skillLevel,
+                            ),
+                          ),
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            child: InfoItem(
+                              icon: AppAssets.playerIcon,
+                              title: AppText.players,
+                              value:
+                                  '${model.rosterCount}/${match.participantsTotal}',
+                            ),
                           ),
                         ],
                       ),
                       SizedBox(height: context.h(16)),
+                      InfoItem(
+                        icon: AppAssets.locationIcon,
+                        title: AppText.location,
+                        value: match.location,
+                        maxLines: 3,
+                      ),
+                      SizedBox(height: context.h(16)),
+                      if (isMatchLocked) ...[
+                        CardWidget(
+                          padding: context.padSym(h: 12, v: 10),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 18,
+                                color: context.appColors.greylight,
+                              ),
+                              SizedBox(width: context.w(8)),
+                              Expanded(
+                                child: Text(
+                                  'Match is ${model.matchStatusLabel.toLowerCase()}. Actions are read-only.',
+                                  style: context.appText.text12W600.copyWith(
+                                    color: context.appColors.greylight,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: context.h(16)),
+                      ],
                       Card(
                         child: Padding(
                           padding: context.padSym(h: 12),
@@ -398,6 +481,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       SizedBox(height: context.h(16)),
                       if (model.selectedIndex == 0) ...[
                         UserGreetingWidget(
+                          imageUrl: match.hostAvatarUrl,
                           title: match.displayHostName,
                           locName: match.location,
                           subTitle: match.resolvedHostBio,
@@ -442,6 +526,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
                               return UserMatchCard(
+                                avatarUrl: model.rosterAvatarUrlAt(index),
                                 onActionTap: () async {
                                   final shouldRemove = await showDialog<bool>(
                                     context: context,
@@ -468,7 +553,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       ],
                                     ),
                                   );
-                                  if (shouldRemove != true || !context.mounted) {
+                                  if (shouldRemove != true ||
+                                      !context.mounted) {
                                     return;
                                   }
                                   final message = await model
@@ -483,28 +569,23 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     );
                                   }
                                 },
-                                onCardTap: () =>
-                                    (() {
-                                      final userId = model
-                                          .rosterUserIdAt(index)
-                                          .trim();
-                                      final displayName =
-                                          model.rosterNameAt(index);
-                                      if (_uuidPattern.hasMatch(userId)) {
-                                        match.pushPublicProfileForUser(
-                                          context,
-                                          userId: userId,
-                                          displayName: displayName,
-                                        );
-                                      } else {
-                                        AppSnackBar.show(
-                                          'Player profile is not available yet. Please try again in a moment.',
-                                        );
-                                      }
-                                    })(),
+                                onCardTap: () {
+                                  final uid = model
+                                      .rosterUserIdAt(index)
+                                      .trim();
+                                  final name = model.rosterNameAt(index);
+                                  if (uid.isEmpty || name.trim().isEmpty) {
+                                    return;
+                                  }
+                                  match.pushPublicProfileForUser(
+                                    context,
+                                    userId: uid,
+                                    displayName: name,
+                                  );
+                                },
                                 title: model.rosterNameAt(index),
                                 subTitle: model.rosterSkillAt(index),
-                                showActionIcon: true,
+                                showActionIcon: !isMatchLocked,
                               );
                             },
                           ),
@@ -514,8 +595,11 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SectionHeaderWidget(
-                              title: AppText.participatedPlayers,
+                            Text(
+                              AppText.participatedPlayers,
+                              style: context.appText.text16W500.copyWith(
+                                color: context.appColors.onSurface,
+                              ),
                             ),
                             // ✅ Refresh button
                             if (!model.isLoadingUsers)
@@ -533,12 +617,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
 
                         // ── loading state ──────────────────────────────────────────
                         if (model.isLoadingUsers)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
+                          const _HostPlayersShimmer()
                         // ── error state ────────────────────────────────────────────
                         else if (model.usersFetchError != null)
                           Column(
@@ -601,124 +680,87 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             ],
                           )
                         // ── all users from API ─────────────────────────────────────
-                        else
-                          ListView.builder(
-                            itemCount: model.allUsers.length,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              final user = model.allUsers[index];
-                              final sport = user.sports?.isNotEmpty == true
-                                  ? user.sports!.first
-                                  : null;
+                        else ...[
+                          SizedBox(height: context.h(4)),
+                          ...List.generate(model.allUsers.length, (index) {
+                            final user = model.allUsers[index];
+                            final sport = user.sports?.isNotEmpty == true
+                                ? user.sports!.first
+                                : null;
 
-                              return PersonInvitedCard(
-                                playerName: user.fullName,
-                                matchName: sport?.sport ?? match.sportType,
-                                matchLevel:
-                                    sport?.skillLevel ?? match.skillLevel,
-                                destance:
-                                    user.location?.trim().isNotEmpty == true
-                                    ? user.location
-                                    : '${match.distanceKm.toStringAsFixed(1)} km',
-                                isShow: true,
-                                isInvited: model.isUserAlreadyInvited(
-                                  user.id?.trim() ?? '',
-                                ),
-                                isLoading: model.isInvitingUser(
-                                  user.id?.trim() ?? '',
-                                ),
-                                ontap: () async {
-                                  final userId = user.id?.trim() ?? '';
-                                  AppLogger.info(
-                                    'Invite button tapped from HostDetailsScreen',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  AppLogger.debug(
-                                    'Tapped matchId: ${match.id}',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  AppLogger.debug(
-                                    'Tapped userId: $userId',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  if (userId.isEmpty) {
-                                    if (!context.mounted) return;
-                                    AppSnackBar.show('User id is missing');
-                                    return;
-                                  }
+                            return PersonInvitedCard(
+                              avatarUrl: user.avatarUrl,
+                              playerName: user.fullName,
+                              matchName: sport?.sport ?? match.sportType,
+                              matchLevel: sport?.skillLevel ?? match.skillLevel,
+                              destance: user.location?.trim().isNotEmpty == true
+                                  ? user.location
+                                  : '${match.distanceKm.toStringAsFixed(1)} km',
+                              isShow: true,
+                              isInvited: model.isUserAlreadyInvited(
+                                user.id?.trim() ?? '',
+                              ),
+                              isLoading: !isMatchLocked && model.isInvitingUser(
+                                user.id?.trim() ?? '',
+                              ),
+                              isActionDisabled: isMatchLocked,
+                              ontap: () async {
+                                if (isMatchLocked) return;
+                                final userId = user.id?.trim() ?? '';
+                                AppLogger.info(
+                                  'Invite button tapped from HostDetailsScreen',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                AppLogger.debug(
+                                  'Tapped matchId: ${match.id}',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                AppLogger.debug(
+                                  'Tapped userId: $userId',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                if (userId.isEmpty) {
+                                  if (!context.mounted) return;
+                                  AppSnackBar.show('User id is missing');
+                                  return;
+                                }
 
-                                  final message = await model.inviteUserToMatch(
-                                    matchId: match.id,
-                                    userId: userId,
-                                  );
+                                final message = await model.inviteUserToMatch(
+                                  matchId: match.id,
+                                  userId: userId,
+                                );
 
-                                  AppLogger.debug(
-                                    'Invite result message: $message',
-                                    tag: 'HostDetailsScreen',
-                                  );
-                                  if (!context.mounted || message == null) {
-                                    return;
-                                  }
-                                  AppSnackBar.show(message);
-                                },
-                                cardOnTap: () {
-                                  ListOfAllUserService().recordProfileView(
-                                    user,
-                                  );
-                                  final uid = user.id?.trim() ?? '';
-                                  if (uid.isEmpty) return;
-                                  match.pushPublicProfileForUser(
-                                    context,
-                                    userId: uid,
-                                    displayName: user.fullName ?? '',
-                                  );
-                                },
-                              );
-                            },
-                          ),
+                                AppLogger.debug(
+                                  'Invite result message: $message',
+                                  tag: 'HostDetailsScreen',
+                                );
+                                if (!context.mounted || message == null) {
+                                  return;
+                                }
+                                AppSnackBar.show(message);
+                              },
+                              cardOnTap: () {
+                                ListOfAllUserService().recordProfileView(user);
+                                final uid = user.id?.trim() ?? '';
+                                if (uid.isEmpty) return;
+                                match.pushPublicProfileForUser(
+                                  context,
+                                  userId: uid,
+                                  displayName: user.fullName ?? '',
+                                );
+                              },
+                            );
+                          }),
+                        ],
 
                         SizedBox(height: context.h(16)),
                       ],
 
                       if (model.selectedIndex == 2) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            children: [
-                              Container(
-                                height: context.h(174),
-                                width: context.w(380),
-                                decoration: BoxDecoration(
-                                  color: context.appColors.blue10,
-                                  borderRadius: BorderRadius.circular(
-                                    context.radiusR(12),
-                                  ),
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: Padding(
-                                  padding: context.padAll(12),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.fullscreen,
-                                        size: 20,
-                                      ),
-                                      onPressed: () {},
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        MatchLocationMapCard(
+                          location: match.location,
+                          latitude: match.latitude,
+                          longitude: match.longitude,
                         ),
                         SizedBox(height: context.h(16)),
                         SectionHeaderWidget(title: match.location),
@@ -733,6 +775,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             SizedBox(width: context.w(4)),
                             Expanded(
                               child: NormalText(
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 subText: match.location,
                                 subColor: context.appColors.greylight,
                               ),
@@ -759,77 +803,120 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                               match.isHostedByCurrentUser)
                       // ── Loading state ─────────────────────────────────────────
                       ? const Center(child: CircularProgressIndicator())
-                      // ── Join / Leave button ───────────────────────────────────
-                      : CustomButton(
-                          text: match.isHostedByCurrentUser
-                              ? model.matchStatus == 'ongoing'
-                                    ? 'Ongoing'
-                                    : model.matchStatus == 'completed'
-                                    ? 'Completed'
-                                    : AppText.startMatching
-                              : model.hasJoined
-                              ? AppText.leaveMatch
-                              : AppText.joinMatch,
-                          color: match.isHostedByCurrentUser
-                              ? model.matchStatus == 'completed'
-                                    ? context.appColors.greyDark
-                                    : context.appColors.primary
-                              : model.hasJoined
-                              ? context
-                                    .appColors
-                                    .error // red for Leave
-                              : context.appColors.primary, // primary for Join
-                          onTap:
-                              model.matchStatus == 'completed' &&
-                                  match.isHostedByCurrentUser
-                              ? null
-                              : () async {
-                                  final matchId = match.id;
-                                  if (matchId.isEmpty) {
+                      : match.isHostedByCurrentUser
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CustomButton(
+                              text: model.matchStatus == 'pending'
+                                  ? AppText.startMatching
+                                  : model.matchStatus == 'ongoing'
+                                  ? 'Complete Match'
+                                  : model.matchStatusLabel,
+                              color: model.matchStatus == 'pending' ||
+                                      model.matchStatus == 'ongoing'
+                                  ? context.appColors.primary
+                                  : context.appColors.greyDark,
+                              onTap:
+                                  model.matchStatus == 'completed' ||
+                                          model.matchStatus == 'cancelled'
+                                      ? null
+                                      : () async {
+                                          final matchId = match.id;
+                                          if (matchId.isEmpty) return;
+                                          final success = model.matchStatus ==
+                                                  'ongoing'
+                                              ? await model.completeMatch(
+                                                  matchId,
+                                                )
+                                              : await model.startMatch(matchId);
+                                          if (!context.mounted) return;
+                                          if (!success) {
+                                            AppSnackBar.show(
+                                              model.matchStatusError ??
+                                                  'Failed to update match status',
+                                              backgroundColor:
+                                                  context.appColors.error,
+                                            );
+                                            return;
+                                          }
+                                          AppSnackBar.show(
+                                            model.matchStatus == 'completed'
+                                                ? 'Match completed successfully!'
+                                                : 'Match started successfully!',
+                                            backgroundColor:
+                                                context.appColors.primary,
+                                          );
+                                        },
+                            ),
+                            if (model.matchStatus == 'pending') ...[
+                              SizedBox(height: context.h(10)),
+                              GestureDetector(
+                                onTap: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (dialogContext) => AlertDialog(
+                                      title: const Text('Cancel Match'),
+                                      content: const Text(
+                                        'This will notify participants that this match was cancelled.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogContext, false),
+                                          child: const Text(AppText.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogContext, true),
+                                          child: const Text('Cancel Match'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed != true || !context.mounted) {
                                     return;
                                   }
-
-                                  // ── START MATCH flow (host) ────────────────────────
-                                  if (match.isHostedByCurrentUser) {
-                                    debugPrint(
-                                      '🟡 [HostDetailsScreen] Start Match button tapped',
+                                  final ok = await model.cancelMatch(match.id);
+                                  if (!context.mounted) return;
+                                  if (ok) {
+                                    AppSnackBar.show(
+                                      'Match cancelled. Participants will be notified.',
+                                      backgroundColor: context.appColors.error,
                                     );
-                                    debugPrint(
-                                      '🟡 [HostDetailsScreen] Match ID: $matchId',
+                                  } else {
+                                    AppSnackBar.show(
+                                      model.matchStatusError ??
+                                          'Failed to cancel match',
+                                      backgroundColor: context.appColors.error,
                                     );
-                                    debugPrint(
-                                      '🟡 [HostDetailsScreen] Current match status: ${model.matchStatus}',
-                                    );
-
-                                    final success = await model.startMatch(
-                                      matchId,
-                                    );
-
-                                    if (!context.mounted) return;
-
-                                    if (success) {
-                                      debugPrint(
-                                        '✅ [HostDetailsScreen] Match status updated to ongoing',
-                                      );
-                                      AppSnackBar.show(
-                                        'Match started successfully!',
-                                        backgroundColor:
-                                            context.appColors.primary,
-                                      );
-                                    } else {
-                                      debugPrint(
-                                        '❌ [HostDetailsScreen] Failed to start match',
-                                      );
-                                      debugPrint(
-                                        '❌ [HostDetailsScreen] Error: ${model.matchStatusError}',
-                                      );
-                                      AppSnackBar.show(
-                                        model.matchStatusError ??
-                                            'Failed to start match',
-                                        backgroundColor:
-                                            context.appColors.error,
-                                      );
-                                    }
+                                  }
+                                },
+                                child: Padding(
+                                  padding: context.padSym(v: 6),
+                                  child: Text(
+                                    'Cancel Match',
+                                    style: context.appText.text14W600.copyWith(
+                                      color: context.appColors.error,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        )
+                      // ── Join / Leave button ───────────────────────────────────
+                      : CustomButton(
+                          text: model.hasJoined
+                              ? AppText.leaveMatch
+                              : AppText.joinMatch,
+                          color: model.hasJoined
+                              ? context.appColors.error
+                              : context.appColors.primary,
+                          onTap: () async {
+                                  final matchId = match.id;
+                                  if (matchId.isEmpty) {
                                     return;
                                   }
                                   if (model.hasJoined) {
@@ -901,8 +988,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   if (!result && model.joinLeaveError != null) {
                                     AppSnackBar.show(
                                       model.joinLeaveError!,
-                                      backgroundColor:
-                                          context.appColors.error,
+                                      backgroundColor: context.appColors.error,
                                     );
                                   } else if (result) {
                                     AppSnackBar.show(
@@ -919,6 +1005,43 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _HostPlayersShimmer extends StatelessWidget {
+  const _HostPlayersShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: List.generate(
+          3,
+          (_) => Padding(
+            padding: EdgeInsets.only(bottom: context.h(12)),
+            child: Row(
+              children: const [
+                ShimmerBox(width: 52, height: 52, shape: BoxShape.circle),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShimmerBox(width: 140, height: 14),
+                      SizedBox(height: 8),
+                      ShimmerBox(width: 100, height: 12),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 12),
+                ShimmerBox(width: 72, height: 34, radius: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

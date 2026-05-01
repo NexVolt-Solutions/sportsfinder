@@ -9,6 +9,8 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
+import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -57,20 +59,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _isEarlier(DateTime date) => !_isToday(date) && !_isYesterday(date);
 
   String _relativeLabel(DateTime date) {
-    final local = date.toLocal();
-    final diff = DateTime.now().difference(local);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) {
-      final minutes = diff.inMinutes;
-      return '$minutes minute${minutes == 1 ? '' : 's'} ago';
-    }
-    if (diff.inHours < 24) {
-      final hours = diff.inHours;
-      return '$hours hour${hours == 1 ? '' : 's'} ago';
-    }
-    final days = diff.inDays;
-    if (days <= 1) return AppText.yesterday;
-    return '$days day${days == 1 ? '' : 's'} ago';
+    return DateTimeFormatters.relativeLabel(date);
   }
 
   Future<void> _handleInvitationAction(
@@ -127,6 +116,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
       }
 
+      if (!mounted) return;
       final notificationService = context.read<NotificationService>();
       await notificationService.markAsRead(item.id);
 
@@ -156,12 +146,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         error: e,
       );
       if (!mounted) return;
-      AppSnackBar.show(e.toString());
+      AppSnackBar.show(messageFromApiException(e));
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _actionLoading.remove(item.id);
-      });
+      if (mounted) {
+        setState(() {
+          _actionLoading.remove(item.id);
+        });
+      }
     }
   }
 
@@ -172,7 +163,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await context.read<NotificationService>().markAsRead(item.id);
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.show(e.toString());
+      AppSnackBar.show(messageFromApiException(e));
     }
   }
 
@@ -190,20 +181,118 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.show(e.toString());
+      AppSnackBar.show(messageFromApiException(e));
     }
   }
 
   Future<void> _handleClearMessages() async {
     final service = context.read<NotificationService>();
     if (service.notifications.isEmpty) return;
-    service.clearAllNotifications();
+    await service.clearAllNotifications();
     if (!mounted) return;
     setState(() {
       _actionLoading.clear();
       _resolvedInviteActions.clear();
     });
     AppSnackBar.show('All messages cleared');
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    NotificationService service,
+    List<NotificationModel> visibleNotifications,
+  ) {
+    final c = context.appColors;
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: context.w(28),
+            height: context.w(28),
+            child: Center(
+              child: SvgPicture.asset(
+                AppAssets.backIcon,
+                colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: NormalText(
+              titleText: AppText.notifications,
+              titleStyle: context.appText.text18W600,
+            ),
+          ),
+        ),
+        PopupMenuButton<_NotificationMenuAction>(
+          icon: Icon(Icons.more_vert, color: c.greyDark, size: context.w(22)),
+          onSelected: (action) {
+            switch (action) {
+              case _NotificationMenuAction.readAll:
+                _handleReadAll();
+                break;
+              case _NotificationMenuAction.clearMessages:
+                _handleClearMessages();
+                break;
+            }
+          },
+          itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
+            PopupMenuItem<_NotificationMenuAction>(
+              value: _NotificationMenuAction.readAll,
+              enabled: service.hasUnread && !service.isMarkingAllRead,
+              child: Text(
+                service.isMarkingAllRead
+                    ? '${AppText.readAll}...'
+                    : AppText.readAll,
+              ),
+            ),
+            PopupMenuItem<_NotificationMenuAction>(
+              value: _NotificationMenuAction.clearMessages,
+              enabled: visibleNotifications.isNotEmpty,
+              child: const Text('Clear messages'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildSection(
+    BuildContext context, {
+    required String title,
+    required List<NotificationModel> items,
+    bool addTopSpacing = false,
+    bool addBottomSpacing = false,
+  }) {
+    if (items.isEmpty) return const <Widget>[];
+    return <Widget>[
+      if (addTopSpacing) SizedBox(height: context.h(8)),
+      NormalText(titleText: title, titleStyle: context.appText.text16W600),
+      SizedBox(height: context.h(10)),
+      ...items.map(_buildNotificationCard),
+      if (addBottomSpacing) SizedBox(height: context.h(8)),
+    ];
+  }
+
+  Widget _buildNotificationCard(NotificationModel n) {
+    return _NotificationCard(
+      item: _NotificationItem.fromModel(
+        n,
+        rightLabel: _relativeLabel(n.createdAt),
+        resolvedInviteAction: _resolvedInviteActions[n.id],
+      ),
+      isActionLoading: _actionLoading[n.id] == true,
+      onTap: () => _handleNotificationTap(n),
+      onPrimaryTap: n.isInvitation
+          ? () => _handleInvitationAction(n, true)
+          : null,
+      onSecondaryTap: n.isInvitation
+          ? () => _handleInvitationAction(n, false)
+          : null,
+    );
   }
 
   @override
@@ -228,144 +317,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             : ListView(
                 padding: context.padSym(h: 20, v: 20),
                 children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        behavior: HitTestBehavior.opaque,
-                        child: SizedBox(
-                          width: context.w(28),
-                          height: context.w(28),
-                          child: Center(
-                            child: SvgPicture.asset(
-                              AppAssets.backIcon,
-                              colorFilter: ColorFilter.mode(
-                                c.greyDark,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: NormalText(
-                            titleText: AppText.notifications,
-                            titleStyle: context.appText.text18W600,
-                          ),
-                        ),
-                      ),
-                      PopupMenuButton<_NotificationMenuAction>(
-                        icon: Icon(
-                          Icons.more_vert,
-                          color: c.greyDark,
-                          size: context.w(22),
-                        ),
-                        onSelected: (action) {
-                          switch (action) {
-                            case _NotificationMenuAction.readAll:
-                              _handleReadAll();
-                              break;
-                            case _NotificationMenuAction.clearMessages:
-                              _handleClearMessages();
-                              break;
-                          }
-                        },
-                        itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
-                          PopupMenuItem<_NotificationMenuAction>(
-                            value: _NotificationMenuAction.readAll,
-                            enabled: service.hasUnread && !service.isMarkingAllRead,
-                            child: Text(
-                              service.isMarkingAllRead
-                                  ? '${AppText.readAll}...'
-                                  : AppText.readAll,
-                            ),
-                          ),
-                          PopupMenuItem<_NotificationMenuAction>(
-                            value: _NotificationMenuAction.clearMessages,
-                            enabled: visibleNotifications.isNotEmpty,
-                            child: const Text('Clear messages'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
+                  _buildHeader(context, service, visibleNotifications),
                   SizedBox(height: context.h(12)),
-                  if (todayItems.isNotEmpty) ...[
-                    NormalText(
-                      titleText: AppText.today,
-                      titleStyle: context.appText.text16W600,
-                    ),
-                    SizedBox(height: context.h(10)),
-                    ...todayItems.map(
-                      (n) => _NotificationCard(
-                        item: _NotificationItem.fromModel(
-                          n,
-                          rightLabel: _relativeLabel(n.createdAt),
-                          resolvedInviteAction: _resolvedInviteActions[n.id],
-                        ),
-                        isActionLoading: _actionLoading[n.id] == true,
-                        onTap: () => _handleNotificationTap(n),
-                        onPrimaryTap: n.isInvitation
-                            ? () => _handleInvitationAction(n, true)
-                            : null,
-                        onSecondaryTap: n.isInvitation
-                            ? () => _handleInvitationAction(n, false)
-                            : null,
-                      ),
-                    ),
-                    SizedBox(height: context.h(8)),
-                  ],
-                  if (yesterdayItems.isNotEmpty) ...[
-                    NormalText(
-                      titleText: AppText.yesterday,
-                      titleStyle: context.appText.text16W600,
-                    ),
-                    SizedBox(height: context.h(10)),
-                    ...yesterdayItems.map(
-                      (n) => _NotificationCard(
-                        item: _NotificationItem.fromModel(
-                          n,
-                          rightLabel: _relativeLabel(n.createdAt),
-                          resolvedInviteAction: _resolvedInviteActions[n.id],
-                        ),
-                        isActionLoading: _actionLoading[n.id] == true,
-                        onTap: () => _handleNotificationTap(n),
-                        onPrimaryTap: n.isInvitation
-                            ? () => _handleInvitationAction(n, true)
-                            : null,
-                        onSecondaryTap: n.isInvitation
-                            ? () => _handleInvitationAction(n, false)
-                            : null,
-                      ),
-                    ),
-                  ],
-                  if (earlierItems.isNotEmpty) ...[
-                    SizedBox(height: context.h(8)),
-                    NormalText(
-                      titleText: AppText.earlier,
-                      titleStyle: context.appText.text16W600,
-                    ),
-                    SizedBox(height: context.h(10)),
-                    ...earlierItems.map(
-                      (n) => _NotificationCard(
-                        item: _NotificationItem.fromModel(
-                          n,
-                          rightLabel: _relativeLabel(n.createdAt),
-                          resolvedInviteAction: _resolvedInviteActions[n.id],
-                        ),
-                        isActionLoading: _actionLoading[n.id] == true,
-                        onTap: () => _handleNotificationTap(n),
-                        onPrimaryTap: n.isInvitation
-                            ? () => _handleInvitationAction(n, true)
-                            : null,
-                        onSecondaryTap: n.isInvitation
-                            ? () => _handleInvitationAction(n, false)
-                            : null,
-                      ),
-                    ),
-                  ],
+                  ..._buildSection(
+                    context,
+                    title: AppText.today,
+                    items: todayItems,
+                    addBottomSpacing: true,
+                  ),
+                  ..._buildSection(
+                    context,
+                    title: AppText.yesterday,
+                    items: yesterdayItems,
+                  ),
+                  ..._buildSection(
+                    context,
+                    title: AppText.earlier,
+                    items: earlierItems,
+                    addTopSpacing: true,
+                  ),
                   if (visibleNotifications.isEmpty)
                     Padding(
                       padding: context.padSym(v: 40),
@@ -422,8 +392,7 @@ class _NotificationItem {
     _ResolvedInviteAction? resolvedInviteAction,
   }) {
     final subtitle = model.displaySubtitle;
-    final showActions =
-        model.isInvitation && resolvedInviteAction == null;
+    final showActions = model.isInvitation && resolvedInviteAction == null;
     return _NotificationItem(
       avatarLetter: model.avatarLetter,
       title: model.displayTitle,

@@ -42,7 +42,8 @@ class NotificationModel {
       type: json['type'] ?? '',
       payload: mergedPayload,
       isRead: json['is_read'] ?? false,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt:
+          DateTime.tryParse('${json['created_at'] ?? ''}') ?? DateTime.now(),
     );
   }
 
@@ -67,6 +68,11 @@ class NotificationModel {
     return normalized.contains('INVITE');
   }
 
+  bool get isFollowNotification {
+    final normalized = type.trim().toUpperCase();
+    return normalized.contains('FOLLOW');
+  }
+
   bool get isMatchDeleted {
     final normalized = type.trim().toUpperCase();
     return normalized.contains('DELETE') ||
@@ -83,6 +89,8 @@ class NotificationModel {
 
   String get inviterName => _readString([
     payload['inviter_name'],
+    payload['follower_name'],
+    payload['actor_name'],
     payload['sender_full_name'],
     payload['inviterFullName'],
     payload['host_name'],
@@ -92,6 +100,31 @@ class NotificationModel {
     payload['name'],
     _nested(payload['inviter'], 'full_name'),
     _nested(payload['inviter'], 'name'),
+    _nested(payload['sender'], 'full_name'),
+    _nested(payload['sender'], 'name'),
+    _nested(payload['user'], 'full_name'),
+    _nested(payload['user'], 'name'),
+  ]);
+
+  String get actorName => _readString([
+    payload['follower_name'],
+    payload['followed_by_name'],
+    payload['follow_back_name'],
+    payload['actor_name'],
+    payload['from_user_name'],
+    payload['from_name'],
+    payload['initiator_name'],
+    payload['sender_full_name'],
+    payload['sender_name'],
+    payload['user_name'],
+    payload['full_name'],
+    payload['name'],
+    _nested(payload['follower'], 'full_name'),
+    _nested(payload['follower'], 'name'),
+    _nested(payload['actor'], 'full_name'),
+    _nested(payload['actor'], 'name'),
+    _nested(payload['from_user'], 'full_name'),
+    _nested(payload['from_user'], 'name'),
     _nested(payload['sender'], 'full_name'),
     _nested(payload['sender'], 'name'),
     _nested(payload['user'], 'full_name'),
@@ -128,7 +161,11 @@ class NotificationModel {
   ]);
 
   String get displayTitle {
-    if (message.isNotEmpty) return message;
+    if (isFollowNotification) {
+      final who = actorName.isNotEmpty ? actorName : inviterName;
+      if (who.isNotEmpty) return '$who started following you';
+      return 'New follower';
+    }
     if (isMatchDeleted) {
       final sport = sportName.isNotEmpty ? sportName : 'match';
       return 'A $sport match you joined was deleted';
@@ -138,6 +175,7 @@ class NotificationModel {
       final sport = sportName.isNotEmpty ? sportName : 'a match';
       return '$who invited you to join $sport';
     }
+    if (message.isNotEmpty) return message;
     return type.replaceAll('_', ' ').trim();
   }
 
@@ -148,7 +186,11 @@ class NotificationModel {
   }
 
   String get avatarLetter {
-    final base = inviterName.isNotEmpty ? inviterName : displayTitle;
+    final base = actorName.isNotEmpty
+        ? actorName
+        : inviterName.isNotEmpty
+        ? inviterName
+        : displayTitle;
     if (base.trim().isEmpty) return '?';
     return base.trim()[0].toUpperCase();
   }

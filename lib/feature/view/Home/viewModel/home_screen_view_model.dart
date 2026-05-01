@@ -13,9 +13,10 @@ class HomeScreenViewModel extends ChangeNotifier {
   final MyProfileRepository repository;
 
   HomeScreenViewModel({required this.repository}) {
-    // ✅ Delegate to the singleton — won't re-fetch if already loaded
+    // Defer so ProfileService does not notify during the first home build
+    // (avoids "setState during build" in listeners such as [AllUpcommingMatchesViewModel]).
     final service = ProfileService();
-    service.fetchMyProfile();
+    Future<void>.microtask(() => service.fetchMyProfile());
 
     // Listen to ProfileService changes and rebuild this ViewModel
     service.addListener(_onProfileServiceChanged);
@@ -31,6 +32,7 @@ class HomeScreenViewModel extends ChangeNotifier {
 
   bool matchesLoading = false;
   String? matchesError;
+  bool hasMoreUpcoming = false;
 
   // Add this getter anywhere — in the ViewModel or as a helper
   String get timeGreeting {
@@ -79,21 +81,39 @@ class HomeScreenViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _matchesRepo.getAllMatches(page: 1, limit: 20);
+      final allRes = await _matchesRepo.getAllMatches(
+        page: 1,
+        limit: 20,
+        type: 'all',
+      );
+      final myRes = await _matchesRepo.getAllMatches(
+        page: 1,
+        limit: 20,
+        type: 'my',
+      );
+      final merged = <String, AllMatches>{};
+      for (final m in allRes.items) {
+        merged[m.id] = m;
+      }
+      for (final m in myRes.items) {
+        merged[m.id] = m;
+      }
       final nowUtc = DateTime.now().toUtc();
 
       matches =
-          res.items.where((m) {
-            final start = m.scheduledStartUtc;
+          merged.values.where((m) {
+        final start = m.scheduledStartUtc;
             return start != null &&
                 start.isAfter(nowUtc) &&
                 !DeletedMatchesService().isDeleted(m.id);
           }).toList();
+      hasMoreUpcoming = allRes.hasNext || myRes.hasNext;
 
       _resortMatches();
     } catch (e) {
       matchesError = e.toString();
       matches = [];
+      hasMoreUpcoming = false;
     } finally {
       matchesLoading = false;
       notifyListeners();

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
+import 'package:sport_finding/core/utils/share_sheet_helper.dart';
 import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
@@ -23,7 +25,9 @@ import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/custom_seeting_card.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
+import 'package:sport_finding/feature/webwidget/web_profile_content.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
@@ -125,6 +129,31 @@ class ProfileScreen extends StatelessWidget {
     AppSnackBar.show(AppText.logoutSuccess);
   }
 
+  Future<void> _shareProfile(BuildContext context) async {
+    final model = context.read<ProfileScreenViewModel>();
+    final sportLine = model.sportsList.isNotEmpty
+        ? model.sportsList
+              .map((sport) => '${sport.name} (${sport.skill})')
+              .join(', ')
+        : '';
+
+    final shareText = [
+      'Check out my SportFinding profile!',
+      model.fullName,
+      if (model.bio.isNotEmpty) model.bio,
+      if (model.location.isNotEmpty) 'Location: ${model.location}',
+      if (sportLine.isNotEmpty) 'Sports: $sportLine',
+      if (model.matchesPlayedLabel.isNotEmpty)
+        'Matches: ${model.matchesPlayedLabel}',
+    ].join('\n');
+
+    await ShareSheetHelper.showShareSheet(
+      context,
+      title: model.fullName.isNotEmpty ? model.fullName : AppText.share,
+      text: shareText,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -132,6 +161,27 @@ class ProfileScreen extends StatelessWidget {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           final notificationService = context.watch<NotificationService>();
+          if (kIsWeb && embedInBottomBar) {
+            return WebProfileContent(
+              model: model,
+              notificationsEnabled: model.notificationsEnabled,
+              isUpdatingPreference: notificationService.isUpdatingPreference,
+              safeAvatarUrl: _safeAvatarUrl(model.avatarUrl),
+              onFollowersTap: () => model.openFollowers(context),
+              onFollowingTap: () => model.openFollowing(context),
+              onSwitchChanged: (val) async {
+                final message = await notificationService
+                    .updateNotificationPreference(val);
+                if (!context.mounted) return;
+                AppSnackBar.show(
+                  message != null && message.isNotEmpty
+                      ? message
+                      : AppText.notificationsUpdated,
+                );
+              },
+              onTapSetting: (index) => model.onTapFun(context, index),
+            );
+          }
           return MainFrame(
             showDecorationLayer: !embedInBottomBar,
             child: ListView(
@@ -161,19 +211,7 @@ class ProfileScreen extends StatelessWidget {
                 NormalText(titleText: AppText.profile),
                 SizedBox(height: context.h(16)),
                 if (model.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 16),
-                        Text("Loading profile..."),
-                      ],
-                    ),
-                  )
+                  const _ProfileGreetingShimmer()
                 else
                   UserGreetingWidget(
                     imageUrl: _safeAvatarUrl(model.avatarUrl),
@@ -183,52 +221,13 @@ class ProfileScreen extends StatelessWidget {
                     isShow: model.bio.isNotEmpty,
                   ),
                 SizedBox(height: context.h(16)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: CardWidget(
-                        onTap: () => model.openFollowers(context),
-                        padding: context.padSym(h: 22, v: 18),
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: model.followersCountLabel,
-                          subText: AppText.followers,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: context.w(12)),
-                    Expanded(
-                      child: CardWidget(
-                        onTap: () => model.openFollowing(context),
-                        padding: context.padSym(h: 22, v: 18),
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: model.followingCountLabel,
-                          subText: AppText.following,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: context.w(12)),
-                    Expanded(
-                      child: CardWidget(
-                        padding: context.padSym(h: 22, v: 18),
-                        child: NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          titleText: model.matchesPlayedLabel,
-                          subText: AppText.matches,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                ProfileDetailStatsRow(
+                  followersCount: model.followersCount,
+                  followingCount: model.followingCount,
+                  ratingValue: model.ratingValue,
+                  matchesPlayedValue: model.matchesPlayedLabel,
+                  onFollowersTap: () => model.openFollowers(context),
+                  onFollowingTap: () => model.openFollowing(context),
                 ),
                 ListView.builder(
                   itemCount: model.profileData.length,
@@ -246,22 +245,14 @@ class ProfileScreen extends StatelessWidget {
                           : item['switchValue'],
                       onSwitchChanged: index == 2
                           ? (val) async {
-                              final previous = model.notificationsEnabled;
-                              model.toggleSwitch(index, previous);
-                              try {
-                                final message = await notificationService
-                                    .updateNotificationPreference(val);
-                                if (!context.mounted) return;
-                                AppSnackBar.show(
-                                  message != null && message.isNotEmpty
-                                      ? message
-                                      : AppText.notificationsUpdated,
-                                );
-                              } catch (e) {
-                                if (!context.mounted) return;
-                                model.toggleSwitch(index, previous);
-                                AppSnackBar.show(e.toString());
-                              }
+                              final message = await notificationService
+                                  .updateNotificationPreference(val);
+                              if (!context.mounted) return;
+                              AppSnackBar.show(
+                                message != null && message.isNotEmpty
+                                    ? message
+                                    : AppText.notificationsUpdated,
+                              );
                             }
                           : (val) {
                               model.toggleSwitch(index, val);
@@ -307,19 +298,19 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                NormalText(titleText: AppText.mySports),
-                ListView.builder(
-                  itemCount: model.sportsList.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final sport = model.sportsList[index];
-                    return ProfilePrivateSportRow(
-                      sportName: sport.name,
-                      skillLabel: sport.skill,
-                    );
-                  },
-                ),
+                // NormalText(titleText: AppText.mySports),
+                // ListView.builder(
+                //   itemCount: model.sportsList.length,
+                //   shrinkWrap: true,
+                //   physics: const NeverScrollableScrollPhysics(),
+                //   itemBuilder: (context, index) {
+                //     final sport = model.sportsList[index];
+                //     return ProfilePrivateSportRow(
+                //       sportName: sport.name,
+                //       skillLabel: sport.skill,
+                //     );
+                //   },
+                // ),
                 SizedBox(height: context.h(16)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -378,7 +369,7 @@ class ProfileScreen extends StatelessWidget {
                         leading: SvgPicture.asset(AppAssets.share),
                         borderColor: AppColors.bluecolor,
                         radius: BorderRadius.circular(context.radiusR(12)),
-                        onTap: () {},
+                        onTap: () => _shareProfile(context),
                         text: AppText.share,
                       ),
                     ),
@@ -388,6 +379,36 @@ class ProfileScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProfileGreetingShimmer extends StatelessWidget {
+  const _ProfileGreetingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: const [
+          ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ShimmerBox(width: 130, height: 14),
+                SizedBox(height: 10),
+                ShimmerBox(width: 110, height: 12),
+                SizedBox(height: 10),
+                ShimmerBox(width: 180, height: 12),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

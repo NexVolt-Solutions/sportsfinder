@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/Review/create_review_model.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
 import 'package:sport_finding/Data/Repositories/Review/review_repository.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
@@ -12,15 +13,23 @@ import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
     _listener = () {
-      Future.microtask(notifyListeners);
+      Future.microtask(_safeNotifyListeners);
     };
     ProfileService().addListener(_listener);
     Future.microtask(_load);
+  }
+
+  bool _disposed = false;
+
+  void _safeNotifyListeners() {
+    if (_disposed) return;
+    notifyListeners();
   }
 
   final PublicProfileArgs? _args;
@@ -41,6 +50,7 @@ class PublicProfileViewModel extends ChangeNotifier {
   String? _followError;
   bool? _isFollowingOverride;
   int? _followersCountOverride;
+  bool? _canRateOverride;
 
   /// True when opening from settings (no args) or empty [userId], or when the
   /// selected user is the logged-in account.
@@ -93,6 +103,8 @@ class PublicProfileViewModel extends ChangeNotifier {
   /// Hide follow / message / rate when viewing your own public profile.
   bool get isOwnProfile =>
       _viewingSelf || (_active?.actions.isOwnProfile ?? false);
+  bool get canRateProfile =>
+      !isOwnProfile && (_canRateOverride ?? (_active?.actions.canRate ?? true));
 
   Future<void> _load() async {
     if (_viewingSelf) {
@@ -100,35 +112,42 @@ class PublicProfileViewModel extends ChangeNotifier {
       try {
         await ProfileService().fetchMyProfile(forceRefresh: refresh);
       } catch (_) {}
-      notifyListeners();
+      _safeNotifyListeners();
       return;
     }
 
     _fetchOtherLoading = true;
     _fetchOtherError = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       final raw = await _repo.getUserById(_args!.userId.trim());
-      if (raw is Map) {
-        _otherProfile = UserProfileModel.fromJson(
-          Map<String, dynamic>.from(raw),
-        );
-        _fetchOtherError = null;
-      } else {
-        throw Exception('Invalid profile response');
+      if (!_disposed) {
+        if (raw is Map) {
+          _otherProfile = UserProfileModel.fromJson(
+            Map<String, dynamic>.from(raw),
+          );
+          _fetchOtherError = null;
+        } else {
+          throw Exception('Invalid profile response');
+        }
       }
     } catch (e) {
-      _fetchOtherError = e.toString();
-      _otherProfile = null;
+      if (!_disposed) {
+        _fetchOtherError = e.toString();
+        _otherProfile = null;
+      }
     } finally {
-      _fetchOtherLoading = false;
-      notifyListeners();
+      if (!_disposed) {
+        _fetchOtherLoading = false;
+        _safeNotifyListeners();
+      }
     }
   }
 
   @override
   void dispose() {
+    _disposed = true;
     ProfileService().removeListener(_listener);
     super.dispose();
   }
@@ -170,6 +189,8 @@ class PublicProfileViewModel extends ChangeNotifier {
     return r.toStringAsFixed(1);
   }
 
+  String get matchesPlayedValue => '${_active?.stats.matches ?? 0}';
+
   List<MySport> get publicSports {
     final raw = _active?.sports ?? [];
     final out = <MySport>[];
@@ -200,11 +221,78 @@ class PublicProfileViewModel extends ChangeNotifier {
     return null;
   }
 
+  List<Map<String, String>> get parsedReviews {
+    final list = _active?.reviews;
+    if (list == null || list.isEmpty) return const <Map<String, String>>[];
+
+    final out = <Map<String, String>>[];
+    for (final item in list) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final authorRaw =
+          m['author_name'] ??
+          m['reviewer_name'] ??
+          m['reviewer'] ??
+          m['author'] ??
+          m['user'];
+      final author = authorRaw is Map
+          ? '${authorRaw['full_name'] ?? authorRaw['name'] ?? ''}'.trim()
+          : '${authorRaw ?? ''}'.trim();
+
+      final body = '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+      final rawDate = m['created_at'] ?? m['date'] ?? m['reviewed_at'];
+      String date = '';
+      if (rawDate != null) {
+        final parsed = DateTime.tryParse(rawDate.toString());
+        date = parsed == null
+            ? rawDate.toString()
+            : '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+      }
+
+      if (author.isEmpty && body.isEmpty) continue;
+      out.add(<String, String>{
+        'author': author.isEmpty ? '—' : author,
+        'body': body.isEmpty ? AppText.profilePlaceholderReview : body,
+        'date': date,
+        'initial': author.isEmpty ? '?' : author[0].toUpperCase(),
+      });
+    }
+
+    return out;
+  }
+
+  bool get hasReviews {
+    final total = _active?.totalReviews ?? 0;
+    if (total > 0) return true;
+    final list = _active?.reviews;
+    if (list == null || list.isEmpty) return false;
+    for (final item in list) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final authorRaw =
+          m['author_name'] ??
+          m['reviewer_name'] ??
+          m['reviewer'] ??
+          m['author'] ??
+          m['user'];
+      final author = authorRaw is Map
+          ? '${authorRaw['full_name'] ?? authorRaw['name'] ?? ''}'.trim()
+          : '${authorRaw ?? ''}'.trim();
+      final body = '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+      if (author.isNotEmpty || body.isNotEmpty) return true;
+    }
+    return false;
+  }
+
   String get reviewAuthor {
     final m = _firstReviewMap;
     if (m == null) return '';
     final name =
-        m['author_name'] ?? m['reviewer_name'] ?? m['author'] ?? m['user'];
+        m['author_name'] ??
+        m['reviewer_name'] ??
+        m['reviewer'] ??
+        m['author'] ??
+        m['user'];
     if (name is Map) return '${name['full_name'] ?? name['name'] ?? ''}';
     return name?.toString() ?? '';
   }
@@ -271,14 +359,27 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   void onMessageTap(BuildContext context) {
-    Navigator.pushNamed(context, RoutesName.chatScreen);
+    final matchId = initialMatchId.trim();
+    if (matchId.isEmpty) {
+      AppSnackBar.show(
+        'Direct user chat is not available yet. Open chat from a match instead.',
+      );
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      RoutesName.chatScreen,
+      arguments: ChatRouteArgs(
+        contactName: 'Match Chat',
+        matchId: matchId,
+        isOnline: true,
+      ),
+    );
   }
 
   Future<void> onFollowTap(BuildContext context) async {
-    if (isOwnProfile ||
-        selectedUserId.isEmpty ||
-        _followLoading ||
-        isFollowing) {
+    if (isOwnProfile || selectedUserId.isEmpty || _followLoading) {
       log(
         'ℹ️ [PublicProfileVM] Follow tap ignored '
         '(isOwnProfile: $isOwnProfile, selectedUserId: $selectedUserId, '
@@ -286,74 +387,90 @@ class PublicProfileViewModel extends ChangeNotifier {
       );
       return;
     }
+    if (isFollowing) {
+      openFollowers(context);
+      return;
+    }
 
     _followLoading = true;
     _followError = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       log('🚀 [PublicProfileVM] Follow API hit for userId: $selectedUserId');
       await _followUserRepo.followUser(userId: selectedUserId);
+      if (_disposed) return;
       log('✅ [PublicProfileVM] Follow API success for userId: $selectedUserId');
       _isFollowingOverride = true;
       _followersCountOverride = followersCount + 1;
       _followError = null;
-      notifyListeners();
+      _safeNotifyListeners();
 
       if (!context.mounted) return;
       AppSnackBar.show('User followed successfully');
+      openFollowers(context);
     } catch (e) {
+      if (_disposed) return;
       log('❌ [PublicProfileVM] Follow API failed for userId: $selectedUserId');
       log('📍 [PublicProfileVM] Follow error: $e');
       _followError = e.toString();
-      notifyListeners();
+      _safeNotifyListeners();
 
       if (!context.mounted) return;
       AppSnackBar.show(_followError ?? 'Failed to follow user');
     } finally {
-      _followLoading = false;
-      notifyListeners();
+      if (!_disposed) {
+        _followLoading = false;
+        _safeNotifyListeners();
+      }
     }
   }
 
   Future<bool> submitReview({
-    required String matchId,
     required int rating,
     required String comment,
   }) async {
     log(
       '[PublicProfileVM] submitReview tapped for userId=$selectedUserId, '
-      'matchId=$matchId, rating=$rating',
+      'rating=$rating',
     );
+    if (_submitReviewLoading) {
+      return false;
+    }
     if (isOwnProfile) {
       _submitReviewError = AppText.cannotRateOwnProfile;
-      notifyListeners();
+      _safeNotifyListeners();
+      return false;
+    }
+    if (!canRateProfile) {
+      _submitReviewError = 'You have already submitted a profile review for this user.';
+      _safeNotifyListeners();
       return false;
     }
     if (selectedUserId.isEmpty) {
       _submitReviewError = AppText.invalidUserProfile;
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
-
     _submitReviewLoading = true;
     _submitReviewError = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _reviewRepository.createReview(
         userId: selectedUserId,
         request: CreateReviewRequestModel(
-          matchId: matchId.trim(),
           rating: rating,
           comment: comment.trim(),
         ),
       );
+      if (_disposed) return false;
       log(
         '[PublicProfileVM] submitReview success for userId=$selectedUserId',
       );
 
       final raw = await _repo.getUserById(selectedUserId);
+      if (_disposed) return false;
       if (raw is Map) {
         _otherProfile = UserProfileModel.fromJson(
           Map<String, dynamic>.from(raw),
@@ -362,15 +479,21 @@ class PublicProfileViewModel extends ChangeNotifier {
 
       _submitReviewLoading = false;
       _submitReviewError = null;
-      notifyListeners();
+      _safeNotifyListeners();
       return true;
     } catch (e) {
+      if (_disposed) return false;
       log(
         '[PublicProfileVM] submitReview failed for userId=$selectedUserId: $e',
       );
       _submitReviewLoading = false;
-      _submitReviewError = e.toString();
-      notifyListeners();
+      _submitReviewError = messageFromApiException(e);
+      if ((_submitReviewError ?? '').toLowerCase().contains(
+        'already submitted a profile review',
+      )) {
+        _canRateOverride = false;
+      }
+      _safeNotifyListeners();
       return false;
     }
   }

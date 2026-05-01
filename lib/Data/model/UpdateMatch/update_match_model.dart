@@ -9,6 +9,8 @@ class UpdateMatchModel {
   final int? durationMinutes;
   final int? maxPlayers;
   final String? location;
+  final double? latitude;
+  final double? longitude;
 
   UpdateMatchModel({
     this.id,
@@ -21,6 +23,8 @@ class UpdateMatchModel {
     this.durationMinutes,
     this.maxPlayers,
     this.location,
+    this.latitude,
+    this.longitude,
   });
 
   factory UpdateMatchModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class UpdateMatchModel {
       durationMinutes: json["duration_minutes"],
       maxPlayers: json["max_players"],
       location: json["location"],
+      latitude: (json["latitude"] as num?)?.toDouble(),
+      longitude: (json["longitude"] as num?)?.toDouble(),
     );
   }
 }

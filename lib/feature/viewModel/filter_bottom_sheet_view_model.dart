@@ -1,34 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
+import 'package:sport_finding/core/Network/platform_options_store.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
 
-/// ViewModel for [FilterBottomSheet].
-///
-/// Keeps all user selections (sport/skill/distance/date/time) so the UI is
-/// purely a renderer and stays consistent across all screens.
+ 
 class FilterBottomSheetViewModel extends ChangeNotifier {
-  FilterBottomSheetViewModel();
+  FilterBottomSheetViewModel() {
+    _load();
+  }
 
   int? selectedSportIndex;
   int? selectedSkillIndex;
-
-  /// UI initial value matches the design (thumb near `10 km`),
-  /// but we treat it as "no distance filter" until the user moves the slider.
-  double distance = 10.0;
+ double distance = 10.0;
   bool distanceEnabled = false;
 
-  final List<String> skillLevels = const [
-    'Beginner',
-    'Intermediate',
-    'Advanced',
-  ];
+  List<String> skillLevels = [];
+  List<SportType> sports = [];
+  bool isLoading = true;
+  String? loadError;
 
-  final List<SportType> sports = [
-    SportType(name: 'Football', icon: AppAssets.footBallIcon),
-    SportType(name: 'Basketball', icon: AppAssets.basketBallIcon),
-    SportType(name: 'Volleyball', icon: AppAssets.volleyBallIcon),
-    SportType(name: 'Tennis', icon: AppAssets.tableTennisIcon),
-  ];
+  Future<void> _load() async {
+    isLoading = true;
+    loadError = null;
+    notifyListeners();
+    try {
+      final o = await PlatformOptionsStore.instance.load();
+      skillLevels = List<String>.from(o.skills);
+      sports = o.sports
+          .map(
+            (name) => SportType(name: name, icon: _iconForSportName(name)),
+          )
+          .toList();
+    } catch (e) {
+      loadError = e.toString();
+      skillLevels = [];
+      sports = [];
+    }
+    isLoading = false;
+    notifyListeners();
+  }
+
+  void retryOptionsLoad() {
+    _load();
+  }
+
+  String _iconForSportName(String sport) {
+    switch (sport.toLowerCase()) {
+      case 'football':
+        return AppAssets.footBallIcon;
+      case 'basketball':
+        return AppAssets.basketBallIcon;
+      case 'tennis':
+        return AppAssets.tableTennisIcon;
+      case 'volleyball':
+        return AppAssets.volleyBallIcon;
+      case 'badminton':
+        return AppAssets.tableTennisIcon;
+      case 'cricket':
+        return AppAssets.batIcon;
+      default:
+        return AppAssets.footBallIcon;
+    }
+  }
 
   final TextEditingController dateController = TextEditingController();
   final TextEditingController timeController = TextEditingController();
@@ -81,7 +114,14 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
     final effectiveDistance = distanceEnabled ? distance : kMaxFilterDistanceKm;
     return FilterData(
       sportIndex: selectedSportIndex,
-      skillLevel: selectedSkillIndex != null
+      sportName: selectedSportIndex != null &&
+              selectedSportIndex! >= 0 &&
+              selectedSportIndex! < sports.length
+          ? sports[selectedSportIndex!].name
+          : null,
+      skillLevel: selectedSkillIndex != null &&
+              selectedSkillIndex! >= 0 &&
+              selectedSkillIndex! < skillLevels.length
           ? skillLevels[selectedSkillIndex!]
           : null,
       distance: effectiveDistance,

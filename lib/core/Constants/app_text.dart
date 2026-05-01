@@ -7,8 +7,14 @@ class AppText {
 
   static const String noRouteFound = 'no Route Found';
   static const String verifyYourAccount = 'Verify Your Account';
-  static const String enterThe6DigitCodeWeHaveSentToYourEmail =
-      'Enter the 6-digit that we have sent to [EMAIL_ADDRESS]';
+  static String enterThe6DigitCodeWeHaveSentTo(String email) {
+    final e = email.trim();
+    if (e.isEmpty) {
+      return 'Enter the 6-digit code that we have sent to your email';
+    }
+    return 'Enter the 6-digit code that we have sent to $e';
+  }
+
   static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
   static const String skip = 'Skip';
   static const String sportFinding = 'SportFinding';
@@ -193,6 +199,17 @@ class AppText {
   static const String denmarkCentralPark = 'Denmark Central Park';
   static const String maximumPlayers = 'Maximum Players';
   static const String skillLevelHint = 'Beginner / Intermediate / Advanced';
+
+  /// Create match sport/skill dropdowns when nothing is selected yet.
+  static const String selectSportType = 'Select sport type';
+  static const String selectYourSkill = 'Select your skill';
+
+  /// Match schedule: require date and time before save/create.
+  static const String selectMatchDateRequired = 'Please select a date';
+  static const String selectMatchTimeRequired = 'Please select a time';
+  static const String scheduleDateTimeRequired =
+      'Please select both date and time for the match.';
+
   static const String eG10 = 'e.g. 10';
   static const String eGBasketball = 'e.g Basketball';
   static const String description = 'Description';
@@ -206,7 +223,7 @@ class AppText {
       'Your match is live. Share it with friends!';
   static const String shareMatch = 'Share Match';
 
-  static const String invitedPlayers = 'Invited Players';
+  static const String invitePlayers = 'Invite Players';
   static const String alexJohnson = 'Alex Johnson';
   static const String losAngelesCa = 'Los Angeles, CA';
   static const String passionateAthleteBio =

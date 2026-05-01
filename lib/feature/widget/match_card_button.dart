@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -19,24 +20,34 @@ class MatchCardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: ontap,
-      child: Card(
-        child: Container(
-          padding: context.padSym(h: 10, v: 4),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(context.radiusR(12)),
-          ),
-          child: NormalText(
-            titleText: text,
-            titleStyle: context.appText.text12W600.copyWith(
-              height: 1.5,
-              color: textColor,
-            ),
-          ),
+    final button = Container(
+      padding: context.padSym(
+        h: kIsWeb ? 12 : 10,
+        v: kIsWeb ? 6 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(context.radiusR(kIsWeb ? 10 : 12)),
+        border: kIsWeb && color == context.appColors.surface
+            ? Border.all(color: const Color(0xFFD7E7F7))
+            : null,
+      ),
+      child: NormalText(
+        titleText: text,
+        titleStyle: context.appText.text12W600.copyWith(
+          height: 1.5,
+          color: textColor,
         ),
       ),
+    );
+    return GestureDetector(
+      onTap: ontap,
+      child: kIsWeb
+          ? button
+          : Card(
+              margin: EdgeInsets.zero,
+              child: button,
+            ),
     );
   }
 }

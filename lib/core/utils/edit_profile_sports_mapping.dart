@@ -8,11 +8,17 @@ String? apiSportToUiDropdown(String? raw) {
   if (s.contains('VOLLEY')) return AppText.volleyball;
   if (s.contains('TENNIS')) return AppText.tennis;
   if (s.contains('FOOT') || s == 'SOCCER') return AppText.football;
+  if (s.contains('CRICK')) return AppText.cricket;
+  if (s.contains('BADMINTON')) {
+    return 'Badminton';
+  }
   for (final o in [
     AppText.basketball,
     AppText.football,
     AppText.tennis,
     AppText.volleyball,
+    AppText.cricket,
+    'Badminton',
   ]) {
     if (o.toLowerCase() == raw.trim().toLowerCase()) return o;
   }
@@ -43,6 +49,10 @@ String uiSportToApiToken(String ui) {
       return 'Tennis';
     case AppText.volleyball:
       return 'Volleyball';
+    case AppText.cricket:
+      return 'Cricket';
+    case 'Badminton':
+      return 'Badminton';
     default:
       return ui.trim();
   }

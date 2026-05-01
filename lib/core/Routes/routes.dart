@@ -11,6 +11,7 @@ import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/verifi
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
@@ -38,293 +39,283 @@ import 'package:sport_finding/feature/view/Legal/terms_of_service_screen.dart';
 import 'package:sport_finding/feature/view/Notifications/notifications_screen.dart';
 import 'package:sport_finding/feature/view/Onboarding/on_boarding_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Otp/otp_verification_screen.dart';
+import 'package:sport_finding/feature/view/AppStart/app_start_screen.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/skill_level_screen.dart';
-import 'package:sport_finding/feature/view/SplashScreen/splash_screen.dart';
 
 class Routes {
+  static T? _argAs<T>(Object? arg) => arg is T ? arg : null;
+  static Route<dynamic> _route(
+    RouteSettings settings,
+    WidgetBuilder builder,
+  ) {
+    return MaterialPageRoute(settings: settings, builder: builder);
+  }
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case RoutesName.splashScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.splashScreen,
-            const SplashScreen(),
-          ),
-        );
+      case RoutesName.appStartScreen:
+        return _route(settings, (_) => const AppStartScreen());
       case RoutesName.onboardingScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.onboardingScreen,
-            const OnBoardingScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.onboardingScreen,
+                const OnBoardingScreen(),
+              ),
         );
       case RoutesName.LoginScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.LoginScreen,
-            const LoginScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.LoginScreen,
+                const LoginScreen(),
+              ),
         );
       case RoutesName.SignUp:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) =>
-              RouteProviders.wrapIfNeeded(RoutesName.SignUp, const SignUp()),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(RoutesName.SignUp, const SignUp()),
         );
       case RoutesName.skillLevelScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.skillLevelScreen,
-            const SkillLevelScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.skillLevelScreen,
+                const SkillLevelScreen(),
+              ),
         );
       case RoutesName.chooseSportScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.chooseSportScreen,
-            const ChooseSportScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.chooseSportScreen,
+                const ChooseSportScreen(),
+              ),
         );
       case RoutesName.locationAccessScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.locationAccessScreen,
-            const LocationAccessScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.locationAccessScreen,
+                const LocationAccessScreen(),
+              ),
         );
       case RoutesName.bottomBarScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.bottomBarScreen,
-            const BottomBarScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.bottomBarScreen,
+                const BottomBarScreen(),
+              ),
         );
 
       case RoutesName.otpVerificationScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.otpVerificationScreen,
-            OtpVerificationScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.otpVerificationScreen,
+                OtpVerificationScreen(),
+              ),
         );
       case RoutesName.allUpComingMatchesScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.allUpComingMatchesScreen,
-            AllUpcomingMatches(),
-            routeArguments: settings.arguments,
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.allUpComingMatchesScreen,
+                AllUpcomingMatches(),
+                routeArguments: settings.arguments,
+              ),
         );
       case RoutesName.seeAllInvatedPlayerScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.seeAllInvatedPlayerScreen,
-            SeeAllInvatedPlayerScreen(),
-            routeArguments: settings.arguments,
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.seeAllInvatedPlayerScreen,
+                SeeAllInvatedPlayerScreen(),
+                routeArguments: settings.arguments,
+              ),
         );
 
-      ////////////
       case RoutesName.userMatchDetailsScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.userMatchDetailsScreen,
-            const UserMatchDetailsScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.userMatchDetailsScreen,
+                const UserMatchDetailsScreen(),
+              ),
         );
       case RoutesName.hostDetailsScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.hostDetailsScreen,
-            HostDetailsScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.hostDetailsScreen,
+                HostDetailsScreen(),
+              ),
         );
       case RoutesName.createMatchScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.createMatchScreen,
-
-            CreateMatchScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.createMatchScreen,
+                CreateMatchScreen(),
+              ),
         );
       case RoutesName.locationSearchScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.locationSearchScreen,
-            const LocationSearchScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.locationSearchScreen,
+                const LocationSearchScreen(),
+              ),
         );
       case RoutesName.editMatchScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.editMatchScreen,
-            const EditMatchScreen(),
-            routeArguments: settings.arguments,
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.editMatchScreen,
+                const EditMatchScreen(),
+                routeArguments: settings.arguments,
+              ),
         );
       case RoutesName.matchCreatedDoneScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.matchCreatedDoneScreen,
-            const MatchCreatedDoneScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.matchCreatedDoneScreen,
+                const MatchCreatedDoneScreen(),
+              ),
         );
 
       case RoutesName.allMemberScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.allMemberScreen,
-            AllMemberScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.allMemberScreen,
+                AllMemberScreen(),
+              ),
         );
       case RoutesName.chatScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) =>
-              RouteProviders.wrapIfNeeded(RoutesName.chatScreen, ChatScreen()),
+        final args = _argAs<ChatRouteArgs>(settings.arguments);
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.chatScreen,
+                ChatScreen(
+                  matchId: args?.matchId,
+                  targetUserId: args?.targetUserId,
+                ),
+                routeArguments: settings.arguments,
+              ),
         );
       case RoutesName.notificationsScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.notificationsScreen,
-            const NotificationsScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.notificationsScreen,
+                const NotificationsScreen(),
+              ),
         );
       case RoutesName.editProfileRoute:
         final editArgs = settings.arguments;
-        final a = editArgs is EditProfileRouteArgs
-            ? editArgs
-            : const EditProfileRouteArgs();
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => ChangeNotifierProvider(
-            create: (_) => EditProfileScreenViewModel(UpdateProfileRepo()),
-            child: EditProfileScreen(
-              initialName: a.initialName,
-              initialBio: a.initialBio,
-              initialAvatarUrl: a.initialAvatarUrl,
-              initialSport: a.initialSport,
-              initialSkill: a.initialSkill,
-            ),
-          ),
+        final a = _argAs<EditProfileRouteArgs>(editArgs) ??
+            const EditProfileRouteArgs();
+        return _route(
+          settings,
+          (_) => ChangeNotifierProvider(
+                create: (_) => EditProfileScreenViewModel(UpdateProfileRepo()),
+                child: EditProfileScreen(
+                  initialName: a.initialName,
+                  initialBio: a.initialBio,
+                  initialAvatarUrl: a.initialAvatarUrl,
+                  initialSport: a.initialSport,
+                  initialSkill: a.initialSkill,
+                ),
+              ),
         );
       case RoutesName.forgotPasswordScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.forgotPasswordScreen,
-            const ForgotPasswordScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.forgotPasswordScreen,
+                const ForgotPasswordScreen(),
+              ),
         );
 
       case RoutesName.verificationScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.verificationScreen,
-            const VerificationScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.verificationScreen,
+                const VerificationScreen(),
+              ),
         );
 
       case RoutesName.newPasswordScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => RouteProviders.wrapIfNeeded(
-            RoutesName.newPasswordScreen,
-            const NewPasswordScreen(),
-          ),
+        return _route(
+          settings,
+          (_) => RouteProviders.wrapIfNeeded(
+                RoutesName.newPasswordScreen,
+                const NewPasswordScreen(),
+              ),
         );
 
       case RoutesName.followersScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => FollowersScreen(
-            args: settings.arguments is FollowConnectionsArgs
-                ? settings.arguments as FollowConnectionsArgs
-                : null,
-          ),
+        return _route(
+          settings,
+          (_) => FollowersScreen(
+                args: _argAs<FollowConnectionsArgs>(settings.arguments),
+              ),
         );
       case RoutesName.followingScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => FollowingScreen(
-            args: settings.arguments is FollowConnectionsArgs
-                ? settings.arguments as FollowConnectionsArgs
-                : null,
-          ),
+        return _route(
+          settings,
+          (_) => FollowingScreen(
+                args: _argAs<FollowConnectionsArgs>(settings.arguments),
+              ),
         );
       case RoutesName.privacyPolicyScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const PrivacyPolicyScreen(),
-        );
+        return _route(settings, (_) => const PrivacyPolicyScreen());
       case RoutesName.termsOfServiceScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const TermsOfServiceScreen(),
-        );
+        return _route(settings, (_) => const TermsOfServiceScreen());
       case RoutesName.publicProfileScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => PublicProfileScreen(
-            args: settings.arguments is PublicProfileArgs
-                ? settings.arguments as PublicProfileArgs
-                : null,
-          ),
+        return _route(
+          settings,
+          (_) => PublicProfileScreen(
+                args: _argAs<PublicProfileArgs>(settings.arguments),
+              ),
         );
       case RoutesName.privateProfileScreen:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const PrivateProfileScreen(),
-        );
+        return _route(settings, (_) => const PrivateProfileScreen());
 
       default:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (context) => Scaffold(
-            body: Stack(
-              children: [
-                Center(
-                  child: Text(
-                    AppText.noRouteFound,
-                    textAlign: TextAlign.center,
-                    style: context.appText.text18Bold.copyWith(
-                      color: context.appColors.onSurface,
+        return _route(
+          settings,
+          (context) => Scaffold(
+                body: Stack(
+                  children: [
+                    Center(
+                      child: Text(
+                        AppText.noRouteFound,
+                        textAlign: TextAlign.center,
+                        style: context.appText.text18Bold.copyWith(
+                          color: context.appColors.onSurface,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Positioned(
-                  top: context.sh(50),
-                  left: context.sw(20),
-                  child: InkWell(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                      color: context.appColors.onSurface,
+                    Positioned(
+                      top: context.sh(50),
+                      left: context.sw(20),
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: context.appColors.onSurface,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
         );
     }
   }

@@ -17,7 +17,9 @@ class ListOfAllUserRepository {
       print(response);
       print("========== GET ALL USERS COMPLETED ==========");
 
-      return response;
+      return ListOfAllUserModel.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      );
     } catch (e, stackTrace) {
       print("========== GET ALL USERS ERROR ==========");
       print("Error: $e");

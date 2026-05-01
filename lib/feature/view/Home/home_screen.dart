@@ -15,12 +15,13 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
+import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -62,6 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<HomeScreenViewModel>(
       builder: (context, model, child) {
+        // if (kIsWeb) {
+        //   return WebHomeContent(model: model);
+        // }
         return ListView(
           padding: context.padSym(h: 20),
           children: [
@@ -74,19 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
             if (model.isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 16),
-                    Text("Loading profile..."),
-                  ],
-                ),
-              )
+              const _HomeGreetingShimmer()
             else
               UserGreetingWidget(
                 title: model.timeGreeting,
@@ -111,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         RoutesName.createMatchScreen,
                       );
                     },
-                    padding: context.padSym(h: 26, v: 18),
+                    // padding: context.padSym(h: 26, v: 18),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -129,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(width: context.w(12)),
                 Expanded(
                   child: CardWidget(
-                    padding: context.padSym(h: 26, v: 18),
+                    // padding: context.padSym(h: 26, v: 18),
                     onTap: () {
                       context.read<BottomBarScreenViewModel>().setSelectedIndex(
                         1,
@@ -163,6 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   arguments: AllUpcomingMatchesRouteArgs(
                     scope: UpcomingMatchesScope.allUpcoming,
                     prefetchedMatches: List<AllMatches>.from(model.matches),
+                    hasNext: model.hasMoreUpcoming,
                   ),
                 );
               },
@@ -171,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: GlobalMatchCard.listSlotHeight(context),
               child: model.matchesLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const _HomeMatchesShimmer()
                   : model.matches.isEmpty
                   ? Center(
                       child: NormalText(
@@ -251,6 +244,111 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+}
+
+class _HomeGreetingShimmer extends StatelessWidget {
+  const _HomeGreetingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: const [
+          ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ShimmerBox(width: 140, height: 14, radius: 8),
+                SizedBox(height: 10),
+                ShimmerBox(width: 110, height: 12, radius: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeMatchesShimmer extends StatelessWidget {
+  const _HomeMatchesShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: 2,
+      padding: EdgeInsets.zero,
+      separatorBuilder: (_, _) => SizedBox(width: context.w(12)),
+      itemBuilder: (context, _) {
+        return SizedBox(
+          width: context.w(300),
+          child: CardWidget(
+            child: Padding(
+              padding: context.padSym(h: 16, v: 16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxHeight <= 150;
+                  if (compact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        ShimmerBox(width: 120, height: 14),
+                        ShimmerBox(width: 90, height: 10),
+                        ShimmerBox(width: 150, height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ShimmerBox(width: 60, height: 10),
+                            ShimmerBox(
+                              width: 28,
+                              height: 28,
+                              shape: BoxShape.circle,
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      ShimmerBox(width: 140, height: 16),
+                      SizedBox(height: 12),
+                      ShimmerBox(width: 100, height: 12),
+                      SizedBox(height: 18),
+                      ShimmerBox(height: 12),
+                      SizedBox(height: 10),
+                      ShimmerBox(width: 180, height: 12),
+                      SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ShimmerBox(width: 70, height: 12),
+                          ShimmerBox(
+                            width: 44,
+                            height: 44,
+                            shape: BoxShape.circle,
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
         );
       },
     );
