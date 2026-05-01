@@ -673,7 +673,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       if (!participant.countsAsJoinedPlayer) continue;
       final fullName = participant.user.fullName.trim();
       if (myId.isNotEmpty && userId == myId) {
-        isCurrentUserInParticipants = true;
+        // _isCurrentUserInParticipants = true;
       }
       if (fullName.isEmpty) continue;
       if (hostId.isNotEmpty && userId == hostId) continue;
