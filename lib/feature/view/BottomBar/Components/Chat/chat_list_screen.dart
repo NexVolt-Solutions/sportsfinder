@@ -40,7 +40,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final selectedTargetUserId = (selected.targetUserId ?? '').trim();
     if (selectedName.isEmpty || selectedTargetUserId.isEmpty) return;
 
-    _safeVm.startOrOpenThread(selectedName, targetUserId: selectedTargetUserId);
+    _safeVm.startOrOpenThread(
+      selectedName,
+      targetUserId: selectedTargetUserId,
+    );
     if (kIsWeb && widget.embedInBottomBar) {
       setState(() => _selectedWebThreadIndex = 0);
       return;
@@ -69,9 +72,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             final safeSelected = hasThreads
                 ? _selectedWebThreadIndex.clamp(0, model.threads.length - 1)
                 : 0;
-            final activeThread = hasThreads
-                ? model.threads[safeSelected]
-                : null;
+            final activeThread = hasThreads ? model.threads[safeSelected] : null;
             return Padding(
               padding: context.padSym(h: 20, v: 8),
               child: Column(
@@ -134,10 +135,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 SizedBox(height: context.h(8)),
                                 Row(
                                   children: [
-                                    _WebFilterChip(
-                                      label: 'All',
-                                      selected: true,
-                                    ),
+                                    _WebFilterChip(label: 'All', selected: true),
                                     SizedBox(width: context.w(6)),
                                     _WebFilterChip(label: 'Unread'),
                                     SizedBox(width: context.w(6)),
@@ -181,9 +179,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                       ),
                                                   border: Border.all(
                                                     color: isSelected
-                                                        ? context
-                                                              .appColors
-                                                              .primary
+                                                        ? context.appColors.primary
                                                         : context
                                                               .appColors
                                                               .greylight
@@ -227,24 +223,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                           Text(
                                                             t.userName,
                                                             maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
+                                                            overflow: TextOverflow
+                                                                .ellipsis,
                                                             style: context
                                                                 .appText
                                                                 .text14W500,
                                                           ),
                                                           SizedBox(
-                                                            height: context.h(
-                                                              2,
-                                                            ),
+                                                            height: context.h(2),
                                                           ),
                                                           Text(
                                                             t.lastMessage,
                                                             maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
+                                                            overflow: TextOverflow
+                                                                .ellipsis,
                                                             style: context
                                                                 .appText
                                                                 .text12W400
@@ -320,9 +312,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             .withValues(alpha: 0.35),
                                         child: Text(
                                           activeThread != null &&
-                                                  activeThread
-                                                      .userName
-                                                      .isNotEmpty
+                                                  activeThread.userName.isNotEmpty
                                               ? activeThread.userName[0]
                                                     .toUpperCase()
                                               : 'C',
@@ -420,14 +410,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         onPressed: activeThread == null
                                             ? null
                                             : () {
-                                                final text =
-                                                    _webMessageController.text
-                                                        .trim();
+                                                final text = _webMessageController
+                                                    .text
+                                                    .trim();
                                                 if (text.isEmpty) return;
                                                 ChatListScreenViewModel.upsertThread(
                                                   userName:
                                                       activeThread.userName,
-                                                  matchId: activeThread.matchId,
+                                                  matchId:
+                                                      activeThread.matchId,
+                                                  targetUserId:
+                                                      activeThread.targetUserId,
                                                   lastMessage: text,
                                                   lastAt: DateTime.now(),
                                                 );
@@ -450,6 +443,32 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                 ],
               ),
+            return WebChatContent(
+              model: model,
+              selectedThreadIndex: _selectedWebThreadIndex,
+              messageController: _webMessageController,
+              onThreadSelected: (index) {
+                setState(() => _selectedWebThreadIndex = index);
+              },
+              onPickUser: _pickAndOpenUser,
+              onSendMessage: () {
+                final hasThreads = model.hasThreads;
+                if (!hasThreads) return;
+                final safeSelected = _selectedWebThreadIndex.clamp(
+                  0,
+                  model.threads.length - 1,
+                );
+                final activeThread = model.threads[safeSelected];
+                final text = _webMessageController.text.trim();
+                if (text.isEmpty) return;
+                ChatListScreenViewModel.upsertThread(
+                  userName: activeThread.userName,
+                  matchId: activeThread.matchId,
+                  lastMessage: text,
+                  lastAt: DateTime.now(),
+                );
+                _webMessageController.clear();
+              },
             );
           }
           return Scaffold(
