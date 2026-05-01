@@ -110,7 +110,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     AppText.location,
   ];
 
-  String? _boundMatchId;
+  bool _isDisposed = false;
   List<String> _rosterNames = [];
   List<String> _rosterSkills = [];
   List<String> _rosterUserIds = [];
@@ -356,6 +356,14 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Sync first so we do not send join while server still finalizing a recent leave.
+      await refreshRoster();
+      if (_hasJoined) {
+        log('ℹ️ [ViewModel] joinMatch skipped - user already joined after sync');
+        _sessionJoinStateByMatchId[matchId] = true;
+        return true;
+      }
+
       final JoinLeaveMatchResponse result = await _joinLeaveRepo.joinMatch(
         matchId,
       );
@@ -386,6 +394,35 @@ class HostDetailScreenViewModel extends ChangeNotifier {
         return true; // Treat as success for UI purposes
       }
 
+      // Some backends need a moment after leave before re-join.
+      if (errorStr.contains('unexpected error occurred')) {
+        log(
+          'ℹ️ [ViewModel] joinMatch transient backend error after leave; retrying once...',
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 900));
+        try {
+          await refreshRoster();
+          if (_hasJoined) {
+            _sessionJoinStateByMatchId[matchId] = true;
+            return true;
+          }
+          final retryResult = await _joinLeaveRepo.joinMatch(matchId);
+          log(
+            '✅ [ViewModel] joinMatch retry success — message: ${retryResult.message}',
+          );
+          _hasJoined = true;
+          _sessionJoinStateByMatchId[matchId] = true;
+          _addCurrentUserToRoster();
+          _joinLeaveError = null;
+          return true;
+        } catch (retryError, retryStack) {
+          log('❌ [ViewModel] joinMatch retry failed — error: $retryError');
+          log('📍 [ViewModel] joinMatch retry stacktrace: $retryStack');
+          _joinLeaveError = retryError.toString();
+          return false;
+        }
+      }
+
       return false;
     } finally {
       _isJoinLeaveLoading = false;
@@ -414,6 +451,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       _hasJoined = false;
       _sessionJoinStateByMatchId[matchId] = false;
       _removeCurrentUserFromRoster();
+      await refreshRoster();
       log('[ViewModel] leaveMatch cached state -> left for matchId: $matchId');
       return true;
     } catch (e, stack) {
@@ -454,7 +492,6 @@ class HostDetailScreenViewModel extends ChangeNotifier {
 
   // ── Bind Match ─────────────────────────────────────────────────────────────
   void bindMatch(DiscoveryMatch match) {
-    _boundMatchId = match.id;
     _currentMatch = match;
     _seedRosterFromMatch(match);
 
@@ -620,6 +657,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   void _applyRosterFromDetail(MatchDetailResponse detail) {
     final hostId = detail.host.id.trim();
     final hostName = detail.host.fullName.trim().toLowerCase();
+    final myId = (ProfileService().profile?.id ?? '').trim();
     final names = <String>[];
     final skills = <String>[];
     final userIds = <String>[];
@@ -634,6 +672,9 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       }
       if (!participant.countsAsJoinedPlayer) continue;
       final fullName = participant.user.fullName.trim();
+      if (myId.isNotEmpty && userId == myId) {
+        isCurrentUserInParticipants = true;
+      }
       if (fullName.isEmpty) continue;
       if (hostId.isNotEmpty && userId == hostId) continue;
       if (hostName.isNotEmpty && fullName.toLowerCase() == hostName) continue;
@@ -862,8 +903,15 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   // ── Dispose ────────────────────────────────────────────────────────────────
   @override
   void dispose() {
+    _isDisposed = true;
     log('🗑️ [ViewModel] dispose called');
     ListOfAllUserService().removeListener(_onUsersChanged);
     super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
   }
 }
