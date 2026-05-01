@@ -26,6 +26,17 @@ class FcmService {
   StreamSubscription<RemoteMessage>? _onMessageSub;
   StreamSubscription<String>? _tokenRefreshSub;
   bool _isInitialized = false;
+  Timer? _tokenRetryTimer;
+  bool _isTokenSyncInFlight = false;
+  int _tokenRetryAttempt = 0;
+  static const List<Duration> _tokenRetryDelays = <Duration>[
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+    Duration(seconds: 5),
+    Duration(seconds: 10),
+    Duration(seconds: 20),
+    Duration(seconds: 30),
+  ];
 
   Future<void> initialize({
     required NotificationService notificationService,
@@ -36,6 +47,7 @@ class FcmService {
 
     final messaging = FirebaseMessaging.instance;
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    WidgetsBinding.instance.addObserver(_appLifecycleObserver);
 
     final settings = await messaging.requestPermission(
       alert: true,
@@ -85,9 +97,13 @@ class FcmService {
   }
 
   Future<void> _syncCurrentToken() async {
+    if (_isTokenSyncInFlight) return;
+    _tokenRetryTimer?.cancel();
+    _isTokenSyncInFlight = true;
     try {
       final token = await FirebaseMessaging.instance.getToken();
       await _syncTokenToBackend(token);
+      _tokenRetryAttempt = 0;
     } catch (e, stackTrace) {
       AppLogger.error(
         'FCM getToken failed. Will continue without token for now.',
@@ -95,8 +111,35 @@ class FcmService {
         error: e,
         stackTrace: stackTrace,
       );
+      _scheduleTokenRetry();
+    } finally {
+      _isTokenSyncInFlight = false;
     }
   }
+
+  void _scheduleTokenRetry() {
+    if (_tokenRetryTimer != null) return;
+    final delay = _tokenRetryDelays[
+      _tokenRetryAttempt.clamp(0, _tokenRetryDelays.length - 1)
+    ];
+    _tokenRetryAttempt += 1;
+    AppLogger.warning(
+      'Retrying FCM token sync in ${delay.inSeconds}s (attempt $_tokenRetryAttempt)',
+      tag: 'FcmService',
+    );
+    _tokenRetryTimer = Timer(delay, () {
+      _tokenRetryTimer = null;
+      unawaited(_syncCurrentToken());
+    });
+  }
+
+  late final WidgetsBindingObserver _appLifecycleObserver =
+      _FcmLifecycleObserver(onResumed: () {
+        if (_isTokenSyncInFlight || _tokenRetryTimer != null) {
+          return;
+        }
+        unawaited(_syncCurrentToken());
+      });
 
   Future<void> _syncTokenToBackend(String? token) async {
     if (token == null || token.trim().isEmpty) {
@@ -137,8 +180,24 @@ class FcmService {
   }
 
   Future<void> dispose() async {
+    WidgetsBinding.instance.removeObserver(_appLifecycleObserver);
+    _tokenRetryTimer?.cancel();
+    _tokenRetryTimer = null;
     await _onMessageOpenedSub?.cancel();
     await _onMessageSub?.cancel();
     await _tokenRefreshSub?.cancel();
+  }
+}
+
+class _FcmLifecycleObserver extends WidgetsBindingObserver {
+  _FcmLifecycleObserver({required this.onResumed});
+
+  final VoidCallback onResumed;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      onResumed();
+    }
   }
 }

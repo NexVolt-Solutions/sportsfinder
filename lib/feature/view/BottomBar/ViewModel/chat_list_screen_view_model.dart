@@ -6,6 +6,7 @@ class ChatThreadPreview {
   const ChatThreadPreview({
     required this.userName,
     this.matchId,
+    this.targetUserId,
     required this.lastMessage,
     required this.lastTime,
     this.unreadCount = 0,
@@ -14,6 +15,7 @@ class ChatThreadPreview {
 
   final String userName;
   final String? matchId;
+  final String? targetUserId;
   final String lastMessage;
   final String lastTime;
   final int unreadCount;
@@ -22,6 +24,7 @@ class ChatThreadPreview {
   ChatThreadPreview copyWith({
     String? userName,
     String? matchId,
+    String? targetUserId,
     String? lastMessage,
     String? lastTime,
     int? unreadCount,
@@ -30,6 +33,7 @@ class ChatThreadPreview {
     return ChatThreadPreview(
       userName: userName ?? this.userName,
       matchId: matchId ?? this.matchId,
+      targetUserId: targetUserId ?? this.targetUserId,
       lastMessage: lastMessage ?? this.lastMessage,
       lastTime: lastTime ?? this.lastTime,
       unreadCount: unreadCount ?? this.unreadCount,
@@ -59,6 +63,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
   static void upsertThread({
     required String userName,
     String? matchId,
+    String? targetUserId,
     String? lastMessage,
     DateTime? lastAt,
     int unreadCount = 0,
@@ -66,6 +71,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
   }) {
     final trimmedName = userName.trim();
     final trimmedMatchId = (matchId ?? '').trim();
+    final trimmedTargetUserId = (targetUserId ?? '').trim();
     if (trimmedName.isEmpty) return;
     final now = lastAt ?? DateTime.now();
     final formattedTime = DateFormat('h:mm a').format(now);
@@ -75,6 +81,9 @@ class ChatListScreenViewModel extends ChangeNotifier {
       if (trimmedMatchId.isNotEmpty) {
         return (t.matchId ?? '').trim() == trimmedMatchId;
       }
+      if (trimmedTargetUserId.isNotEmpty) {
+        return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
+      }
       return t.userName.toLowerCase() == trimmedName.toLowerCase();
     });
     if (idx < 0) {
@@ -83,6 +92,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
         ChatThreadPreview(
           userName: trimmedName,
           matchId: trimmedMatchId.isNotEmpty ? trimmedMatchId : null,
+          targetUserId: trimmedTargetUserId.isNotEmpty ? trimmedTargetUserId : null,
           lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
           lastTime: formattedTime,
           unreadCount: unreadCount,
@@ -92,6 +102,8 @@ class ChatListScreenViewModel extends ChangeNotifier {
     } else {
       final updated = _globalThreads[idx].copyWith(
         userName: trimmedName,
+        matchId: trimmedMatchId.isNotEmpty ? trimmedMatchId : null,
+        targetUserId: trimmedTargetUserId.isNotEmpty ? trimmedTargetUserId : null,
         lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
         lastTime: formattedTime,
         unreadCount: unreadCount,
@@ -107,10 +119,11 @@ class ChatListScreenViewModel extends ChangeNotifier {
     _notifyAllListeners();
   }
 
-  void startOrOpenThread(String userName) {
+  void startOrOpenThread(String userName, {String? targetUserId}) {
     upsertThread(
       userName: userName,
       matchId: null,
+      targetUserId: targetUserId,
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),
       unreadCount: 0,

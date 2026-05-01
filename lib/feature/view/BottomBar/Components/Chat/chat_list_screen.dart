@@ -35,9 +35,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
       context,
       RoutesName.allMemberScreen,
     );
-    if (!mounted || selected is! String || selected.trim().isEmpty) return;
+    if (!mounted || selected is! ChatRouteArgs) return;
+    final selectedName = selected.contactName.trim();
+    final selectedTargetUserId = (selected.targetUserId ?? '').trim();
+    if (selectedName.isEmpty || selectedTargetUserId.isEmpty) return;
 
-    _safeVm.startOrOpenThread(selected.trim());
+    _safeVm.startOrOpenThread(
+      selectedName,
+      targetUserId: selectedTargetUserId,
+    );
     if (kIsWeb && widget.embedInBottomBar) {
       setState(() => _selectedWebThreadIndex = 0);
       return;
@@ -45,12 +51,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     await Navigator.pushNamed(
       context,
       RoutesName.chatScreen,
-      arguments: ChatRouteArgs(
-        contactName: selected.trim(),
-        // Direct chat uses UI-only thread until backend direct chat is integrated.
-        matchId: null,
-        isOnline: true,
-      ),
+      arguments: selected,
     );
   }
 
@@ -418,6 +419,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                       activeThread.userName,
                                                   matchId:
                                                       activeThread.matchId,
+                                                  targetUserId:
+                                                      activeThread.targetUserId,
                                                   lastMessage: text,
                                                   lastAt: DateTime.now(),
                                                 );
@@ -480,6 +483,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     arguments: ChatRouteArgs(
                                       contactName: t.userName,
                                       matchId: t.matchId,
+                                      targetUserId: t.targetUserId,
                                       isOnline: t.isOnline,
                                     ),
                                   );
