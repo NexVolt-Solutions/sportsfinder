@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
+import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -43,20 +44,26 @@ class RealtimeChatMessage {
 class MatchChatService {
   MatchChatService({
     required this.accessToken,
-    required this.matchId,
+    this.matchId,
+    this.targetUserId,
     ChatWsConnector? wsConnector,
     ReconnectDelayForAttempt? reconnectDelayForAttempt,
+    String? restBaseUrl,
   }) : _wsConnector = wsConnector ?? _defaultWsConnector {
+    final baseRestUrl = (restBaseUrl ?? ApiService().baseUrl).trim();
+    _baseRest = '$baseRestUrl/api/v1';
+    _baseWs = _toWsBase(baseRestUrl);
     _reconnectScheduler = ReconnectScheduler(
       delayForAttempt: reconnectDelayForAttempt ?? _defaultReconnectDelay,
     );
   }
 
-  static const String _baseRest = 'https://api.sportfinding.com/api/v1';
-  static const String _baseWs = 'wss://api.sportfinding.com';
+  final String? matchId;
+  final String? targetUserId;
+  late final String _baseRest;
+  late final String _baseWs;
 
   final String accessToken;
-  final String matchId;
   final ChatWsConnector _wsConnector;
 
   WebSocketChannel? _channel;
@@ -71,6 +78,20 @@ class MatchChatService {
   Stream<RealtimeChatMessage> get onMessage => _messageController.stream;
   Stream<String> get onError => _errorController.stream;
   Stream<void> get onConnected => _connectedController.stream;
+
+  String get _chatPath {
+    final resolvedMatchId = matchId?.trim() ?? '';
+    final resolvedTargetUserId = targetUserId?.trim() ?? '';
+    if (resolvedMatchId.isNotEmpty) {
+      return '/ws/matches/$resolvedMatchId/chat';
+    }
+    if (resolvedTargetUserId.isNotEmpty) {
+      return '/ws/users/$resolvedTargetUserId/chat';
+    }
+    throw StateError(
+      'MatchChatService requires either a non-empty matchId or targetUserId.',
+    );
+  }
 
   static WebSocketChannel _defaultWsConnector(
     Uri uri,
@@ -90,8 +111,25 @@ class MatchChatService {
     return const Duration(seconds: 5);
   }
 
+  static String _toWsBase(String restBaseUrl) {
+    final uri = Uri.parse(restBaseUrl);
+    final wsScheme = uri.scheme == 'https' ? 'wss' : 'ws';
+    return uri.replace(scheme: wsScheme, path: '', query: null).toString();
+  }
+
   Future<List<RealtimeChatMessage>> loadHistory() async {
-    final uri = Uri.parse('$_baseRest/matches/$matchId/messages');
+    final activeMatchId = matchId?.trim() ?? '';
+    final activeTargetUserId = targetUserId?.trim() ?? '';
+    late final Uri uri;
+    if (activeMatchId.isNotEmpty) {
+      uri = Uri.parse('$_baseRest/matches/$activeMatchId/messages');
+    } else if (activeTargetUserId.isNotEmpty) {
+      uri = Uri.parse('$_baseRest/users/$activeTargetUserId/messages');
+    } else {
+      throw Exception(
+        'Chat history requires either matchId or targetUserId.',
+      );
+    }
     debugPrint('[MatchChatService] [History] GET $uri');
     final response = await http.get(
       uri,
@@ -137,10 +175,10 @@ class MatchChatService {
     }
     _reconnectScheduler.cancel();
     final uri = Uri.parse(
-      '$_baseWs/ws/matches/$matchId/chat?token=${Uri.encodeQueryComponent(accessToken)}',
+      '$_baseWs$_chatPath?token=${Uri.encodeQueryComponent(accessToken)}',
     );
 
-    debugPrint('[MatchChatService] [WS] connecting matchId=$matchId uri=$uri');
+    debugPrint('[MatchChatService] [WS] connecting path=$_chatPath');
     _channel = _wsConnector(
       uri,
       <String, dynamic>{HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
@@ -158,10 +196,14 @@ class MatchChatService {
         _scheduleReconnect();
       },
       onDone: () {
-        debugPrint('[MatchChatService] [WS] done/closed');
-        _errorController.add('Connection closed');
+        final closeCode = _channel?.closeCode;
+        debugPrint('[MatchChatService] [WS] done/closed code=$closeCode');
+        final message = _messageForCloseCode(closeCode);
+        _errorController.add(message);
         _resetSocket();
-        _scheduleReconnect();
+        if (_shouldReconnect(closeCode)) {
+          _scheduleReconnect();
+        }
       },
       cancelOnError: true,
     );
@@ -226,6 +268,26 @@ class MatchChatService {
       canSchedule: () => !_isDisposed && _channel == null,
       onFire: connect,
     );
+  }
+
+  bool _shouldReconnect(int? closeCode) {
+    if (closeCode == 4001 || closeCode == 4003 || closeCode == 4004) {
+      return false;
+    }
+    return true;
+  }
+
+  String _messageForCloseCode(int? closeCode) {
+    switch (closeCode) {
+      case 4001:
+        return 'Session expired. Please sign in again.';
+      case 4003:
+        return 'Access denied for this chat.';
+      case 4004:
+        return 'Chat target was not found.';
+      default:
+        return 'Connection closed';
+    }
   }
 
   void dispose() {
