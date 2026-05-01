@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
@@ -24,7 +23,6 @@ import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
-import 'package:sport_finding/feature/webwidget/web_home_content.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.showAppBar = true});
