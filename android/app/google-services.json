@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "147032468406-6f9g9bpt4od357te14s5ib1u2bs7h3vc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sportfinding.app",
+            "certificate_hash": "1c18d8edacb282dca7749ad98979e4271cada45e"
+          }
+        },
+        {
           "client_id": "147032468406-fihnfqa7oqnmi0vg838peck2kiqb8dp6.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -52,3 +60,4 @@
   ],
   "configuration_version": "1"
 }
+

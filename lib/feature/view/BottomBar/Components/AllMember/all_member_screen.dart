@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
@@ -77,7 +78,11 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                               avatarUrl: user.avatarUrl,
                               cardOnTap: () => Navigator.pop(
                                 context,
-                                (user.fullName ?? '').trim(),
+                                ChatRouteArgs(
+                                  contactName: (user.fullName ?? '').trim(),
+                                  targetUserId: (user.id ?? '').trim(),
+                                  isOnline: true,
+                                ),
                               ),
                               playerName: user.fullName,
                               matchLevel: firstSport?.skillLevel ?? '',

@@ -103,8 +103,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         }
       }
 
-      // Convert UpdateMatchModel to updated DiscoveryMatch
-      final updatedMatch = DiscoveryMatch(
+       final updatedMatch = DiscoveryMatch(
         id: result.id ?? match.id,
         title: result.title ?? match.title,
         distanceKm: match.distanceKm,

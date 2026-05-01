@@ -8,6 +8,7 @@ import 'package:sport_finding/Data/Repositories/Notification/notification_reop.d
 import 'package:sport_finding/Data/Repositories/NotificationRead/notification_read_repository.dart';
 import 'package:sport_finding/Data/Repositories/NotificationReadAll/notification_read_all_repository.dart';
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
+import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
@@ -28,7 +29,7 @@ class NotificationService extends ChangeNotifier {
   final NotificationWsConnector _wsConnector;
   final NotificationTokenProvider _tokenProvider;
   final Duration _pingInterval;
-  static const String _baseWs = 'wss://api.sportfinding.com';
+  final String _baseWs;
 
   List<NotificationModel> notifications = [];
   bool isLoading = false;
@@ -56,9 +57,11 @@ class NotificationService extends ChangeNotifier {
     required NotificationTokenProvider tokenProvider,
     required Duration pingInterval,
     required bool autoConnect,
+    required String restBaseUrl,
   }) : _wsConnector = wsConnector,
        _tokenProvider = tokenProvider,
-       _pingInterval = pingInterval {
+       _pingInterval = pingInterval,
+       _baseWs = _toWsBase(restBaseUrl) {
     _reconnectScheduler = ReconnectScheduler(
       delayForAttempt: reconnectDelayForAttempt,
     );
@@ -73,6 +76,7 @@ class NotificationService extends ChangeNotifier {
     NotificationTokenProvider? tokenProvider,
     bool autoConnect = true,
     Duration pingInterval = const Duration(seconds: 30),
+    String? restBaseUrl,
   }) {
     return NotificationService._internal(
       wsConnector: wsConnector ?? _defaultWsConnector,
@@ -81,12 +85,16 @@ class NotificationService extends ChangeNotifier {
       tokenProvider: tokenProvider ?? AppPreferences.getAccessToken,
       pingInterval: pingInterval,
       autoConnect: autoConnect,
+      restBaseUrl: (restBaseUrl ?? ApiService().baseUrl).trim(),
     );
   }
   static WebSocketChannel _defaultWsConnector(
     Uri uri,
     Map<String, dynamic> headers,
   ) {
+    if (kIsWeb) {
+      return WebSocketChannel.connect(uri);
+    }
     return IOWebSocketChannel.connect(uri, headers: headers);
   }
 
@@ -94,6 +102,12 @@ class NotificationService extends ChangeNotifier {
     if (attempt <= 1) return const Duration(seconds: 1);
     if (attempt <= 3) return const Duration(seconds: 2);
     return const Duration(seconds: 5);
+  }
+
+  static String _toWsBase(String restBaseUrl) {
+    final uri = Uri.parse(restBaseUrl);
+    final wsScheme = uri.scheme == 'https' ? 'wss' : 'ws';
+    return uri.replace(scheme: wsScheme, path: '', query: null).toString();
   }
 
   Uri _notificationsWsUri(String token) {
@@ -107,7 +121,6 @@ class NotificationService extends ChangeNotifier {
   }
 
   Future<void> ensureRealtimeConnected() async {
-    if (kIsWeb) return;
     if (_isDisposed || _channel != null) return;
     if (_retryAfter != null && DateTime.now().isBefore(_retryAfter!)) return;
     _reconnectScheduler.cancel();
@@ -174,6 +187,12 @@ class NotificationService extends ChangeNotifier {
         return;
       case 'pong':
         return;
+      case 'error':
+        AppLogger.warning(
+          'Notification socket error event: ${event['detail'] ?? 'unknown'}',
+          tag: 'NotificationService',
+        );
+        return;
     }
   }
 
@@ -211,12 +230,15 @@ class NotificationService extends ChangeNotifier {
   }
 
   void _handleSocketDone() {
+    final closeCode = _channel?.closeCode;
     AppLogger.warning(
-      'Notification WebSocket closed',
+      'Notification WebSocket closed (code=$closeCode)',
       tag: 'NotificationService',
     );
     _cleanupRealtimeState();
-    _scheduleReconnect();
+    if (_shouldReconnect(closeCode)) {
+      _scheduleReconnect();
+    }
   }
 
   void _applyTemporaryBackoffIfNeeded(Object error) {
@@ -266,6 +288,13 @@ class NotificationService extends ChangeNotifier {
       canSchedule: () => !_isDisposed && _channel == null,
       onFire: ensureRealtimeConnected,
     );
+  }
+
+  bool _shouldReconnect(int? closeCode) {
+    if (closeCode == 4001) {
+      return false;
+    }
+    return true;
   }
 
   Future<void> fetchNotifications() async {
