@@ -56,7 +56,7 @@ class UserMatchCard extends StatelessWidget {
                             width: context.w(44),
                             height: context.w(44),
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Text(
+                            errorBuilder: (_, _, _) => Text(
                               getInitials(title),
                               style: TextStyle(
                                 color: context.appColors.white,

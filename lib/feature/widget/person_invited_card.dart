@@ -71,7 +71,7 @@ class PersonInvitedCard extends StatelessWidget {
                             width: context.w(44),
                             height: context.w(44),
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Text(
+                            errorBuilder: (_, _, _) => Text(
                               getInitials(playerName),
                               style: TextStyle(
                                 color: context.appColors.white,

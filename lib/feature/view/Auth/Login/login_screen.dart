@@ -16,7 +16,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/social_button_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
-import 'package:sport_finding/feature/widget/web_auth_shell.dart';
+import 'package:sport_finding/feature/webwidget/web_auth_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

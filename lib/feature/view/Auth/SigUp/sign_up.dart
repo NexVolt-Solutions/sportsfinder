@@ -19,7 +19,7 @@ import 'package:sport_finding/feature/widget/profile_avatar_picker.dart';
 import 'package:sport_finding/feature/widget/social_button_widget.dart';
 import 'package:sport_finding/feature/widget/terms_check_box.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
-import 'package:sport_finding/feature/widget/web_auth_shell.dart';
+import 'package:sport_finding/feature/webwidget/web_auth_shell.dart';
 
 class SignUp extends StatelessWidget {
   const SignUp({super.key});

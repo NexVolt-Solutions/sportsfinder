@@ -4,6 +4,7 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class WebAuthSplitShell extends StatelessWidget {
@@ -23,33 +24,16 @@ class WebAuthSplitShell extends StatelessWidget {
     final c = context.appColors;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FC),
-      body: SafeArea(
+      body: MainFrame(
         child: Center(
           child: Container(
-            // constraints: const BoxConstraints(maxWidth: 1280, maxHeight: 820),
-            // margin: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: c.onPrimary,
-              // boxShadow: const [
-              //   BoxShadow(
-              //     color: Color(0x110E4A84),
-              //     blurRadius: 30,
-              //     offset: Offset(0, 16),
-              //   ),
-              // ],
-            ),
+            decoration: BoxDecoration(color: c.onPrimary),
             child: Row(
               children: [
                 Expanded(
                   flex: 5,
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: c.primary,
-                      // borderRadius: BorderRadius.only(
-                      //   topLeft: Radius.circular(context.radiusR(28)),
-                      //   bottomLeft: Radius.circular(context.radiusR(28)),
-                      // ),
-                    ),
+                    decoration: BoxDecoration(color: c.primary),
                     padding: context.padSym(h: 28, v: 28),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +82,6 @@ class WebAuthSplitShell extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         const Spacer(),
                       ],
                     ),
@@ -131,7 +114,7 @@ class WebAuthCenteredShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FC),
-      body: SafeArea(
+      body: MainFrame(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),

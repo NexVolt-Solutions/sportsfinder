@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
@@ -13,11 +13,11 @@ import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
-import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/global_match_card.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
-import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
 class AllUpcomingMatches extends StatefulWidget {
   const AllUpcomingMatches({
@@ -27,7 +27,6 @@ class AllUpcomingMatches extends StatefulWidget {
   });
 
   final bool embedAsBottomTab;
-
   final String? listTitle;
 
   @override
@@ -63,85 +62,92 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
     return Consumer<AllUpcommingMatchesViewModel>(
       builder: (context, model, _) {
         if (kIsWeb && widget.embedAsBottomTab) {
-          return Padding(
-            padding: context.padSym(h: 20, v: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                WebDashboardTitle(
-                  title: widget.listTitle ?? 'Matches Management',
-                  subtitle: '/ total matches',
-                ),
-                SizedBox(height: context.h(16)),
-                Expanded(
-                  child: WebDashboardPanel(
-                    padding: context.padSym(h: 18, v: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SearchBarWidget(
-                          isShow: true,
-                          onChanged: model.searchMatches,
-                          onFilterTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) {
-                                return FilterBottomSheet(
-                                  onApply: (filterData) {
-                                    model.applyFilters(filterData);
-                                  },
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        SizedBox(height: context.h(16)),
-                        Expanded(
-                          child: ListView.separated(
-                            itemCount: model.matches.length,
-                            separatorBuilder: (_, _) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final match = model.matches[index];
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(match.title),
-                                subtitle: Text(
-                                  '${match.sport} • ${match.locationName}',
-                                ),
-                                trailing: Container(
-                                  padding: context.padSym(h: 10, v: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEAF4FF),
-                                    borderRadius: BorderRadius.circular(
-                                      context.radiusR(18),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    match.status,
-                                    style: context.appText.text12W500.copyWith(
-                                      color: context.appColors.primary,
-                                    ),
-                                  ),
-                                ),
-                                onTap: () => _openMatchDetails(
-                                  context,
-                                  model,
-                                  DiscoveryMatch.fromAllMatches(match),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+          final rows = model.matches
+              .map(
+                (match) => WebMatchTableRowData(
+                  title: match.title,
+                  sport: match.sport,
+                  players:
+                      '${match.currentPlayers}/${match.maxPlayers}',
+                  location: match.locationName.isNotEmpty
+                      ? match.locationName
+                      : match.location,
+                  status: _formatWebStatus(match.status),
+                  onView: () => _openMatchDetails(
+                    context,
+                    model,
+                    DiscoveryMatch.fromAllMatches(match),
+                  ),
+                  onEdit: () {
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.createMatchScreen,
+                      arguments: DiscoveryMatch.fromAllMatches(match),
+                    );
+                  },
+                  onDelete: () => _openMatchDetails(
+                    context,
+                    model,
+                    DiscoveryMatch.fromAllMatches(match),
                   ),
                 ),
-              ],
-            ),
+              )
+              .toList();
+          return WebMatchesManagementSection(
+            title: widget.listTitle ?? 'Matches Management',
+            subtitle: '${rows.length} total matches',
+            onSearchChanged: model.searchMatches,
+            onSportsTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(
+                    onApply: (filterData) {
+                      model.applyFilters(filterData);
+                    },
+                  );
+                },
+              );
+            },
+            onDateTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(
+                    onApply: (filterData) {
+                      model.applyFilters(filterData);
+                    },
+                  );
+                },
+              );
+            },
+            onLocationTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return FilterBottomSheet(
+                    onApply: (filterData) {
+                      model.applyFilters(filterData);
+                    },
+                  );
+                },
+              );
+            },
+            rows: rows,
+            emptyLabel: model.isLoading
+                ? 'Loading matches...'
+                : model.listScope == UpcomingMatchesScope.myMatches
+                ? AppText.noHostedMatchesYet
+                : AppText.noMatchesFound,
           );
         }
+
         final content = Padding(
           padding: context.padSym(h: 20),
           child: Column(
@@ -159,9 +165,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
               SizedBox(height: context.h(16)),
               SearchBarWidget(
                 isShow: true,
-                onChanged: (text) {
-                  model.searchMatches(text);
-                },
+                onChanged: model.searchMatches,
                 onFilterTap: () {
                   showModalBottomSheet(
                     context: context,
@@ -178,10 +182,11 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                 },
               ),
               SizedBox(height: context.h(16)),
-              // Categories tabs removed (All / Football / Basketball / etc.).
-              SizedBox.shrink(),
+              const SizedBox.shrink(),
               Expanded(
-                child: (!model.hasFetchedOnce && model.matches.isEmpty) || model.isLoading
+                child:
+                    (!model.hasFetchedOnce && model.matches.isEmpty) ||
+                        model.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : model.matches.isEmpty
                     ? Center(
@@ -266,4 +271,10 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
       },
     );
   }
+}
+
+String _formatWebStatus(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return 'Upcoming';
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }

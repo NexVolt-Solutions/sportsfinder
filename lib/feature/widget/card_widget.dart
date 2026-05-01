@@ -40,6 +40,7 @@
 //     );
 //   }
 // }
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -72,57 +73,55 @@ class CardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final effectiveRadius = borderRadius ?? context.radiusR(kIsWeb ? 18 : 12);
+    final effectiveBackground = backgroundColor ??
+        (kIsWeb ? Colors.white : null);
+    final effectiveBorderColor = isActive
+        ? (activeBorderColor ?? c.primary)
+        : (borderColor ?? (kIsWeb ? const Color(0xFFD7E7F7) : Colors.transparent));
+
     return GestureDetector(
       onTap: onTap,
       behavior: onTap != null
           ? HitTestBehavior.opaque
           : HitTestBehavior.deferToChild,
       child: Card(
-        margin: context.padSym(v: 8),
-        elevation: elevation,
+        margin: context.padSym(v: kIsWeb ? 0 : 8),
+        elevation: kIsWeb ? 0 : elevation,
         shadowColor: Colors.black.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            borderRadius ?? context.radiusR(12),
-          ),
+          borderRadius: BorderRadius.circular(effectiveRadius),
         ),
+        color: Colors.transparent,
         child: Container(
-          padding: padding ?? context.padSym(h: 12, v: 12),
-          // margin: context.padSym(v: 12),
-          // decoration: BoxDecoration(
-          //   color: backgroundColor ?? c.blue10,
-          //   borderRadius: BorderRadius.circular(
-          //     borderRadius ?? context.radiusR(12),
-          //   ),
-          //   border: Border.all(
-          //     color: isActive
-          //         ? (activeBorderColor ?? c.primary)
-          //         : (borderColor ?? Colors.transparent),
-          //     width: 1.5,
-          //   ),
-          // ),
+          padding: padding ??
+              context.padSym(
+                h: kIsWeb ? 18 : 12,
+                v: kIsWeb ? 18 : 12,
+              ),
           decoration: BoxDecoration(
-            // color: context.appColors.blue10,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.blue10, AppColors.blue20],
-            ),
-            borderRadius: BorderRadius.circular(context.radiusR(12)),
-
+            color: effectiveBackground,
+            gradient: kIsWeb
+                ? null
+                : LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.blue10, AppColors.blue20],
+                  ),
+            borderRadius: BorderRadius.circular(effectiveRadius),
             border: Border.all(
-              color: isActive
-                  ? (activeBorderColor ?? c.primary)
-                  : (borderColor ?? Colors.transparent),
+              color: effectiveBorderColor,
               width: 1.5,
             ),
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: context.appColors.onSurface.withOpacity(0.1),
-            //     blurRadius: 2,
-            //     offset: const Offset(0, 2),
-            //   ),
-            // ],
+            boxShadow: kIsWeb
+                ? const [
+                    BoxShadow(
+                      color: Color(0x0B0E4A84),
+                      blurRadius: 18,
+                      offset: Offset(0, 8),
+                    ),
+                  ]
+                : null,
           ),
           child: child ?? const SizedBox(),
         ),

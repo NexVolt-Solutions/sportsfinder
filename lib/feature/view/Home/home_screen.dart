@@ -16,15 +16,15 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
+import 'package:sport_finding/feature/widget/global_match_card.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
-import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/webwidget/web_home_content.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.showAppBar = true});
@@ -65,9 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<HomeScreenViewModel>(
       builder: (context, model, child) {
-        if (kIsWeb) {
-          return _WebHomeContent(model: model);
-        }
+        // if (kIsWeb) {
+        //   return WebHomeContent(model: model);
+        // }
         return ListView(
           padding: context.padSym(h: 20),
           children: [
@@ -252,189 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _WebHomeContent extends StatelessWidget {
-  const _WebHomeContent({required this.model});
-
-  final HomeScreenViewModel model;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: context.padSym(h: 20, v: 8),
-      children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: context.radiusR(20),
-              backgroundImage:
-                  model.avatarUrl.trim().isNotEmpty ? NetworkImage(model.avatarUrl) : null,
-              child: model.avatarUrl.trim().isEmpty
-                  ? const Icon(Icons.person)
-                  : null,
-            ),
-            SizedBox(width: context.w(12)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  model.timeGreeting,
-                  style: context.appText.text14W500.copyWith(
-                    color: context.appColors.onSurface,
-                  ),
-                ),
-                Text(
-                  model.fullName.isNotEmpty ? model.fullName : 'Player',
-                  style: context.appText.text12W400.copyWith(
-                    color: context.appColors.greylight,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        SizedBox(height: context.h(18)),
-        SearchBarWidget(isShow: false),
-        SizedBox(height: context.h(16)),
-        Row(
-          children: [
-            Expanded(
-              child: WebQuickActionCard(
-                icon: Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: context.appColors.primary,
-                ),
-                title: 'Create Matches',
-                onTap: () {
-                  Navigator.pushNamed(context, RoutesName.createMatchScreen);
-                },
-              ),
-            ),
-            SizedBox(width: context.w(14)),
-            Expanded(
-              child: WebQuickActionCard(
-                icon: Icon(
-                  Icons.search_rounded,
-                  color: context.appColors.primary,
-                ),
-                title: 'Find Matches',
-                onTap: () {
-                  context.read<BottomBarScreenViewModel>().setSelectedIndex(1);
-                },
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: context.h(22)),
-        WebDashboardTitle(
-          title: AppText.allUpcomingMatches,
-          trailing: GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                RoutesName.allUpComingMatchesScreen,
-                arguments: AllUpcomingMatchesRouteArgs(
-                  scope: UpcomingMatchesScope.allUpcoming,
-                  prefetchedMatches: List<AllMatches>.from(model.matches),
-                  hasNext: model.hasMoreUpcoming,
-                ),
-              );
-            },
-            child: Text(
-              'View All',
-              style: context.appText.text12W500.copyWith(
-                color: context.appColors.primary,
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: context.h(12)),
-        SizedBox(
-          height: context.h(176),
-          child: model.matchesLoading
-              ? const _HomeMatchesShimmer()
-              : ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: model.matches.length > 4 ? 4 : model.matches.length,
-                  itemBuilder: (context, index) {
-                    final match = model.matches[index];
-                    return SizedBox(
-                      width: context.w(210),
-                      child: WebDashboardPanel(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              match.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.appText.text14W600.copyWith(
-                                color: context.appColors.onSurface,
-                              ),
-                            ),
-                            SizedBox(height: context.h(6)),
-                            Text(
-                              match.sport,
-                              style: context.appText.text12W400.copyWith(
-                                color: context.appColors.greylight,
-                              ),
-                            ),
-                            SizedBox(height: context.h(10)),
-                            Text(
-                              match.locationName,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.appText.text12W400.copyWith(
-                                color: context.appColors.greylight,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '${match.currentPlayers}/${match.maxPlayers} players',
-                              style: context.appText.text12W500.copyWith(
-                                color: context.appColors.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  separatorBuilder: (_, _) => SizedBox(width: context.w(12)),
-                ),
-        ),
-        SizedBox(height: context.h(24)),
-        const WebDashboardTitle(title: 'Popular Sports'),
-        SizedBox(height: context.h(12)),
-        Wrap(
-          spacing: context.w(14),
-          runSpacing: context.h(14),
-          children: model.sports.map((sport) {
-            return SizedBox(
-              width: context.w(122),
-              child: WebDashboardPanel(
-                padding: context.padSym(h: 14, v: 18),
-                child: Column(
-                  children: [
-                    CardIconWidget(imageAsset: sport.imagePath),
-                    SizedBox(height: context.h(10)),
-                    Text(
-                      sport.title,
-                      textAlign: TextAlign.center,
-                      style: context.appText.text14W500.copyWith(
-                        color: context.appColors.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-}
-
 class _HomeGreetingShimmer extends StatelessWidget {
   const _HomeGreetingShimmer();
 
@@ -481,7 +298,6 @@ class _HomeMatchesShimmer extends StatelessWidget {
               padding: context.padSym(h: 16, v: 16),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                 
                   final compact = constraints.maxHeight <= 150;
                   if (compact) {
                     return Column(
@@ -495,7 +311,11 @@ class _HomeMatchesShimmer extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             ShimmerBox(width: 60, height: 10),
-                            ShimmerBox(width: 28, height: 28, shape: BoxShape.circle),
+                            ShimmerBox(
+                              width: 28,
+                              height: 28,
+                              shape: BoxShape.circle,
+                            ),
                           ],
                         ),
                       ],
@@ -518,7 +338,11 @@ class _HomeMatchesShimmer extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           ShimmerBox(width: 70, height: 12),
-                          ShimmerBox(width: 44, height: 44, shape: BoxShape.circle),
+                          ShimmerBox(
+                            width: 44,
+                            height: 44,
+                            shape: BoxShape.circle,
+                          ),
                         ],
                       ),
                     ],

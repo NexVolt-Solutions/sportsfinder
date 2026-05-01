@@ -42,7 +42,7 @@ class UserGreetingWidget extends StatelessWidget {
                     width: context.w(44),
                     height: context.w(44),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
+                    errorBuilder: (_, _, _) =>
                         Icon(Icons.person, color: context.appColors.white),
                   ),
                 )

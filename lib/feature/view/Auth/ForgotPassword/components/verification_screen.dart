@@ -14,7 +14,7 @@ import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/widget/web_auth_shell.dart';
+import 'package:sport_finding/feature/webwidget/web_auth_shell.dart';
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});
@@ -121,7 +121,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
               ),
             if (!kIsWeb) SizedBox(height: context.h(30)),
             NormalText(
-              titleText: kIsWeb ? 'Verify Your Identity' : AppText.verifyYourAccount,
+              titleText: kIsWeb
+                  ? 'Verify Your Identity'
+                  : AppText.verifyYourAccount,
               subText: kIsWeb
                   ? 'We sent a 6-digit code to your email.\nEnter it below to continue.'
                   : AppText.enterThe6DigitCodeWeHaveSentTo(_email),
@@ -151,9 +153,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 if (error == null) {
                   if (vm.resetToken.trim().isEmpty) {
                     _pinController.clear();
-                    AppSnackBar.show(
-                      'Reset token missing. Please try again.',
-                    );
+                    AppSnackBar.show('Reset token missing. Please try again.');
                     return;
                   }
                   AppSnackBar.show('OTP Verified Successfully!');
@@ -204,10 +204,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
         return Scaffold(
           body: MainFrame(
-            child: Padding(
-              padding: context.padSym(h: 20),
-              child: content,
-            ),
+            child: Padding(padding: context.padSym(h: 20), child: content),
           ),
         );
       },

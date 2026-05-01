@@ -27,7 +27,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
-import 'package:sport_finding/feature/widget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/webwidget/web_profile_content.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
@@ -162,79 +162,24 @@ class ProfileScreen extends StatelessWidget {
         builder: (context, model, _) {
           final notificationService = context.watch<NotificationService>();
           if (kIsWeb && embedInBottomBar) {
-            return Padding(
-              padding: context.padSym(h: 20, v: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const WebDashboardTitle(
-                    title: 'Profile',
-                    subtitle: 'Manage your personal info and account settings.',
-                  ),
-                  SizedBox(height: context.h(16)),
-                  Expanded(
-                    child: WebDashboardPanel(
-                      child: ListView(
-                        children: [
-                          if (model.isLoading)
-                            const _ProfileGreetingShimmer()
-                          else
-                            UserGreetingWidget(
-                              imageUrl: _safeAvatarUrl(model.avatarUrl),
-                              title: model.fullName,
-                              locName: model.location,
-                              subTitle: model.bio,
-                              isShow: model.bio.isNotEmpty,
-                            ),
-                          SizedBox(height: context.h(16)),
-                          ProfileDetailStatsRow(
-                            followersCount: model.followersCount,
-                            followingCount: model.followingCount,
-                            ratingValue: model.ratingValue,
-                            matchesPlayedValue: model.matchesPlayedLabel,
-                            onFollowersTap: () => model.openFollowers(context),
-                            onFollowingTap: () => model.openFollowing(context),
-                          ),
-                          SizedBox(height: context.h(18)),
-                          ...model.profileData.map((item) {
-                            final index = model.profileData.indexOf(item);
-                            return CustomSettingCard(
-                              icon: item['leading'],
-                              title: item['title'],
-                              subtitle: item['subtitle'],
-                              trailingType: item['trailingType'],
-                              switchValue: index == 2
-                                  ? model.notificationsEnabled
-                                  : item['switchValue'],
-                              onSwitchChanged: index == 2
-                                  ? (val) async {
-                                      final message = await notificationService
-                                          .updateNotificationPreference(val);
-                                      if (!context.mounted) return;
-                                      AppSnackBar.show(
-                                        message != null && message.isNotEmpty
-                                            ? message
-                                            : AppText.notificationsUpdated,
-                                      );
-                                    }
-                                  : (val) {
-                                      model.toggleSwitch(index, val);
-                                    },
-                              switchEnabled: index == 2
-                                  ? !notificationService.isUpdatingPreference
-                                  : true,
-                              switchLoading: index == 2
-                                  ? notificationService.isUpdatingPreference
-                                  : false,
-                              onTap: () => model.onTapFun(context, index),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            return WebProfileContent(
+              model: model,
+              notificationsEnabled: model.notificationsEnabled,
+              isUpdatingPreference: notificationService.isUpdatingPreference,
+              safeAvatarUrl: _safeAvatarUrl(model.avatarUrl),
+              onFollowersTap: () => model.openFollowers(context),
+              onFollowingTap: () => model.openFollowing(context),
+              onSwitchChanged: (val) async {
+                final message = await notificationService
+                    .updateNotificationPreference(val);
+                if (!context.mounted) return;
+                AppSnackBar.show(
+                  message != null && message.isNotEmpty
+                      ? message
+                      : AppText.notificationsUpdated,
+                );
+              },
+              onTapSetting: (index) => model.onTapFun(context, index),
             );
           }
           return MainFrame(
