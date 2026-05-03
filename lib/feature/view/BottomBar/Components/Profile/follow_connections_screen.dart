@@ -187,11 +187,11 @@ class _FollowersTrailing extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: isFollowing ? null : () => vm.followBackUser(user),
-        borderRadius: BorderRadius.circular(context.radiusR(10)),
+        borderRadius: BorderRadius.circular(context.radius(10)),
         child: Ink(
           decoration: BoxDecoration(
             color: error != null ? c.surface : c.primary,
-            borderRadius: BorderRadius.circular(context.radiusR(10)),
+            borderRadius: BorderRadius.circular(context.radius(10)),
             boxShadow: [
               BoxShadow(
                 color: (error != null ? c.surface : c.primary).withValues(
@@ -274,8 +274,10 @@ class _FollowingTrailing extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: !canUnfollow || isUnfollowing ? null : () => vm.unfollowUserApi(user),
-        borderRadius: BorderRadius.circular(context.radiusR(10)),
+        onTap: !canUnfollow || isUnfollowing
+            ? null
+            : () => vm.unfollowUserApi(user),
+        borderRadius: BorderRadius.circular(context.radius(10)),
         child: Ink(
           decoration: BoxDecoration(
             color: error != null ? c.surface : c.surface,
@@ -284,7 +286,7 @@ class _FollowingTrailing extends StatelessWidget {
                   ? c.greylight.withValues(alpha: 0.45)
                   : c.greylight.withValues(alpha: 0.45),
             ),
-            borderRadius: BorderRadius.circular(context.radiusR(10)),
+            borderRadius: BorderRadius.circular(context.radius(10)),
           ),
           child: Padding(
             padding: context.padSym(h: 12, v: 10),

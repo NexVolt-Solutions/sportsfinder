@@ -65,7 +65,7 @@ class SignUp extends StatelessWidget {
                     selector: (_, m) => m.pickedXFile,
                     builder: (context, xFile, _) {
                       return ProfileAvatarPicker(
-                        radius: context.radiusR(50),
+                        radius: context.radius(50),
                         xFile: xFile,
                         onPickPressed: () => _onPickAvatar(context),
                       );

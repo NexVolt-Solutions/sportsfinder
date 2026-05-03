@@ -28,7 +28,7 @@ class PublicProfileScreen extends StatelessWidget {
       backgroundColor: c.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(context.radiusR(14)),
+          top: Radius.circular(context.radius(14)),
         ),
       ),
       builder: (sheetContext) => _RatePlayerSheet(model: model),
@@ -354,7 +354,7 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
               padding: context.padAll(16),
               decoration: BoxDecoration(
                 color: c.blue10,
-                borderRadius: BorderRadius.circular(context.radiusR(12)),
+                borderRadius: BorderRadius.circular(context.radius(12)),
               ),
               child: TextField(
                 controller: _controller,

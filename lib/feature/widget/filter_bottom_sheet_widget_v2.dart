@@ -34,7 +34,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        return Consumer<FilterBottomSheetViewModel>(
+    return Consumer<FilterBottomSheetViewModel>(
       builder: (context, vm, _) {
         if (vm.isLoading) {
           return Container(
@@ -42,7 +42,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
             decoration: BoxDecoration(
               color: context.appColors.onPrimary,
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(context.radiusR(12)),
+                top: Radius.circular(context.radius(12)),
               ),
             ),
             child: Center(
@@ -63,7 +63,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
             decoration: BoxDecoration(
               color: context.appColors.onPrimary,
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(context.radiusR(12)),
+                top: Radius.circular(context.radius(12)),
               ),
             ),
             child: Column(
@@ -87,7 +87,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.appColors.onPrimary,
             borderRadius: BorderRadius.vertical(
-              top: Radius.circular(context.radiusR(12)),
+              top: Radius.circular(context.radius(12)),
             ),
           ),
           child: Column(
@@ -100,7 +100,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                 height: context.h(4),
                 decoration: BoxDecoration(
                   color: context.appColors.greylight,
-                  borderRadius: BorderRadius.circular(context.radiusR(2)),
+                  borderRadius: BorderRadius.circular(context.radius(2)),
                 ),
               ),
 
@@ -177,7 +177,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: bg,
                                   borderRadius: BorderRadius.circular(
-                                    context.radiusR(12),
+                                    context.radius(12),
                                   ),
                                   border: border,
                                 ),
@@ -255,7 +255,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                                         ? context.appColors.onPrimary
                                         : context.appColors.blue10,
                                     borderRadius: BorderRadius.circular(
-                                      context.radiusR(20),
+                                      context.radius(20),
                                     ),
                                     border: Border.all(
                                       color: isSelected
@@ -363,7 +363,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: context.appColors.onPrimary,
                                   borderRadius: BorderRadius.circular(
-                                    context.radiusR(12),
+                                    context.radius(12),
                                   ),
                                   border: Border.all(
                                     color: context.appColors.greylight,

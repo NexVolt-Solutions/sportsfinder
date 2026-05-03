@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +26,6 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
-import 'package:sport_finding/feature/webwidget/web_profile_content.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
@@ -161,27 +159,27 @@ class ProfileScreen extends StatelessWidget {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           final notificationService = context.watch<NotificationService>();
-          if (kIsWeb && embedInBottomBar) {
-            return WebProfileContent(
-              model: model,
-              notificationsEnabled: model.notificationsEnabled,
-              isUpdatingPreference: notificationService.isUpdatingPreference,
-              safeAvatarUrl: _safeAvatarUrl(model.avatarUrl),
-              onFollowersTap: () => model.openFollowers(context),
-              onFollowingTap: () => model.openFollowing(context),
-              onSwitchChanged: (val) async {
-                final message = await notificationService
-                    .updateNotificationPreference(val);
-                if (!context.mounted) return;
-                AppSnackBar.show(
-                  message != null && message.isNotEmpty
-                      ? message
-                      : AppText.notificationsUpdated,
-                );
-              },
-              onTapSetting: (index) => model.onTapFun(context, index),
-            );
-          }
+          // if (kIsWeb && embedInBottomBar) {
+          //   return WebProfileContent(
+          //     model: model,
+          //     notificationsEnabled: model.notificationsEnabled,
+          //     isUpdatingPreference: notificationService.isUpdatingPreference,
+          //     safeAvatarUrl: _safeAvatarUrl(model.avatarUrl),
+          //     onFollowersTap: () => model.openFollowers(context),
+          //     onFollowingTap: () => model.openFollowing(context),
+          //     onSwitchChanged: (val) async {
+          //       final message = await notificationService
+          //           .updateNotificationPreference(val);
+          //       if (!context.mounted) return;
+          //       AppSnackBar.show(
+          //         message != null && message.isNotEmpty
+          //             ? message
+          //             : AppText.notificationsUpdated,
+          //       );
+          //     },
+          //     onTapSetting: (index) => model.onTapFun(context, index),
+          //   );
+          // }
           return MainFrame(
             showDecorationLayer: !embedInBottomBar,
             child: ListView(
@@ -229,44 +227,52 @@ class ProfileScreen extends StatelessWidget {
                   onFollowersTap: () => model.openFollowers(context),
                   onFollowingTap: () => model.openFollowing(context),
                 ),
+                SizedBox(height: context.h(16)),
+
                 ListView.builder(
                   itemCount: model.profileData.length,
                   shrinkWrap: true,
+
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     final item = model.profileData[index];
-                    return CustomSettingCard(
-                      icon: item['leading'],
-                      title: item['title'],
-                      subtitle: item['subtitle'],
-                      trailingType: item['trailingType'],
-                      switchValue: index == 2
-                          ? model.notificationsEnabled
-                          : item['switchValue'],
-                      onSwitchChanged: index == 2
-                          ? (val) async {
-                              final message = await notificationService
-                                  .updateNotificationPreference(val);
-                              if (!context.mounted) return;
-                              AppSnackBar.show(
-                                message != null && message.isNotEmpty
-                                    ? message
-                                    : AppText.notificationsUpdated,
-                              );
-                            }
-                          : (val) {
-                              model.toggleSwitch(index, val);
-                            },
-                      switchEnabled: index == 2
-                          ? !notificationService.isUpdatingPreference
-                          : true,
-                      switchLoading: index == 2
-                          ? notificationService.isUpdatingPreference
-                          : false,
-                      onTap: () => model.onTapFun(context, index),
+                    return Padding(
+                      padding: context.padSym(v: 8),
+                      child: CustomSettingCard(
+                        icon: item['leading'],
+                        title: item['title'],
+                        subtitle: item['subtitle'],
+                        trailingType: item['trailingType'],
+                        switchValue: index == 2
+                            ? model.notificationsEnabled
+                            : item['switchValue'],
+                        onSwitchChanged: index == 2
+                            ? (val) async {
+                                final message = await notificationService
+                                    .updateNotificationPreference(val);
+                                if (!context.mounted) return;
+                                AppSnackBar.show(
+                                  message != null && message.isNotEmpty
+                                      ? message
+                                      : AppText.notificationsUpdated,
+                                );
+                              }
+                            : (val) {
+                                model.toggleSwitch(index, val);
+                              },
+                        switchEnabled: index == 2
+                            ? !notificationService.isUpdatingPreference
+                            : true,
+                        switchLoading: index == 2
+                            ? notificationService.isUpdatingPreference
+                            : false,
+                        onTap: () => model.onTapFun(context, index),
+                      ),
                     );
                   },
                 ),
+                SizedBox(height: context.h(8)),
+
                 CardWidget(
                   onTap: () => _handleLogout(context),
                   padding: context.padSym(h: 16, v: 14),
@@ -324,7 +330,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         leading: SvgPicture.asset(AppAssets.edit),
                         borderColor: AppColors.bluecolor,
-                        radius: BorderRadius.circular(context.radiusR(12)),
+                        radius: BorderRadius.circular(context.radius(12)),
                         onTap: () {
                           final ps = ProfileService().profile;
                           String? sportUi;
@@ -368,7 +374,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         leading: SvgPicture.asset(AppAssets.share),
                         borderColor: AppColors.bluecolor,
-                        radius: BorderRadius.circular(context.radiusR(12)),
+                        radius: BorderRadius.circular(context.radius(12)),
                         onTap: () => _shareProfile(context),
                         text: AppText.share,
                       ),

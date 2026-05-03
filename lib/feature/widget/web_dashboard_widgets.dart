@@ -20,9 +20,9 @@ class WebDashboardPanel extends StatelessWidget {
       height: height,
       padding: padding ?? context.padSym(h: 18, v: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(context.radius(18)),
-        border: Border.all(color: const Color(0xFFD7E7F7)),
+        color: context.appColors.blue10,
+        borderRadius: BorderRadius.circular(context.radiusR(12)),
+        border: Border.all(color: context.appColors.transparent),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0B0E4A84),
@@ -97,26 +97,28 @@ class WebQuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: context.padSym(h: 18, v: 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F8FF),
-          borderRadius: BorderRadius.circular(context.radius(16)),
-          border: Border.all(color: const Color(0xFFD7E7F7)),
+      child: Card(
+        color: const Color(0xFFF2F8FF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(context.radiusR(12)),
+          side: const BorderSide(color: Color(0xFFD7E7F7)),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            SizedBox(height: context.h(10)),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: context.appText.text14W500.copyWith(
-                color: context.appColors.onSurface,
+        child: Container(
+          padding: context.padSym(h: 164, v: 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              SizedBox(height: context.h(10)),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: context.appText.text14W500.copyWith(
+                  color: context.appColors.onSurface,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

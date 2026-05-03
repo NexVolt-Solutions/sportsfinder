@@ -62,7 +62,7 @@ class PersonInvitedCard extends StatelessWidget {
               children: [
                 // ✅ CircleAvatar like UserMatchCard
                 CircleAvatar(
-                  radius: context.radiusR(22), // half of previous 42 height
+                  radius: context.radius(22), // half of previous 42 height
                   backgroundColor: context.appColors.primary,
                   child: showAvatar
                       ? ClipOval(

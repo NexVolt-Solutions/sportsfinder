@@ -13,7 +13,7 @@
 //     return Container(
 //       padding: context.padSym(v: 13),
 //       decoration: BoxDecoration(
-//         borderRadius: BorderRadius.circular(context.radiusR(12)),
+//         borderRadius: BorderRadius.circular(context.radius(12)),
 //         border: Border.all(color: context.appColors.primary),
 //       ),
 //       child: Row(

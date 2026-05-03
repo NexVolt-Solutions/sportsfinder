@@ -52,13 +52,13 @@
 //       decoration: BoxDecoration(
 //         color: AppColors.transparent,
 //         border: Border.all(color: context.appColors.greylight),
-//         borderRadius: BorderRadius.circular(context.radiusR(8)),
+//         borderRadius: BorderRadius.circular(context.radius(8)),
 //       ),
 //     );
 
 //     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
 //       border: Border.all(color: context.appColors.primary),
-//       borderRadius: BorderRadius.circular(context.radiusR(8)),
+//       borderRadius: BorderRadius.circular(context.radius(8)),
 //     );
 
 //     final submittedPinTheme = defaultPinTheme.copyWith(
@@ -280,13 +280,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       decoration: BoxDecoration(
         color: AppColors.transparent,
         border: Border.all(color: context.appColors.greylight),
-        borderRadius: BorderRadius.circular(context.radiusR(8)),
+        borderRadius: BorderRadius.circular(context.radius(8)),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: context.appColors.primary),
-      borderRadius: BorderRadius.circular(context.radiusR(8)),
+      borderRadius: BorderRadius.circular(context.radius(8)),
     );
 
     final submittedPinTheme = defaultPinTheme.copyWith(

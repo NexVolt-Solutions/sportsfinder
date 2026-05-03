@@ -205,9 +205,9 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                                       if (m.optionsLoaded) {
                                         WidgetsBinding.instance
                                             .addPostFrameCallback((_) {
-                                          if (!context.mounted) return;
-                                          _applyRouteAfterOptions(m);
-                                        });
+                                              if (!context.mounted) return;
+                                              _applyRouteAfterOptions(m);
+                                            });
                                       }
                                     });
                                   },
@@ -395,7 +395,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                                               color: context.appColors.blue10,
                                               borderRadius:
                                                   BorderRadius.circular(
-                                                    context.radiusR(12),
+                                                    context.radius(12),
                                                   ),
                                             ),
                                           ),
@@ -465,10 +465,8 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                       EditMatchViewModel,
                       ({bool isLoading, bool isDeleting})
                     >(
-                      selector: (_, m) => (
-                        isLoading: m.isLoading,
-                        isDeleting: m.isDeleting,
-                      ),
+                      selector: (_, m) =>
+                          (isLoading: m.isLoading, isDeleting: m.isDeleting),
                       builder: (context, state, _) {
                         final vm = context.read<EditMatchViewModel>();
                         final busy = state.isLoading || state.isDeleting;
@@ -493,9 +491,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                                         AppSnackBar.show(
                                           vm.error ?? 'Failed to save changes',
                                           backgroundColor: Colors.red,
-                                          duration: const Duration(
-                                            seconds: 3,
-                                          ),
+                                          duration: const Duration(seconds: 3),
                                         );
                                       }
                                     },

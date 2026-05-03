@@ -141,8 +141,12 @@ class GlobalMatchCard extends StatelessWidget {
     final innerH = contentHeight(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final isCompactCard = innerH <= 155 || textScale > 1.0;
-    final chipTopGap = isCompactCard ? 2.0 : context.sh(showHostingChip ? 4 : 6);
-    final sectionGap = isCompactCard ? 4.0 : context.sh(showHostingChip ? 4 : 8);
+    final chipTopGap = isCompactCard
+        ? 2.0
+        : context.sh(showHostingChip ? 4 : 6);
+    final sectionGap = isCompactCard
+        ? 4.0
+        : context.sh(showHostingChip ? 4 : 8);
     final metaGap = isCompactCard ? 2.0 : context.sh(showHostingChip ? 3 : 4);
 
     return CardWidget(
@@ -248,7 +252,7 @@ class _HostingChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(context.radiusR(6)),
+        borderRadius: BorderRadius.circular(context.radius(6)),
         border: Border.all(color: primary.withValues(alpha: 0.45)),
       ),
       child: Row(

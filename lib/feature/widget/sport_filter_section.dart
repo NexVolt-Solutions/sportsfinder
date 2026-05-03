@@ -33,7 +33,7 @@ class SportFilterSection extends StatelessWidget {
             child: Card(
               surfaceTintColor: c.blue10,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(context.radiusR(12)),
+                borderRadius: BorderRadius.circular(context.radius(12)),
                 side: BorderSide(
                   color: isSelected ? c.primary : c.transparent,
                   width: 1,

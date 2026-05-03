@@ -85,7 +85,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       decoration: BoxDecoration(
         color: context.appColors.onPrimary,
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(context.radiusR(12)),
+          top: Radius.circular(context.radius(12)),
         ),
       ),
       child: Column(
@@ -98,7 +98,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             height: context.h(4),
             decoration: BoxDecoration(
               color: AppColors.greylight,
-              borderRadius: BorderRadius.circular(context.radiusR(2)),
+              borderRadius: BorderRadius.circular(context.radius(2)),
             ),
           ),
 
@@ -356,7 +356,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             color: context.appColors.onPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                context.radiusR(12),
+                                context.radius(12),
                               ),
                               side: BorderSide(
                                 color: context

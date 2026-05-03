@@ -35,7 +35,7 @@ class SocialButtonWidget extends StatelessWidget {
         padding: context.padSym(v: 13),
         decoration: BoxDecoration(
           color: backgroundColor ?? c.transparent,
-          borderRadius: BorderRadius.circular(context.radiusR(12)),
+          borderRadius: BorderRadius.circular(context.radius(12)),
           border: showBorder
               ? Border.all(color: borderColor ?? c.primary)
               : null,

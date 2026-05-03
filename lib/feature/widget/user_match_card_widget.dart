@@ -47,7 +47,7 @@ class UserMatchCard extends StatelessWidget {
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: context.radiusR(22),
+                  radius: context.radius(22),
                   backgroundColor: context.appColors.greyDark,
                   child: showAvatar
                       ? ClipOval(

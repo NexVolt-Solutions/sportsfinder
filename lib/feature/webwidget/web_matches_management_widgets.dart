@@ -29,7 +29,7 @@ class WebMatchesToolbar extends StatelessWidget {
             height: context.h(44),
             decoration: BoxDecoration(
               color: const Color(0xFFF2F8FF),
-              borderRadius: BorderRadius.circular(context.radiusR(12)),
+              borderRadius: BorderRadius.circular(context.radius(12)),
               border: Border.all(color: const Color(0xFF6BB5FF)),
             ),
             child: TextField(
@@ -193,15 +193,13 @@ class WebMatchesManagementSection extends StatelessWidget {
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF45A5FF),
                                             borderRadius: BorderRadius.circular(
-                                              context.radiusR(12),
+                                              context.radius(12),
                                             ),
                                           ),
                                           child: Text(
                                             row.status,
                                             style: context.appText.text12W500
-                                                .copyWith(
-                                                  color: Colors.white,
-                                                ),
+                                                .copyWith(color: Colors.white),
                                           ),
                                         ),
                                       ),
@@ -273,17 +271,19 @@ class _ToolbarFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? context.appColors.primary : const Color(0xFF6BB5FF);
+    final color = isSelected
+        ? context.appColors.primary
+        : const Color(0xFF6BB5FF);
     final textColor = isSelected ? Colors.white : color;
     return InkWell(
-      borderRadius: BorderRadius.circular(context.radiusR(10)),
+      borderRadius: BorderRadius.circular(context.radius(10)),
       onTap: onTap,
       child: Container(
         height: context.h(36),
         padding: context.padSym(h: 14, v: 8),
         decoration: BoxDecoration(
           color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(context.radiusR(10)),
+          borderRadius: BorderRadius.circular(context.radius(10)),
           border: Border.all(color: color),
         ),
         child: Row(

@@ -557,7 +557,7 @@ class _ActionPill extends StatelessWidget {
     final c = context.appColors;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(context.radiusR(14)),
+      borderRadius: BorderRadius.circular(context.radius(14)),
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: context.w(12),
@@ -565,7 +565,7 @@ class _ActionPill extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: filled ? c.primary : c.onPrimary.withValues(alpha: 0.0),
-          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderRadius: BorderRadius.circular(context.radius(14)),
           border: Border.all(color: c.primary, width: 1.1),
         ),
         child: Text(

@@ -88,7 +88,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: context.appColors.blue10,
-                        borderRadius: BorderRadius.circular(context.radiusR(12)),
+                        borderRadius: BorderRadius.circular(context.radius(12)),
                       ),
                       child: TextField(
                         controller: _messageController,
@@ -116,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: context.padAll(12),
                       decoration: BoxDecoration(
                         color: context.appColors.primary,
-                        borderRadius: BorderRadius.circular(context.radiusR(12)),
+                        borderRadius: BorderRadius.circular(context.radius(12)),
                         boxShadow: [
                           BoxShadow(
                             color: context.appColors.primary.withValues(
@@ -151,7 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           SizedBox(width: context.w(12)),
                           CircleAvatar(
-                            radius: context.radiusR(21),
+                            radius: context.radius(21),
                             backgroundColor: context.appColors.greylight,
                           ),
                           SizedBox(width: context.w(12)),
@@ -255,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           decoration: BoxDecoration(
             color: context.appColors.primary,
-            borderRadius: BorderRadius.circular(context.radiusR(12)),
+            borderRadius: BorderRadius.circular(context.radius(12)),
           ),
           child: NormalText(
             titleText: date,

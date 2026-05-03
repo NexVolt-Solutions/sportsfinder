@@ -24,7 +24,7 @@ class ProfileCardWidget extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: c.blue10,
-        borderRadius: BorderRadius.circular(context.radiusR(12)),
+        borderRadius: BorderRadius.circular(context.radius(12)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

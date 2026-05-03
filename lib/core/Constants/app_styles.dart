@@ -129,13 +129,13 @@ class AppStyles {
   // ─── Layout (Figma-based) ─────────────────────────────────────────────────
 
   /// Card / container radius (Figma 12).
-  double get radiusCard => _context.radiusR(12);
+  double get radiusCard => _context.radius(12);
 
   /// Button radius (Figma 12).
-  double get radiusButton => _context.radiusR(12);
+  double get radiusButton => _context.radius(12);
 
   /// Small radius (Figma 8).
-  double get radiusSmall => _context.radiusR(8);
+  double get radiusSmall => _context.radius(8);
 
   /// Standard horizontal padding (Figma 20).
   double get paddingHorizontal => _context.sw(20);

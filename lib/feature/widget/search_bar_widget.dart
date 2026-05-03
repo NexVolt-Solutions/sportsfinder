@@ -21,7 +21,7 @@
 //             padding: context.padSym(h: 12),
 //             decoration: BoxDecoration(
 //               color: c.blue10,
-//               borderRadius: BorderRadius.circular(context.radiusR(12)),
+//               borderRadius: BorderRadius.circular(context.radius(12)),
 //               border: Border.all(color: c.primary, width: 1.2),
 //             ),
 //             child: TextField(
@@ -98,7 +98,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             padding: context.padSym(h: 12),
             decoration: BoxDecoration(
               color: c.blue10,
-              borderRadius: BorderRadius.circular(context.radiusR(12)),
+              borderRadius: BorderRadius.circular(context.radius(12)),
               border: Border.all(color: c.primary, width: 1.2),
             ),
             child: TextField(

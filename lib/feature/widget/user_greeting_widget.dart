@@ -33,7 +33,7 @@ class UserGreetingWidget extends StatelessWidget {
       children: [
         // 👇 Profile Image
         CircleAvatar(
-          radius: context.radiusR(22),
+          radius: context.radius(22),
           backgroundColor: context.appColors.greyDark,
           child: _isNetworkHttpUrl(normalizedImageUrl)
               ? ClipOval(

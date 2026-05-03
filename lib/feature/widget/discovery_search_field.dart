@@ -33,13 +33,13 @@ class DiscoverySearchField extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: c.blue10,
-              borderRadius: BorderRadius.circular(context.radiusR(12)),
+              borderRadius: BorderRadius.circular(context.radius(12)),
               border: Border.all(color: c.primary),
             ),
             child: Row(
               children: [
                 InkWell(
-                  borderRadius: BorderRadius.circular(context.radiusR(12)),
+                  borderRadius: BorderRadius.circular(context.radius(12)),
                   onTap: () => onChanged?.call(controller.text),
                   child: SvgIconWidget(c: c, icon: AppAssets.searchIcon),
                 ),
@@ -72,7 +72,7 @@ class DiscoverySearchField extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: onFilterTap,
-              borderRadius: BorderRadius.circular(context.radiusR(12)),
+              borderRadius: BorderRadius.circular(context.radius(12)),
               child: Padding(
                 padding: context.padSym(h: 12, v: 12),
                 child: SvgIconWidget(c: c, icon: AppAssets.filterIcon),

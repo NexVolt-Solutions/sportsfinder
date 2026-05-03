@@ -21,13 +21,10 @@ class MatchCardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final button = Container(
-      padding: context.padSym(
-        h: kIsWeb ? 12 : 10,
-        v: kIsWeb ? 6 : 4,
-      ),
+      padding: context.padSym(h: kIsWeb ? 12 : 10, v: kIsWeb ? 6 : 4),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(context.radiusR(kIsWeb ? 10 : 12)),
+        borderRadius: BorderRadius.circular(context.radius(kIsWeb ? 10 : 12)),
         border: kIsWeb && color == context.appColors.surface
             ? Border.all(color: const Color(0xFFD7E7F7))
             : null,
@@ -42,12 +39,7 @@ class MatchCardButton extends StatelessWidget {
     );
     return GestureDetector(
       onTap: ontap,
-      child: kIsWeb
-          ? button
-          : Card(
-              margin: EdgeInsets.zero,
-              child: button,
-            ),
+      child: kIsWeb ? button : Card(margin: EdgeInsets.zero, child: button),
     );
   }
 }

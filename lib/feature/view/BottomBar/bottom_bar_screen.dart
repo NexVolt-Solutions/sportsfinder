@@ -54,9 +54,8 @@ class _MyMatchesTabSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AllUpcommingMatchesViewModel(
-        scope: UpcomingMatchesScope.myMatches,
-      ),
+      create: (_) =>
+          AllUpcommingMatchesViewModel(scope: UpcomingMatchesScope.myMatches),
       child: const _MyMatchesFetchWhenTabSelected(),
     );
   }
@@ -161,8 +160,8 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<BottomBarScreenViewModel>().setSelectedIndex(
-            args.clamp(0, maxIndex),
-          );
+        args.clamp(0, maxIndex),
+      );
     });
   }
 
@@ -213,7 +212,9 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   }) {
     final isSelected = selectedIndex == index;
     final c = context.appColors;
-    final bg = isSelected ? c.primary.withValues(alpha: 0.12) : Colors.transparent;
+    final bg = isSelected
+        ? c.primary.withValues(alpha: 0.12)
+        : Colors.transparent;
     final color = isSelected ? c.primary : c.greyDark;
 
     return GestureDetector(
@@ -230,7 +231,9 @@ class _BottomBarContentState extends State<_BottomBarContent> {
           color: bg,
           borderRadius: BorderRadius.circular(_webW(context, 14)),
           border: Border.all(
-            color: isSelected ? c.primary.withValues(alpha: 0.18) : Colors.transparent,
+            color: isSelected
+                ? c.primary.withValues(alpha: 0.18)
+                : Colors.transparent,
           ),
         ),
         child: Row(
@@ -265,10 +268,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        SvgPicture.asset(
-          AppAssets.notificationIcon,
-          fit: BoxFit.contain,
-        ),
+        SvgPicture.asset(AppAssets.notificationIcon, fit: BoxFit.contain),
         if (unreadCount > 0)
           Positioned(
             right: -6,
@@ -305,10 +305,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     return Padding(
       padding: context.padSym(h: 20),
       child: AppBarWidget(
-        leading: NormalText(
-          titleText: AppText.sportFinding,
-          titleFontSize: 18,
-        ),
+        leading: NormalText(titleText: AppText.sportFinding, titleFontSize: 18),
         trailing: _buildNotificationBell(context),
         onTrailingTap: () => _handleNotificationTap(context),
       ),
@@ -322,12 +319,16 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     return widthScale < heightScale ? widthScale : heightScale;
   }
 
-  double _webW(BuildContext context, double value) => value * _webScale(context);
-  double _webH(BuildContext context, double value) => value * _webScale(context);
+  double _webW(BuildContext context, double value) =>
+      value * _webScale(context);
+  double _webH(BuildContext context, double value) =>
+      value * _webScale(context);
 
   Widget _buildWebTopBar(BuildContext context, BottomBarScreenViewModel vm) {
     final c = context.appColors;
-    final userName = vm.userName.trim().isNotEmpty ? vm.userName.trim() : 'User';
+    final userName = vm.userName.trim().isNotEmpty
+        ? vm.userName.trim()
+        : 'User';
     final email = vm.userEmail.trim().isNotEmpty
         ? vm.userEmail.trim()
         : 'user@sports.com';
@@ -364,7 +365,9 @@ class _BottomBarContentState extends State<_BottomBarContent> {
                   backgroundColor: c.primary.withValues(alpha: 0.2),
                   child: Text(
                     initial.toUpperCase(),
-                    style: context.appText.text14W600.copyWith(color: c.primary),
+                    style: context.appText.text14W600.copyWith(
+                      color: c.primary,
+                    ),
                   ),
                 ),
                 SizedBox(width: _webW(context, 10)),
@@ -373,11 +376,15 @@ class _BottomBarContentState extends State<_BottomBarContent> {
                   children: [
                     Text(
                       userName,
-                      style: context.appText.text14W600.copyWith(color: c.onSurface),
+                      style: context.appText.text14W600.copyWith(
+                        color: c.onSurface,
+                      ),
                     ),
                     Text(
                       email,
-                      style: context.appText.text12W400.copyWith(color: c.greyDark),
+                      style: context.appText.text12W400.copyWith(
+                        color: c.greyDark,
+                      ),
                     ),
                   ],
                 ),
@@ -417,7 +424,9 @@ class _BottomBarContentState extends State<_BottomBarContent> {
               child: Container(
                 decoration: BoxDecoration(
                   color: context.appColors.surface,
-                  borderRadius: BorderRadius.circular(context.radiusR(_barRadius)),
+                  borderRadius: BorderRadius.circular(
+                    context.radius(_barRadius),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: context.appColors.blue20,
@@ -477,7 +486,8 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             Positioned(
               bottom: _barHeight / 2 - _homeButtonSize / 1.1,
               child: GestureDetector(
-                onTap: () => vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
+                onTap: () =>
+                    vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
                 child: SvgPicture.asset(AppAssets.homeIcon),
               ),
             ),
@@ -534,7 +544,8 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             label: 'Home',
             index: BottomBarScreenViewModel.homeIndex,
             selectedIndex: vm.selectedIndex,
-            onTap: () => vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
+            onTap: () =>
+                vm.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
           ),
           SizedBox(height: _webH(context, 10)),
           _webNavItem(
@@ -594,7 +605,11 @@ class _BottomBarContentState extends State<_BottomBarContent> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.logout_rounded, size: _webW(context, 18), color: c.error),
+                  Icon(
+                    Icons.logout_rounded,
+                    size: _webW(context, 18),
+                    color: c.error,
+                  ),
                   SizedBox(width: _webW(context, 8)),
                   Text(
                     AppText.logout,
@@ -627,7 +642,9 @@ class _BottomBarContentState extends State<_BottomBarContent> {
                     color: context.appColors.surface.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(_webW(context, 24)),
                     border: Border.all(
-                      color: context.appColors.greylight.withValues(alpha: 0.35),
+                      color: context.appColors.greylight.withValues(
+                        alpha: 0.35,
+                      ),
                     ),
                   ),
                   child: Column(

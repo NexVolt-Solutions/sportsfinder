@@ -31,7 +31,7 @@
 //         decoration: BoxDecoration(
 //           color: backgroundColor ?? c.blue10,
 //           borderRadius: BorderRadius.circular(
-//             borderRadius ?? context.radiusR(12),
+//             borderRadius ?? context.radius(12),
 //           ),
 //           border: Border.all(color: borderColor ?? c.transparent),
 //         ),
@@ -73,12 +73,13 @@ class CardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final effectiveRadius = borderRadius ?? context.radiusR(kIsWeb ? 18 : 12);
-    final effectiveBackground = backgroundColor ??
-        (kIsWeb ? Colors.white : null);
+    final effectiveRadius = borderRadius ?? context.radius(kIsWeb ? 18 : 12);
+    final effectiveBackground =
+        backgroundColor ?? (kIsWeb ? AppColors.blue10 : null);
     final effectiveBorderColor = isActive
         ? (activeBorderColor ?? c.primary)
-        : (borderColor ?? (kIsWeb ? const Color(0xFFD7E7F7) : Colors.transparent));
+        : (borderColor ??
+              (kIsWeb ? const Color(0xFFD7E7F7) : Colors.transparent));
 
     return GestureDetector(
       onTap: onTap,
@@ -94,11 +95,9 @@ class CardWidget extends StatelessWidget {
         ),
         color: Colors.transparent,
         child: Container(
-          padding: padding ??
-              context.padSym(
-                h: kIsWeb ? 18 : 12,
-                v: kIsWeb ? 18 : 12,
-              ),
+          padding:
+              padding ??
+              context.padSym(h: kIsWeb ? 18 : 12, v: kIsWeb ? 18 : 12),
           decoration: BoxDecoration(
             color: effectiveBackground,
             gradient: kIsWeb
@@ -109,10 +108,7 @@ class CardWidget extends StatelessWidget {
                     colors: [AppColors.blue10, AppColors.blue20],
                   ),
             borderRadius: BorderRadius.circular(effectiveRadius),
-            border: Border.all(
-              color: effectiveBorderColor,
-              width: 1.5,
-            ),
+            border: Border.all(color: effectiveBorderColor, width: 1.5),
             boxShadow: kIsWeb
                 ? const [
                     BoxShadow(

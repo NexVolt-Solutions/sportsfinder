@@ -83,7 +83,7 @@ class _MatchDurationPickerBodyState extends State<_MatchDurationPickerBody> {
       decoration: BoxDecoration(
         color: c.onPrimary,
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(context.radiusR(16)),
+          top: Radius.circular(context.radius(16)),
         ),
       ),
       padding: EdgeInsets.fromLTRB(
@@ -104,7 +104,7 @@ class _MatchDurationPickerBodyState extends State<_MatchDurationPickerBody> {
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: cardW),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(context.radiusR(14)),
+                borderRadius: BorderRadius.circular(context.radius(14)),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -209,19 +209,12 @@ class _MatchDurationPickerBodyState extends State<_MatchDurationPickerBody> {
     );
   }
 
-  static Widget _headerCell(
-    String text,
-    AppTextTheme t,
-    AppColorTheme c,
-  ) {
+  static Widget _headerCell(String text, AppTextTheme t, AppColorTheme c) {
     return Expanded(
       child: Center(
         child: Text(
           text,
-          style: t.text12W600.copyWith(
-            color: c.greyDark,
-            letterSpacing: 0.25,
-          ),
+          style: t.text12W600.copyWith(color: c.greyDark, letterSpacing: 0.25),
         ),
       ),
     );

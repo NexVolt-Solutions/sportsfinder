@@ -77,9 +77,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     });
 
     try {
-      final result = await _googlePlacesService.searchPlaceSuggestions(
-        trimmed,
-      );
+      final result = await _googlePlacesService.searchPlaceSuggestions(trimmed);
       if (!mounted) return;
       setState(() {
         _results = result.suggestions;
@@ -205,7 +203,11 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                     _isLoading = false;
                   });
                 },
-                icon: Icon(Icons.close_rounded, size: context.w(20), color: c.greyDark),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: context.w(20),
+                  color: c.greyDark,
+                ),
                 style: IconButton.styleFrom(foregroundColor: c.greyDark),
                 tooltip: 'Clear',
               )
@@ -213,15 +215,15 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         filled: true,
         fillColor: c.blue10,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderRadius: BorderRadius.circular(context.radius(14)),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderRadius: BorderRadius.circular(context.radius(14)),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(context.radiusR(14)),
+          borderRadius: BorderRadius.circular(context.radius(14)),
           borderSide: BorderSide(color: c.primary, width: 1),
         ),
         contentPadding: EdgeInsets.symmetric(
@@ -238,10 +240,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         child: SizedBox(
           width: 28,
           height: 28,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: c.primary,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: c.primary),
         ),
       );
     }
@@ -252,10 +251,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
           child: Text(
             _error!,
             textAlign: TextAlign.center,
-            style: t.text14W400.copyWith(
-              color: c.greyDark,
-              height: 1.45,
-            ),
+            style: t.text14W400.copyWith(color: c.greyDark, height: 1.45),
           ),
         ),
       );
@@ -371,7 +367,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
       color: c.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(context.radiusR(12)),
+        borderRadius: BorderRadius.circular(context.radius(12)),
         splashColor: c.primary.withValues(alpha: 0.08),
         highlightColor: c.primary.withValues(alpha: 0.04),
         child: Padding(
@@ -388,16 +384,17 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: t.text16W500.copyWith(
-                    color: c.onSurface,
-                    height: 1.3,
-                  ),
+                  style: t.text16W500.copyWith(color: c.onSurface, height: 1.3),
                 ),
               ),
               if (onRemove != null)
                 IconButton(
                   onPressed: onRemove,
-                  icon: Icon(Icons.close, size: context.w(18), color: c.greylight),
+                  icon: Icon(
+                    Icons.close,
+                    size: context.w(18),
+                    color: c.greylight,
+                  ),
                   style: IconButton.styleFrom(
                     minimumSize: Size(context.w(36), context.h(36)),
                     padding: EdgeInsets.zero,

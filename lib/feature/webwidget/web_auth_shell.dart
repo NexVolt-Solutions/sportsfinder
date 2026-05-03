@@ -126,7 +126,7 @@ class WebAuthCenteredShell extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(context.radiusR(24)),
+                borderRadius: BorderRadius.circular(context.radius(24)),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x110E4A84),

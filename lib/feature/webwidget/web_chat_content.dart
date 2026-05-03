@@ -64,7 +64,7 @@ class WebChatContent extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: context.appColors.blue10,
                               borderRadius: BorderRadius.circular(
-                                context.radiusR(10),
+                                context.radius(10),
                               ),
                               border: Border.all(
                                 color: context.appColors.greylight,
@@ -111,7 +111,7 @@ class WebChatContent extends StatelessWidget {
                                       final isSelected = index == safeSelected;
                                       return InkWell(
                                         borderRadius: BorderRadius.circular(
-                                          context.radiusR(12),
+                                          context.radius(12),
                                         ),
                                         onTap: () => onThreadSelected(index),
                                         child: Container(
@@ -121,7 +121,7 @@ class WebChatContent extends StatelessWidget {
                                                 ? context.appColors.blue10
                                                 : Colors.transparent,
                                             borderRadius: BorderRadius.circular(
-                                              context.radiusR(12),
+                                              context.radius(12),
                                             ),
                                             border: Border.all(
                                               color: isSelected
@@ -136,7 +136,7 @@ class WebChatContent extends StatelessWidget {
                                           child: Row(
                                             children: [
                                               CircleAvatar(
-                                                radius: context.radiusR(17),
+                                                radius: context.radius(17),
                                                 backgroundColor: context
                                                     .appColors
                                                     .greylight
@@ -239,7 +239,7 @@ class WebChatContent extends StatelessWidget {
                             child: Row(
                               children: [
                                 CircleAvatar(
-                                  radius: context.radiusR(18),
+                                  radius: context.radius(18),
                                   backgroundColor: context.appColors.greylight
                                       .withValues(alpha: 0.35),
                                   child: Text(
@@ -312,7 +312,7 @@ class WebChatContent extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: context.appColors.blue10,
                                       borderRadius: BorderRadius.circular(
-                                        context.radiusR(10),
+                                        context.radius(10),
                                       ),
                                       border: Border.all(
                                         color: context.appColors.greylight
@@ -379,7 +379,7 @@ class WebBubble extends StatelessWidget {
       padding: context.padSym(h: 12, v: 8),
       decoration: BoxDecoration(
         color: isMe ? context.appColors.primary : Colors.white,
-        borderRadius: BorderRadius.circular(context.radiusR(10)),
+        borderRadius: BorderRadius.circular(context.radius(10)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +419,7 @@ class WebFilterChip extends StatelessWidget {
       padding: context.padSym(h: 10, v: 4),
       decoration: BoxDecoration(
         color: selected ? context.appColors.primary : Colors.transparent,
-        borderRadius: BorderRadius.circular(context.radiusR(14)),
+        borderRadius: BorderRadius.circular(context.radius(14)),
         border: Border.all(
           color: selected
               ? context.appColors.primary

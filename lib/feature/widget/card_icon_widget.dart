@@ -23,7 +23,7 @@ class CardIconWidget extends StatelessWidget {
         color: isSelected
             ? c.primary
             : (kIsWeb ? const Color(0xFFF2F8FF) : c.surface),
-        borderRadius: BorderRadius.circular(context.radiusR(kIsWeb ? 14 : 12)),
+        borderRadius: BorderRadius.circular(context.radius(kIsWeb ? 14 : 12)),
         border: kIsWeb && !isSelected
             ? Border.all(color: const Color(0xFFD7E7F7))
             : null,
@@ -41,9 +41,6 @@ class CardIconWidget extends StatelessWidget {
     if (kIsWeb) {
       return box;
     }
-    return Card(
-      color: isSelected ? c.primary : c.surface,
-      child: box,
-    );
+    return Card(color: isSelected ? c.primary : c.surface, child: box);
   }
 }

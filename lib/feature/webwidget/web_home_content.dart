@@ -30,7 +30,7 @@ class WebHomeContent extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                radius: context.radiusR(24),
+                radius: context.radius(24),
                 backgroundImage: model.avatarUrl.trim().isNotEmpty
                     ? NetworkImage(model.avatarUrl)
                     : null,

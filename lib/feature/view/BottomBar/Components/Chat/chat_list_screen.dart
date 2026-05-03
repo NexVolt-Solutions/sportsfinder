@@ -40,10 +40,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final selectedTargetUserId = (selected.targetUserId ?? '').trim();
     if (selectedName.isEmpty || selectedTargetUserId.isEmpty) return;
 
-    _safeVm.startOrOpenThread(
-      selectedName,
-      targetUserId: selectedTargetUserId,
-    );
+    _safeVm.startOrOpenThread(selectedName, targetUserId: selectedTargetUserId);
     if (kIsWeb && widget.embedInBottomBar) {
       setState(() => _selectedWebThreadIndex = 0);
       return;
@@ -94,7 +91,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 );
                 _webMessageController.clear();
               },
-
             );
           }
           return Scaffold(
@@ -145,13 +141,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   decoration: BoxDecoration(
                                     color: context.appColors.blue10,
                                     borderRadius: BorderRadius.circular(
-                                      context.radiusR(12),
+                                      context.radius(12),
                                     ),
                                   ),
                                   child: Row(
                                     children: [
                                       CircleAvatar(
-                                        radius: context.radiusR(22),
+                                        radius: context.radius(22),
                                         backgroundColor:
                                             context.appColors.greylight,
                                         child: Text(

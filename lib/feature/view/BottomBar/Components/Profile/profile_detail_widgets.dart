@@ -291,7 +291,7 @@
 //             crossAxisAlignment: CrossAxisAlignment.start,
 //             children: [
 //               CircleAvatar(
-//                 radius: context.radiusR(22),
+//                 radius: context.radius(22),
 //                 backgroundColor: c.blue10,
 //                 child: Text(
 //                   reviewInitial,
@@ -373,7 +373,7 @@
 //             padding: context.padSym(h: 12, v: 6),
 //             decoration: BoxDecoration(
 //               color: Colors.white,
-//               borderRadius: BorderRadius.circular(context.radiusR(20)),
+//               borderRadius: BorderRadius.circular(context.radius(20)),
 //               border: Border.all(color: c.primary, width: 1),
 //             ),
 //             child: NormalText(
