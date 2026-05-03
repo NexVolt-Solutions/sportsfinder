@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -8,11 +9,13 @@ class WebDashboardPanel extends StatelessWidget {
     required this.child,
     this.padding,
     this.height,
+    this.backgroundColor,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double? height;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +23,9 @@ class WebDashboardPanel extends StatelessWidget {
       height: height,
       padding: padding ?? context.padSym(h: 18, v: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor ?? AppColors.whitecolor,
         borderRadius: BorderRadius.circular(context.radius(18)),
-        border: Border.all(color: const Color(0xFFD7E7F7)),
+        border: Border.all(color: AppColors.transparent),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0B0E4A84),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -127,6 +128,7 @@ class WebMatchesManagementSection extends StatelessWidget {
             SizedBox(height: context.h(18)),
             Expanded(
               child: WebDashboardPanel(
+                backgroundColor: context.appColors.blue10,
                 padding: context.padSym(h: 18, v: 18),
                 child: rows.isEmpty
                     ? Center(
@@ -145,11 +147,21 @@ class WebMatchesManagementSection extends StatelessWidget {
                                 minWidth: constraints.maxWidth,
                               ),
                               child: DataTable(
-                                headingRowHeight: context.h(44),
-                                dataRowMinHeight: context.h(64),
-                                dataRowMaxHeight: context.h(78),
+                                // // headingRowHeight: context.h(44),
+                                // dataRowMinHeight: context.h(64),
+                                // dataRowMaxHeight: context.h(78),
+                                dividerThickness: 1.0,
                                 columnSpacing: context.w(24),
                                 horizontalMargin: 0,
+                                border: TableBorder(
+                                  horizontalInside: BorderSide(
+                                    color: AppColors.whitecolor,
+                                  ),
+                                  // top: BorderSide(
+                                  //   color: tableDividerColor,
+                                  //   width: 1,
+                                  // ),
+                                ),
                                 headingTextStyle: context.appText.text12W500
                                     .copyWith(
                                       color: context.appColors.greyDark,
@@ -170,10 +182,7 @@ class WebMatchesManagementSection extends StatelessWidget {
                                   return DataRow(
                                     cells: [
                                       DataCell(
-                                        SizedBox(
-                                          width: context.w(120),
-                                          child: Text(row.title),
-                                        ),
+                                        SizedBox(child: Text(row.title)),
                                       ),
                                       DataCell(Text(row.sport)),
                                       DataCell(Text(row.players)),
@@ -191,7 +200,7 @@ class WebMatchesManagementSection extends StatelessWidget {
                                         Container(
                                           padding: context.padSym(h: 12, v: 6),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF45A5FF),
+                                            color: AppColors.bluecolor,
                                             borderRadius: BorderRadius.circular(
                                               context.radius(12),
                                             ),
@@ -199,7 +208,9 @@ class WebMatchesManagementSection extends StatelessWidget {
                                           child: Text(
                                             row.status,
                                             style: context.appText.text12W500
-                                                .copyWith(color: Colors.white),
+                                                .copyWith(
+                                                  color: AppColors.whitecolor,
+                                                ),
                                           ),
                                         ),
                                       ),
