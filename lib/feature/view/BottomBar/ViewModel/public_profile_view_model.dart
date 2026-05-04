@@ -15,6 +15,7 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
@@ -175,7 +176,7 @@ class PublicProfileViewModel extends ChangeNotifier {
     return AppText.profilePlaceholderLocation;
   }
 
-  String get avatarUrl => _active?.avatarUrl?.trim() ?? '';
+  String get avatarUrl => normalizeImageUrl(_active?.avatarUrl)?.trim() ?? '';
 
   int get followersCount =>
       _followersCountOverride ?? (_active?.stats.followers ?? 0);
@@ -359,20 +360,19 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   void onMessageTap(BuildContext context) {
-    final matchId = initialMatchId.trim();
-    if (matchId.isEmpty) {
-      AppSnackBar.show(
-        'Direct user chat is not available yet. Open chat from a match instead.',
-      );
+    if (selectedUserId.isEmpty) {
+      AppSnackBar.show(AppText.invalidUserProfile);
       return;
     }
 
+    final matchId = initialMatchId.trim();
     Navigator.pushNamed(
       context,
       RoutesName.chatScreen,
       arguments: ChatRouteArgs(
-        contactName: 'Match Chat',
-        matchId: matchId,
+        contactName: fullName.isNotEmpty ? fullName : 'Player Chat',
+        matchId: matchId.isEmpty ? null : matchId,
+        targetUserId: selectedUserId,
         isOnline: true,
       ),
     );

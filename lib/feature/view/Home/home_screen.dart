@@ -63,9 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer<HomeScreenViewModel>(
       builder: (context, model, child) {
-        // if (kIsWeb) {
-        //   return WebHomeContent(model: model);
-        // }
         return ListView(
           padding: context.padSym(h: 20, v: 20),
           children: [

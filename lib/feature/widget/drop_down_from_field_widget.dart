@@ -46,6 +46,7 @@ class DropdownFormFieldWidget extends StatelessWidget {
           decoration: InputDecoration(
             alignLabelWithHint: true,
             isDense: true,
+            constraints: BoxConstraints(minHeight: context.h(64)),
             label: Text(
               label,
               style: context.appText.text16W400.copyWith(color: c.onSurface),

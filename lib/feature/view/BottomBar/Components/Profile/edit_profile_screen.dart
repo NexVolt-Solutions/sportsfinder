@@ -699,12 +699,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final side = BorderSide(color: c.greylight, width: 1);
     return InputDecoration(
       floatingLabelBehavior: FloatingLabelBehavior.auto,
+      isDense: true,
+      constraints: BoxConstraints(minHeight: context.h(64)),
       labelText: label,
       labelStyle: t.text16W400.copyWith(color: c.onSurface),
       floatingLabelStyle: t.text12W400.copyWith(color: c.greylight),
       filled: true,
       fillColor: Colors.transparent,
-      contentPadding: context.padSym(h: 16, v: 18),
+      contentPadding: context.padSym(h: 16, v: 12),
       border: OutlineInputBorder(borderRadius: radius, borderSide: side),
       enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: side),
       focusedBorder: OutlineInputBorder(

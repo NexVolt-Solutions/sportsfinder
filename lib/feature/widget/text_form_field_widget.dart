@@ -97,6 +97,9 @@ class TextFormFieldWidget extends StatelessWidget {
       decoration: InputDecoration(
         alignLabelWithHint: true,
         isDense: maxLines == 1,
+        constraints: maxLines == 1
+            ? BoxConstraints(minHeight: context.h(64))
+            : null,
         contentPadding: maxLines > 1
             ? AppFormFieldLayout.contentPaddingMultiline(context)
             : AppFormFieldLayout.contentPadding(context),

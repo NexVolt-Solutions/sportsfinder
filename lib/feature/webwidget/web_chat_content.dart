@@ -33,327 +33,387 @@ class WebChatContent extends StatelessWidget {
 
     return MainFrame(
       showDecorationLayer: false,
-      child: Padding(
-        padding: context.padSym(h: 20, v: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const WebDashboardTitle(
-              title: 'Chat',
-              subtitle: 'Start messaging now',
-            ),
-            SizedBox(height: context.h(8)),
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                tooltip: 'New chat',
-                onPressed: onPickUser,
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 10,
-                    child: WebDashboardPanel(
-                      padding: context.padSym(h: 12, v: 12),
-                      child: Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: context.appColors.blue10,
-                              borderRadius: BorderRadius.circular(
-                                context.radius(10),
-                              ),
-                              border: Border.all(
-                                color: context.appColors.greylight,
-                                width: 0.8,
-                              ),
-                            ),
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Start or new chat now..',
-                                hintStyle: context.appText.text12W400.copyWith(
-                                  color: context.appColors.greylight,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search_rounded,
-                                  color: context.appColors.greylight,
-                                  size: 18,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: context.padSym(h: 8, v: 10),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: context.h(8)),
-                          Row(
-                            children: [
-                              const WebFilterChip(label: 'All', selected: true),
-                              SizedBox(width: context.w(6)),
-                              const WebFilterChip(label: 'Unread'),
-                              SizedBox(width: context.w(6)),
-                              const WebFilterChip(label: 'Favorites'),
-                              SizedBox(width: context.w(6)),
-                              const WebFilterChip(label: 'Group'),
-                            ],
-                          ),
-                          SizedBox(height: context.h(8)),
-                          Expanded(
-                            child: hasThreads
-                                ? ListView.separated(
-                                    itemCount: model.threads.length,
-                                    separatorBuilder: (_, _) =>
-                                        SizedBox(height: context.h(8)),
-                                    itemBuilder: (context, index) {
-                                      final thread = model.threads[index];
-                                      final isSelected = index == safeSelected;
-                                      return InkWell(
-                                        borderRadius: BorderRadius.circular(
-                                          context.radius(12),
+      child: Stack(
+        children: [
+          Padding(
+            padding: context.padSym(h: 20, v: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const WebDashboardTitle(
+                  title: 'Chat',
+                  subtitle: 'Start messaging now',
+                ),
+                SizedBox(height: context.h(16)),
+                Expanded(
+                  child: hasThreads
+                      ? Row(
+                          children: [
+                            Expanded(
+                              flex: 10,
+                              child: WebDashboardPanel(
+                                backgroundColor: context.appColors.blue10,
+                                padding: context.padSym(h: 12, v: 12),
+                                child: Column(
+                                  children: [
+                                    _SearchBox(),
+                                    SizedBox(height: context.h(8)),
+                                    Row(
+                                      children: [
+                                        const WebFilterChip(
+                                          label: 'All',
+                                          selected: true,
                                         ),
-                                        onTap: () => onThreadSelected(index),
-                                        child: Container(
-                                          padding: context.padSym(h: 10, v: 10),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? context.appColors.blue10
-                                                : Colors.transparent,
+                                        SizedBox(width: context.w(6)),
+                                        const WebFilterChip(label: 'Unread'),
+                                        SizedBox(width: context.w(6)),
+                                        const WebFilterChip(label: 'Favorites'),
+                                        SizedBox(width: context.w(6)),
+                                        const WebFilterChip(label: 'Group'),
+                                      ],
+                                    ),
+                                    SizedBox(height: context.h(8)),
+                                    Expanded(
+                                      child: ListView.separated(
+                                        itemCount: model.threads.length,
+                                        separatorBuilder: (_, _) =>
+                                            SizedBox(height: context.h(8)),
+                                        itemBuilder: (context, index) {
+                                          final thread = model.threads[index];
+                                          final isSelected =
+                                              index == safeSelected;
+                                          return InkWell(
                                             borderRadius: BorderRadius.circular(
                                               context.radius(12),
                                             ),
-                                            border: Border.all(
-                                              color: isSelected
-                                                  ? context.appColors.primary
-                                                  : context.appColors.greylight
-                                                        .withValues(
-                                                          alpha: 0.25,
+                                            onTap: () =>
+                                                onThreadSelected(index),
+                                            child: Container(
+                                              padding: context.padSym(
+                                                h: 10,
+                                                v: 10,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? context.appColors.white
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      context.radius(12),
+                                                    ),
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? context.appColors
+                                                            .primary
+                                                      : context
+                                                            .appColors
+                                                            .greylight
+                                                            .withValues(
+                                                              alpha: 0.25,
+                                                            ),
+                                                  width: 0.8,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: context.radius(17),
+                                                    backgroundColor: context
+                                                        .appColors
+                                                        .white,
+                                                    child: Text(
+                                                      thread.userName.isNotEmpty
+                                                          ? thread.userName[0]
+                                                                .toUpperCase()
+                                                          : 'U',
+                                                      style: context
+                                                          .appText
+                                                          .text12W500,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: context.w(10),
+                                                  ),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          thread.userName,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: context
+                                                              .appText
+                                                              .text14W500,
                                                         ),
-                                              width: 0.8,
+                                                        SizedBox(
+                                                          height: context.h(2),
+                                                        ),
+                                                        Text(
+                                                          thread.lastMessage,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: context
+                                                              .appText
+                                                              .text12W400
+                                                              .copyWith(
+                                                                color: context
+                                                                    .appColors
+                                                                    .greyDark,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: context.w(6),
+                                                  ),
+                                                  Text(
+                                                    thread.lastTime,
+                                                    style: context
+                                                        .appText
+                                                        .text12W400
+                                                        .copyWith(
+                                                          color: context
+                                                              .appColors
+                                                              .greylight,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: context.radius(17),
-                                                backgroundColor: context
-                                                    .appColors
-                                                    .greylight
-                                                    .withValues(alpha: 0.4),
-                                                child: Text(
-                                                  thread.userName.isNotEmpty
-                                                      ? thread.userName[0]
-                                                            .toUpperCase()
-                                                      : 'U',
-                                                  style: context
-                                                      .appText
-                                                      .text12W500,
-                                                ),
-                                              ),
-                                              SizedBox(width: context.w(10)),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      thread.userName,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: context
-                                                          .appText
-                                                          .text14W500,
-                                                    ),
-                                                    SizedBox(
-                                                      height: context.h(2),
-                                                    ),
-                                                    Text(
-                                                      thread.lastMessage,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: context
-                                                          .appText
-                                                          .text12W400
-                                                          .copyWith(
-                                                            color: context
-                                                                .appColors
-                                                                .greyDark,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(width: context.w(6)),
-                                              Text(
-                                                thread.lastTime,
-                                                style: context
-                                                    .appText
-                                                    .text12W400
-                                                    .copyWith(
-                                                      color: context
-                                                          .appColors
-                                                          .greylight,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Center(
-                                    child: Text(
-                                      'No chats yet',
-                                      style: context.appText.text14W400
-                                          .copyWith(
-                                            color: context.appColors.greylight,
-                                          ),
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: context.w(12)),
-                  Expanded(
-                    flex: 14,
-                    child: WebDashboardPanel(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: context.padSym(h: 14, v: 10),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: context.appColors.greylight.withValues(
-                                    alpha: 0.45,
-                                  ),
+                                  ],
                                 ),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: context.radius(18),
-                                  backgroundColor: context.appColors.greylight
-                                      .withValues(alpha: 0.35),
-                                  child: Text(
-                                    activeThread != null &&
-                                            activeThread.userName.isNotEmpty
-                                        ? activeThread.userName[0].toUpperCase()
-                                        : 'C',
-                                    style: context.appText.text12W500,
-                                  ),
-                                ),
-                                SizedBox(width: context.w(10)),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        activeThread?.userName ??
-                                            'Select a conversation',
-                                        style: context.appText.text14W500,
-                                      ),
-                                      Text(
-                                        'Start messaging now',
-                                        style: context.appText.text12W400
-                                            .copyWith(
-                                              color:
-                                                  context.appColors.greylight,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.more_horiz_rounded),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: context.padSym(h: 14, v: 12),
-                              child: Column(
-                                children: [
-                                  const Spacer(),
-                                  if (activeThread != null) ...[
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: WebBubble(
-                                        text: activeThread.lastMessage,
-                                        time: activeThread.lastTime,
-                                        isMe: true,
-                                      ),
-                                    ),
-                                  ] else
-                                    Text(
-                                      'Start by selecting or creating a chat',
-                                      style: context.appText.text14W400
-                                          .copyWith(
-                                            color: context.appColors.greylight,
+                            SizedBox(width: context.w(12)),
+                            Expanded(
+                              flex: 16,
+                              child: WebDashboardPanel(
+                                backgroundColor: context.appColors.blue10,
+                                padding: EdgeInsets.zero,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: context.padSym(h: 14, v: 10),
+                                      decoration: BoxDecoration(
+                                        color: context.appColors.white,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(
+                                            context.radius(18),
                                           ),
+                                          topRight: Radius.circular(
+                                            context.radius(18),
+                                          ),
+                                        ),
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: context.appColors.greylight
+                                                .withValues(alpha: 0.45),
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: context.radius(18),
+                                            backgroundColor: context
+                                                .appColors
+                                                .blue10,
+                                            child: Text(
+                                              activeThread != null &&
+                                                      activeThread
+                                                          .userName
+                                                          .isNotEmpty
+                                                  ? activeThread.userName[0]
+                                                        .toUpperCase()
+                                                  : 'C',
+                                              style: context.appText.text12W500,
+                                            ),
+                                          ),
+                                          SizedBox(width: context.w(10)),
+                                          Expanded(
+                                            child: Text(
+                                              activeThread?.userName ?? '',
+                                              style: context
+                                                  .appText
+                                                  .text14W500,
+                                            ),
+                                          ),
+                                          const Icon(Icons.more_horiz_rounded),
+                                        ],
+                                      ),
                                     ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: context.padSym(h: 14, v: 12),
+                                        child: Column(
+                                          children: [
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: WebBubble(
+                                                text:
+                                                    'Hey, what\'s the match location for today?',
+                                                time: activeThread?.lastTime ??
+                                                    '',
+                                                isMe: false,
+                                              ),
+                                            ),
+                                            SizedBox(height: context.h(18)),
+                                            Align(
+                                              alignment: Alignment.centerRight,
+                                              child: WebBubble(
+                                                text:
+                                                    activeThread?.lastMessage ??
+                                                    'Hey, what\'s the match location for today?',
+                                                time: activeThread?.lastTime ??
+                                                    '',
+                                                isMe: true,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: context.padSym(h: 14, v: 12),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: context
+                                                    .appColors
+                                                    .white,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      context.radius(10),
+                                                    ),
+                                                border: Border.all(
+                                                  color: context
+                                                      .appColors
+                                                      .primary
+                                                      .withValues(alpha: 0.45),
+                                                ),
+                                              ),
+                                              child: TextField(
+                                                controller:
+                                                    messageController,
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      'Type your message...',
+                                                  border: InputBorder.none,
+                                                  contentPadding:
+                                                      context.padSym(
+                                                        h: 12,
+                                                        v: 10,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: context.w(10)),
+                                          IconButton(
+                                            onPressed: onSendMessage,
+                                            icon: Icon(
+                                              Icons.send_outlined,
+                                              color:
+                                                  context.appColors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child: SizedBox(
+                            width: context.w(420),
+                            child: WebDashboardPanel(
+                              padding: context.padAll(32),
+                              backgroundColor: context.appColors.blue10,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.chat_bubble_outline_rounded,
+                                    size: context.w(52),
+                                    color: context.appColors.primary,
+                                  ),
+                                  SizedBox(height: context.h(16)),
+                                  Text(
+                                    'No chats yet',
+                                    style: context.appText.text18W400.copyWith(
+                                      color: context.appColors.onSurface,
+                                    ),
+                                  ),
+                                  SizedBox(height: context.h(8)),
+                                  Text(
+                                    'Start a new conversation to see your chat screen here.',
+                                    textAlign: TextAlign.center,
+                                    style: context.appText.text14W400.copyWith(
+                                      color: context.appColors.greylight,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: context.padSym(h: 14, v: 12),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: context.appColors.blue10,
-                                      borderRadius: BorderRadius.circular(
-                                        context.radius(10),
-                                      ),
-                                      border: Border.all(
-                                        color: context.appColors.greylight
-                                            .withValues(alpha: 0.6),
-                                      ),
-                                    ),
-                                    child: TextField(
-                                      controller: messageController,
-                                      enabled: activeThread != null,
-                                      decoration: InputDecoration(
-                                        hintText: 'Type your message...',
-                                        border: InputBorder.none,
-                                        contentPadding: context.padSym(
-                                          h: 12,
-                                          v: 10,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: context.w(10)),
-                                IconButton(
-                                  onPressed: activeThread == null
-                                      ? null
-                                      : onSendMessage,
-                                  icon: Icon(
-                                    Icons.send_outlined,
-                                    color: context.appColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                        ),
+                ),
+              ],
             ),
-          ],
+          ),
+          Positioned(
+            right: context.w(28),
+            bottom: context.h(28),
+            child: FloatingActionButton(
+              onPressed: onPickUser,
+              backgroundColor: context.appColors.primary,
+              child: Icon(Icons.add, color: context.appColors.onPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.appColors.white,
+        borderRadius: BorderRadius.circular(context.radius(10)),
+        border: Border.all(color: context.appColors.primary, width: 0.8),
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Start or new chat now..',
+          hintStyle: context.appText.text12W400.copyWith(
+            color: context.appColors.greylight,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: context.appColors.greylight,
+            size: 18,
+          ),
+          border: InputBorder.none,
+          contentPadding: context.padSym(h: 8, v: 10),
         ),
       ),
     );

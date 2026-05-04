@@ -819,6 +819,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       model.matchStatus == 'cancelled'
                                   ? null
                                   : () async {
+                                      final wasPending =
+                                          model.matchStatus == 'pending';
                                       final matchId = match.id;
                                       if (matchId.isEmpty) return;
                                       final success =
@@ -842,6 +844,14 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                         backgroundColor:
                                             context.appColors.primary,
                                       );
+                                      if (wasPending) {
+                                        Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          RoutesName.bottomBarScreen,
+                                          (route) => false,
+                                          arguments: 2,
+                                        );
+                                      }
                                     },
                             ),
                             if (model.matchStatus == 'pending') ...[

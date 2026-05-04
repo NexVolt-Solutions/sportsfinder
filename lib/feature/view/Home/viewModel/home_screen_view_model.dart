@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -10,9 +9,7 @@ import 'package:sport_finding/core/Network/deleted_matches_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 
 class HomeScreenViewModel extends ChangeNotifier {
-  final MyProfileRepository repository;
-
-  HomeScreenViewModel({required this.repository}) {
+  HomeScreenViewModel() {
     // Defer so ProfileService does not notify during the first home build
     // (avoids "setState during build" in listeners such as [AllUpcommingMatchesViewModel]).
     final service = ProfileService();
