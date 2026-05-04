@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/auth_route_resolver.dart';
+import 'package:sport_finding/core/utils/browser_history.dart';
 import 'package:sport_finding/core/utils/oauth_uri_bootstrap.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 
@@ -27,13 +29,25 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
       return;
     }
 
-    final next = Uri.base.queryParameters['next'] ?? '';
-    final tab = mapNextPathToBottomBarTab(next);
-    Navigator.pushReplacementNamed(
-      context,
-      RoutesName.bottomBarScreen,
-      arguments: tab,
-    );
+    // Same flow as mobile [AppStartScreen]: skill / location onboarding when
+    // profile is incomplete; main app only when complete.
+    final routeName = await AuthRouteResolver.resolvePostAuthRouteName();
+    if (!mounted) return;
+
+    if (routeName == RoutesName.bottomBarScreen) {
+      final next = Uri.base.queryParameters['next'] ?? '';
+      final tab = mapNextPathToBottomBarTab(next);
+      Navigator.pushReplacementNamed(
+        context,
+        RoutesName.bottomBarScreen,
+        arguments: tab,
+      );
+    } else {
+      Navigator.pushReplacementNamed(context, routeName);
+    }
+
+    // Remove tokens from the address bar (path-only; hash is cleared with `/`).
+    replaceBrowserPathAfterOAuth('/');
   }
 
   @override

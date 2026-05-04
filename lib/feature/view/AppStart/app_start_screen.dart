@@ -40,16 +40,6 @@ class _AppStartScreenState extends State<AppStartScreen> {
       return;
     }
 
-    if (kIsWeb) {
-      _navigated = true;
-      Navigator.pushReplacementNamed(
-        context,
-        RoutesName.bottomBarScreen,
-        arguments: BottomBarScreenViewModel.homeIndex,
-      );
-      return;
-    }
-
     final routeName = await AuthRouteResolver.resolvePostAuthRouteName();
     if (!mounted || _navigated) return;
 
