@@ -1,11 +1,16 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/public_profile_view_model.dart';
@@ -14,11 +19,40 @@ import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
+import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/webwidget/web_profile_content.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   const PublicProfileScreen({super.key, this.args});
 
   final PublicProfileArgs? args;
+
+  void _openEditProfile(BuildContext context) {
+    final ps = ProfileService().profile;
+    String? sportUi;
+    String? skillUi;
+    if (ps != null && ps.sports.isNotEmpty) {
+      final raw = ps.sports.first;
+      if (raw is Map) {
+        final m = Map<String, dynamic>.from(raw);
+        sportUi = apiSportToUiDropdown(m['sport']?.toString());
+        skillUi = apiSkillToUiDropdown(
+          (m['skill_level'] ?? m['skill'])?.toString(),
+        );
+      }
+    }
+    Navigator.pushNamed(
+      context,
+      RoutesName.editProfileRoute,
+      arguments: EditProfileRouteArgs(
+        initialName: ProfileService().fullName,
+        initialBio: ProfileService().bio.isNotEmpty ? ProfileService().bio : null,
+        initialAvatarUrl: ProfileService().avatarUrl,
+        initialSport: sportUi,
+        initialSkill: skillUi,
+      ),
+    );
+  }
 
   void _showRateSheet(BuildContext context, PublicProfileViewModel model) {
     final c = context.appColors;
@@ -41,12 +75,110 @@ class PublicProfileScreen extends StatelessWidget {
       create: (_) => PublicProfileViewModel(args: args),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: MainFrame(
-          child: Consumer<PublicProfileViewModel>(
-            builder: (context, model, _) {
-              final c = context.appColors;
-              final t = context.appText;
-              return Column(
+        body: Consumer<PublicProfileViewModel>(
+          builder: (context, model, _) {
+            final c = context.appColors;
+            final t = context.appText;
+
+            if (kIsWeb) {
+              if (model.showSpinner) {
+                return const _ProfileScreenShimmer();
+              }
+              if (model.showError) {
+                return Center(
+                  child: Text(
+                    model.displayError,
+                    textAlign: TextAlign.center,
+                    style: t.text14W400.copyWith(color: c.greyDark),
+                  ),
+                );
+              }
+              return WebProfileContent(
+                title: AppText.publicProfile,
+                subtitle: 'Start messaging now',
+                displayName: model.fullName,
+                location: model.location,
+                bio: model.bio,
+                safeAvatarUrl: model.avatarUrl,
+                isLoading: false,
+                followersValue: '${model.followersCount}',
+                followingValue: '${model.followingCount}',
+                ratingValue: model.ratingValue,
+                matchesPlayedValue: model.matchesPlayedValue,
+                onFollowersTap: model.isOwnProfile
+                    ? null
+                    : () => model.openFollowers(context),
+                onFollowingTap: model.isOwnProfile
+                    ? null
+                    : () => model.openFollowing(context),
+                onRatingTap: model.isOwnProfile || !model.canRateProfile
+                    ? null
+                    : () => _showRateSheet(context, model),
+                onBackTap: () => Navigator.pop(context),
+                headerActionText: model.isOwnProfile
+                    ? AppText.editProfile
+                    : null,
+                onHeaderActionTap: model.isOwnProfile
+                    ? () => _openEditProfile(context)
+                    : null,
+                showHeaderText: false,
+                actionSection: Column(
+                  children: [
+                    _FollowMessageRow(
+                      onFollow: !model.isOwnProfile
+                          ? () => model.onFollowTap(context)
+                          : null,
+                      onMessage: !model.isOwnProfile
+                          ? () => model.onMessageTap(context)
+                          : null,
+                      isFollowing: model.isFollowing,
+                      isFollowLoading: model.isFollowLoading,
+                    ),
+                    SizedBox(height: context.h(12)),
+                    _RatePlayerButton(
+                      onTap: model.canRateProfile
+                          ? () => _showRateSheet(context, model)
+                          : null,
+                    ),
+                  ],
+                ),
+                footerSection: model.hasReviews
+                    ? WebDashboardPanel(
+                        padding: context.padAll(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppText.reviews,
+                              style: t.text18W400.copyWith(
+                                color: c.onSurface,
+                              ),
+                            ),
+                            SizedBox(height: context.h(16)),
+                            ...model.parsedReviews.map(
+                              (review) => Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: context.h(10),
+                                ),
+                                child: ProfileDetailReviewCard(
+                                  reviewAuthor: review['author'] ?? '—',
+                                  reviewDate: review['date'] ?? '',
+                                  reviewBody:
+                                      review['body'] ??
+                                      AppText.profilePlaceholderReview,
+                                  reviewInitial: review['initial'] ?? '?',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : null,
+              );
+            }
+
+            return MainFrame(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
@@ -97,13 +229,12 @@ class PublicProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: context.h(20)),
-
                               _FollowMessageRow(
-                                onFollow: () async => !model.isOwnProfile
-                                    ? await model.onFollowTap(context)
+                                onFollow: !model.isOwnProfile
+                                    ? () => model.onFollowTap(context)
                                     : null,
-                                onMessage: () => !model.isOwnProfile
-                                    ? model.onMessageTap(context)
+                                onMessage: !model.isOwnProfile
+                                    ? () => model.onMessageTap(context)
                                     : null,
                                 isFollowing: model.isFollowing,
                                 isFollowLoading: model.isFollowLoading,
@@ -114,8 +245,6 @@ class PublicProfileScreen extends StatelessWidget {
                                     ? () => _showRateSheet(context, model)
                                     : null,
                               ),
-                              SizedBox(height: context.h(20)),
-
                               SizedBox(height: context.h(20)),
                               ProfileDetailStatsRow(
                                 followersCount: model.followersCount,
@@ -176,9 +305,9 @@ class PublicProfileScreen extends StatelessWidget {
                           ),
                   ),
                 ],
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -242,11 +371,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
   bool _isSubmittingLocal = false;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -255,7 +379,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
   Future<void> _submit() async {
     if (_isSubmittingLocal || widget.model.isSubmittingReview) return;
     final comment = _controller.text.trim();
-    debugPrint('[RatePlayerSheet] Submit tapped for rating=$_selectedStars');
 
     if (_selectedStars <= 0) {
       AppSnackBar.show(AppText.reviewValidationRating);
@@ -277,17 +400,11 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
     if (!mounted) return;
 
     if (ok) {
-      debugPrint(
-        '[RatePlayerSheet] Review API success for user=${widget.model.displayName}',
-      );
       Navigator.of(context).pop();
       AppSnackBar.show(AppText.reviewSubmitSuccess);
       return;
     }
 
-    debugPrint(
-      '[RatePlayerSheet] Review API failed: ${widget.model.submitReviewError}',
-    );
     AppSnackBar.show(
       widget.model.submitReviewError ?? 'Failed to submit review',
     );
@@ -316,7 +433,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
                   child: NormalText(
                     titleText:
                         '${AppText.ratingUserPrefix}${widget.model.displayName}',
-
                     maxLines: 1,
                   ),
                 ),
@@ -399,8 +515,8 @@ class _FollowMessageRow extends StatelessWidget {
     required this.isFollowLoading,
   });
 
-  final Future<void> Function() onFollow;
-  final VoidCallback onMessage;
+  final Future<void> Function()? onFollow;
+  final VoidCallback? onMessage;
   final bool isFollowing;
   final bool isFollowLoading;
 
@@ -412,7 +528,9 @@ class _FollowMessageRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: isFollowing || isFollowLoading ? null : () => onFollow(),
+          onTap: isFollowLoading || onFollow == null
+              ? null
+              : () => onFollow!(),
           child: Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadiusGeometry.circular(30),

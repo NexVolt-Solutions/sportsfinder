@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +19,6 @@ import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
-import 'package:sport_finding/feature/webwidget/web_profile_content.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
@@ -101,7 +99,9 @@ class ProfileScreen extends StatelessWidget {
     try {
       await FcmService.instance.deactivateForLogout();
     } catch (e) {
-      debugPrint('[ProfileScreen] FCM deactivate failed (continuing logout): $e');
+      debugPrint(
+        '[ProfileScreen] FCM deactivate failed (continuing logout): $e',
+      );
     }
 
     try {
@@ -165,55 +165,7 @@ class ProfileScreen extends StatelessWidget {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           final notificationService = context.watch<NotificationService>();
-          if (kIsWeb && embedInBottomBar) {
-            return WebProfileContent(
-              model: model,
-              notificationsEnabled: model.notificationsEnabled,
-              isUpdatingPreference: notificationService.isUpdatingPreference,
-              safeAvatarUrl: _safeAvatarUrl(model.avatarUrl),
-              onFollowersTap: () => model.openFollowers(context),
-              onFollowingTap: () => model.openFollowing(context),
-              onSwitchChanged: (val) async {
-                final message = await notificationService
-                    .updateNotificationPreference(val);
-                if (!context.mounted) return;
-                AppSnackBar.show(
-                  message != null && message.isNotEmpty
-                      ? message
-                      : AppText.notificationsUpdated,
-                );
-              },
-              onTapSetting: (index) => model.onTapFun(context, index),
-              onPrimaryAction: () {
-                final ps = ProfileService().profile;
-                String? sportUi;
-                String? skillUi;
-                if (ps != null && ps.sports.isNotEmpty) {
-                  final raw = ps.sports.first;
-                  if (raw is Map) {
-                    final m = Map<String, dynamic>.from(raw);
-                    sportUi = apiSportToUiDropdown(m['sport']?.toString());
-                    skillUi = apiSkillToUiDropdown(
-                      (m['skill_level'] ?? m['skill'])?.toString(),
-                    );
-                  }
-                }
-                Navigator.pushNamed(
-                  context,
-                  RoutesName.editProfileRoute,
-                  arguments: EditProfileRouteArgs(
-                    initialName: model.fullName,
-                    initialBio: model.bio.isNotEmpty ? model.bio : null,
-                    initialAvatarUrl: _safeAvatarUrl(model.avatarUrl),
-                    initialSport: sportUi,
-                    initialSkill: skillUi,
-                  ),
-                );
-              },
-              onSecondaryAction: () => _shareProfile(context),
-              primaryActionLabel: AppText.message,
-            );
-          }
+
           return MainFrame(
             showDecorationLayer: !embedInBottomBar,
             child: ListView(
@@ -338,19 +290,7 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                // NormalText(titleText: AppText.mySports),
-                // ListView.builder(
-                //   itemCount: model.sportsList.length,
-                //   shrinkWrap: true,
-                //   physics: const NeverScrollableScrollPhysics(),
-                //   itemBuilder: (context, index) {
-                //     final sport = model.sportsList[index];
-                //     return ProfilePrivateSportRow(
-                //       sportName: sport.name,
-                //       skillLabel: sport.skill,
-                //     );
-                //   },
-                // ),
+
                 SizedBox(height: context.h(16)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

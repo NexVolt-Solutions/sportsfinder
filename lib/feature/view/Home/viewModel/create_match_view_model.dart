@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
@@ -461,7 +462,7 @@ class CreateMatchViewModel extends ChangeNotifier {
       _selectedTime!.minute,
     );
 
-    return dt.toUtc().toIso8601String();
+    return kIsWeb ? dt.toIso8601String() : dt.toUtc().toIso8601String();
   }
 
   Future<bool> createMatchApi() async {
