@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +14,18 @@ import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/firebase_options.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// On web, honor the browser path (e.g. `/auth-callback`) instead of always
+/// booting `app_start_screen`, which breaks OAuth redirects.
+String _materialInitialRoute() {
+  if (!kIsWeb) return RoutesName.appStartScreen;
+  var path = Uri.base.path;
+  if (path.isEmpty || path == '/') return RoutesName.appStartScreen;
+  if (path.length > 1 && path.endsWith('/')) {
+    path = path.substring(0, path.length - 1);
+  }
+  return path;
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +51,7 @@ Future<void> main() async {
         theme: AppTheme.light,
         scaffoldMessengerKey: rootScaffoldMessengerKey,
         navigatorKey: rootNavigatorKey,
-        initialRoute: RoutesName.appStartScreen,
+        initialRoute: _materialInitialRoute(),
         onGenerateRoute: Routes.generateRoute,
       ),
     ),

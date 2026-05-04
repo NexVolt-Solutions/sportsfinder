@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
@@ -52,8 +53,36 @@ class Routes {
     return MaterialPageRoute(settings: settings, builder: builder);
   }
 
+  /// Web engines sometimes pass `"/auth-callback?next=..."` as [RouteSettings.name].
+  /// Strip query/hash so switch cases match.
+  static String _routeNameForMatch(RouteSettings settings) {
+    var name = settings.name;
+    if (kIsWeb && (name == null || name.isEmpty)) {
+      final p = Uri.base.path;
+      name = p.isEmpty ? '/' : p;
+    }
+    if (name == null || name.isEmpty) {
+      return RoutesName.appStartScreen;
+    }
+    var n = name;
+    final q = n.indexOf('?');
+    if (q != -1) n = n.substring(0, q);
+    final h = n.indexOf('#');
+    if (h != -1) n = n.substring(0, h);
+    if (n.startsWith('http')) {
+      try {
+        n = Uri.parse(n).path;
+      } catch (_) {}
+    }
+    if (n.length > 1 && n.endsWith('/')) {
+      n = n.substring(0, n.length - 1);
+    }
+    return n;
+  }
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    switch (settings.name) {
+    final routeKey = _routeNameForMatch(settings);
+    switch (routeKey) {
       case RoutesName.appStartScreen:
         return _route(settings, (_) => const AppStartScreen());
       case RoutesName.authCallbackScreen:
