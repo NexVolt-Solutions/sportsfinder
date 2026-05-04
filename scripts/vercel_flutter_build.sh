@@ -5,12 +5,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 FLUTTER_DIR="${ROOT}/.flutter"
-if [[ ! -x "${FLUTTER_DIR}/bin/flutter" ]]; then
+FLUTTER_VERSION="3.41.6"
+if [[ ! -x "${FLUTTER_DIR}/bin/flutter" ]] || [[ "$("${FLUTTER_DIR}/bin/flutter" --version 2>/dev/null | awk '/Flutter / {print $2; exit}')" != "${FLUTTER_VERSION}" ]]; then
   rm -rf "${FLUTTER_DIR}"
-  git clone https://github.com/flutter/flutter.git -b stable --depth 1 "${FLUTTER_DIR}"
+  git clone https://github.com/flutter/flutter.git --branch "${FLUTTER_VERSION}" --depth 1 "${FLUTTER_DIR}"
 fi
 
 export PATH="${FLUTTER_DIR}/bin:${PATH}"
+flutter --version
 flutter config --no-analytics
 flutter precache --web
 flutter pub get
