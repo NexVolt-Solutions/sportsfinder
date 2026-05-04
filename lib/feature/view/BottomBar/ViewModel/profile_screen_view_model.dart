@@ -51,6 +51,74 @@ class ProfileScreenViewModel extends ChangeNotifier {
   }
   bool get notificationsEnabled => _ps.notificationsEnabled;
 
+  Map<String, dynamic>? get _firstReviewMap {
+    final list = _ps.reviews;
+    if (list.isEmpty) return null;
+    final first = list.first;
+    if (first is Map) return Map<String, dynamic>.from(first);
+    return null;
+  }
+
+  bool get hasReviews {
+    if (_ps.totalReviews > 0) return true;
+    final list = _ps.reviews;
+    if (list.isEmpty) return false;
+    for (final item in list) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final authorRaw =
+          m['author_name'] ??
+          m['reviewer_name'] ??
+          m['reviewer'] ??
+          m['author'] ??
+          m['user'];
+      final author = authorRaw is Map
+          ? '${authorRaw['full_name'] ?? authorRaw['name'] ?? ''}'.trim()
+          : '${authorRaw ?? ''}'.trim();
+      final body = '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+      if (author.isNotEmpty || body.isNotEmpty) return true;
+    }
+    return false;
+  }
+
+  String get reviewAuthorForDisplay {
+    final m = _firstReviewMap;
+    if (m == null) return '—';
+    final name =
+        m['author_name'] ??
+        m['reviewer_name'] ??
+        m['reviewer'] ??
+        m['author'] ??
+        m['user'];
+    final value = name is Map
+        ? '${name['full_name'] ?? name['name'] ?? ''}'.trim()
+        : '${name ?? ''}'.trim();
+    return value.isNotEmpty ? value : '—';
+  }
+
+  String get reviewDateForDisplay {
+    final m = _firstReviewMap;
+    if (m == null) return '';
+    final raw = m['created_at'] ?? m['date'] ?? m['reviewed_at'];
+    if (raw == null) return '';
+    final parsed = DateTime.tryParse(raw.toString());
+    if (parsed == null) return raw.toString();
+    return '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+  }
+
+  String get reviewBodyForDisplay {
+    final m = _firstReviewMap;
+    if (m == null) return AppText.profilePlaceholderReview;
+    final body = '${m['body'] ?? m['comment'] ?? m['text'] ?? ''}'.trim();
+    return body.isNotEmpty ? body : AppText.profilePlaceholderReview;
+  }
+
+  String get reviewInitial {
+    final author = reviewAuthorForDisplay.trim();
+    if (author.isEmpty || author == '—') return '?';
+    return author[0].toUpperCase();
+  }
+
   // --- unchanged below ---
   int selectedSportIndex = -1;
 

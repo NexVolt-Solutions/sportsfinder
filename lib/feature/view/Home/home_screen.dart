@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         //   return WebHomeContent(model: model);
         // }
         return ListView(
-          padding: context.padSym(h: 20),
+          padding: context.padSym(h: 20, v: 20),
           children: [
             if (widget.showAppBar) ...[
               AppBarWidget(

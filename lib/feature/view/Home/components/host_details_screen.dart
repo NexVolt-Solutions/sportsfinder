@@ -40,9 +40,6 @@ class HostDetailsScreen extends StatefulWidget {
 
 class _HostDetailsScreenState extends State<HostDetailsScreen> {
   bool _scheduledInitialBind = false;
-  static final RegExp _uuidPattern = RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
-  );
 
   @override
   void didChangeDependencies() {
@@ -106,7 +103,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         }
       }
 
-       final updatedMatch = DiscoveryMatch(
+      final updatedMatch = DiscoveryMatch(
         id: result.id ?? match.id,
         title: result.title ?? match.title,
         distanceKm: match.distanceKm,
@@ -264,7 +261,8 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
 
         final showPlayedMatchesCard = match.hostMatchesPlayed > 0;
         final isMatchLocked =
-            model.matchStatus == 'completed' || model.matchStatus == 'cancelled';
+            model.matchStatus == 'completed' ||
+            model.matchStatus == 'cancelled';
         return Scaffold(
           backgroundColor: context.appColors.surface,
           body: Column(
@@ -326,8 +324,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           Container(
                             padding: context.padSym(h: 10, v: 5),
                             decoration: BoxDecoration(
-                              color:
-                                  model.matchStatus == 'cancelled'
+                              color: model.matchStatus == 'cancelled'
                                   ? context.appColors.error.withValues(
                                       alpha: 0.12,
                                     )
@@ -347,8 +344,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             child: Text(
                               model.matchStatusLabel,
                               style: context.appText.text12W600.copyWith(
-                                color:
-                                    model.matchStatus == 'cancelled'
+                                color: model.matchStatus == 'cancelled'
                                     ? context.appColors.error
                                     : model.matchStatus == 'completed'
                                     ? context.appColors.greyDark
@@ -700,9 +696,9 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                               isInvited: model.isUserAlreadyInvited(
                                 user.id?.trim() ?? '',
                               ),
-                              isLoading: !isMatchLocked && model.isInvitingUser(
-                                user.id?.trim() ?? '',
-                              ),
+                              isLoading:
+                                  !isMatchLocked &&
+                                  model.isInvitingUser(user.id?.trim() ?? ''),
                               isActionDisabled: isMatchLocked,
                               ontap: () async {
                                 if (isMatchLocked) return;
@@ -813,41 +809,40 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                   : model.matchStatus == 'ongoing'
                                   ? 'Complete Match'
                                   : model.matchStatusLabel,
-                              color: model.matchStatus == 'pending' ||
+                              color:
+                                  model.matchStatus == 'pending' ||
                                       model.matchStatus == 'ongoing'
                                   ? context.appColors.primary
                                   : context.appColors.greyDark,
                               onTap:
                                   model.matchStatus == 'completed' ||
-                                          model.matchStatus == 'cancelled'
-                                      ? null
-                                      : () async {
-                                          final matchId = match.id;
-                                          if (matchId.isEmpty) return;
-                                          final success = model.matchStatus ==
-                                                  'ongoing'
-                                              ? await model.completeMatch(
-                                                  matchId,
-                                                )
-                                              : await model.startMatch(matchId);
-                                          if (!context.mounted) return;
-                                          if (!success) {
-                                            AppSnackBar.show(
-                                              model.matchStatusError ??
-                                                  'Failed to update match status',
-                                              backgroundColor:
-                                                  context.appColors.error,
-                                            );
-                                            return;
-                                          }
-                                          AppSnackBar.show(
-                                            model.matchStatus == 'completed'
-                                                ? 'Match completed successfully!'
-                                                : 'Match started successfully!',
-                                            backgroundColor:
-                                                context.appColors.primary,
-                                          );
-                                        },
+                                      model.matchStatus == 'cancelled'
+                                  ? null
+                                  : () async {
+                                      final matchId = match.id;
+                                      if (matchId.isEmpty) return;
+                                      final success =
+                                          model.matchStatus == 'ongoing'
+                                          ? await model.completeMatch(matchId)
+                                          : await model.startMatch(matchId);
+                                      if (!context.mounted) return;
+                                      if (!success) {
+                                        AppSnackBar.show(
+                                          model.matchStatusError ??
+                                              'Failed to update match status',
+                                          backgroundColor:
+                                              context.appColors.error,
+                                        );
+                                        return;
+                                      }
+                                      AppSnackBar.show(
+                                        model.matchStatus == 'completed'
+                                            ? 'Match completed successfully!'
+                                            : 'Match started successfully!',
+                                        backgroundColor:
+                                            context.appColors.primary,
+                                      );
+                                    },
                             ),
                             if (model.matchStatus == 'pending') ...[
                               SizedBox(height: context.h(10)),
@@ -862,13 +857,17 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(dialogContext, false),
+                                          onPressed: () => Navigator.pop(
+                                            dialogContext,
+                                            false,
+                                          ),
                                           child: const Text(AppText.cancel),
                                         ),
                                         TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(dialogContext, true),
+                                          onPressed: () => Navigator.pop(
+                                            dialogContext,
+                                            true,
+                                          ),
                                           child: const Text('Cancel Match'),
                                         ),
                                       ],
@@ -915,89 +914,79 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                               ? context.appColors.error
                               : context.appColors.primary,
                           onTap: () async {
-                                  final matchId = match.id;
-                                  if (matchId.isEmpty) {
-                                    return;
-                                  }
-                                  if (model.hasJoined) {
-                                    final result = await model.leaveMatch(
-                                      matchId,
-                                    );
-                                    if (!context.mounted) return;
-                                    if (!result &&
-                                        model.joinLeaveError != null) {
-                                      AppSnackBar.show(
-                                        model.joinLeaveError!,
-                                        backgroundColor:
-                                            context.appColors.error,
-                                      );
-                                    } else if (result) {
-                                      AppSnackBar.show(
-                                        'Left match successfully',
-                                        backgroundColor:
-                                            context.appColors.primary,
-                                      );
-                                    }
-                                    return;
-                                  }
+                            final matchId = match.id;
+                            if (matchId.isEmpty) {
+                              return;
+                            }
+                            if (model.hasJoined) {
+                              final result = await model.leaveMatch(matchId);
+                              if (!context.mounted) return;
+                              if (!result && model.joinLeaveError != null) {
+                                AppSnackBar.show(
+                                  model.joinLeaveError!,
+                                  backgroundColor: context.appColors.error,
+                                );
+                              } else if (result) {
+                                AppSnackBar.show(
+                                  'Left match successfully',
+                                  backgroundColor: context.appColors.primary,
+                                );
+                              }
+                              return;
+                            }
 
-                                  // ── Check if match is full ─────────────────────────
-                                  final int roster = model.rosterCount;
-                                  final int total = match.participantsTotal;
-                                  final bool isFull = roster >= total;
+                            // ── Check if match is full ─────────────────────────
+                            final int roster = model.rosterCount;
+                            final int total = match.participantsTotal;
+                            final bool isFull = roster >= total;
 
-                                  if (isFull) {
-                                    if (!context.mounted) return;
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: true,
-                                      builder: (dialogContext) =>
-                                          CustomBottomSheetWidget(
-                                            isCenter: true,
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  AppAssets
-                                                      .joiningMatchPeopelIcon,
-                                                  fit: BoxFit.scaleDown,
-                                                ),
-                                                SizedBox(height: context.h(16)),
-                                                NormalText(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  titleText:
-                                                      AppText.matchIsFull,
-                                                  maxLines: 5,
-                                                  subAlign: TextAlign.center,
-                                                  subText: AppText
-                                                      .thisMatchHasReachedItsMaximumCapacity,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                    );
-                                    return;
-                                  }
-                                  // ── JOIN flow ──────────────────────────────────────
-                                  final result = await model.joinMatch(matchId);
-                                  if (!context.mounted) return;
+                            if (isFull) {
+                              if (!context.mounted) return;
+                              showDialog(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (dialogContext) => CustomBottomSheetWidget(
+                                  isCenter: true,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SvgPicture.asset(
+                                        AppAssets.joiningMatchPeopelIcon,
+                                        fit: BoxFit.scaleDown,
+                                      ),
+                                      SizedBox(height: context.h(16)),
+                                      NormalText(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        titleText: AppText.matchIsFull,
+                                        maxLines: 5,
+                                        subAlign: TextAlign.center,
+                                        subText: AppText
+                                            .thisMatchHasReachedItsMaximumCapacity,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            // ── JOIN flow ──────────────────────────────────────
+                            final result = await model.joinMatch(matchId);
+                            if (!context.mounted) return;
 
-                                  if (!result && model.joinLeaveError != null) {
-                                    AppSnackBar.show(
-                                      model.joinLeaveError!,
-                                      backgroundColor: context.appColors.error,
-                                    );
-                                  } else if (result) {
-                                    AppSnackBar.show(
-                                      'Joined match successfully!',
-                                      backgroundColor:
-                                          context.appColors.primary,
-                                    );
-                                  }
-                                },
+                            if (!result && model.joinLeaveError != null) {
+                              AppSnackBar.show(
+                                model.joinLeaveError!,
+                                backgroundColor: context.appColors.error,
+                              );
+                            } else if (result) {
+                              AppSnackBar.show(
+                                'Joined match successfully!',
+                                backgroundColor: context.appColors.primary,
+                              );
+                            }
+                          },
                         ),
                 ),
               ),

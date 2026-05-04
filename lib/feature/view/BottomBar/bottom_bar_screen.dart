@@ -20,6 +20,7 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import '../../../Data/Repositories/my_profile_Repository.dart'
@@ -332,8 +333,6 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     final email = vm.userEmail.trim().isNotEmpty
         ? vm.userEmail.trim()
         : 'user@sports.com';
-    final initial = userName.isNotEmpty ? userName.substring(0, 1) : 'U';
-
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: _webW(context, 32),
@@ -360,15 +359,10 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: _webW(context, 18),
-                  backgroundColor: c.primary.withValues(alpha: 0.2),
-                  child: Text(
-                    initial.toUpperCase(),
-                    style: context.appText.text14W600.copyWith(
-                      color: c.primary,
-                    ),
-                  ),
+                AppAvatar(
+                  size: _webW(context, 36),
+                  imageUrl: vm.userImage,
+                  fallbackText: userName,
                 ),
                 SizedBox(width: _webW(context, 10)),
                 Column(

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-
-bool _isNetworkHttpUrl(String? s) {
-  if (s == null || s.trim().isEmpty) return false;
-  final u = Uri.tryParse(s.trim());
-  if (u == null || !u.hasScheme || u.host.isEmpty) return false;
-  return u.isScheme('http') || u.isScheme('https');
-}
 
 class UserGreetingWidget extends StatelessWidget {
   final String title;
@@ -28,30 +22,16 @@ class UserGreetingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final normalizedImageUrl = imageUrl?.trim();
     return Row(
       children: [
-        // 👇 Profile Image
-        CircleAvatar(
-          radius: context.radius(22),
-          backgroundColor: context.appColors.greyDark,
-          child: _isNetworkHttpUrl(normalizedImageUrl)
-              ? ClipOval(
-                  child: Image.network(
-                    normalizedImageUrl!,
-                    width: context.w(44),
-                    height: context.w(44),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) =>
-                        Icon(Icons.person, color: context.appColors.white),
-                  ),
-                )
-              : Icon(Icons.person, color: context.appColors.white),
+        AppAvatar(
+          size: context.w(44),
+          imageUrl: imageUrl,
+          fallbackText: title,
+          backgroundColor: context.appColors.white,
+          iconColor: context.appColors.white,
         ),
-
         SizedBox(width: context.w(16)),
-
-        // 👇 All text inside Column
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,8 +42,6 @@ class UserGreetingWidget extends StatelessWidget {
                 maxLines: 2,
                 subStyle: context.appText.text14W500,
               ),
-
-              // ✅ Conditional show here
               if (isShow && subTitle != null && subTitle!.isNotEmpty)
                 NormalText(
                   titleText: subTitle!,

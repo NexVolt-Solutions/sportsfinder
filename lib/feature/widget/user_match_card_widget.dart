@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
@@ -11,8 +12,8 @@ class UserMatchCard extends StatelessWidget {
   final String subTitle;
   final String? avatarUrl;
   final bool showActionIcon;
-  final VoidCallback? onActionTap; // 👈 new callback
-  final VoidCallback? onCardTap; // 👈 new callback
+  final VoidCallback? onActionTap;
+  final VoidCallback? onCardTap;
 
   const UserMatchCard({
     super.key,
@@ -21,22 +22,11 @@ class UserMatchCard extends StatelessWidget {
     this.avatarUrl,
     this.showActionIcon = false,
     this.onActionTap,
-    this.onCardTap, // 👈 receive from parent
+    this.onCardTap,
   });
-
-  String getInitials(String text) {
-    return text.length >= 2
-        ? text.substring(0, 2).toUpperCase()
-        : text.toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final normalizedAvatarUrl = avatarUrl?.trim();
-    final showAvatar =
-        normalizedAvatarUrl != null &&
-        (normalizedAvatarUrl.startsWith('http://') ||
-            normalizedAvatarUrl.startsWith('https://'));
     return CardWidget(
       onTap: onCardTap,
       padding: context.padSym(h: 12, v: 12),
@@ -46,32 +36,12 @@ class UserMatchCard extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: context.radius(22),
+                AppAvatar(
+                  size: context.w(44),
+                  imageUrl: avatarUrl,
+                  fallbackText: title,
                   backgroundColor: context.appColors.greyDark,
-                  child: showAvatar
-                      ? ClipOval(
-                          child: Image.network(
-                            normalizedAvatarUrl,
-                            width: context.w(44),
-                            height: context.w(44),
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Text(
-                              getInitials(title),
-                              style: TextStyle(
-                                color: context.appColors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          getInitials(title),
-                          style: TextStyle(
-                            color: context.appColors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  iconColor: context.appColors.white,
                 ),
                 SizedBox(width: context.w(12)),
                 Expanded(
@@ -87,11 +57,9 @@ class UserMatchCard extends StatelessWidget {
               ],
             ),
           ),
-
-          /// ✅ Show/Hide SVG with onTap
           if (showActionIcon)
             GestureDetector(
-              onTap: onActionTap, // 👈 trigger the callback
+              onTap: onActionTap,
               child: SvgPicture.asset(AppAssets.removeUserIcon),
             ),
         ],
