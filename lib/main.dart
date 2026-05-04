@@ -27,6 +27,49 @@ String _materialInitialRoute() {
   return path;
 }
 
+/// Avoids Flutter splitting `"/auth-callback"` into nested routes `"/"` + `"auth-callback"`,
+/// which made the first segment hit [Routes] `default` → "no route found" on web.
+List<Route<dynamic>> _onGenerateInitialRoutes(String initialRoute) {
+  if (!kIsWeb) {
+    return <Route<dynamic>>[
+      Routes.generateRoute(RouteSettings(name: initialRoute)),
+    ];
+  }
+
+  var path = initialRoute;
+  final q = path.indexOf('?');
+  if (q != -1) path = path.substring(0, q);
+  final h = path.indexOf('#');
+  if (h != -1) path = path.substring(0, h);
+  if (path.length > 1 && path.endsWith('/')) {
+    path = path.substring(0, path.length - 1);
+  }
+
+  if (path == RoutesName.authCallbackScreen ||
+      path == 'auth-callback' ||
+      path.toLowerCase() == '/auth-callback') {
+    return <Route<dynamic>>[
+      Routes.generateRoute(
+        const RouteSettings(name: RoutesName.authCallbackScreen),
+      ),
+    ];
+  }
+
+  if (path.isEmpty ||
+      path == '/' ||
+      path == RoutesName.appStartScreen) {
+    return <Route<dynamic>>[
+      Routes.generateRoute(
+        RouteSettings(name: RoutesName.appStartScreen),
+      ),
+    ];
+  }
+
+  return <Route<dynamic>>[
+    Routes.generateRoute(RouteSettings(name: initialRoute)),
+  ];
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -52,6 +95,7 @@ Future<void> main() async {
         scaffoldMessengerKey: rootScaffoldMessengerKey,
         navigatorKey: rootNavigatorKey,
         initialRoute: _materialInitialRoute(),
+        onGenerateInitialRoutes: _onGenerateInitialRoutes,
         onGenerateRoute: Routes.generateRoute,
       ),
     ),
