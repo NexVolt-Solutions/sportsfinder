@@ -1,6 +1,9 @@
 // ignore_for_file: constant_identifier_names
 
 class RoutesName {
+  /// Web OAuth redirect path must match `generateRoute` / browser URL.
+  static const String authCallbackScreen = '/auth-callback';
+
   static const String appStartScreen = 'app_start_screen';
   static const String onboardingScreen = 'on_boarding_screen';
   static const String LoginScreen = 'login_screen';

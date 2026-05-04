@@ -10,6 +10,7 @@ import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/new_pa
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/components/verification_screen.dart';
 import 'package:sport_finding/feature/view/Auth/ForgotPassword/forgot_password_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_screen.dart';
+import 'package:sport_finding/feature/view/Auth/auth_callback_screen.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/sign_up.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/AllMember/all_member_screen.dart';
@@ -55,6 +56,9 @@ class Routes {
     switch (settings.name) {
       case RoutesName.appStartScreen:
         return _route(settings, (_) => const AppStartScreen());
+      case RoutesName.authCallbackScreen:
+      case 'auth-callback':
+        return _route(settings, (_) => const AuthCallbackScreen());
       case RoutesName.onboardingScreen:
         return _route(
           settings,
