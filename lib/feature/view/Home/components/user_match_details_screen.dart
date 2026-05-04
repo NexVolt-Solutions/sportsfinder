@@ -66,15 +66,15 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                   style: context.appText.text16W500,
                 ),
                 SizedBox(height: context.h(16)),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Back',
-                    style: context.appText.text16W500.copyWith(
-                      color: context.appColors.primary,
-                    ),
-                  ),
-                ),
+                // TextButton(
+                //   onPressed: () => Navigator.pop(context),
+                //   child: Text(
+                //     'Back',
+                //     style: context.appText.text16W500.copyWith(
+                //       color: context.appColors.primary,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
