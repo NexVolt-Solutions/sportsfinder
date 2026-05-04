@@ -9,13 +9,35 @@ class NotificationSettingsRepository {
 
   final ApiService _apiService;
   static const String _preferredEndpoint = '/api/v1/users/me/settings';
-  static const String _fallbackProfileEndpoint = '/api/v1/users/me';
+  static const String _profileEndpoint = '/api/v1/users/me';
 
   Future<NotificationSettingsResponseModel> updateNotificationPreference({
     required NotificationSettingsRequestModel request,
   }) async {
     final payload = request.toJson();
     final fallbackPayload = <String, dynamic>{'settings': payload};
+    try {
+      log(
+        '[NotificationSettingsRepository] PUT $_profileEndpoint '
+        'notifications_enabled=${request.notificationsEnabled}',
+      );
+      final response = await _apiService.put(_profileEndpoint, data: payload);
+      return NotificationSettingsResponseModel.fromJson(
+        Map<String, dynamic>.from(response),
+      );
+    } catch (e, stackTrace) {
+      if (!_shouldRetryWithFallback(e)) {
+        log(
+          '[NotificationSettingsRepository] PUT $_profileEndpoint failed: $e',
+          stackTrace: stackTrace,
+        );
+        rethrow;
+      }
+      log(
+        '[NotificationSettingsRepository] PUT failed. '
+        'Trying PATCH $_preferredEndpoint',
+      );
+    }
     try {
       log(
         '[NotificationSettingsRepository] PATCH $_preferredEndpoint '
@@ -37,12 +59,12 @@ class NotificationSettingsRepository {
         rethrow;
       }
       log(
-        '[NotificationSettingsRepository] Primary endpoint failed. '
-        'Trying fallback PATCH $_fallbackProfileEndpoint',
+        '[NotificationSettingsRepository] Primary PATCH failed. '
+        'Trying fallback PATCH $_profileEndpoint',
       );
       try {
         final response = await _apiService.patch(
-          _fallbackProfileEndpoint,
+          _profileEndpoint,
           data: payload,
         );
         return NotificationSettingsResponseModel.fromJson(
@@ -58,10 +80,10 @@ class NotificationSettingsRepository {
         }
         log(
           '[NotificationSettingsRepository] Fallback root payload failed. '
-          'Trying nested settings payload on $_fallbackProfileEndpoint',
+          'Trying nested settings payload on $_profileEndpoint',
         );
         final response = await _apiService.patch(
-          _fallbackProfileEndpoint,
+          _profileEndpoint,
           data: fallbackPayload,
         );
         return NotificationSettingsResponseModel.fromJson(

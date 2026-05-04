@@ -6,6 +6,7 @@ import 'package:sport_finding/Data/model/Logout/logout_model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/core.dart';
+import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
@@ -99,6 +100,12 @@ class ProfileScreen extends StatelessWidget {
     final refreshToken = await AppPreferences.getRefreshToken();
 
     try {
+      await FcmService.instance.deactivateForLogout();
+    } catch (e) {
+      debugPrint('[ProfileScreen] FCM deactivate failed (continuing logout): $e');
+    }
+
+    try {
       if (refreshToken != null && refreshToken.isNotEmpty) {
         final response = await LogoutRepository().logout(
           request: LogoutRequestModel(refreshToken: refreshToken),
@@ -115,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
       return;
     }
 
-    await LoginScreenViewModel.logout();
+    await LoginScreenViewModel.logout(pushTokenAlreadyDeactivated: true);
     ListOfAllUserService().clear();
 
     if (!context.mounted) return;

@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/DeviceToken/device_token_repository.dart';
 import 'package:sport_finding/Data/model/DeviceToken/device_token_model.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 @pragma('vm:entry-point')
@@ -37,6 +39,15 @@ class FcmService {
     Duration(seconds: 20),
     Duration(seconds: 30),
   ];
+
+  static const Set<String> _matchPushTypes = <String>{
+    'match_invited',
+    'match_joined',
+    'match_invite_accepted',
+    'match_invite_declined',
+    'match_started',
+    'player_removed',
+  };
 
   Future<void> initialize({
     required NotificationService notificationService,
@@ -82,7 +93,7 @@ class FcmService {
         tag: 'FcmService',
       );
       unawaited(notificationService.fetchNotifications());
-      navigatorKey.currentState?.pushNamed(RoutesName.notificationsScreen);
+      _navigateForOpenedPush(message, navigatorKey);
     });
 
     final initialMessage = await messaging.getInitialMessage();
@@ -92,8 +103,77 @@ class FcmService {
         tag: 'FcmService',
       );
       unawaited(notificationService.fetchNotifications());
-      navigatorKey.currentState?.pushNamed(RoutesName.notificationsScreen);
+      _navigateForOpenedPush(initialMessage, navigatorKey);
     }
+  }
+
+  /// Call after login, signup (with session), Google auth, or web token bootstrap.
+  Future<void> registerTokenWithBackendIfAuthenticated() async {
+    await _syncCurrentToken();
+  }
+
+  /// Call before clearing the backend session (still needs a valid access token).
+  Future<void> deactivateForLogout() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      await _deviceTokenRepository.deactivateDeviceToken(fcmToken: token);
+      AppLogger.success('FCM device token deactivated on server', tag: 'FcmService');
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'FCM device deactivation failed (session may still clear locally)',
+        tag: 'FcmService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  void _navigateForOpenedPush(
+    RemoteMessage message,
+    GlobalKey<NavigatorState> navigatorKey,
+  ) {
+    Future<void> run() async {
+      final nav = navigatorKey.currentState;
+      if (nav == null) return;
+
+      final access = await AppPreferences.getAccessToken();
+      if (access == null || access.trim().isEmpty) {
+        AppLogger.debug(
+          'Skip FCM deep link: no backend session',
+          tag: 'FcmService',
+        );
+        return;
+      }
+
+      final data = message.data;
+      String dataString(String k) => (data[k] ?? '').toString().trim();
+      final type = dataString('type').toLowerCase();
+      final matchId = dataString('match_id');
+
+      if (matchId.isNotEmpty && _matchPushTypes.contains(type)) {
+        final title = message.notification?.title ?? '';
+        final body = message.notification?.body ?? '';
+        final stub = DiscoveryMatch.fromPushData(
+          matchId: matchId,
+          title: title,
+          sportType: body,
+          notificationBody: body,
+        );
+        nav.pushNamed(RoutesName.userMatchDetailsScreen, arguments: stub);
+        return;
+      }
+
+      if (type == 'new_follower') {
+        nav.pushNamed(RoutesName.followersScreen);
+        return;
+      }
+
+      nav.pushNamed(RoutesName.notificationsScreen);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(run());
+    });
   }
 
   Future<void> _syncCurrentToken() async {
@@ -147,7 +227,19 @@ class FcmService {
       return;
     }
 
-    AppLogger.debug('FCM token: $token', tag: 'FcmService');
+    final access = await AppPreferences.getAccessToken();
+    if (access == null || access.trim().isEmpty) {
+      AppLogger.debug(
+        'Skipping FCM registration: no backend access token',
+        tag: 'FcmService',
+      );
+      return;
+    }
+
+    AppLogger.debug(
+      'FCM token len=${token.length} (registered after auth)',
+      tag: 'FcmService',
+    );
     final platform = _platformName();
     if (platform == null) {
       AppLogger.warning(

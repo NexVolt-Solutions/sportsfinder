@@ -281,14 +281,22 @@ class ApiService {
   //   }
   // }
 
-  /// ✅ DELETE (updated to return body)
-  Future<dynamic> delete(String endpoint, {String? token}) async {
+  /// ✅ DELETE (optional JSON body — e.g. FCM device deactivation)
+  Future<dynamic> delete(
+    String endpoint, {
+    String? token,
+    Map<String, dynamic>? data,
+  }) async {
     final url = "$baseUrl$endpoint";
     final response = await _sendWithAutoRefresh(
       token: token,
       send: (resolvedToken) async {
         final headers = await getHeaders(token: resolvedToken);
-        return http.delete(Uri.parse(url), headers: headers);
+        return http.delete(
+          Uri.parse(url),
+          headers: headers,
+          body: data != null ? jsonEncode(data) : null,
+        );
       },
     );
 

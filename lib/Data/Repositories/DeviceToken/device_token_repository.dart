@@ -39,6 +39,39 @@ class DeviceTokenRepository {
     }
   }
 
+  /// `DELETE /api/v1/users/me/devices` — pass [fcmToken] to drop one device, or
+  /// omit / null / empty to deactivate all tokens for the user (`{}`).
+  Future<DeviceTokenResponseModel> deactivateDeviceToken({String? fcmToken}) async {
+    final Map<String, dynamic> body = (fcmToken != null && fcmToken.trim().isNotEmpty)
+        ? <String, dynamic>{'fcm_token': fcmToken.trim()}
+        : <String, dynamic>{};
+    try {
+      log('[DeviceTokenRepository] DELETE $_preferredEndpoint (single=${body.isNotEmpty})');
+      final response = await _apiService.delete(_preferredEndpoint, data: body);
+      if (response == null) {
+        return DeviceTokenResponseModel(message: 'Device token(s) deactivated successfully.');
+      }
+      return DeviceTokenResponseModel.fromJson(Map<String, dynamic>.from(response));
+    } catch (e, stackTrace) {
+      if (!_shouldRetryWithFallback(e)) {
+        log(
+          '[DeviceTokenRepository] deactivateDeviceToken failed: $e',
+          stackTrace: stackTrace,
+        );
+        rethrow;
+      }
+      log(
+        '[DeviceTokenRepository] Preferred DELETE failed. '
+        'Trying fallback DELETE $_fallbackEndpoint',
+      );
+      final response = await _apiService.delete(_fallbackEndpoint, data: body);
+      if (response == null) {
+        return DeviceTokenResponseModel(message: 'Device token(s) deactivated successfully.');
+      }
+      return DeviceTokenResponseModel.fromJson(Map<String, dynamic>.from(response));
+    }
+  }
+
   bool _shouldRetryWithFallback(Object error) {
     final value = error.toString().toLowerCase();
     return value.contains('not found') ||
