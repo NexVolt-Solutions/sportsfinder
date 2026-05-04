@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:sport_finding/Data/Repositories/my_profile_Repository.dart';
+import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/model/UpdateProfile/update_profile_model.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
