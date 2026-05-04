@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
@@ -290,7 +291,7 @@ class EditMatchViewModel extends ChangeNotifier {
       _selectedTime!.minute,
     );
 
-    return dt.toUtc().toIso8601String();
+    return kIsWeb ? dt.toIso8601String() : dt.toUtc().toIso8601String();
   }
 
   Future<bool> saveChanges() async {

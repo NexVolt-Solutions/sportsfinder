@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
@@ -6,19 +7,28 @@ String? normalizeImageUrl(String? raw) {
   if (raw == null) return null;
   final trimmed = raw.trim();
   if (trimmed.isEmpty) return null;
-  final uri = Uri.tryParse(trimmed);
+  final sanitized = trimmed.replaceAll('\\', '/');
+  final uri = Uri.tryParse(sanitized);
   if (uri != null && uri.hasScheme) {
     if (uri.isScheme('http') ||
         uri.isScheme('https') ||
         uri.isScheme('data') ||
         uri.isScheme('blob')) {
-      return trimmed;
+      if (kIsWeb &&
+          uri.isScheme('http') &&
+          uri.host.isNotEmpty &&
+          uri.host != 'localhost' &&
+          uri.host != '127.0.0.1') {
+        return uri.replace(scheme: 'https').toString();
+      }
+      return sanitized;
     }
   }
   final base = ApiService().baseUrl.trim();
-  if (trimmed.startsWith('//')) return 'https:$trimmed';
-  if (trimmed.startsWith('/')) return '$base$trimmed';
-  return '$base/$trimmed';
+  if (sanitized.startsWith('//')) return 'https:$sanitized';
+  if (sanitized.startsWith('/')) return '$base$sanitized';
+  if (sanitized.startsWith('./')) return '$base/${sanitized.substring(2)}';
+  return '$base/$sanitized';
 }
 
 class AppAvatar extends StatelessWidget {
@@ -72,8 +82,13 @@ class AppAvatar extends StatelessWidget {
         child: normalizedUrl == null
             ? Center(child: fallback())
             : Image.network(
+                key: ValueKey(normalizedUrl),
                 normalizedUrl,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(child: fallback());
+                },
                 errorBuilder: (_, _, _) => Center(child: fallback()),
               ),
       ),

@@ -4,6 +4,7 @@ class AppAssets {
 
   //Sport Icon
   static const String basketBallIcon = "assets/sport/basketball.svg";
+  static const String webHomeIcon = "assets/icon/webHomeIcon.svg";
   static const String batIcon = "assets/sport/bat.svg";
   static const String footBallIcon = "assets/sport/football.svg";
   static const String tableTennisIcon = "assets/sport/tableTennis.svg";

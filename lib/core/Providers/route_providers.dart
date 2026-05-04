@@ -5,7 +5,6 @@ import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile
 import 'package:sport_finding/Data/Repositories/forgot_password_repository.dart';
 import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/Repositories/list_of_all_user_repository.dart';
-import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/Repositories/otp_verification_repository.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
@@ -85,9 +84,7 @@ class RouteProviders {
         );
       case RoutesName.bottomBarScreen:
         return ChangeNotifierProvider(
-          create: (_) => BottomBarScreenViewModel(
-            MyProfileRepository(apiService: ApiService()),
-          ),
+          create: (_) => BottomBarScreenViewModel(),
           child: child,
         );
       case RoutesName.otpVerificationScreen:

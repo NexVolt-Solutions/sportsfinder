@@ -6,7 +6,6 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
@@ -40,9 +39,7 @@ List<Widget> _bottomBarTabChildren() => <Widget>[
   const _MyMatchesTabSlot(),
   const DiscoverTabScreen(embedInBottomBar: true),
   ChangeNotifierProvider(
-    create: (_) => HomeScreenViewModel(
-      repository: MyProfileRepository(apiService: ApiService()),
-    ),
+    create: (_) => HomeScreenViewModel(),
     child: const HomeScreen(showAppBar: false),
   ),
   const ChatListScreen(embedInBottomBar: true),
@@ -534,7 +531,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
           SizedBox(height: _webH(context, 28)),
           _webNavItem(
             context: context,
-            iconPath: AppAssets.homeIcon,
+            iconPath: AppAssets.webHomeIcon,
             label: 'Home',
             index: BottomBarScreenViewModel.homeIndex,
             selectedIndex: vm.selectedIndex,

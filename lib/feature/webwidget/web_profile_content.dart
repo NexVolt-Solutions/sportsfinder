@@ -5,8 +5,6 @@ import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/custom_seeting_card.dart';
@@ -18,30 +16,70 @@ import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
 class WebProfileContent extends StatelessWidget {
   const WebProfileContent({
     super.key,
-    required this.model,
-    required this.notificationsEnabled,
-    required this.isUpdatingPreference,
+    required this.title,
+    required this.subtitle,
+    required this.displayName,
+    required this.location,
+    required this.bio,
     required this.safeAvatarUrl,
-    required this.onFollowersTap,
-    required this.onFollowingTap,
-    required this.onSwitchChanged,
-    required this.onTapSetting,
-    required this.onPrimaryAction,
-    required this.onSecondaryAction,
-    this.primaryActionLabel = AppText.message,
+    required this.isLoading,
+    required this.followersValue,
+    required this.followingValue,
+    required this.ratingValue,
+    required this.matchesPlayedValue,
+    this.onFollowersTap,
+    this.onFollowingTap,
+    this.onRatingTap,
+    this.onMatchesTap,
+    this.actionSection,
+    this.middleSection,
+    this.footerSection,
+    this.settingsItems = const <Map<String, dynamic>>[],
+    this.notificationsEnabled = false,
+    this.isUpdatingPreference = false,
+    this.onSwitchChanged,
+    this.onTapSetting,
+    this.primaryActionLabel,
+    this.onPrimaryAction,
+    this.onSecondaryAction,
+    this.secondaryActionIconAsset = AppAssets.follow,
+    this.onBackTap,
+    this.headerActionText,
+    this.onHeaderActionTap,
+    this.showHeaderText = true,
   });
 
-  final ProfileScreenViewModel model;
+  final String title;
+  final String subtitle;
+  final String displayName;
+  final String location;
+  final String bio;
+  final String? safeAvatarUrl;
+  final bool isLoading;
+  final String followersValue;
+  final String followingValue;
+  final String ratingValue;
+  final String matchesPlayedValue;
+  final VoidCallback? onFollowersTap;
+  final VoidCallback? onFollowingTap;
+  final VoidCallback? onRatingTap;
+  final VoidCallback? onMatchesTap;
+  final Widget? actionSection;
+  final Widget? middleSection;
+  final Widget? footerSection;
+  final List<Map<String, dynamic>> settingsItems;
   final bool notificationsEnabled;
   final bool isUpdatingPreference;
-  final String? safeAvatarUrl;
-  final VoidCallback onFollowersTap;
-  final VoidCallback onFollowingTap;
-  final ValueChanged<bool> onSwitchChanged;
-  final void Function(int index) onTapSetting;
-  final VoidCallback onPrimaryAction;
-  final VoidCallback onSecondaryAction;
-  final String primaryActionLabel;
+  final ValueChanged<bool>? onSwitchChanged;
+  final void Function(int index)? onTapSetting;
+  final String? primaryActionLabel;
+  final VoidCallback? onPrimaryAction;
+  final VoidCallback? onSecondaryAction;
+  final String secondaryActionIconAsset;
+  final VoidCallback? onBackTap;
+  final String? headerActionText;
+  final VoidCallback? onHeaderActionTap;
+  final bool showHeaderText;
 
   @override
   Widget build(BuildContext context) {
@@ -50,55 +88,84 @@ class WebProfileContent extends StatelessWidget {
       child: ListView(
         padding: context.padSym(h: 20, v: 20),
         children: [
-          const WebDashboardTitle(
-            title: 'Profile',
-            subtitle: 'Start messaging now',
+          Row(
+            children: [
+              if (onBackTap != null) ...[
+                InkWell(
+                  onTap: onBackTap,
+                  borderRadius: BorderRadius.circular(context.radius(12)),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                    color: context.appColors.onSurface,
+                  ),
+                ),
+                SizedBox(width: context.w(16)),
+              ],
+              Expanded(
+                child: WebDashboardTitle(title: title, subtitle: subtitle),
+              ),
+              if (headerActionText != null && onHeaderActionTap != null)
+                SizedBox(
+                  width: context.w(180),
+                  child: CustomButton(
+                    text: headerActionText!,
+                    onTap: onHeaderActionTap,
+                    color: context.appColors.primary,
+                    titleStyle: context.appText.text14W500.copyWith(
+                      color: context.appColors.onPrimary,
+                    ),
+                  ),
+                ),
+            ],
           ),
           SizedBox(height: context.h(16)),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: context.w(260),
+                width: context.w(300),
                 child: WebDashboardPanel(
-                  child: model.isLoading
+                  child: isLoading
                       ? const _WebProfileCardShimmer()
                       : Column(
                           children: [
                             AppAvatar(
                               size: context.w(128),
                               imageUrl: safeAvatarUrl,
-                              fallbackText: model.fullName,
+                              fallbackText: displayName,
                               backgroundColor: context.appColors.white,
                               iconColor: context.appColors.primary,
                             ),
                             SizedBox(height: context.h(24)),
                             NormalText(
-                              titleText: model.fullName.isNotEmpty
-                                  ? model.fullName
+                              titleText: displayName.isNotEmpty
+                                  ? displayName
                                   : 'Player',
                               titleAlign: TextAlign.center,
                               titleStyle: context.appText.text28W700.copyWith(
                                 color: context.appColors.greyDark,
                               ),
                             ),
-
                             SizedBox(height: context.h(4)),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 16,
-                                  color: context.appColors.greyDark,
+                                SvgPicture.asset(
+                                  AppAssets.iconOutline,
+                                  width: context.w(16),
+                                  height: context.w(16),
+                                  colorFilter: ColorFilter.mode(
+                                    context.appColors.greyDark,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                                 SizedBox(width: context.w(6)),
                                 Flexible(
                                   child: Text(
-                                    model.location.isNotEmpty
-                                        ? model.location
+                                    location.isNotEmpty
+                                        ? location
                                         : AppText.profilePlaceholderLocation,
-                                    textAlign: TextAlign.center,
                                     style: context.appText.text14W400.copyWith(
                                       color: context.appColors.greyDark,
                                     ),
@@ -106,48 +173,56 @@ class WebProfileContent extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            SizedBox(height: context.h(24)),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CustomButton(
-                                    padding: context.padAll(6),
-                                    text: primaryActionLabel,
-                                    onTap: onPrimaryAction,
-                                    color: context.appColors.primary,
-                                    titleStyle: context.appText.text14W500
-                                        .copyWith(
-                                          color: context.appColors.onPrimary,
-                                        ),
+                            if (actionSection != null) ...[
+                              SizedBox(height: context.h(24)),
+                              actionSection!,
+                            ] else if (primaryActionLabel != null &&
+                                onPrimaryAction != null) ...[
+                              SizedBox(height: context.h(24)),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: CustomButton(
+                                      padding: context.padAll(6),
+                                      text: primaryActionLabel!,
+                                      onTap: onPrimaryAction,
+                                      color: context.appColors.primary,
+                                      titleStyle: context.appText.text14W500
+                                          .copyWith(
+                                            color: context.appColors.onPrimary,
+                                          ),
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: context.w(10)),
-                                InkWell(
-                                  onTap: onSecondaryAction,
-                                  borderRadius: BorderRadius.circular(
-                                    context.radius(12),
-                                  ),
-                                  child: Container(
-                                    padding: context.padAll(16),
-                                    decoration: BoxDecoration(
-                                      color: context.appColors.blue10,
+                                  if (onSecondaryAction != null) ...[
+                                    SizedBox(width: context.w(10)),
+                                    InkWell(
+                                      onTap: onSecondaryAction,
                                       borderRadius: BorderRadius.circular(
                                         context.radius(12),
                                       ),
-                                      border: Border.all(
-                                        color: AppColors.whitecolor,
+                                      child: Container(
+                                        padding: context.padAll(16),
+                                        decoration: BoxDecoration(
+                                          color: context.appColors.blue10,
+                                          borderRadius: BorderRadius.circular(
+                                            context.radius(12),
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.whitecolor,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: SvgPicture.asset(
+                                            secondaryActionIconAsset,
+                                            color: context.appColors.primary,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                        AppAssets.follow,
-                                        color: context.appColors.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                                  ],
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                 ),
@@ -155,55 +230,52 @@ class WebProfileContent extends StatelessWidget {
               SizedBox(width: context.w(20)),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         _StatCard(
-                          value: '${model.followersCount}',
+                          value: followersValue,
                           label: AppText.followers,
                           onTap: onFollowersTap,
                         ),
                         SizedBox(width: context.w(16)),
                         _StatCard(
-                          value: '${model.followingCount}',
+                          value: followingValue,
                           label: AppText.following,
                           onTap: onFollowingTap,
                         ),
                         SizedBox(width: context.w(16)),
                         _StatCard(
-                          value: model.ratingValue,
+                          value: ratingValue,
                           label: AppText.rating,
+                          onTap: onRatingTap,
                         ),
                         SizedBox(width: context.w(16)),
                         _StatCard(
-                          value: model.matchesPlayedLabel,
+                          value: matchesPlayedValue,
                           label: 'Matches Played',
+                          onTap: onMatchesTap,
                         ),
                       ],
                     ),
                     SizedBox(height: context.h(20)),
                     WebDashboardPanel(
                       padding: context.padAll(32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
                               'About',
                               style: context.appText.text18W400.copyWith(
                                 color: context.appColors.onSurface,
                               ),
                             ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              model.bio.isNotEmpty
-                                  ? model.bio
+                            SizedBox(height: context.h(16)),
+                            Text(
+                              bio.isNotEmpty
+                                  ? bio
                                   : 'Passionate athlete who loves team sports and meeting new players. Always up for a match!',
                               textAlign: TextAlign.start,
                               style: context.appText.text16W400.copyWith(
@@ -211,69 +283,57 @@ class WebProfileContent extends StatelessWidget {
                                 height: 1.5,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
+                    if (middleSection != null) ...[
+                      SizedBox(height: context.h(20)),
+                      middleSection!,
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: context.h(20)),
-          WebDashboardPanel(
-            child: Column(
-              children: model.profileData.map((item) {
-                final index = model.profileData.indexOf(item);
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: index == model.profileData.length - 1
-                        ? 0
-                        : context.h(8),
-                  ),
-                  child: CustomSettingCard(
-                    icon: item['leading'],
-                    title: item['title'],
-                    subtitle: item['subtitle'],
-                    trailingType: item['trailingType'],
-                    switchValue: index == 2
-                        ? notificationsEnabled
-                        : item['switchValue'],
-                    onSwitchChanged: index == 2
-                        ? onSwitchChanged
-                        : (val) {
-                            model.toggleSwitch(index, val);
-                          },
-                    switchEnabled: index == 2 ? !isUpdatingPreference : true,
-                    switchLoading: index == 2 ? isUpdatingPreference : false,
-                    onTap: () => onTapSetting(index),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          if (model.hasReviews) ...[
+          if (settingsItems.isNotEmpty) ...[
+            SizedBox(height: context.h(20)),
             WebDashboardPanel(
-              padding: context.padAll(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppText.reviews,
-                    style: context.appText.text18W400.copyWith(
-                      color: context.appColors.onSurface,
+                children: settingsItems.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: index == settingsItems.length - 1
+                          ? 0
+                          : context.h(8),
                     ),
-                  ),
-                  SizedBox(height: context.h(16)),
-                  ProfileDetailReviewCard(
-                    reviewAuthor: model.reviewAuthorForDisplay,
-                    reviewDate: model.reviewDateForDisplay,
-                    reviewBody: model.reviewBodyForDisplay,
-                    reviewInitial: model.reviewInitial,
-                  ),
-                ],
+                    child: CustomSettingCard(
+                      icon: item['leading'],
+                      title: item['title'],
+                      subtitle: item['subtitle'],
+                      trailingType: item['trailingType'],
+                      switchValue: index == 2
+                          ? notificationsEnabled
+                          : item['switchValue'],
+                      onSwitchChanged: index == 2 && onSwitchChanged != null
+                          ? onSwitchChanged!
+                          : (val) {},
+                      switchEnabled: index == 2 ? !isUpdatingPreference : true,
+                      switchLoading: index == 2 ? isUpdatingPreference : false,
+                      onTap: onTapSetting == null
+                          ? null
+                          : () => onTapSetting!(index),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
+          ],
+          if (footerSection != null) ...[
+            SizedBox(height: context.h(20)),
+            footerSection!,
           ],
         ],
       ),
@@ -296,12 +356,14 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(context.radius(12)),
         child: WebDashboardPanel(
           backgroundColor: context.appColors.blue10,
-          padding: context.padAll(24),
+          // height: context.h(146),
+          padding: context.padAll(20),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 value,
-                style: context.appText.text56W400.copyWith(
+                style: context.appText.text28W700.copyWith(
                   color: context.appColors.onSurface,
                 ),
               ),

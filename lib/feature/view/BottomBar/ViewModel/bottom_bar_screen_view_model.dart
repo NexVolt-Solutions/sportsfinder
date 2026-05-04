@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class BottomBarScreenViewModel extends ChangeNotifier {
-  final MyProfileRepository repository;
-  BottomBarScreenViewModel(this.repository);
+  BottomBarScreenViewModel();
   int _selectedIndex = 2;
 
   int get selectedIndex => _selectedIndex;
@@ -31,12 +30,17 @@ class BottomBarScreenViewModel extends ChangeNotifier {
   String get userLocation => profile?.location ?? '';
 
   Future<void> fetchMyProfile() async {
+    if (ProfileService().profile != null) {
+      profile = ProfileService().profile;
+      notifyListeners();
+      return;
+    }
     _setProfileLoading(true);
     errorMessage = null;
     try {
-      final response = await repository.getMyProfile();
+      await ProfileService().fetchMyProfile();
       AppLogger.debug('Fetched profile response', tag: 'BottomBarScreenVM');
-      profile = UserProfileModel.fromJson(response);
+      profile = ProfileService().profile;
     } catch (e) {
       errorMessage = e.toString();
     } finally {
