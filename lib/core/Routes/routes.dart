@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/Repositories/UpdateProfileRepo/update_profile_repo.dart';
@@ -84,6 +84,11 @@ class Routes {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final routeKey = _routeNameForMatch(settings);
+    if (kIsWeb) {
+      debugPrint(
+        '[ROUTES][web] incoming="${settings.name}" matched="$routeKey" uri="${Uri.base}"',
+      );
+    }
     switch (routeKey) {
       case '/':
       case RoutesName.appStartScreen:
@@ -324,6 +329,9 @@ class Routes {
         return _route(settings, (_) => const PrivateProfileScreen());
 
       default:
+        debugPrint(
+          '[ROUTES][fallback] incoming="${settings.name}" matched="$routeKey" uri="${Uri.base}"',
+        );
         return _route(
           settings,
           (context) => Scaffold(
