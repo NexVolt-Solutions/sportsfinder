@@ -13,7 +13,7 @@ fi
 
 export PATH="${FLUTTER_DIR}/bin:${PATH}"
 flutter --version
-flutter config --no-analytics
+flutter config --no-analytics --enable-web
 flutter precache --web
 flutter pub get
 flutter build web --release
