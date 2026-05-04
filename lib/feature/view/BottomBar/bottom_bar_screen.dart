@@ -23,7 +23,7 @@ import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import '../../../Data/Repositories/my_profile_Repository.dart'
+import '../../../Data/Repositories/my_profile_repository.dart'
     show MyProfileRepository;
 
 class BottomBarScreen extends StatelessWidget {
