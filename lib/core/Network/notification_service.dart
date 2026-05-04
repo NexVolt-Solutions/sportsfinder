@@ -385,17 +385,25 @@ class NotificationService extends ChangeNotifier {
   Future<String?> updateNotificationPreference(bool enabled) async {
     if (isUpdatingPreference) return null;
 
+    final profile = ProfileService();
+    final previous = profile.notificationsEnabled;
+
     isUpdatingPreference = true;
+    profile.updateNotificationPreference(enabled);
     notifyListeners();
 
     try {
       final response = await _settingsRepository.updateNotificationPreference(
         request: NotificationSettingsRequestModel(notificationsEnabled: enabled),
       );
-      ProfileService().updateNotificationPreference(enabled);
+      final server = response.notificationsEnabled;
+      if (server != null && server != enabled) {
+        profile.updateNotificationPreference(server);
+      }
       final msg = response.message.trim();
       return msg.isNotEmpty ? msg : 'Notification preference updated';
     } catch (e) {
+      profile.updateNotificationPreference(previous);
       AppLogger.error(
         'Failed to update notification preference on server',
         tag: 'NotificationService',
