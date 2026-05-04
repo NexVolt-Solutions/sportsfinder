@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Vercel Linux build: install Flutter (not on PATH by default) and emit web assets to build/web.
-set -euxo pipefail
+set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
@@ -12,10 +12,7 @@ if [[ ! -x "${FLUTTER_DIR}/bin/flutter" ]] || [[ "$("${FLUTTER_DIR}/bin/flutter"
 fi
 
 export PATH="${FLUTTER_DIR}/bin:${PATH}"
-# Vercel CI can run commands under different users/worktrees; mark repo as safe for git operations Flutter performs internally.
-git config --global --add safe.directory "${FLUTTER_DIR}" || true
 flutter --version
-flutter doctor -v
 flutter config --no-analytics --enable-web
 flutter precache --web
 flutter pub get
