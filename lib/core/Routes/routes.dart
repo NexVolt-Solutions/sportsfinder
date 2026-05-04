@@ -77,12 +77,15 @@ class Routes {
     if (n.length > 1 && n.endsWith('/')) {
       n = n.substring(0, n.length - 1);
     }
+    // Browser root path should behave like app start route.
+    if (n == '/') return RoutesName.appStartScreen;
     return n;
   }
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final routeKey = _routeNameForMatch(settings);
     switch (routeKey) {
+      case '/':
       case RoutesName.appStartScreen:
         return _route(settings, (_) => const AppStartScreen());
       case RoutesName.authCallbackScreen:
