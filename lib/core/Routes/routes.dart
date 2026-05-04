@@ -64,6 +64,21 @@ class Routes {
     if (name == null || name.isEmpty) {
       return RoutesName.appStartScreen;
     }
+
+    // Some web engines can pass the URL hash payload itself as route name,
+    // e.g. "access_token=...&refresh_token=...". In that case, route by path.
+    if (kIsWeb) {
+      final lowered = name.toLowerCase();
+      final looksLikeOAuthPayload =
+          (lowered.contains('access_token=') &&
+              lowered.contains('token_type=')) ||
+          lowered.startsWith('refresh_token=');
+      if (looksLikeOAuthPayload) {
+        final p = Uri.base.path.trim();
+        if (p.isNotEmpty) return p;
+      }
+    }
+
     var n = name;
     final q = n.indexOf('?');
     if (q != -1) n = n.substring(0, q);
