@@ -589,6 +589,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -689,8 +690,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  bool _isValidUrl(String? url) =>
-      url != null && url.isNotEmpty && url.startsWith('http');
+  String? _normalizedAvatarUrl(String? url) => normalizeImageUrl(url);
 
   InputDecoration _dropdownDecoration(BuildContext context, String label) {
     final c = context.appColors;
@@ -719,7 +719,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final c = context.appColors;
     final t = context.appText;
     final avatarSize = context.w(104);
-    final avatarUrl = widget.initialAvatarUrl;
+    final avatarUrl = _normalizedAvatarUrl(widget.initialAvatarUrl);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -775,9 +775,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       height: avatarSize,
                                     );
                                   }
-                                  if (_isValidUrl(avatarUrl)) {
+                                  if (avatarUrl != null && avatarUrl.isNotEmpty) {
                                     return Image.network(
-                                      avatarUrl!,
+                                      avatarUrl,
                                       fit: BoxFit.cover,
                                       cacheWidth: 320,
                                       filterQuality: FilterQuality.medium,

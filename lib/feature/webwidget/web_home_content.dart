@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -25,18 +28,14 @@ class WebHomeContent extends StatelessWidget {
     return MainFrame(
       showDecorationLayer: true,
       child: ListView(
-        padding: context.padSym(h: 48, v: 36),
+        padding: context.padSym(h: 48, v: 20),
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: context.radius(24),
-                backgroundImage: model.avatarUrl.trim().isNotEmpty
-                    ? NetworkImage(model.avatarUrl)
-                    : null,
-                child: model.avatarUrl.trim().isEmpty
-                    ? const Icon(Icons.person)
-                    : null,
+              AppAvatar(
+                size: context.w(48),
+                imageUrl: model.avatarUrl,
+                fallbackText: model.fullName,
               ),
               SizedBox(width: context.w(12)),
               NormalText(
@@ -142,42 +141,52 @@ class WebHomeContent extends StatelessWidget {
                       final match = model.matches[index];
                       return SizedBox(
                         width: context.w(210),
-                        child: WebDashboardPanel(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                match.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.appText.text14W600.copyWith(
-                                  color: context.appColors.onSurface,
+                        child: InkWell(
+                          onTap: () {
+                            DiscoveryMatch.fromAllMatches(
+                              match,
+                            ).pushMatchOrHostScreen(context);
+                          },
+                          borderRadius: BorderRadius.circular(
+                            context.radiusR(12),
+                          ),
+                          child: WebDashboardPanel(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  match.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.appText.text14W600.copyWith(
+                                    color: context.appColors.onSurface,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: context.h(6)),
-                              Text(
-                                match.sport,
-                                style: context.appText.text12W400.copyWith(
-                                  color: context.appColors.greylight,
+                                SizedBox(height: context.h(6)),
+                                Text(
+                                  match.sport,
+                                  style: context.appText.text12W400.copyWith(
+                                    color: context.appColors.greylight,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: context.h(10)),
-                              Text(
-                                match.locationName,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.appText.text12W400.copyWith(
-                                  color: context.appColors.greylight,
+                                SizedBox(height: context.h(10)),
+                                Text(
+                                  match.locationName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.appText.text12W400.copyWith(
+                                    color: context.appColors.greylight,
+                                  ),
                                 ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '${match.currentPlayers}/${match.maxPlayers} players',
-                                style: context.appText.text12W500.copyWith(
-                                  color: context.appColors.onSurface,
+                                const Spacer(),
+                                Text(
+                                  '${match.currentPlayers}/${match.maxPlayers} players',
+                                  style: context.appText.text12W500.copyWith(
+                                    color: context.appColors.onSurface,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );

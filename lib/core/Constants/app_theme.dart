@@ -128,6 +128,7 @@ class AppTextTheme extends ThemeExtension<AppTextTheme> {
   TextStyle get text18Bold => _style(18, FontWeight.bold);
   TextStyle get text28W500 => _style(28, FontWeight.w500);
   TextStyle get text28W700 => _style(28, FontWeight.w700);
+  TextStyle get text56W400 => _style(56, FontWeight.w400);
 
   // 16
   TextStyle get text16W600 => _style(16, FontWeight.w600);

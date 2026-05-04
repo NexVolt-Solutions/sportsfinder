@@ -32,9 +32,6 @@ class UserMatchDetailsScreen extends StatefulWidget {
 
 class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
   bool _scheduledInitialBind = false;
-  static final RegExp _uuidPattern = RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
-  );
 
   @override
   void didChangeDependencies() {
@@ -69,15 +66,15 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                   style: context.appText.text16W500,
                 ),
                 SizedBox(height: context.h(16)),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Back',
-                    style: context.appText.text16W500.copyWith(
-                      color: context.appColors.primary,
-                    ),
-                  ),
-                ),
+                // TextButton(
+                //   onPressed: () => Navigator.pop(context),
+                //   child: Text(
+                //     'Back',
+                //     style: context.appText.text16W500.copyWith(
+                //       color: context.appColors.primary,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -277,87 +274,97 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                           onTap: joinDisabledByStatus
                               ? null
                               : () async {
-                            final matchId = match.id;
-                            if (matchId.isEmpty) {
-                              return;
-                            }
+                                  final matchId = match.id;
+                                  if (matchId.isEmpty) {
+                                    return;
+                                  }
 
-                            if (isHostedByCurrentUser) {
-                              if (!context.mounted) return;
-                              AppSnackBar.show('You are hosting this match.');
-                              return;
-                            }
+                                  if (isHostedByCurrentUser) {
+                                    if (!context.mounted) return;
+                                    AppSnackBar.show(
+                                      'You are hosting this match.',
+                                    );
+                                    return;
+                                  }
 
-                            if (model.hasJoined) {
-                              final result = await model.leaveMatch(matchId);
-                              if (!context.mounted) return;
-                              if (!result && model.joinLeaveError != null) {
-                                AppSnackBar.show(
-                                  model.joinLeaveError!,
-                                  backgroundColor: context.appColors.error,
-                                );
-                              } else if (result) {
-                                AppSnackBar.show(
-                                  'Left match successfully',
-                                  backgroundColor: context.appColors.primary,
-                                );
-                              }
-                              return;
-                            }
+                                  if (model.hasJoined) {
+                                    final result = await model.leaveMatch(
+                                      matchId,
+                                    );
+                                    if (!context.mounted) return;
+                                    if (!result &&
+                                        model.joinLeaveError != null) {
+                                      AppSnackBar.show(
+                                        model.joinLeaveError!,
+                                        backgroundColor:
+                                            context.appColors.error,
+                                      );
+                                    } else if (result) {
+                                      AppSnackBar.show(
+                                        'Left match successfully',
+                                        backgroundColor:
+                                            context.appColors.primary,
+                                      );
+                                    }
+                                    return;
+                                  }
 
-                            final int roster = model.rosterCount;
-                            final int total = match.participantsTotal;
-                            final bool isFull = roster >= total;
+                                  final int roster = model.rosterCount;
+                                  final int total = match.participantsTotal;
+                                  final bool isFull = roster >= total;
 
-                            if (isFull) {
-                              if (!context.mounted) return;
-                              showDialog(
-                                context: context,
-                                barrierDismissible: true,
-                                builder: (dialogContext) =>
-                                    CustomBottomSheetWidget(
-                                      isCenter: true,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          SvgPicture.asset(
-                                            AppAssets.joiningMatchPeopelIcon,
-                                            fit: BoxFit.scaleDown,
+                                  if (isFull) {
+                                    if (!context.mounted) return;
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (dialogContext) =>
+                                          CustomBottomSheetWidget(
+                                            isCenter: true,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  AppAssets
+                                                      .joiningMatchPeopelIcon,
+                                                  fit: BoxFit.scaleDown,
+                                                ),
+                                                SizedBox(height: context.h(16)),
+                                                NormalText(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  titleText:
+                                                      AppText.matchIsFull,
+                                                  maxLines: 5,
+                                                  subAlign: TextAlign.center,
+                                                  subText: AppText
+                                                      .thisMatchHasReachedItsMaximumCapacity,
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          SizedBox(height: context.h(16)),
-                                          NormalText(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            titleText: AppText.matchIsFull,
-                                            maxLines: 5,
-                                            subAlign: TextAlign.center,
-                                            subText: AppText
-                                                .thisMatchHasReachedItsMaximumCapacity,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                              );
-                              return;
-                            }
+                                    );
+                                    return;
+                                  }
 
-                            final result = await model.joinMatch(matchId);
-                            if (!context.mounted) return;
+                                  final result = await model.joinMatch(matchId);
+                                  if (!context.mounted) return;
 
-                            if (!result && model.joinLeaveError != null) {
-                              AppSnackBar.show(
-                                model.joinLeaveError!,
-                                backgroundColor: context.appColors.error,
-                              );
-                            } else if (result) {
-                              AppSnackBar.show(
-                                'Joined match successfully!',
-                                backgroundColor: context.appColors.primary,
-                              );
-                            }
-                          },
+                                  if (!result && model.joinLeaveError != null) {
+                                    AppSnackBar.show(
+                                      model.joinLeaveError!,
+                                      backgroundColor: context.appColors.error,
+                                    );
+                                  } else if (result) {
+                                    AppSnackBar.show(
+                                      'Joined match successfully!',
+                                      backgroundColor:
+                                          context.appColors.primary,
+                                    );
+                                  }
+                                },
                         ),
                 ),
               ),

@@ -6,6 +6,7 @@ import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 
 class ProfileService extends ChangeNotifier {
   static final ProfileService _instance = ProfileService._internal();
@@ -35,7 +36,7 @@ class ProfileService extends ChangeNotifier {
     return AppText.profilePlaceholderLocation;
   }
 
-  String get avatarUrl => profile?.avatarUrl ?? '';
+  String get avatarUrl => normalizeImageUrl(profile?.avatarUrl) ?? '';
   bool get hasProfile => profile != null;
   bool get isAdmin => profile?.isAdmin == true;
   String get status => profile?.status ?? 'default status';
@@ -107,7 +108,7 @@ class ProfileService extends ChangeNotifier {
       location: (u.location != null && u.location!.trim().isNotEmpty)
           ? u.location
           : p.location,
-      avatarUrl: u.avatarUrl ?? p.avatarUrl,
+      avatarUrl: normalizeImageUrl(u.avatarUrl) ?? p.avatarUrl,
       isAdmin: p.isAdmin,
       status: p.status,
       sports: sportMaps,

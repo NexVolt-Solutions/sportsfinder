@@ -392,8 +392,8 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
-import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 
 /// ================= AVATAR =================
 class ProfileDetailAvatar extends StatelessWidget {
@@ -412,32 +412,10 @@ class ProfileDetailAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
 
-    final avatar = ClipOval(
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return ColoredBox(
-              color: c.blue10,
-              child: Center(
-                child: ShimmerBox(
-                  width: size,
-                  height: size,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            );
-          },
-          errorBuilder: (_, _, _) => ColoredBox(
-            color: c.blue10,
-            child: Icon(Icons.person, color: c.primary, size: 40),
-          ),
-        ),
-      ),
+    final avatar = SizedBox(
+      width: size,
+      height: size,
+      child: AppAvatar(size: size, imageUrl: url, backgroundColor: c.blue10),
     );
 
     if (!showTrophyBadge) return avatar;

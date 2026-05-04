@@ -284,7 +284,7 @@ class _ToolbarFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isSelected
         ? context.appColors.primary
-        : const Color(0xFF6BB5FF);
+        : context.appColors.primary;
     final textColor = isSelected ? Colors.white : color;
     return InkWell(
       borderRadius: BorderRadius.circular(context.radius(10)),
