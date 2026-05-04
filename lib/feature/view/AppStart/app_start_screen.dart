@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
@@ -78,6 +79,7 @@ class _AppStartScreenState extends State<AppStartScreen> {
       refreshToken: refreshToken.isNotEmpty ? refreshToken : null,
       tokenType: tokenType.isNotEmpty ? tokenType : 'Bearer',
     );
+    await FcmService.instance.registerTokenWithBackendIfAuthenticated();
   }
 
   @override

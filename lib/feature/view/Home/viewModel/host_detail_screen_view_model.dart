@@ -707,7 +707,45 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       'players=$_rosterNames',
       tag: 'HostDetailVM',
     );
+    _mergeMatchMetadataFromDetail(detail);
     _syncCurrentMatchRoster();
+  }
+
+  /// Fills title, schedule, host, location, etc. from [GET /api/v1/matches/{id}]
+  /// so push-opened stubs and partial route args match the API.
+  void _mergeMatchMetadataFromDetail(MatchDetailResponse detail) {
+    final m = _currentMatch;
+    if (m == null) return;
+
+    final loc = detail.location.trim().isNotEmpty
+        ? detail.location.trim()
+        : detail.facilityAddress.trim();
+    final dateStr = detail.scheduledDate.trim().isNotEmpty
+        ? detail.scheduledDate.trim()
+        : m.date;
+    final timeStr = detail.scheduledTime.trim().isNotEmpty
+        ? detail.scheduledTime.trim()
+        : m.time;
+    final hostId = detail.host.id.trim();
+    final hostName = detail.host.fullName.trim();
+
+    _currentMatch = m.copyWith(
+      title: detail.title.trim().isNotEmpty ? detail.title.trim() : m.title,
+      sportType: detail.sport.trim().isNotEmpty ? detail.sport.trim() : m.sportType,
+      location: loc.isNotEmpty ? loc : m.location,
+      date: dateStr,
+      time: timeStr,
+      hostUserId: hostId.isNotEmpty ? hostId : m.hostUserId,
+      hostDisplayName: hostName.isNotEmpty ? hostName : m.hostDisplayName,
+      hostAvatarUrl: detail.host.avatarUrl ?? m.hostAvatarUrl,
+      skillLevel: detail.skillLevel.trim().isNotEmpty
+          ? detail.skillLevel.trim()
+          : m.skillLevel,
+      latitude: detail.latitude ?? m.latitude,
+      longitude: detail.longitude ?? m.longitude,
+      participantsTotal: detail.maxPlayers > 0 ? detail.maxPlayers : m.participantsTotal,
+      status: _normalizeMatchStatus(detail.status),
+    );
   }
 
   void _syncCurrentMatchRoster() {

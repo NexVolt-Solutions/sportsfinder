@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/Notification/notification_reop.dart';
 import 'package:sport_finding/Data/Repositories/NotificationRead/notification_read_repository.dart';
 import 'package:sport_finding/Data/Repositories/NotificationReadAll/notification_read_all_repository.dart';
+import 'package:sport_finding/Data/Repositories/NotificationSettings/notification_settings_repository.dart';
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
+import 'package:sport_finding/Data/model/NotificationSettings/notification_settings_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
@@ -26,6 +28,8 @@ class NotificationService extends ChangeNotifier {
   final NotificationReadRepository _readRepository = NotificationReadRepository();
   final NotificationReadAllRepository _readAllRepository =
       NotificationReadAllRepository();
+  final NotificationSettingsRepository _settingsRepository =
+      NotificationSettingsRepository();
   final NotificationWsConnector _wsConnector;
   final NotificationTokenProvider _tokenProvider;
   final Duration _pingInterval;
@@ -381,15 +385,27 @@ class NotificationService extends ChangeNotifier {
   Future<String?> updateNotificationPreference(bool enabled) async {
     if (isUpdatingPreference) return null;
 
+    final profile = ProfileService();
+    final previous = profile.notificationsEnabled;
+
     isUpdatingPreference = true;
+    profile.updateNotificationPreference(enabled);
     notifyListeners();
 
     try {
-      ProfileService().updateNotificationPreference(enabled);
-      return 'Notification preference updated';
+      final response = await _settingsRepository.updateNotificationPreference(
+        request: NotificationSettingsRequestModel(notificationsEnabled: enabled),
+      );
+      final server = response.notificationsEnabled;
+      if (server != null && server != enabled) {
+        profile.updateNotificationPreference(server);
+      }
+      final msg = response.message.trim();
+      return msg.isNotEmpty ? msg : 'Notification preference updated';
     } catch (e) {
+      profile.updateNotificationPreference(previous);
       AppLogger.error(
-        'Failed to update local notification preference',
+        'Failed to update notification preference on server',
         tag: 'NotificationService',
         error: e,
       );

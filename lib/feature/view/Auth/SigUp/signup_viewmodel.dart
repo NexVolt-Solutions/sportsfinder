@@ -119,6 +119,7 @@ import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repositor
 import 'package:sport_finding/Data/model/GoogleAuth/google_auth_request_model.dart';
 import 'package:sport_finding/Data/Repositories/sign_up_repository.dart';
 import 'package:sport_finding/core/Constants/google_sign_in_config.dart';
+import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 
@@ -324,6 +325,7 @@ class SignUpViewModel extends ChangeNotifier {
         refreshToken: response.refreshToken,
         tokenType: response.tokenType,
       );
+      await FcmService.instance.registerTokenWithBackendIfAuthenticated();
       return AuthRouteResolver.resolvePostAuthTag();
     } on GoogleSignInException catch (e) {
       switch (e.code) {

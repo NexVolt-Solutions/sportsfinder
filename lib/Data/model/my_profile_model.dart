@@ -189,9 +189,16 @@ class Settings {
   Settings({required this.notificationsEnabled});
 
   factory Settings.fromJson(Map<String, dynamic> json) {
-    return Settings(
-      notificationsEnabled: json['notifications_enabled'] ?? false,
-    );
+    final raw = json['notifications_enabled'];
+    if (raw is bool) {
+      return Settings(notificationsEnabled: raw);
+    }
+    // Backend may omit key; default true so we do not accidentally treat as "off".
+    if (raw == null) return Settings(notificationsEnabled: true);
+    final s = raw.toString().toLowerCase();
+    if (s == 'true' || s == '1') return Settings(notificationsEnabled: true);
+    if (s == 'false' || s == '0') return Settings(notificationsEnabled: false);
+    return Settings(notificationsEnabled: true);
   }
 
   Map<String, dynamic> toJson() {

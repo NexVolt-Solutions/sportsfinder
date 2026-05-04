@@ -7,6 +7,7 @@ import 'package:sport_finding/Data/Repositories/login_repository.dart';
 import 'package:sport_finding/Data/model/GoogleAuth/google_auth_request_model.dart';
 import 'package:sport_finding/core/Constants/google_sign_in_config.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/auth_route_resolver.dart';
 
@@ -116,6 +117,7 @@ class LoginScreenViewModel extends ChangeNotifier {
       }
 
       await _saveTokens(accessToken, refreshToken, tokenType);
+      await FcmService.instance.registerTokenWithBackendIfAuthenticated();
 
       return AuthRouteResolver.resolvePostAuthTag();
     } catch (e) {
@@ -223,6 +225,7 @@ class LoginScreenViewModel extends ChangeNotifier {
         response.refreshToken,
         response.tokenType,
       );
+      await FcmService.instance.registerTokenWithBackendIfAuthenticated();
 
       final route = await AuthRouteResolver.resolvePostAuthTag();
       _logGoogle('loginWithGoogle: success → route=$route');
@@ -274,7 +277,14 @@ class LoginScreenViewModel extends ChangeNotifier {
     return AppPreferences.isLoggedIn();
   }
 
-  static Future<void> logout() async {
+  /// When [pushTokenAlreadyDeactivated] is true, the caller already ran
+  /// [FcmService.deactivateForLogout] while the access token was still valid
+  /// (e.g. profile flow before `POST /auth/logout`).
+  static Future<void> logout({bool pushTokenAlreadyDeactivated = false}) async {
+    if (!pushTokenAlreadyDeactivated) {
+      await FcmService.instance.deactivateForLogout();
+    }
+
     try {
       await _ensureGoogleSignInInitialized();
       await GoogleSignIn.instance.signOut();

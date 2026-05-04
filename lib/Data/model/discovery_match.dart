@@ -58,6 +58,31 @@ class DiscoveryMatch {
   final double? longitude;
   final String status;
 
+  /// Minimal row used when opening a match from an FCM `data.match_id` payload;
+  /// [HostDetailScreenViewModel.refreshRoster] loads full detail from the API.
+  factory DiscoveryMatch.fromPushData({
+    required String matchId,
+    String title = 'Match',
+    String sportType = '',
+    String notificationBody = '',
+  }) {
+    final resolvedTitle = title.trim().isNotEmpty
+        ? title.trim()
+        : (notificationBody.trim().isNotEmpty ? notificationBody.trim() : 'Match');
+    return DiscoveryMatch(
+      id: matchId.trim(),
+      title: resolvedTitle,
+      distanceKm: 0,
+      sportType: sportType.trim().isNotEmpty ? sportType.trim() : '—',
+      location: '',
+      date: '—',
+      time: '—',
+      participantsJoined: 0,
+      participantsTotal: 0,
+      players: const [],
+    );
+  }
+
   /// Maps API match data into [DiscoveryMatch] (date/time formatted for [matchScheduledStart]).
   factory DiscoveryMatch.fromAllMatches(AllMatches m) {
     final start = _apiScheduledLocal(m);
