@@ -9,7 +9,8 @@ class AppSnackBar {
   static void show(
     String message, {
     Color? backgroundColor,
-    SnackBarBehavior? behavior,
+
+    SnackBarBehavior behavior = SnackBarBehavior.floating,
     Duration duration = const Duration(seconds: 3),
   }) {
     final messenger = rootScaffoldMessengerKey.currentState;
@@ -21,6 +22,11 @@ class AppSnackBar {
         SnackBar(
           content: Text(message),
           backgroundColor: backgroundColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          elevation: 3,
+         
           behavior: behavior,
           duration: duration,
         ),
