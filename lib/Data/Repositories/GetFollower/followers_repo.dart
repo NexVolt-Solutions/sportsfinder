@@ -38,12 +38,4 @@ class FollowersRepo {
     }
   }
 }
-// final repo = FollowersRepo();
-
-// final result = await repo.getFollowers(
-//   userId: "9d777b48-ee5d-44c9-a400-70b9093841a6",
-//   page: 1,
-//   limit: 20,
-// );
-
-// print(result.items.length);
+ 
