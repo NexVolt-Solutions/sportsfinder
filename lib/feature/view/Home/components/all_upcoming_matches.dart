@@ -275,6 +275,8 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
 
 String _formatWebStatus(String raw) {
   final trimmed = raw.trim();
-  if (trimmed.isEmpty) return 'Upcoming';
+  if (trimmed.isEmpty) return 'Pending';
+  final value = trimmed.toLowerCase();
+  if (value == 'open' || value == 'pending') return 'Pending';
   return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }

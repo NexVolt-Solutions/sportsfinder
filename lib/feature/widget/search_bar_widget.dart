@@ -99,7 +99,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             decoration: BoxDecoration(
               color: c.blue10,
               borderRadius: BorderRadius.circular(context.radius(12)),
-              border: Border.all(color: c.primary, width: 1.2),
+              border: Border.all(color: c.primary, width: 0.1),
             ),
             child: TextField(
               controller: _controller,

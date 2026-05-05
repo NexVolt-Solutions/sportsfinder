@@ -188,7 +188,7 @@ class WebMatchesManagementSection extends StatelessWidget {
                                       DataCell(Text(row.players)),
                                       DataCell(
                                         SizedBox(
-                                          width: context.w(90),
+                                          width: context.w(170),
                                           child: Text(
                                             row.location,
                                             maxLines: 2,

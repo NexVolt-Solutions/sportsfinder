@@ -21,9 +21,9 @@ class PlayerCountWidget extends StatelessWidget {
           height: 25,
           child: Stack(
             children: [
-              _avatar(left: 0, context: context),
-              _avatar(left: 20, context: context),
-              _avatar(left: 40, context: context),
+              const _PlayerAvatar(left: 0),
+              const _PlayerAvatar(left: 20),
+              const _PlayerAvatar(left: 40),
             ],
           ),
         ),
@@ -40,8 +40,15 @@ class PlayerCountWidget extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _avatar({required double left, required BuildContext context}) {
+class _PlayerAvatar extends StatelessWidget {
+  const _PlayerAvatar({required this.left});
+
+  final double left;
+
+  @override
+  Widget build(BuildContext context) {
     return Positioned(
       left: left,
       child: Container(

@@ -197,69 +197,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     AppSnackBar.show('All messages cleared');
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    NotificationService service,
-    List<NotificationModel> visibleNotifications,
-  ) {
-    final c = context.appColors;
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.pop(context),
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            width: context.w(28),
-            height: context.w(28),
-            child: Center(
-              child: SvgPicture.asset(
-                AppAssets.backIcon,
-                colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: NormalText(
-              titleText: AppText.notifications,
-              titleStyle: context.appText.text18W600,
-            ),
-          ),
-        ),
-        PopupMenuButton<_NotificationMenuAction>(
-          icon: Icon(Icons.more_vert, color: c.greyDark, size: context.w(22)),
-          onSelected: (action) {
-            switch (action) {
-              case _NotificationMenuAction.readAll:
-                _handleReadAll();
-                break;
-              case _NotificationMenuAction.clearMessages:
-                _handleClearMessages();
-                break;
-            }
-          },
-          itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
-            PopupMenuItem<_NotificationMenuAction>(
-              value: _NotificationMenuAction.readAll,
-              enabled: service.hasUnread && !service.isMarkingAllRead,
-              child: Text(
-                service.isMarkingAllRead
-                    ? '${AppText.readAll}...'
-                    : AppText.readAll,
-              ),
-            ),
-            PopupMenuItem<_NotificationMenuAction>(
-              value: _NotificationMenuAction.clearMessages,
-              enabled: visibleNotifications.isNotEmpty,
-              child: const Text('Clear messages'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   List<Widget> _buildSection(
     BuildContext context, {
     required String title,
@@ -317,7 +254,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             : ListView(
                 padding: context.padSym(h: 20, v: 20),
                 children: [
-                  _buildHeader(context, service, visibleNotifications),
+                  _NotificationsHeader(
+                    service: service,
+                    visibleNotifications: visibleNotifications,
+                    onReadAll: _handleReadAll,
+                    onClearMessages: _handleClearMessages,
+                  ),
                   SizedBox(height: context.h(12)),
                   ..._buildSection(
                     context,
@@ -404,6 +346,80 @@ class _NotificationItem {
       primaryActionText: showActions ? 'Accept' : null,
       secondaryActionText: showActions ? 'Decline' : null,
       isPrimaryActionFilled: true,
+    );
+  }
+}
+
+class _NotificationsHeader extends StatelessWidget {
+  const _NotificationsHeader({
+    required this.service,
+    required this.visibleNotifications,
+    required this.onReadAll,
+    required this.onClearMessages,
+  });
+
+  final NotificationService service;
+  final List<NotificationModel> visibleNotifications;
+  final VoidCallback onReadAll;
+  final VoidCallback onClearMessages;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: context.w(28),
+            height: context.w(28),
+            child: Center(
+              child: SvgPicture.asset(
+                AppAssets.backIcon,
+                colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: NormalText(
+              titleText: AppText.notifications,
+              titleStyle: context.appText.text18W600,
+            ),
+          ),
+        ),
+        PopupMenuButton<_NotificationMenuAction>(
+          icon: Icon(Icons.more_vert, color: c.greyDark, size: context.w(22)),
+          onSelected: (action) {
+            switch (action) {
+              case _NotificationMenuAction.readAll:
+                onReadAll();
+                break;
+              case _NotificationMenuAction.clearMessages:
+                onClearMessages();
+                break;
+            }
+          },
+          itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
+            PopupMenuItem<_NotificationMenuAction>(
+              value: _NotificationMenuAction.readAll,
+              enabled: service.hasUnread && !service.isMarkingAllRead,
+              child: Text(
+                service.isMarkingAllRead
+                    ? '${AppText.readAll}...'
+                    : AppText.readAll,
+              ),
+            ),
+            PopupMenuItem<_NotificationMenuAction>(
+              value: _NotificationMenuAction.clearMessages,
+              enabled: visibleNotifications.isNotEmpty,
+              child: const Text('Clear messages'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

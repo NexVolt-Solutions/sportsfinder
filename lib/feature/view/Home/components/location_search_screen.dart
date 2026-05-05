@@ -162,12 +162,33 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                 title: 'Search location',
               ),
               SizedBox(height: context.h(16)),
-              _buildSearchField(c, t, query),
+              _LocationSearchField(
+                controller: _searchController,
+                query: query,
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _results = <String>[];
+                    _error = null;
+                    _isLoading = false;
+                  });
+                },
+              ),
               SizedBox(height: context.h(12)),
               Expanded(
                 child: hasQuery
-                    ? _buildSuggestionsBody(c, t, query)
-                    : _buildHistoryBody(c, t),
+                    ? _LocationSuggestionsBody(
+                        isLoading: _isLoading,
+                        error: _error,
+                        results: _results,
+                        onSelectLocation: _selectLocation,
+                      )
+                    : _LocationHistoryBody(
+                        history: _history,
+                        onClearHistory: _clearHistory,
+                        onSelectLocation: _selectLocation,
+                        onRemoveHistoryItem: _removeHistoryItem,
+                      ),
               ),
             ],
           ),
@@ -175,10 +196,25 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSearchField(AppColorTheme c, AppTextTheme t, String query) {
+class _LocationSearchField extends StatelessWidget {
+  const _LocationSearchField({
+    required this.controller,
+    required this.query,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String query;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final t = context.appText;
     return TextField(
-      controller: _searchController,
+      controller: controller,
       autofocus: true,
       textInputAction: TextInputAction.search,
       textCapitalization: TextCapitalization.sentences,
@@ -195,14 +231,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         ),
         suffixIcon: query.trim().isNotEmpty
             ? IconButton(
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() {
-                    _results = <String>[];
-                    _error = null;
-                    _isLoading = false;
-                  });
-                },
+                onPressed: onClear,
                 icon: Icon(
                   Icons.close_rounded,
                   size: context.w(20),
@@ -233,9 +262,26 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSuggestionsBody(AppColorTheme c, AppTextTheme t, String query) {
-    if (_isLoading) {
+class _LocationSuggestionsBody extends StatelessWidget {
+  const _LocationSuggestionsBody({
+    required this.isLoading,
+    required this.error,
+    required this.results,
+    required this.onSelectLocation,
+  });
+
+  final bool isLoading;
+  final String? error;
+  final List<String> results;
+  final ValueChanged<String> onSelectLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final t = context.appText;
+    if (isLoading) {
       return Center(
         child: SizedBox(
           width: 28,
@@ -244,19 +290,19 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         ),
       );
     }
-    if (_error != null) {
+    if (error != null) {
       return Center(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: context.w(8)),
           child: Text(
-            _error!,
+            error!,
             textAlign: TextAlign.center,
             style: t.text14W400.copyWith(color: c.greyDark, height: 1.45),
           ),
         ),
       );
     }
-    if (_results.isEmpty) {
+    if (results.isEmpty) {
       return Center(
         child: Text(
           'No matches for your search.',
@@ -266,23 +312,38 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     }
     return ListView.separated(
       padding: EdgeInsets.only(top: context.h(4), bottom: context.h(24)),
-      itemCount: _results.length,
+      itemCount: results.length,
       separatorBuilder: (context, _) => SizedBox(height: context.h(2)),
       itemBuilder: (context, index) {
-        final item = _results[index];
-        return _locationTile(
-          c: c,
-          t: t,
+        final item = results[index];
+        return _LocationTile(
           title: item,
           leading: Icons.place_outlined,
-          onTap: () => _selectLocation(item),
+          onTap: () => onSelectLocation(item),
         );
       },
     );
   }
+}
 
-  Widget _buildHistoryBody(AppColorTheme c, AppTextTheme t) {
-    if (_history.isEmpty) {
+class _LocationHistoryBody extends StatelessWidget {
+  const _LocationHistoryBody({
+    required this.history,
+    required this.onClearHistory,
+    required this.onSelectLocation,
+    required this.onRemoveHistoryItem,
+  });
+
+  final List<String> history;
+  final VoidCallback onClearHistory;
+  final ValueChanged<String> onSelectLocation;
+  final ValueChanged<String> onRemoveHistoryItem;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final t = context.appText;
+    if (history.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -321,7 +382,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
             ),
             const Spacer(),
             TextButton(
-              onPressed: _clearHistory,
+              onPressed: onClearHistory,
               style: TextButton.styleFrom(
                 foregroundColor: c.primary,
                 padding: EdgeInsets.symmetric(horizontal: context.w(8)),
@@ -336,17 +397,15 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.only(bottom: context.h(24)),
-            itemCount: _history.length,
+            itemCount: history.length,
             separatorBuilder: (context, _) => SizedBox(height: context.h(2)),
             itemBuilder: (context, index) {
-              final item = _history[index];
-              return _locationTile(
-                c: c,
-                t: t,
+              final item = history[index];
+              return _LocationTile(
                 title: item,
                 leading: Icons.history_rounded,
-                onTap: () => _selectLocation(item),
-                onRemove: () => _removeHistoryItem(item),
+                onTap: () => onSelectLocation(item),
+                onRemove: () => onRemoveHistoryItem(item),
               );
             },
           ),
@@ -354,15 +413,25 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
       ],
     );
   }
+}
 
-  Widget _locationTile({
-    required AppColorTheme c,
-    required AppTextTheme t,
-    required String title,
-    required IconData leading,
-    required VoidCallback onTap,
-    VoidCallback? onRemove,
-  }) {
+class _LocationTile extends StatelessWidget {
+  const _LocationTile({
+    required this.title,
+    required this.leading,
+    required this.onTap,
+    this.onRemove,
+  });
+
+  final String title;
+  final IconData leading;
+  final VoidCallback onTap;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final t = context.appText;
     return Material(
       color: c.transparent,
       child: InkWell(
