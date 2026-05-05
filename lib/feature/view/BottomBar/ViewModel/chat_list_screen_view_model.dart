@@ -118,6 +118,29 @@ class ChatListScreenViewModel extends ChangeNotifier {
     _notifyAllListeners();
   }
 
+  static void removeThread({
+    String? matchId,
+    String? targetUserId,
+    String? userName,
+  }) {
+    final trimmedMatchId = (matchId ?? '').trim();
+    final trimmedTargetUserId = (targetUserId ?? '').trim();
+    final trimmedUserName = (userName ?? '').trim().toLowerCase();
+    _globalThreads.removeWhere((thread) {
+      if (trimmedMatchId.isNotEmpty) {
+        return (thread.matchId ?? '').trim() == trimmedMatchId;
+      }
+      if (trimmedTargetUserId.isNotEmpty) {
+        return (thread.targetUserId ?? '').trim() == trimmedTargetUserId;
+      }
+      if (trimmedUserName.isNotEmpty) {
+        return thread.userName.trim().toLowerCase() == trimmedUserName;
+      }
+      return false;
+    });
+    _notifyAllListeners();
+  }
+
   void startOrOpenThread(String userName, {String? targetUserId}) {
     upsertThread(
       userName: userName,

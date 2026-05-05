@@ -234,12 +234,18 @@ class _BottomBarContentState extends State<_BottomBarContent> {
         ),
         child: Row(
           children: [
-            SvgPicture.asset(
-              iconPath,
-              width: _navIconSize,
-              height: _navIconSize,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-            ),
+            iconPath == AppAssets.webHomeIcon
+                ? SvgPicture.asset(
+                    iconPath,
+                    width: _navIconSize,
+                    height: _navIconSize,
+                  )
+                : SvgPicture.asset(
+                    iconPath,
+                    width: _navIconSize,
+                    height: _navIconSize,
+                    colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                  ),
             SizedBox(width: _webW(context, 12)),
             Expanded(
               child: Text(
