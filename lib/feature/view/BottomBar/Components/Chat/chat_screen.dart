@@ -31,6 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_boundRealtimeChat) return;
 
     final routeArgs = ModalRoute.of(context)?.settings.arguments;
+    debugPrint('[ChatScreen] routeArgsType=${routeArgs.runtimeType}');
     final routeTargetUserId = routeArgs is ChatRouteArgs
         ? (routeArgs.targetUserId?.trim() ?? '')
         : '';
@@ -38,7 +39,11 @@ class _ChatScreenState extends State<ChatScreen> {
         ? widget.targetUserId!.trim()
         : routeTargetUserId;
 
-    if (targetUserId.isEmpty) return;
+    if (targetUserId.isEmpty) {
+      debugPrint('[ChatScreen] bind skipped: empty targetUserId');
+      return;
+    }
+    debugPrint('[ChatScreen] binding targetUserId=$targetUserId');
 
     _boundRealtimeChat = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {

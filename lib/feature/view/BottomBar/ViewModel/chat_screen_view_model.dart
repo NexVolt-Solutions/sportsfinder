@@ -179,6 +179,8 @@ class ChatScreenViewModel extends ChangeNotifier {
       _log('bindDirectChat aborted: access token missing');
       return;
     }
+    final myIdAtBind = _currentUserIdProvider();
+    _log('bindDirectChat ctx myId=$myIdAtBind tokenLen=${token.length}');
 
     _isBindingRealtime = true;
     _errorMessage = null;
@@ -192,6 +194,7 @@ class ChatScreenViewModel extends ChangeNotifier {
 
     try {
       final history = await service.loadHistory();
+      history.sort((a, b) => a.sentAt.compareTo(b.sentAt));
       _messages.clear();
       _messageIds.clear();
       for (final item in history) {
@@ -214,13 +217,16 @@ class ChatScreenViewModel extends ChangeNotifier {
     _connectedSub = service.onConnected.listen((_) {
       _isConnected = true;
       _errorMessage = null;
-      _log('direct ws connected');
+      _log('direct ws connected targetUserId=$_boundTargetUserId');
       notifyListeners();
     });
 
     _messageSub = service.onMessage.listen((msg) {
+      final myId = _currentUserIdProvider();
+      final isMine = myId.isNotEmpty && msg.senderId.trim() == myId.trim();
       _log(
-        'direct ws message id=${msg.messageId} sender=${msg.senderId} len=${msg.content.length}',
+        'direct ws message id=${msg.messageId} sender=${msg.senderId} '
+        'isMine=$isMine myId=$myId targetUserId=$_boundTargetUserId len=${msg.content.length}',
       );
       _appendRealtimeMessage(msg);
       ChatListScreenViewModel.upsertThread(
