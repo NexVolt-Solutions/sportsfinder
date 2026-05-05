@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
@@ -84,7 +85,11 @@ class ShareSheetHelper {
   }
 
   static Future<void> _launchUri(Uri uri) async {
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final mode =
+        kIsWeb || uri.scheme == 'mailto' || uri.scheme == 'sms'
+        ? LaunchMode.platformDefault
+        : LaunchMode.externalApplication;
+    final launched = await launchUrl(uri, mode: mode);
     if (!launched) {
       AppSnackBar.show('No app found to share this');
     }

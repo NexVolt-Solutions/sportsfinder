@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
+import 'package:sport_finding/Data/model/host_details_route_args.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -40,21 +41,43 @@ class HostDetailsScreen extends StatefulWidget {
 
 class _HostDetailsScreenState extends State<HostDetailsScreen> {
   bool _scheduledInitialBind = false;
+  bool _popToHomeOnBack = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_scheduledInitialBind) return;
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is DiscoveryMatch &&
-        !DeletedMatchesService().isDeleted(args.id) &&
+    DiscoveryMatch? routeMatch;
+    if (args is HostDetailsRouteArgs) {
+      routeMatch = args.match;
+    } else if (args is DiscoveryMatch) {
+      routeMatch = args;
+    }
+    _popToHomeOnBack = args is HostDetailsRouteArgs && args.popToHomeOnBack;
+    if (routeMatch != null &&
+        !DeletedMatchesService().isDeleted(routeMatch.id) &&
         context.read<HostDetailScreenViewModel>().currentMatch == null) {
+      final initialMatch = routeMatch;
       _scheduledInitialBind = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<HostDetailScreenViewModel>().bindMatch(args);
+        context.read<HostDetailScreenViewModel>().bindMatch(initialMatch);
       });
     }
+  }
+
+  void _handleBackNavigation() {
+    if (_popToHomeOnBack) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        RoutesName.bottomBarScreen,
+        (route) => false,
+        arguments: 2,
+      );
+      return;
+    }
+    Navigator.pop(context);
   }
 
   void _navigateToEditScreen() async {
@@ -274,7 +297,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                     padding: context.padSym(h: 20),
                     children: [
                       AppBarWidget(
-                        onLeadingTap: () => Navigator.pop(context),
+                        onLeadingTap: _handleBackNavigation,
                         title: AppText.hostMatchDetails,
                         trailingActions: [
                           GestureDetector(
@@ -819,8 +842,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                       model.matchStatus == 'cancelled'
                                   ? null
                                   : () async {
-                                      final wasPending =
-                                          model.matchStatus == 'pending';
                                       final matchId = match.id;
                                       if (matchId.isEmpty) return;
                                       final success =
@@ -844,14 +865,6 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                         backgroundColor:
                                             context.appColors.primary,
                                       );
-                                      if (wasPending) {
-                                        Navigator.pushNamedAndRemoveUntil(
-                                          context,
-                                          RoutesName.bottomBarScreen,
-                                          (route) => false,
-                                          arguments: 2,
-                                        );
-                                      }
                                     },
                             ),
                             if (model.matchStatus == 'pending') ...[

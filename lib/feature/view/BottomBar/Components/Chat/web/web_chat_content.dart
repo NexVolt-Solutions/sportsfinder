@@ -4,8 +4,10 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 
 class WebChatContent extends StatelessWidget {
   const WebChatContent({
@@ -46,7 +48,7 @@ class WebChatContent extends StatelessWidget {
     return MainFrame(
       showDecorationLayer: false,
       child: Padding(
-        padding: context.padSym(h: 20, v: 8),
+        padding: context.padSym(h: 20, v: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -61,35 +63,41 @@ class WebChatContent extends StatelessWidget {
                       children: [
                         Expanded(
                           flex: 10,
-                          child: WebDashboardPanel(
-                            backgroundColor: context.appColors.blue10,
-                            padding: context.padSym(h: 12, v: 12),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    const Expanded(child: _SearchBox()),
-                                    SizedBox(width: context.w(10)),
-                                    _NewChatButton(onTap: onPickUser),
-                                  ],
-                                ),
-                                SizedBox(height: context.h(8)),
-                                Row(
-                                  children: [
-                                    const WebFilterChip(
-                                      label: 'All',
-                                      selected: true,
+                          child: Column(
+                            children: [
+                              Column(
+                                children: [
+                                  SearchBarWidget(isShow: false),
+                                  SizedBox(height: context.h(10)),
+
+                                  Row(
+                                    children: [
+                                      const WebFilterChip(
+                                        label: 'All',
+                                        selected: true,
+                                      ),
+                                      SizedBox(width: context.w(6)),
+                                      const WebFilterChip(label: 'Unread'),
+                                      SizedBox(width: context.w(6)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: context.h(10)),
+                              Expanded(
+                                child: Container(
+                                  padding: context.padSym(h: 12, v: 12),
+                                  decoration: BoxDecoration(
+                                    color: context.appColors.blue10,
+                                    borderRadius: BorderRadius.circular(
+                                      context.radius(12),
                                     ),
-                                    SizedBox(width: context.w(6)),
-                                    const WebFilterChip(label: 'Unread'),
-                                    SizedBox(width: context.w(6)),
-                                    const WebFilterChip(label: 'Favorites'),
-                                    SizedBox(width: context.w(6)),
-                                    const WebFilterChip(label: 'Group'),
-                                  ],
-                                ),
-                                SizedBox(height: context.h(8)),
-                                Expanded(
+                                    border: Border.all(
+                                      color: context.appColors.primary,
+
+                                      width: 0.1,
+                                    ),
+                                  ),
                                   child: ListView.separated(
                                     itemCount: model.threads.length,
                                     separatorBuilder: (_, _) =>
@@ -98,9 +106,6 @@ class WebChatContent extends StatelessWidget {
                                       final thread = model.threads[index];
                                       final isSelected = index == safeSelected;
                                       return InkWell(
-                                        borderRadius: BorderRadius.circular(
-                                          context.radius(12),
-                                        ),
                                         onTap: () => onThreadSelected(index),
                                         child: Container(
                                           padding: context.padSym(h: 10, v: 10),
@@ -111,31 +116,16 @@ class WebChatContent extends StatelessWidget {
                                             borderRadius: BorderRadius.circular(
                                               context.radius(12),
                                             ),
-                                            border: Border.all(
-                                              color: isSelected
-                                                  ? context.appColors.primary
-                                                  : context.appColors.greylight
-                                                        .withValues(
-                                                          alpha: 0.25,
-                                                        ),
-                                              width: 0.8,
-                                            ),
                                           ),
                                           child: Row(
                                             children: [
-                                              CircleAvatar(
-                                                radius: context.radius(17),
+                                              AppAvatar(
+                                                size: context.w(34),
+                                                fallbackText: thread.userName,
                                                 backgroundColor:
                                                     context.appColors.white,
-                                                child: Text(
-                                                  thread.userName.isNotEmpty
-                                                      ? thread.userName[0]
-                                                            .toUpperCase()
-                                                      : 'U',
-                                                  style: context
-                                                      .appText
-                                                      .text12W500,
-                                                ),
+                                                iconColor:
+                                                    context.appColors.primary,
                                               ),
                                               SizedBox(width: context.w(10)),
                                               Expanded(
@@ -191,18 +181,26 @@ class WebChatContent extends StatelessWidget {
                                     },
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(width: context.w(12)),
                         Expanded(
                           flex: 16,
-                          child: WebDashboardPanel(
-                            backgroundColor: context.appColors.blue10,
-                            padding: EdgeInsets.zero,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: context.appColors.primary,
+                                width: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                context.radius(12),
+                              ),
+                            ),
                             child: Column(
                               children: [
+                                /// 🔹 HEADER
                                 Container(
                                   padding: context.padSym(h: 14, v: 10),
                                   decoration: BoxDecoration(
@@ -215,29 +213,15 @@ class WebChatContent extends StatelessWidget {
                                         context.radius(12),
                                       ),
                                     ),
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: context.appColors.greylight
-                                            .withValues(alpha: 0.45),
-                                      ),
-                                    ),
                                   ),
                                   child: Row(
                                     children: [
-                                      CircleAvatar(
-                                        radius: context.radius(18),
+                                      AppAvatar(
+                                        size: context.w(36),
+                                        fallbackText: activeThread?.userName,
                                         backgroundColor:
                                             context.appColors.blue10,
-                                        child: Text(
-                                          activeThread != null &&
-                                                  activeThread
-                                                      .userName
-                                                      .isNotEmpty
-                                              ? activeThread.userName[0]
-                                                    .toUpperCase()
-                                              : '',
-                                          style: context.appText.text12W500,
-                                        ),
+                                        iconColor: context.appColors.primary,
                                       ),
                                       SizedBox(width: context.w(10)),
                                       Expanded(
@@ -249,6 +233,10 @@ class WebChatContent extends StatelessWidget {
                                       if (activeThread != null)
                                         PopupMenuButton<String>(
                                           color: context.appColors.white,
+                                          icon: Icon(
+                                            Icons.more_horiz_rounded,
+                                            color: context.appColors.greyDark,
+                                          ),
                                           onSelected: (value) {
                                             if (value == 'clear') {
                                               onClearChat();
@@ -257,7 +245,7 @@ class WebChatContent extends StatelessWidget {
                                             onDeleteChat();
                                           },
                                           itemBuilder: (context) => [
-                                            PopupMenuItem<String>(
+                                            PopupMenuItem(
                                               value: 'clear',
                                               child: Text(
                                                 'Clear Chat',
@@ -271,7 +259,7 @@ class WebChatContent extends StatelessWidget {
                                                     ),
                                               ),
                                             ),
-                                            PopupMenuItem<String>(
+                                            PopupMenuItem(
                                               value: 'delete',
                                               child: Text(
                                                 'Delete Chat',
@@ -286,151 +274,132 @@ class WebChatContent extends StatelessWidget {
                                               ),
                                             ),
                                           ],
-                                          child: const Icon(
-                                            Icons.more_horiz_rounded,
-                                          ),
                                         ),
                                     ],
                                   ),
                                 ),
+
+                                /// 🔹 CHAT BODY + INPUT
                                 Expanded(
-                                  child: Padding(
-                                    padding: context.padSym(h: 14, v: 12),
-                                    child: activeThread == null
-                                        ? Center(
-                                            child: Text(
-                                              'Select a chat to start messaging.',
-                                              style: context.appText.text14W400
-                                                  .copyWith(
-                                                    color: context
-                                                        .appColors
-                                                        .greylight,
+                                  child: Container(
+                                    padding: context.padSym(h: 12, v: 12),
+                                    decoration: BoxDecoration(
+                                      color: context.appColors.blue10,
+                                      borderRadius: BorderRadius.only(
+                                        bottomLeft: Radius.circular(
+                                          context.radius(12),
+                                        ),
+                                        bottomRight: Radius.circular(
+                                          context.radius(12),
+                                        ),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        /// 🟢 MESSAGES
+                                        Expanded(
+                                          child: activeThread == null
+                                              ? Center(
+                                                  child: Text(
+                                                    'Select a chat to start messaging.',
+                                                    style: context
+                                                        .appText
+                                                        .text14W400
+                                                        .copyWith(
+                                                          color: context
+                                                              .appColors
+                                                              .greylight,
+                                                        ),
                                                   ),
-                                            ),
-                                          )
-                                        : Column(
+                                                )
+                                              : ListView(
+                                                  reverse: true,
+                                                  children: [
+                                                    Align(
+                                                      alignment:
+                                                          Alignment.centerRight,
+                                                      child: WebBubble(
+                                                        text: activeThread
+                                                            .lastMessage,
+                                                        time: activeThread
+                                                            .lastTime,
+                                                        isMe: true,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                        ),
+
+                                        /// 🟢 INPUT
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            top: context.h(20),
+                                          ),
+                                          child: Row(
                                             children: [
-                                              const Spacer(),
-                                              Align(
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                child: WebBubble(
-                                                  text:
-                                                      activeThread.lastMessage,
-                                                  time: activeThread.lastTime,
-                                                  isMe: true,
+                                              Expanded(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        context.appColors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          context.radius(12),
+                                                        ),
+                                                    border: Border.all(
+                                                      color: context
+                                                          .appColors
+                                                          .primary,
+                                                    ),
+                                                  ),
+                                                  child: TextField(
+                                                    controller:
+                                                        messageController,
+                                                    enabled:
+                                                        activeThread != null,
+                                                    decoration: InputDecoration(
+                                                      hintText:
+                                                          'Type your message...',
+                                                      border: InputBorder.none,
+                                                      contentPadding: context
+                                                          .padSym(h: 12, v: 12),
+
+                                                      suffixIcon:
+                                                          activeThread == null
+                                                          ? null
+                                                          : GestureDetector(
+                                                              onTap:
+                                                                  onSendMessage,
+                                                              child: Container(
+                                                                padding: context
+                                                                    .padSym(
+                                                                      h: 8,
+                                                                      v: 8,
+                                                                    ),
+                                                                child: SvgPicture.asset(
+                                                                  AppAssets
+                                                                      .chatSendIcon,
+                                                                  colorFilter: ColorFilter.mode(
+                                                                    context
+                                                                        .appColors
+                                                                        .primary,
+                                                                    BlendMode
+                                                                        .srcIn,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: context.padSym(h: 14, v: 12),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: context.appColors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              context.radius(10),
-                                            ),
-                                            border: Border.all(
-                                              color: context.appColors.primary
-                                                  .withValues(alpha: 0.45),
-                                            ),
-                                          ),
-                                          child: TextField(
-                                            controller: messageController,
-                                            enabled: activeThread != null,
-                                            decoration: InputDecoration(
-                                              hintText: 'Type your message...',
-                                              border: InputBorder.none,
-                                              contentPadding: context.padSym(
-                                                h: 12,
-                                                v: 12,
-                                              ),
-
-                                              // RIGHT SIDE SEND BUTTON
-                                              suffixIcon: activeThread == null
-                                                  ? null
-                                                  : Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                            right: 6,
-                                                          ),
-                                                      child: GestureDetector(
-                                                        onTap: () {},
-                                                        child: SvgPicture.asset(
-                                                          AppAssets
-                                                              .chatSendIcon,
-                                                          width: context.w(24),
-                                                          height: context.w(24),
-                                                          color: context
-                                                              .appColors
-                                                              .primary,
-                                                        ),
-                                                      ),
-                                                    ),
-                                            ),
-                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                // Padding(
-                                //   padding: context.padSym(h: 14, v: 12),
-                                //   child: Row(
-                                //     children: [
-                                //       Expanded(
-                                //         child: Container(
-                                //           decoration: BoxDecoration(
-                                //             color: context.appColors.white,
-
-                                //             borderRadius: BorderRadius.circular(
-                                //               context.radius(10),
-                                //             ),
-
-                                //             border: Border.all(
-                                //               color: context.appColors.primary
-                                //                   .withValues(alpha: 0.45),
-                                //             ),
-                                //           ),
-                                //           child: TextField(
-                                //             controller: messageController,
-                                //             enabled: activeThread != null,
-                                //             decoration: InputDecoration(
-                                //               suffix: Icon(
-                                //                 Icons.attach_file_rounded,
-                                //                 size: 18,
-                                //                 color:
-                                //                     context.appColors.greylight,
-                                //               ),
-                                //               hintText: 'Type your message...',
-                                //               border: InputBorder.none,
-                                //               contentPadding: context.padSym(
-                                //                 h: 12,
-                                //                 v: 10,
-                                //               ),
-                                //               suffixIcon: activeThread == null
-                                //                   ? null
-                                //                   : IconButton(
-                                //                       onPressed: onSendMessage,
-                                //                       icon: SvgPicture.asset(
-                                //                         AppAssets.chatSendIcon,
-                                //                         width: context.w(18),
-                                //                         height: context.w(18),
-                                //                       ),
-                                //                     ),
-                                //             ),
-                                //           ),
-                                //         ),
-                                //       ),
-                                //     ],
-                                //   ),
-                                // ),
                               ],
                             ),
                           ),
@@ -481,36 +450,6 @@ class WebChatContent extends StatelessWidget {
   }
 }
 
-class _SearchBox extends StatelessWidget {
-  const _SearchBox();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.appColors.white,
-        borderRadius: BorderRadius.circular(context.radius(10)),
-        border: Border.all(color: context.appColors.primary, width: 0.8),
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Start or new chat now..',
-          hintStyle: context.appText.text12W400.copyWith(
-            color: context.appColors.greylight,
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: context.appColors.greylight,
-            size: 18,
-          ),
-          border: InputBorder.none,
-          contentPadding: context.padSym(h: 8, v: 10),
-        ),
-      ),
-    );
-  }
-}
-
 class _NewChatButton extends StatelessWidget {
   const _NewChatButton({required this.onTap});
 
@@ -544,12 +483,12 @@ class WebFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
     return Container(
-      padding: context.padSym(h: 12, v: 6),
+      padding: context.padSym(h: 21, v: 4),
       decoration: BoxDecoration(
         color: selected ? c.primary : c.white,
-        borderRadius: BorderRadius.circular(context.radius(20)),
+        borderRadius: BorderRadius.circular(context.radius(12)),
         border: Border.all(
-          color: selected ? c.primary : c.greylight.withValues(alpha: 0.8),
+          color: selected ? c.primary : c.greylight.withValues(alpha: 0.1),
         ),
       ),
       child: Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
+import 'package:sport_finding/Data/model/host_details_route_args.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -94,7 +95,10 @@ class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
                   Navigator.pushNamed(
                     context,
                     RoutesName.hostDetailsScreen,
-                    arguments: discoveryMatch,
+                    arguments: HostDetailsRouteArgs(
+                      match: discoveryMatch,
+                      popToHomeOnBack: true,
+                    ),
                   );
                 },
                 child: Row(
