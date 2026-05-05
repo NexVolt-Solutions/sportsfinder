@@ -259,11 +259,7 @@ class PublicProfileScreen extends StatelessWidget {
                                 onFollowingTap: model.isOwnProfile
                                     ? null
                                     : () => model.openFollowing(context),
-                                // onRatingTap: model.isOwnProfile
-                                //     ? () => _showRateSheet(context, model)
-                                //     : !model.canRateProfile
-                                //     ? null
-                                //     : () => _showRateSheet(context, model),
+                              
                               ),
                               SizedBox(height: context.h(16)),
                               NormalText(
@@ -493,9 +489,7 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
               text: (widget.model.isSubmittingReview || _isSubmittingLocal)
                   ? '${AppText.submitReview}...'
                   : AppText.submitReview,
-              color: 
-              widget.model.isOwnProfile ? c.greylight : 
-              c.primary,
+              color: c.primary,
               colorText: c.onPrimary,
               onTap:
                   (widget.model.isSubmittingReview ||
