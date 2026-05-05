@@ -256,17 +256,22 @@ class _HostingChip extends StatelessWidget {
         border: Border.all(color: primary.withValues(alpha: 0.45)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
           Icon(Icons.verified_rounded, size: compact ? 13 : 15, color: primary),
           SizedBox(width: context.sw(4)),
-          Text(
-            AppText.youAreHosting,
-            style:
-                (compact
-                        ? context.appText.text12W600.copyWith(fontSize: 10)
-                        : context.appText.text12W600)
-                    .copyWith(color: primary),
+          Expanded(
+            child: Text(
+              AppText.youAreHosting,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style:
+                  (compact
+                          ? context.appText.text12W600.copyWith(fontSize: 10)
+                          : context.appText.text12W600)
+                      .copyWith(color: primary),
+            ),
           ),
         ],
       ),

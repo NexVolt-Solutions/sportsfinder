@@ -9,6 +9,42 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 
+class WebChatMessageItem {
+  const WebChatMessageItem({
+    required this.text,
+    required this.time,
+    required this.isMe,
+    this.isPending = false,
+    this.isFailed = false,
+    this.localId = '',
+  });
+
+  final String text;
+  final String time;
+  final bool isMe;
+  final bool isPending;
+  final bool isFailed;
+  final String localId;
+
+  WebChatMessageItem copyWith({
+    String? text,
+    String? time,
+    bool? isMe,
+    bool? isPending,
+    bool? isFailed,
+    String? localId,
+  }) {
+    return WebChatMessageItem(
+      text: text ?? this.text,
+      time: time ?? this.time,
+      isMe: isMe ?? this.isMe,
+      isPending: isPending ?? this.isPending,
+      isFailed: isFailed ?? this.isFailed,
+      localId: localId ?? this.localId,
+    );
+  }
+}
+
 class WebChatContent extends StatelessWidget {
   const WebChatContent({
     super.key,
@@ -20,6 +56,7 @@ class WebChatContent extends StatelessWidget {
     required this.onSendMessage,
     required this.onClearChat,
     required this.onDeleteChat,
+    required this.activeMessages,
   });
 
   final ChatListScreenViewModel model;
@@ -30,6 +67,7 @@ class WebChatContent extends StatelessWidget {
   final VoidCallback onSendMessage;
   final VoidCallback onClearChat;
   final VoidCallback onDeleteChat;
+  final List<WebChatMessageItem> activeMessages;
 
   @override
   Widget build(BuildContext context) {
@@ -313,20 +351,38 @@ class WebChatContent extends StatelessWidget {
                                                   ),
                                                 )
                                               : ListView(
-                                                  reverse: true,
-                                                  children: [
-                                                    Align(
-                                                      alignment:
-                                                          Alignment.centerRight,
-                                                      child: WebBubble(
-                                                        text: activeThread
-                                                            .lastMessage,
-                                                        time: activeThread
-                                                            .lastTime,
-                                                        isMe: true,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                  children: activeMessages
+                                                      .map(
+                                                        (message) => Align(
+                                                          alignment: message.isMe
+                                                              ? Alignment
+                                                                    .centerRight
+                                                              : Alignment
+                                                                    .centerLeft,
+                                                          child: Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                  bottom:
+                                                                      context.h(
+                                                                        8,
+                                                                      ),
+                                                                ),
+                                                            child: WebBubble(
+                                                              text:
+                                                                  message.text,
+                                                              time:
+                                                                  message.time,
+                                                              isMe:
+                                                                  message.isMe,
+                                                              isPending: message
+                                                                  .isPending,
+                                                              isFailed:
+                                                                  message.isFailed,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                      .toList(),
                                                 ),
                                         ),
 
@@ -507,11 +563,15 @@ class WebBubble extends StatelessWidget {
     required this.text,
     required this.time,
     required this.isMe,
+    this.isPending = false,
+    this.isFailed = false,
   });
 
   final String text;
   final String time;
   final bool isMe;
+  final bool isPending;
+  final bool isFailed;
 
   @override
   Widget build(BuildContext context) {
@@ -536,9 +596,11 @@ class WebBubble extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              time,
+              isFailed ? 'Failed' : (isPending ? 'Sending...' : time),
               style: context.appText.text12W400.copyWith(
-                color: isMe ? c.onPrimary.withValues(alpha: 0.85) : c.greylight,
+                color: isFailed
+                    ? c.error
+                    : (isMe ? c.onPrimary.withValues(alpha: 0.85) : c.greylight),
               ),
             ),
           ),
