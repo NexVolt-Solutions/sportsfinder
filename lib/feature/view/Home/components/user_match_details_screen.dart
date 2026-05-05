@@ -165,12 +165,25 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         maxLines: 3,
                       ),
                       SizedBox(height: context.h(16)),
-                      UserGreetingWidget(
-                        imageUrl: match.hostAvatarUrl,
-                        title: match.displayHostName,
-                        locName: match.location,
-                        subTitle: match.resolvedHostBio,
-                        isShow: true,
+                      GestureDetector(
+                        onTap: () {
+                          final uid = match.hostUserId.trim();
+                          final name = match.displayHostName.trim();
+                          if (uid.isEmpty || name.isEmpty) return;
+                          match.pushPublicProfileForUser(
+                            context,
+                            userId: uid,
+                            displayName: name,
+                          );
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: UserGreetingWidget(
+                          imageUrl: match.hostAvatarUrl,
+                          title: match.displayHostName,
+                          locName: match.location,
+                          subTitle: match.resolvedHostBio,
+                          isShow: true,
+                        ),
                       ),
                       SizedBox(height: context.h(16)),
                       if (match.isHostedByCurrentUser) ...[

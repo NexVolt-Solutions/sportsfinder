@@ -23,6 +23,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _boundRealtimeChat = false;
+  int _lastRenderedMessageCount = 0;
 
   @override
   void didChangeDependencies() {
@@ -58,6 +59,17 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Consumer<ChatScreenViewModel>(
       builder: (context, model, child) {
+        if (model.messages.length != _lastRenderedMessageCount) {
+          _lastRenderedMessageCount = model.messages.length;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || !_scrollController.hasClients) return;
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            );
+          });
+        }
         final subtitle = model.isRealtimeChatBound
             ? (model.isConnected ? model.activeChatSubtitle : 'Connecting...')
             : 'Chat unavailable';

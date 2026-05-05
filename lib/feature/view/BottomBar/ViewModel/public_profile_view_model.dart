@@ -384,7 +384,10 @@ class PublicProfileViewModel extends ChangeNotifier {
       return;
     }
     if (isFollowing) {
-      openFollowers(context);
+      // Privacy/UX: don't navigate away after tapping follow.
+      if (context.mounted) {
+        AppSnackBar.show('You are already following this user');
+      }
       return;
     }
 
@@ -404,7 +407,6 @@ class PublicProfileViewModel extends ChangeNotifier {
 
       if (!context.mounted) return;
       AppSnackBar.show('User followed successfully');
-      openFollowers(context);
     } catch (e) {
       if (_disposed) return;
       log('❌ [PublicProfileVM] Follow API failed for userId: $selectedUserId');

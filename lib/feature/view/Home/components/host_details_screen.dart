@@ -499,12 +499,25 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                       ),
                       SizedBox(height: context.h(16)),
                       if (model.selectedIndex == 0) ...[
-                        UserGreetingWidget(
-                          imageUrl: match.hostAvatarUrl,
-                          title: match.displayHostName,
-                          locName: match.location,
-                          subTitle: match.resolvedHostBio,
-                          isShow: true,
+                        GestureDetector(
+                          onTap: () {
+                            final uid = match.hostUserId.trim();
+                            final name = match.displayHostName.trim();
+                            if (uid.isEmpty || name.isEmpty) return;
+                            match.pushPublicProfileForUser(
+                              context,
+                              userId: uid,
+                              displayName: name,
+                            );
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: UserGreetingWidget(
+                            imageUrl: match.hostAvatarUrl,
+                            title: match.displayHostName,
+                            locName: match.location,
+                            subTitle: match.resolvedHostBio,
+                            isShow: true,
+                          ),
                         ),
                         if (showPlayedMatchesCard) ...[
                           SizedBox(height: context.h(16)),

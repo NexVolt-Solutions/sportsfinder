@@ -105,12 +105,11 @@ class PublicProfileScreen extends StatelessWidget {
                 followingValue: '${model.followingCount}',
                 ratingValue: model.ratingValue,
                 matchesPlayedValue: model.matchesPlayedValue,
-                onFollowersTap: model.isOwnProfile
-                    ? null
-                    : () => model.openFollowers(context),
-                onFollowingTap: model.isOwnProfile
-                    ? null
-                    : () => model.openFollowing(context),
+                // Privacy: only allow opening follow lists for own profile.
+                onFollowersTap:
+                    model.isOwnProfile ? () => model.openFollowers(context) : null,
+                onFollowingTap:
+                    model.isOwnProfile ? () => model.openFollowing(context) : null,
                 onRatingTap: model.isOwnProfile
                     ? () => _showRateSheet(context, model)
                     : !model.canRateProfile
@@ -253,12 +252,13 @@ class PublicProfileScreen extends StatelessWidget {
                                 followingCount: model.followingCount,
                                 ratingValue: model.ratingValue,
                                 matchesPlayedValue: model.matchesPlayedValue,
+                                // Privacy: only allow opening follow lists for own profile.
                                 onFollowersTap: model.isOwnProfile
-                                    ? null
-                                    : () => model.openFollowers(context),
+                                    ? () => model.openFollowers(context)
+                                    : null,
                                 onFollowingTap: model.isOwnProfile
-                                    ? null
-                                    : () => model.openFollowing(context),
+                                    ? () => model.openFollowing(context)
+                                    : null,
                               
                               ),
                               SizedBox(height: context.h(16)),

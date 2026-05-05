@@ -12,6 +12,9 @@ import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -138,6 +141,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ? response.message
             : (accept ? 'Invitation accepted' : 'Invitation declined'),
       );
+
+      if (accept && mounted) {
+        // After accepting an invite, take the user straight to the match.
+        _navigateForNotification(item);
+      }
     } catch (e) {
       AppLogger.error(
         '$actionLabel invite API failed for notificationId=${item.id}, '
@@ -157,14 +165,75 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _handleNotificationTap(NotificationModel item) async {
-    if (item.isRead || item.id.trim().isEmpty) return;
-
-    try {
-      await context.read<NotificationService>().markAsRead(item.id);
-    } catch (e) {
-      if (!mounted) return;
-      AppSnackBar.show(messageFromApiException(e));
+    final id = item.id.trim();
+    if (id.isNotEmpty && !item.isRead) {
+      try {
+        await context.read<NotificationService>().markAsRead(id);
+      } catch (e) {
+        if (!mounted) return;
+        AppSnackBar.show(messageFromApiException(e));
+      }
     }
+    if (!mounted) return;
+    _navigateForNotification(item);
+  }
+
+  void _navigateForNotification(NotificationModel item) {
+    final type = item.type.trim().toLowerCase();
+    final matchId = item.matchId.trim();
+    final myId = ProfileService().profile?.id.trim() ?? '';
+    final hostId = (item.payload['host_id'] ?? item.payload['hostId'] ?? '')
+        .toString()
+        .trim();
+
+    // Match-related notifications -> open match details.
+    if (matchId.isNotEmpty &&
+        (item.isInvitation ||
+            type.contains('match') ||
+            type.contains('player_removed') ||
+            type.contains('removed') ||
+            type.contains('joined') ||
+            type.contains('started') ||
+            type.contains('cancel') ||
+            type.contains('delete'))) {
+      final baseStub = DiscoveryMatch.fromPushData(
+        matchId: matchId,
+        title: item.payload['match_title']?.toString().trim() ?? '',
+        sportType: item.sportName,
+        notificationBody: item.message.isNotEmpty ? item.message : item.displayTitle,
+      );
+      final stub = baseStub.copyWith(
+        hostUserId: hostId,
+        hostDisplayName:
+            (item.payload['host_name'] ?? item.payload['hostName'] ?? '')
+                .toString()
+                .trim(),
+        hostAvatarUrl:
+            (item.payload['host_avatar'] ?? item.payload['hostAvatar'] ?? '')
+                .toString()
+                .trim(),
+      );
+
+      final isHost = myId.isNotEmpty && hostId.isNotEmpty && myId == hostId;
+      Navigator.pushNamed(
+        context,
+        isHost ? RoutesName.hostDetailsScreen : RoutesName.userMatchDetailsScreen,
+        arguments: stub,
+      );
+      return;
+    }
+
+    // Follower-related notifications -> open followers list.
+    if (item.isFollowNotification || type.contains('new_follower')) {
+      Navigator.pushNamed(context, RoutesName.followersScreen);
+      return;
+    }
+
+    // Default: stay on notifications screen (no deep link).
+    AppLogger.debug(
+      'No navigation mapping for notification type=$type id=${item.id}',
+      tag: 'NotificationsScreen',
+    );
   }
 
   Future<void> _handleReadAll() async {
