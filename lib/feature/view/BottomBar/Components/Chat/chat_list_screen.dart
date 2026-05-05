@@ -9,10 +9,10 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Chat/web/web_chat_content.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
-import 'package:sport_finding/feature/webwidget/web_chat_content.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key, this.embedInBottomBar = false});
@@ -28,7 +28,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   ChatListScreenViewModel? _vm;
   ChatListScreenViewModel get _safeVm => _vm ??= ChatListScreenViewModel();
   final TextEditingController _webMessageController = TextEditingController();
-  int _selectedWebThreadIndex = 0;
+  int? _selectedWebThreadIndex;
 
   Future<void> _pickAndOpenUser() async {
     final selected = await Navigator.pushNamed(
@@ -73,19 +73,41 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 setState(() => _selectedWebThreadIndex = index);
               },
               onPickUser: _pickAndOpenUser,
-              onSendMessage: () {
-                final hasThreads = model.hasThreads;
-                if (!hasThreads) return;
-                final safeSelected = _selectedWebThreadIndex.clamp(
-                  0,
-                  model.threads.length - 1,
+              onClearChat: () {
+                _webMessageController.clear();
+                setState(() => _selectedWebThreadIndex = null);
+              },
+              onDeleteChat: () {
+                final selectedIndex = _selectedWebThreadIndex;
+                if (selectedIndex == null ||
+                    selectedIndex < 0 ||
+                    selectedIndex >= model.threads.length) {
+                  return;
+                }
+                final thread = model.threads[selectedIndex];
+                ChatListScreenViewModel.removeThread(
+                  matchId: thread.matchId,
+                  targetUserId: thread.targetUserId,
+                  userName: thread.userName,
                 );
-                final activeThread = model.threads[safeSelected];
+                _webMessageController.clear();
+                setState(() => _selectedWebThreadIndex = null);
+              },
+              onSendMessage: () {
+                final selectedIndex = _selectedWebThreadIndex;
+                if (!model.hasThreads ||
+                    selectedIndex == null ||
+                    selectedIndex < 0 ||
+                    selectedIndex >= model.threads.length) {
+                  return;
+                }
+                final activeThread = model.threads[selectedIndex];
                 final text = _webMessageController.text.trim();
                 if (text.isEmpty) return;
                 ChatListScreenViewModel.upsertThread(
                   userName: activeThread.userName,
                   matchId: activeThread.matchId,
+                  targetUserId: activeThread.targetUserId,
                   lastMessage: text,
                   lastAt: DateTime.now(),
                 );
