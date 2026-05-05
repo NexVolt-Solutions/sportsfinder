@@ -4,6 +4,14 @@ import 'package:sport_finding/core/Network/api_service.dart';
 
 class FollowersRepo {
   final ApiService _apiService = ApiService();
+  static const int _maxLimit = 100;
+  static const int _defaultLimit = 20;
+
+  int _sanitizeLimit(int limit) {
+    if (limit <= 0) return _defaultLimit;
+    if (limit > _maxLimit) return _maxLimit;
+    return limit;
+  }
 
   Future<FollowersModel> getFollowers({
     required String userId,
@@ -11,12 +19,13 @@ class FollowersRepo {
     int limit = 20,
   }) async {
     try {
+      final safeLimit = _sanitizeLimit(limit);
       log("🚀 GET FOLLOWERS API CALLED");
       log("🆔 User ID: $userId");
-      log("📄 Page: $page | Limit: $limit");
+      log("📄 Page: $page | Limit: $safeLimit");
 
       final response = await _apiService.get(
-        "/api/v1/users/$userId/followers?page=$page&limit=$limit",
+        "/api/v1/users/$userId/followers?page=$page&limit=$safeLimit",
       );
 
       log("📥 Response: $response");

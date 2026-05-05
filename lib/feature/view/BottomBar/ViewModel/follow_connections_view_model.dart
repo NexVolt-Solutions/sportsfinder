@@ -159,10 +159,11 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       return;
     }
     try {
+      const maxFollowingLimit = 100;
       final followingModel = await FollowingRepo().getFollowing(
         userId: me,
         page: 1,
-        limit: 200,
+        limit: maxFollowingLimit,
       );
       _activeFollowingIds
         ..clear()

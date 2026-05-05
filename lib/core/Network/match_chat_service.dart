@@ -12,6 +12,14 @@ typedef ChatWsConnector =
     WebSocketChannel Function(Uri uri, Map<String, dynamic> headers);
 typedef ReconnectDelayForAttempt = Duration Function(int attempt);
 
+class ChatHistoryException implements Exception {
+  ChatHistoryException(this.statusCode);
+  final int statusCode;
+
+  @override
+  String toString() => 'Failed to load chat history: $statusCode';
+}
+
 class RealtimeChatMessage {
   RealtimeChatMessage({
     required this.messageId,
@@ -143,7 +151,7 @@ class MatchChatService {
       debugPrint(
         '[MatchChatService] [History] failed status=${response.statusCode}',
       );
-      throw Exception('Failed to load chat history: ${response.statusCode}');
+      throw ChatHistoryException(response.statusCode);
     }
 
     final dynamic decoded = jsonDecode(response.body);

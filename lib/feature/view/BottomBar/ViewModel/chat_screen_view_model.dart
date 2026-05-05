@@ -220,6 +220,14 @@ class ChatScreenViewModel extends ChangeNotifier {
         isOnline: isOnline,
       );
     } catch (e) {
+      if (e is ChatHistoryException && e.statusCode == 403) {
+        _errorMessage =
+            'You can only open match chat after joining this match.';
+        _log('history load forbidden (403), skipping websocket connect');
+        _isBindingRealtime = false;
+        notifyListeners();
+        return;
+      }
       _errorMessage = 'Could not load chat history: $e';
       _log('history load failed: $e');
     }

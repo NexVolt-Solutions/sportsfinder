@@ -1,11 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:sport_finding/core/Constants/google_maps_config.dart';
 import 'package:sport_finding/core/Network/places_search_result.dart';
+import 'package:sport_finding/core/Network/google_places_web_bridge_stub.dart'
+    if (dart.library.html) 'package:sport_finding/core/Network/google_places_web_bridge.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class GooglePlacesService {
+  final GooglePlacesWebBridge _webBridge = GooglePlacesWebBridge();
   /// Forward geocoding (address -> lat/lng).
   Future<(double, double)?> geocodeAddress(String address) async {
     final q = address.trim();
@@ -83,6 +87,15 @@ class GooglePlacesService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       return const PlacesSearchResult();
+    }
+    if (kIsWeb) {
+      final webResult = await _webBridge.searchSuggestions(
+        query: trimmed,
+        apiKey: GoogleMapsConfig.apiKey,
+      );
+      if (webResult != null) {
+        return webResult;
+      }
     }
     if (GoogleMapsConfig.webServicesKey.isEmpty) {
       AppLogger.warning(

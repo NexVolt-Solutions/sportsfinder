@@ -31,6 +31,7 @@ class FcmService {
   Timer? _tokenRetryTimer;
   bool _isTokenSyncInFlight = false;
   int _tokenRetryAttempt = 0;
+  bool _webTokenSyncBlockedByNetworkPolicy = false;
   static const List<Duration> _tokenRetryDelays = <Duration>[
     Duration(seconds: 1),
     Duration(seconds: 2),
@@ -248,6 +249,13 @@ class FcmService {
       );
       return;
     }
+    if (kIsWeb && _webTokenSyncBlockedByNetworkPolicy) {
+      AppLogger.debug(
+        'Skipping FCM token sync on web after prior network/CORS failure',
+        tag: 'FcmService',
+      );
+      return;
+    }
 
     try {
       final response = await _deviceTokenRepository.registerDeviceToken(
@@ -260,8 +268,26 @@ class FcmService {
         tag: 'FcmService',
       );
     } catch (e) {
+      if (kIsWeb && _looksLikeBrowserNetworkPolicyFailure(e)) {
+        _webTokenSyncBlockedByNetworkPolicy = true;
+        AppLogger.warning(
+          'FCM token sync blocked by browser network policy (likely CORS). '
+          'Will skip further web sync attempts until app reload.',
+          tag: 'FcmService',
+        );
+        return;
+      }
       AppLogger.error('Failed to sync FCM token', tag: 'FcmService', error: e);
     }
+  }
+
+  bool _looksLikeBrowserNetworkPolicyFailure(Object error) {
+    final value = error.toString().toLowerCase();
+    return value.contains('failed to fetch') ||
+        value.contains('clientexception') ||
+        value.contains('xmlhttprequest error') ||
+        value.contains('networkerror') ||
+        value.contains('cors');
   }
 
   String? _platformName() {
