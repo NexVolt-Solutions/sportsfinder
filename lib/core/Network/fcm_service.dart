@@ -32,6 +32,7 @@ class FcmService {
   bool _isTokenSyncInFlight = false;
   int _tokenRetryAttempt = 0;
   bool _webTokenSyncBlockedByNetworkPolicy = false;
+  bool _tokenSyncBlockedByHardFailure = false;
   static const List<Duration> _tokenRetryDelays = <Duration>[
     Duration(seconds: 1),
     Duration(seconds: 2),
@@ -110,6 +111,13 @@ class FcmService {
 
   /// Call after login, signup (with session), Google auth, or web token bootstrap.
   Future<void> registerTokenWithBackendIfAuthenticated() async {
+    if (_tokenSyncBlockedByHardFailure) {
+      AppLogger.warning(
+        'Skipping FCM token sync: blocked by previous hard Firebase Installations failure',
+        tag: 'FcmService',
+      );
+      return;
+    }
     await _syncCurrentToken();
   }
 
@@ -178,6 +186,7 @@ class FcmService {
   }
 
   Future<void> _syncCurrentToken() async {
+    if (_tokenSyncBlockedByHardFailure) return;
     if (_isTokenSyncInFlight) return;
     _tokenRetryTimer?.cancel();
     _isTokenSyncInFlight = true;
@@ -186,6 +195,23 @@ class FcmService {
       await _syncTokenToBackend(token);
       _tokenRetryAttempt = 0;
     } catch (e, stackTrace) {
+      if (_isHardFcmTokenFailure(e)) {
+        _tokenSyncBlockedByHardFailure = true;
+        _tokenRetryTimer?.cancel();
+        _tokenRetryTimer = null;
+        AppLogger.warning(
+          'FCM token sync disabled due to hard Firebase Installations failure '
+          '(FIS auth/unavailable). App will continue without push token until restart.',
+          tag: 'FcmService',
+        );
+        AppLogger.error(
+          'FCM hard failure details',
+          tag: 'FcmService',
+          error: e,
+          stackTrace: stackTrace,
+        );
+        return;
+      }
       AppLogger.error(
         'FCM getToken failed. Will continue without token for now.',
         tag: 'FcmService',
@@ -216,11 +242,20 @@ class FcmService {
 
   late final WidgetsBindingObserver _appLifecycleObserver =
       _FcmLifecycleObserver(onResumed: () {
-        if (_isTokenSyncInFlight || _tokenRetryTimer != null) {
+        if (_tokenSyncBlockedByHardFailure ||
+            _isTokenSyncInFlight ||
+            _tokenRetryTimer != null) {
           return;
         }
         unawaited(_syncCurrentToken());
       });
+
+  bool _isHardFcmTokenFailure(Object error) {
+    final value = error.toString().toLowerCase();
+    return value.contains('fis_auth_error') ||
+        value.contains('firebaseinstallationsexception') ||
+        value.contains('firebase installations service is unavailable');
+  }
 
   Future<void> _syncTokenToBackend(String? token) async {
     if (token == null || token.trim().isEmpty) {
