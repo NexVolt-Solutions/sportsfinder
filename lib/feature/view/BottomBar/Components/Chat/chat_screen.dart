@@ -11,9 +11,8 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, this.matchId, this.targetUserId});
+  const ChatScreen({super.key, this.targetUserId});
 
-  final String? matchId;
   final String? targetUserId;
 
   @override
@@ -31,30 +30,20 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_boundRealtimeChat) return;
 
     final routeArgs = ModalRoute.of(context)?.settings.arguments;
-    final routeMatchId = routeArgs is ChatRouteArgs
-        ? (routeArgs.matchId?.trim() ?? '')
-        : (routeArgs is String ? routeArgs.trim() : '');
     final routeTargetUserId = routeArgs is ChatRouteArgs
         ? (routeArgs.targetUserId?.trim() ?? '')
         : '';
-    final matchId = (widget.matchId?.trim().isNotEmpty ?? false)
-        ? widget.matchId!.trim()
-        : routeMatchId;
     final targetUserId = (widget.targetUserId?.trim().isNotEmpty ?? false)
         ? widget.targetUserId!.trim()
         : routeTargetUserId;
 
-    if (matchId.isEmpty && targetUserId.isEmpty) return;
+    if (targetUserId.isEmpty) return;
 
     _boundRealtimeChat = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final vm = context.read<ChatScreenViewModel>();
-      if (matchId.isNotEmpty) {
-        vm.bindMatchChat(matchId);
-      } else {
-        vm.bindDirectChat(targetUserId);
-      }
+      vm.bindDirectChat(targetUserId);
     });
   }
 

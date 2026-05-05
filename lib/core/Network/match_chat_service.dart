@@ -52,7 +52,6 @@ class RealtimeChatMessage {
 class MatchChatService {
   MatchChatService({
     required this.accessToken,
-    this.matchId,
     this.targetUserId,
     ChatWsConnector? wsConnector,
     ReconnectDelayForAttempt? reconnectDelayForAttempt,
@@ -66,7 +65,6 @@ class MatchChatService {
     );
   }
 
-  final String? matchId;
   final String? targetUserId;
   late final String _baseRest;
   late final String _baseWs;
@@ -88,17 +86,11 @@ class MatchChatService {
   Stream<void> get onConnected => _connectedController.stream;
 
   String get _chatPath {
-    final resolvedMatchId = matchId?.trim() ?? '';
     final resolvedTargetUserId = targetUserId?.trim() ?? '';
-    if (resolvedMatchId.isNotEmpty) {
-      return '/ws/matches/$resolvedMatchId/chat';
-    }
     if (resolvedTargetUserId.isNotEmpty) {
       return '/ws/users/$resolvedTargetUserId/chat';
     }
-    throw StateError(
-      'MatchChatService requires either a non-empty matchId or targetUserId.',
-    );
+    throw StateError('MatchChatService requires a non-empty targetUserId.');
   }
 
   static WebSocketChannel _defaultWsConnector(
@@ -126,18 +118,11 @@ class MatchChatService {
   }
 
   Future<List<RealtimeChatMessage>> loadHistory() async {
-    final activeMatchId = matchId?.trim() ?? '';
     final activeTargetUserId = targetUserId?.trim() ?? '';
-    late final Uri uri;
-    if (activeMatchId.isNotEmpty) {
-      uri = Uri.parse('$_baseRest/matches/$activeMatchId/messages');
-    } else if (activeTargetUserId.isNotEmpty) {
-      uri = Uri.parse('$_baseRest/users/$activeTargetUserId/messages');
-    } else {
-      throw Exception(
-        'Chat history requires either matchId or targetUserId.',
-      );
+    if (activeTargetUserId.isEmpty) {
+      throw Exception('Chat history requires targetUserId.');
     }
+    final uri = Uri.parse('$_baseRest/users/$activeTargetUserId/messages');
     debugPrint('[MatchChatService] [History] GET $uri');
     final response = await http.get(
       uri,
@@ -169,7 +154,7 @@ class MatchChatService {
         )
         .toList();
     debugPrint(
-      '[MatchChatService] [History] loaded count=${history.length} matchId=$matchId',
+      '[MatchChatService] [History] loaded count=${history.length} targetUserId=$targetUserId',
     );
     return history;
   }
@@ -177,7 +162,7 @@ class MatchChatService {
   void connect() {
     if (_isDisposed || _channel != null) {
       debugPrint(
-        '[MatchChatService] [WS] skip connect (disposed=$_isDisposed hasChannel=${_channel != null}) matchId=$matchId',
+        '[MatchChatService] [WS] skip connect (disposed=$_isDisposed hasChannel=${_channel != null}) targetUserId=$targetUserId',
       );
       return;
     }
@@ -219,7 +204,7 @@ class MatchChatService {
 
   void _handleServerEvent(Map<String, dynamic> event) {
     debugPrint(
-      '[MatchChatService] [WS] parsed event type=${event['type']} matchId=$matchId',
+      '[MatchChatService] [WS] parsed event type=${event['type']} targetUserId=$targetUserId',
     );
     switch ('${event['type'] ?? ''}') {
       case 'connected':
@@ -299,7 +284,7 @@ class MatchChatService {
   }
 
   void dispose() {
-    debugPrint('[MatchChatService] dispose matchId=$matchId');
+    debugPrint('[MatchChatService] dispose targetUserId=$targetUserId');
     _isDisposed = true;
     _reconnectScheduler.cancel();
     _channelSub?.cancel();

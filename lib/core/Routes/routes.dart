@@ -257,7 +257,6 @@ class Routes {
           (_) => RouteProviders.wrapIfNeeded(
                 RoutesName.chatScreen,
                 ChatScreen(
-                  matchId: args?.matchId,
                   targetUserId: args?.targetUserId,
                 ),
                 routeArguments: settings.arguments,

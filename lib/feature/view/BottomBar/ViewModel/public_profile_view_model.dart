@@ -99,10 +99,8 @@ class PublicProfileViewModel extends ChangeNotifier {
   bool get isFollowLoading => _followLoading;
   String? get followError => _followError;
   String get selectedUserId => _args?.userId.trim() ?? '';
-  String get initialMatchId => _args?.initialMatchId?.trim() ?? '';
 
-  /// Hide follow / message / rate when viewing your own public profile.
-  bool get isOwnProfile =>
+   bool get isOwnProfile =>
       _viewingSelf || (_active?.actions.isOwnProfile ?? false);
   bool get canRateProfile =>
       !isOwnProfile && (_canRateOverride ?? (_active?.actions.canRate ?? true));
@@ -365,13 +363,11 @@ class PublicProfileViewModel extends ChangeNotifier {
       return;
     }
 
-    final matchId = initialMatchId.trim();
     Navigator.pushNamed(
       context,
       RoutesName.chatScreen,
       arguments: ChatRouteArgs(
         contactName: fullName.isNotEmpty ? fullName : 'Player Chat',
-        matchId: matchId.isEmpty ? null : matchId,
         targetUserId: selectedUserId,
         isOnline: true,
       ),

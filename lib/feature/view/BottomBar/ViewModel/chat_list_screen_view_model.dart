@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 class ChatThreadPreview {
   const ChatThreadPreview({
     required this.userName,
-    this.matchId,
     this.targetUserId,
     required this.lastMessage,
     required this.lastTime,
@@ -13,7 +12,6 @@ class ChatThreadPreview {
   });
 
   final String userName;
-  final String? matchId;
   final String? targetUserId;
   final String lastMessage;
   final String lastTime;
@@ -22,7 +20,6 @@ class ChatThreadPreview {
 
   ChatThreadPreview copyWith({
     String? userName,
-    String? matchId,
     String? targetUserId,
     String? lastMessage,
     String? lastTime,
@@ -31,7 +28,6 @@ class ChatThreadPreview {
   }) {
     return ChatThreadPreview(
       userName: userName ?? this.userName,
-      matchId: matchId ?? this.matchId,
       targetUserId: targetUserId ?? this.targetUserId,
       lastMessage: lastMessage ?? this.lastMessage,
       lastTime: lastTime ?? this.lastTime,
@@ -61,7 +57,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
 
   static void upsertThread({
     required String userName,
-    String? matchId,
     String? targetUserId,
     String? lastMessage,
     DateTime? lastAt,
@@ -69,7 +64,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
     bool isOnline = true,
   }) {
     final trimmedName = userName.trim();
-    final trimmedMatchId = (matchId ?? '').trim();
     final trimmedTargetUserId = (targetUserId ?? '').trim();
     if (trimmedName.isEmpty) return;
     final now = lastAt ?? DateTime.now();
@@ -77,9 +71,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
     final previewMessage = (lastMessage ?? 'Chat started').trim();
 
     final idx = _globalThreads.indexWhere((t) {
-      if (trimmedMatchId.isNotEmpty) {
-        return (t.matchId ?? '').trim() == trimmedMatchId;
-      }
       if (trimmedTargetUserId.isNotEmpty) {
         return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
       }
@@ -90,7 +81,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
         0,
         ChatThreadPreview(
           userName: trimmedName,
-          matchId: trimmedMatchId.isNotEmpty ? trimmedMatchId : null,
           targetUserId: trimmedTargetUserId.isNotEmpty ? trimmedTargetUserId : null,
           lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
           lastTime: formattedTime,
@@ -101,7 +91,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
     } else {
       final updated = _globalThreads[idx].copyWith(
         userName: trimmedName,
-        matchId: trimmedMatchId.isNotEmpty ? trimmedMatchId : null,
         targetUserId: trimmedTargetUserId.isNotEmpty ? trimmedTargetUserId : null,
         lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
         lastTime: formattedTime,
@@ -113,23 +102,18 @@ class ChatListScreenViewModel extends ChangeNotifier {
         ..insert(0, updated);
     }
     debugPrint(
-      '[ChatListVM] upsertThread user=$trimmedName matchId=${trimmedMatchId.isEmpty ? "direct" : trimmedMatchId} total=${_globalThreads.length}',
+      '[ChatListVM] upsertThread user=$trimmedName targetUserId=$trimmedTargetUserId total=${_globalThreads.length}',
     );
     _notifyAllListeners();
   }
 
   static void removeThread({
-    String? matchId,
     String? targetUserId,
     String? userName,
   }) {
-    final trimmedMatchId = (matchId ?? '').trim();
     final trimmedTargetUserId = (targetUserId ?? '').trim();
     final trimmedUserName = (userName ?? '').trim().toLowerCase();
     _globalThreads.removeWhere((thread) {
-      if (trimmedMatchId.isNotEmpty) {
-        return (thread.matchId ?? '').trim() == trimmedMatchId;
-      }
       if (trimmedTargetUserId.isNotEmpty) {
         return (thread.targetUserId ?? '').trim() == trimmedTargetUserId;
       }
@@ -144,7 +128,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
   void startOrOpenThread(String userName, {String? targetUserId}) {
     upsertThread(
       userName: userName,
-      matchId: null,
       targetUserId: targetUserId,
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),

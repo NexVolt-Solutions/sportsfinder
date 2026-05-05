@@ -86,7 +86,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 }
                 final thread = model.threads[selectedIndex];
                 ChatListScreenViewModel.removeThread(
-                  matchId: thread.matchId,
                   targetUserId: thread.targetUserId,
                   userName: thread.userName,
                 );
@@ -106,7 +105,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 if (text.isEmpty) return;
                 ChatListScreenViewModel.upsertThread(
                   userName: activeThread.userName,
-                  matchId: activeThread.matchId,
                   targetUserId: activeThread.targetUserId,
                   lastMessage: text,
                   lastAt: DateTime.now(),
@@ -152,7 +150,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     RoutesName.chatScreen,
                                     arguments: ChatRouteArgs(
                                       contactName: t.userName,
-                                      matchId: t.matchId,
                                       targetUserId: t.targetUserId,
                                       isOnline: t.isOnline,
                                     ),

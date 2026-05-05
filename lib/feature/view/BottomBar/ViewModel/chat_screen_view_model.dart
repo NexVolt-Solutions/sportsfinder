@@ -49,8 +49,6 @@ class ChatMessage {
 }
 
 typedef MatchChatServiceFactory =
-    MatchChatService Function(String accessToken, String matchId);
-typedef DirectChatServiceFactory =
     MatchChatService Function(String accessToken, String targetUserId);
 typedef AccessTokenProvider = Future<String?> Function();
 typedef CurrentUserIdProvider = String Function();
@@ -60,15 +58,10 @@ class ChatScreenViewModel extends ChangeNotifier {
     this.contactName = AppText.alexJohnson,
     this.isOnline = true,
     MatchChatServiceFactory? chatServiceFactory,
-    DirectChatServiceFactory? directChatServiceFactory,
     AccessTokenProvider? accessTokenProvider,
     CurrentUserIdProvider? currentUserIdProvider,
   }) : _chatServiceFactory =
            chatServiceFactory ??
-           ((accessToken, matchId) =>
-               MatchChatService(accessToken: accessToken, matchId: matchId)),
-       _directChatServiceFactory =
-           directChatServiceFactory ??
            ((accessToken, targetUserId) => MatchChatService(
              accessToken: accessToken,
              targetUserId: targetUserId,
@@ -82,7 +75,6 @@ class ChatScreenViewModel extends ChangeNotifier {
   final String contactName;
   final bool isOnline;
   final MatchChatServiceFactory _chatServiceFactory;
-  final DirectChatServiceFactory _directChatServiceFactory;
   final AccessTokenProvider _accessTokenProvider;
   final CurrentUserIdProvider _currentUserIdProvider;
 
@@ -95,9 +87,7 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool _isConnected = false;
   String? _errorMessage;
   bool _isBindingRealtime = false;
-  String _boundMatchId = '';
   String _boundTargetUserId = '';
-  bool _isDirectChat = false;
   int _localMessageCounter = 0;
   final Map<String, Timer> _pendingFailTimers = <String, Timer>{};
   static const Duration _pendingFailureTimeout = Duration(seconds: 12);
@@ -107,8 +97,7 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool get isConnected => _isConnected;
   String? get errorMessage => _errorMessage;
   bool get isRealtimeChatBound => _matchChatService != null;
-  String get activeChatSubtitle =>
-      _isDirectChat ? 'Live direct chat' : 'Live match chat';
+  String get activeChatSubtitle => 'Live chat';
 
   void _log(String message) {
     debugPrint('[ChatScreenVM] $message');
@@ -120,7 +109,7 @@ class ChatScreenViewModel extends ChangeNotifier {
     );
     if (_matchChatService == null) {
       _errorMessage =
-          'This chat is not connected to the backend yet. WebSocket chat is only active when a matchId is opened.';
+          'This chat is not connected to the backend yet.';
       _log('send blocked: service not bound');
       notifyListeners();
       return;
@@ -179,104 +168,11 @@ class ChatScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> bindMatchChat(String matchId) async {
-    final trimmedMatchId = matchId.trim();
-    if (trimmedMatchId.isEmpty || _isBindingRealtime) return;
-    _log('bindMatchChat start matchId=$trimmedMatchId');
-    _boundMatchId = trimmedMatchId;
-    _boundTargetUserId = '';
-    _isDirectChat = false;
-
-    final token = await _accessTokenProvider();
-    if (token == null || token.isEmpty) {
-      _log('bindMatchChat aborted: access token missing');
-      return;
-    }
-
-    _isBindingRealtime = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    await _disposeRealtimeOnly();
-    _log('old realtime state disposed');
-
-    final service = _chatServiceFactory(token, trimmedMatchId);
-    _matchChatService = service;
-
-    try {
-      final history = await service.loadHistory();
-      _messages.clear();
-      _messageIds.clear();
-      for (final item in history) {
-        _appendRealtimeMessage(item);
-      }
-      _log('history loaded count=${history.length}');
-      ChatListScreenViewModel.upsertThread(
-        userName: contactName,
-        matchId: _boundMatchId,
-        lastMessage: history.isNotEmpty ? history.last.content : 'Chat started',
-        lastAt: history.isNotEmpty ? history.last.sentAt : DateTime.now(),
-        unreadCount: 0,
-        isOnline: isOnline,
-      );
-    } catch (e) {
-      if (e is ChatHistoryException && e.statusCode == 403) {
-        _errorMessage =
-            'You can only open match chat after joining this match.';
-        _log('history load forbidden (403), skipping websocket connect');
-        _isBindingRealtime = false;
-        notifyListeners();
-        return;
-      }
-      _errorMessage = 'Could not load chat history: $e';
-      _log('history load failed: $e');
-    }
-
-    _connectedSub = service.onConnected.listen((_) {
-      _isConnected = true;
-      _errorMessage = null;
-      _log('ws connected');
-      notifyListeners();
-    });
-
-    _messageSub = service.onMessage.listen((msg) {
-      _log(
-        'ws message received id=${msg.messageId} sender=${msg.senderId} len=${msg.content.length}',
-      );
-      _appendRealtimeMessage(msg);
-      ChatListScreenViewModel.upsertThread(
-        userName: contactName,
-        matchId: _boundMatchId,
-        lastMessage: msg.content,
-        lastAt: msg.sentAt,
-        unreadCount: 0,
-        isOnline: isOnline,
-      );
-      _errorMessage = null;
-      notifyListeners();
-    });
-
-    _errorSub = service.onError.listen((err) {
-      _isConnected = false;
-      _errorMessage = err;
-      _log('ws error: $err');
-      notifyListeners();
-    });
-
-    _log('calling service.connect()');
-    service.connect();
-    _isBindingRealtime = false;
-    _log('bindMatchChat done');
-    notifyListeners();
-  }
-
   Future<void> bindDirectChat(String targetUserId) async {
     final trimmedTargetUserId = targetUserId.trim();
     if (trimmedTargetUserId.isEmpty || _isBindingRealtime) return;
     _log('bindDirectChat start targetUserId=$trimmedTargetUserId');
     _boundTargetUserId = trimmedTargetUserId;
-    _boundMatchId = '';
-    _isDirectChat = true;
 
     final token = await _accessTokenProvider();
     if (token == null || token.isEmpty) {
@@ -291,7 +187,7 @@ class ChatScreenViewModel extends ChangeNotifier {
     await _disposeRealtimeOnly();
     _log('old realtime state disposed');
 
-    final service = _directChatServiceFactory(token, trimmedTargetUserId);
+    final service = _chatServiceFactory(token, trimmedTargetUserId);
     _matchChatService = service;
 
     try {
@@ -389,11 +285,10 @@ class ChatScreenViewModel extends ChangeNotifier {
       ),
     );
     _schedulePendingFailure(_messages.last.localId);
-    if (_boundMatchId.isNotEmpty) {
+    if (_boundTargetUserId.isNotEmpty) {
       ChatListScreenViewModel.upsertThread(
         userName: contactName,
-        matchId: _boundMatchId,
-        targetUserId: _boundTargetUserId.isNotEmpty ? _boundTargetUserId : null,
+        targetUserId: _boundTargetUserId,
         lastMessage: content,
         lastAt: DateTime.now(),
         unreadCount: 0,
