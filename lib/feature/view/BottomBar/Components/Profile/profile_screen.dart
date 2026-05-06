@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -258,39 +259,40 @@ class ProfileScreen extends StatelessWidget {
                     );
                   },
                 ),
-                SizedBox(height: context.h(8)),
-
-                CardWidget(
-                  onTap: () => _handleLogout(context),
-                  padding: context.padSym(h: 16, v: 14),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.logout_rounded,
-                        color: context.appColors.error,
-                        size: context.w(24),
-                      ),
-                      SizedBox(width: context.w(8)),
-                      Expanded(
-                        child: NormalText(
-                          titleText: AppText.logout,
-                          titleStyle: context.appText.text14W600.copyWith(
-                            color: context.appColors.error,
-                          ),
-                          subText: AppText.logoutSubtitle,
-                          subStyle: context.appText.text12W400.copyWith(
-                            color: context.appColors.greyDark,
+                if (!kIsWeb) ...[
+                  SizedBox(height: context.h(8)),
+                  CardWidget(
+                    onTap: () => _handleLogout(context),
+                    padding: context.padSym(h: 16, v: 14),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.logout_rounded,
+                          color: context.appColors.error,
+                          size: context.w(24),
+                        ),
+                        SizedBox(width: context.w(8)),
+                        Expanded(
+                          child: NormalText(
+                            titleText: AppText.logout,
+                            titleStyle: context.appText.text14W600.copyWith(
+                              color: context.appColors.error,
+                            ),
+                            subText: AppText.logoutSubtitle,
+                            subStyle: context.appText.text12W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
                           ),
                         ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: context.appColors.error,
-                      ),
-                    ],
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: context.appColors.error,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
 
                 SizedBox(height: context.h(16)),
                 Row(

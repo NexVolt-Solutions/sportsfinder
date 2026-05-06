@@ -36,20 +36,13 @@ class CustomSettingCard extends StatelessWidget {
     if (trailingType == 'arrow') {
       trailingWidget = const Icon(Icons.arrow_forward_ios, size: 16);
     } else if (trailingType == 'switch') {
-      trailingWidget = switchLoading
-          ? SizedBox(
-              width: context.w(24),
-              height: context.w(24),
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: context.appColors.primary,
-              ),
-            )
-          : Switch(
-              value: switchValue ?? false,
-              onChanged: switchEnabled ? onSwitchChanged : null,
-              activeThumbColor: context.appColors.primary,
-            );
+      final canToggle =
+          switchEnabled && !switchLoading && onSwitchChanged != null;
+      trailingWidget = Switch(
+        value: switchValue ?? false,
+        onChanged: canToggle ? onSwitchChanged : null,
+        activeThumbColor: context.appColors.primary,
+      );
     }
 
     return CardWidget(
