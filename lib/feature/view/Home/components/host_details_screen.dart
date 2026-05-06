@@ -529,7 +529,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                           behavior: HitTestBehavior.opaque,
                           child: UserGreetingWidget(
                             imageUrl: match.hostAvatarUrl,
-                            title: match.displayHostName,
+                          title: "${match.displayHostName} (${AppText.host})",
                             locName: match.location,
                             subTitle: match.resolvedHostBio,
                             isShow: true,

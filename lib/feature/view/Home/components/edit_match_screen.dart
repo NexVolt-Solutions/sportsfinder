@@ -84,45 +84,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
       onConfirm: model.setDurationFromHms,
     );
   }
-
-  Future<void> _confirmDeleteMatch(
-    BuildContext context,
-    EditMatchViewModel model,
-  ) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(AppText.deleteMatchConfirmationTitle),
-        content: const Text(AppText.deleteMatchConfirmationMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(AppText.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(AppText.deleteMatch),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldDelete != true || !context.mounted) return;
-
-    final success = await model.deleteMatch();
-    if (!context.mounted) return;
-
-    if (success && model.deletedMatch != null) {
-      Navigator.pop<DeleteMatchModel>(context, model.deletedMatch);
-      return;
-    }
-
-    AppSnackBar.show(
-      model.error ?? 'Failed to delete match',
-      backgroundColor: Colors.red,
-    );
-  }
-
+ 
   @override
   Widget build(BuildContext context) {
     final model = context.read<EditMatchViewModel>();
@@ -131,45 +93,48 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
       backgroundColor: context.appColors.surface,
       resizeToAvoidBottomInset: true,
       body: MainFrame(
-        child: Form(
-          key: model.formKey,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: context.padonly(
-                  left: context.w(20),
-                  right: context.w(20),
-                  bottom: context.h(24),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: context.h(20)),
-                        AppBarWidget(
-                          onTapFirst: () => Navigator.pop(context),
-                          title: AppText.sportFinding,
-                        ),
-                        SizedBox(height: context.h(20)),
-                        NormalText(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          titleText: 'Edit Match',
-                          titleStyle: context.appText.text18W600.copyWith(
-                            color: context.appColors.onSurface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(
+                left: context.w(20),
+                right: context.w(20),
+               ),
+              child: AppBarWidget(
+                onTapFirst: () => Navigator.pop(context),
+                title: AppText.sportFinding,
+              ),
+            ),
+            Expanded(
+              child: Form(
+                key: model.formKey,
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: RepaintBoundary(
+                    child: Padding(
+                      padding: context.padonly(
+                        left: context.w(20),
+                        right: context.w(20),
+                       ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                           NormalText(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            titleText: AppText.editMatch,
+                            titleStyle: context.appText.text18W600.copyWith(
+                              color: context.appColors.onSurface,
+                            ),
+                            subText:
+                                'Update your match details and save changes.',
+                            subStyle: context.appText.text14W400.copyWith(
+                              color: context.appColors.greyDark,
+                            ),
                           ),
-                          subText:
-                              'Update your match details and save changes.',
-                          subStyle: context.appText.text14W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: context.h(8)),
+                          SizedBox(height: context.h(8)),
                     Selector<EditMatchViewModel, (bool, String?)>(
                       selector: (_, m) => (m.optionsLoading, m.optionsError),
                       builder: (context, state, _) {
@@ -494,18 +459,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                                       }
                                     },
                             ),
-                            SizedBox(height: context.h(12)),
-                            CustomButton(
-                              text: AppText.deleteMatch,
-                              color: context.appColors.transparent,
-                              colorText: context.appColors.error,
-                              borderColor: context.appColors.error,
-                              outlined: true,
-                              isLoading: state.isDeleting,
-                              onTap: busy
-                                  ? null
-                                  : () => _confirmDeleteMatch(context, vm),
-                            ),
+                             
                           ],
                         );
                       },
@@ -515,6 +469,9 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
               ),
             ),
           ),
+        ),
+      ),
+          ],
         ),
       ),
     );

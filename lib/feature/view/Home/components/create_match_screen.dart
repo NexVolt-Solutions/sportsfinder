@@ -92,17 +92,8 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
         Selector<CreateMatchViewModel, (bool, String?)>(
           selector: (_, m) => (m.optionsLoading, m.optionsError),
           builder: (context, state, _) {
-            final loading = state.$1;
-            final err = state.$2;
-            if (loading) {
-              return LinearProgressIndicator(
-                minHeight: 2,
-                color: context.appColors.primary,
-                backgroundColor: context.appColors.greylight.withValues(
-                  alpha: 0.3,
-                ),
-              );
-            }
+             final err = state.$2;
+           
             if (err != null) {
               return Padding(
                 padding: EdgeInsets.only(bottom: context.h(8)),
@@ -411,52 +402,59 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               ),
             )
           : MainFrame(
-        child: Form(
-          key: model.formKey,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: context.padonly(
-                  left: context.w(20),
-                  right: context.w(20),
-                  bottom: context.h(24),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: context.h(20)),
-                        AppBarWidget(
-                          onTapFirst: () => Navigator.pop(context),
-                          title: AppText.sportFinding,
-                        ),
-                        SizedBox(height: context.h(20)),
-                        Selector<CreateMatchViewModel, bool>(
-                          selector: (_, m) => m.isEditMode,
-                          builder: (context, isEditMode, _) {
-                            return NormalText(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              titleText: isEditMode
-                                  ? 'Edit Match'
-                                  : AppText.createMatch,
-                              titleStyle: context.appText.text18W600.copyWith(
-                                color: context.appColors.onSurface,
-                              ),
-                              subText: isEditMode
-                                  ? 'Update your match details and save changes.'
-                                  : AppText.setUpANewGameForOthersToJoin,
-                              subStyle: context.appText.text14W400.copyWith(
-                                color: context.appColors.greyDark,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: context.w(20),
+                      right: context.w(20),
+                     ),
+                    child: AppBarWidget(
+                      onTapFirst: () => Navigator.pop(context),
+                      title: AppText.sportFinding,
                     ),
+                  ),
+                  Expanded(
+                    child: Form(
+                      key: model.formKey,
+                      child: SingleChildScrollView(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        child: RepaintBoundary(
+                          child: Padding(
+                            padding: context.padonly(
+                              left: context.w(20),
+                              right: context.w(20),
+                             ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                 Selector<CreateMatchViewModel, bool>(
+                                  selector: (_, m) => m.isEditMode,
+                                  builder: (context, isEditMode, _) {
+                                    return NormalText(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      titleText: isEditMode
+                                          ? 'Edit Match'
+                                          : AppText.createMatch,
+                                      titleStyle:
+                                          context.appText.text18W600.copyWith(
+                                            color: context.appColors.onSurface,
+                                          ),
+                                      subText: isEditMode
+                                          ? 'Update your match details and save changes.'
+                                          : AppText
+                                              .setUpANewGameForOthersToJoin,
+                                      subStyle: context.appText.text14W400
+                                          .copyWith(
+                                            color: context.appColors.greyDark,
+                                          ),
+                                    );
+                                  },
+                                ),
                     SizedBox(height: context.h(8)),
                     Selector<CreateMatchViewModel, (bool, String?)>(
                       selector: (_, m) => (m.optionsLoading, m.optionsError),
@@ -772,6 +770,9 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
           ),
         ),
       ),
+                ],
+              ),
+            ),
     );
   }
 }

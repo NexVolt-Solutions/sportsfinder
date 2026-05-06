@@ -118,23 +118,37 @@ class _MatchCreatedDoneScreenState extends State<MatchCreatedDoneScreen> {
         ),
       ),
       body: MainFrame(
-        child: ListView(
-          padding: context.padSym(h: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppBarWidget(
-              onTapFirst: () => Navigator.pop(context),
-              title: AppText.sportFinding,
+            Padding(
+              padding: EdgeInsets.only(
+                left: context.w(20),
+                right: context.w(20),
+                top: context.h(20),
+              ),
+              child: AppBarWidget(
+                onTapFirst: () => Navigator.pop(context),
+                title: AppText.sportFinding,
+              ),
             ),
-            SizedBox(height: context.h(236)),
-            SvgPicture.asset(
-              AppAssets.matchCreatedDoneIcon,
-              fit: BoxFit.scaleDown,
-            ),
-            NormalText(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              titleText: AppText.matchCreated,
-              subAlign: TextAlign.center,
-              subText: AppText.yourMatchIsLiveShareItWithFriends,
+            Expanded(
+              child: ListView(
+                padding: context.padSym(h: 20),
+                children: [
+                  SizedBox(height: context.h(236)),
+                  SvgPicture.asset(
+                    AppAssets.matchCreatedDoneIcon,
+                    fit: BoxFit.scaleDown,
+                  ),
+                  NormalText(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    titleText: AppText.matchCreated,
+                    subAlign: TextAlign.center,
+                    subText: AppText.yourMatchIsLiveShareItWithFriends,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

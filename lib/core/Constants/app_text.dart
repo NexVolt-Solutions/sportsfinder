@@ -18,6 +18,7 @@ class AppText {
   static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
   static const String removePlayer = 'Remove Player';
   static const String skip = 'Skip';
+  static const String host = 'Host';
   static const String accept = 'Accept';
   static const String sportFinding = 'SportFinding';
   static const String uploadYourPicture = 'Upload your picture';
@@ -465,4 +466,6 @@ class AppText {
   static const String cancel = 'Cancel';
   static const String cancelMatch = 'Cancel Match';
   static const String failedToDeleteMatch = 'Failed to delete match';
+  static const String editMatch = 'Edit Match';
+
 }

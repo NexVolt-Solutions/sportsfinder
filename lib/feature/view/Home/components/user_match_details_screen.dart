@@ -55,33 +55,11 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
     if (routeMatch == null) {
       return Scaffold(
         body: Center(
-          child: Padding(
-            padding: context.padSym(h: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  AppText.noRouteFound,
-                  textAlign: TextAlign.center,
-                  style: context.appText.text16W500,
-                ),
-                SizedBox(height: context.h(16)),
-                // TextButton(
-                //   onPressed: () => Navigator.pop(context),
-                //   child: Text(
-                //     'Back',
-                //     style: context.appText.text16W500.copyWith(
-                //       color: context.appColors.primary,
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-          ),
+          child: NormalText (titleText: AppText.noRouteFound, titleStyle: context.appText.text16W500, titleAlign: TextAlign.center),
         ),
       );
     }
-
+    
     return Consumer<HostDetailScreenViewModel>(
       builder: (context, model, _) {
         final match = model.currentMatch ?? routeMatch;
@@ -98,20 +76,28 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
             (!isOngoing || isCancelled || isCompleted);
         return Scaffold(
           backgroundColor: context.appColors.surface,
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: MainFrame(
-                  child: ListView(
-                    padding: context.padSym(h: 20),
+          body: MainFrame(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      AppBarWidget(
-                        onLeadingTap: () => Navigator.pop(context),
-                        title: AppText.matchDetails,
+                      Padding(
+                        padding: context.padSym(h: 20),
+                        child: AppBarWidget(
+                          onLeadingTap: () => Navigator.pop(context),
+                          title: AppText.matchDetails,
+                        ),
                       ),
+                      Expanded(
+                        child: ListView(
+                          padding: context.padSym(h: 20),
+                          children: [
                       NormalText(
                         titleText: match.title,
+                        titleStyle: context.appText.text18W600,
                         subText: match.sportType,
                       ),
                       SizedBox(height: context.h(20)),
@@ -121,7 +107,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                           Expanded(
                             child: InfoItem(
                               icon: AppAssets.calendarIcon,
-                              title: 'Date',
+                                title: AppText.date,
                               value: match.date,
                             ),
                           ),
@@ -129,7 +115,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                           Expanded(
                             child: InfoItem(
                               icon: AppAssets.clockIcon,
-                              title: 'Time',
+                              title: AppText.time,
                               value: match.time,
                             ),
                           ),
@@ -164,7 +150,9 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         value: match.location,
                         maxLines: 3,
                       ),
-                      SizedBox(height: context.h(16)),
+                      SizedBox(height: context.h(4)),
+                     Divider(color: context.appColors.greylight),
+                      SizedBox(height: context.h(8)),
                       GestureDetector(
                         onTap: () {
                           final uid = match.hostUserId.trim();
@@ -179,7 +167,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         behavior: HitTestBehavior.opaque,
                         child: UserGreetingWidget(
                           imageUrl: match.hostAvatarUrl,
-                          title: match.displayHostName,
+                          title: "${match.displayHostName} (${AppText.host})",
                           locName: match.location,
                           subTitle: match.resolvedHostBio,
                           isShow: true,
@@ -250,135 +238,139 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                         ),
                       ],
                     ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: context.h(5),
-                     right: context.w(20),
-                    left: context.w(20),
-                  ),
-                  child: CustomButton(
-                    isLoading: model.isJoinLeaveLoading,
-                    text: isHostedByCurrentUser
-                        ? AppText.startMatch
-                        : isCancelled
-                        ? 'Match Cancelled'
-                        : isCompleted
-                        ? 'Match Completed'
-                        : isPending && !model.hasJoined
-                        ? 'Match Not Started'
-                        : model.hasJoined
-                        ? AppText.leaveMatch
-                        : AppText.joinMatch,
-                    color: isHostedByCurrentUser
-                        ? context.appColors.primary
-                        : joinDisabledByStatus
-                        ? context.appColors.greylight
-                        : model.hasJoined
-                        ? context.appColors.error
-                        : context.appColors.primary,
-                    onTap: joinDisabledByStatus
-                        ? null
-                        : () async {
-                                  final matchId = match.id;
-                                  if (matchId.isEmpty) {
-                                    return;
-                                  }
-
-                                  if (isHostedByCurrentUser) {
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: context.h(5),
+                      bottom: context.h(20),
+                      right: context.w(20),
+                      left: context.w(20),
+                    ),
+                    child: CustomButton(
+                      isLoading: model.isJoinLeaveLoading,
+                      text: isHostedByCurrentUser
+                          ? AppText.startMatch
+                          : isCancelled
+                          ? 'Match Cancelled'
+                          : isCompleted
+                          ? 'Match Completed'
+                          : isPending && !model.hasJoined
+                          ? 'Match Not Started'
+                          : model.hasJoined
+                          ? AppText.leaveMatch
+                          : AppText.joinMatch,
+                      color: isHostedByCurrentUser
+                          ? context.appColors.primary
+                          : joinDisabledByStatus
+                          ? context.appColors.greylight
+                          : model.hasJoined
+                          ? context.appColors.error
+                          : context.appColors.primary,
+                      onTap: joinDisabledByStatus
+                          ? null
+                          : () async {
+                                    final matchId = match.id;
+                                    if (matchId.isEmpty) {
+                                      return;
+                                    }
+            
+                                    if (isHostedByCurrentUser) {
+                                      if (!context.mounted) return;
+                                      AppSnackBar.show(
+                                        'You are hosting this match.',
+                                      );
+                                      return;
+                                    }
+            
+                                    if (model.hasJoined) {
+                                      final result = await model.leaveMatch(
+                                        matchId,
+                                      );
+                                      if (!context.mounted) return;
+                                      if (!result &&
+                                          model.joinLeaveError != null) {
+                                        AppSnackBar.show(
+                                          model.joinLeaveError!,
+                                          backgroundColor:
+                                              context.appColors.error,
+                                        );
+                                      } else if (result) {
+                                        AppSnackBar.show(
+                                          'Left match successfully',
+                                          backgroundColor:
+                                              context.appColors.primary,
+                                        );
+                                      }
+                                      return;
+                                    }
+            
+                                    final int roster = model.rosterCount;
+                                    final int total = match.participantsTotal;
+                                    final bool isFull = roster >= total;
+            
+                                    if (isFull) {
+                                      if (!context.mounted) return;
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: true,
+                                        builder: (dialogContext) =>
+                                            CustomBottomSheetWidget(
+                                              isCenter: true,
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  SvgPicture.asset(
+                                                    AppAssets
+                                                        .joiningMatchPeopelIcon,
+                                                    fit: BoxFit.scaleDown,
+                                                  ),
+                                                  SizedBox(height: context.h(16)),
+                                                  NormalText(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.center,
+                                                    titleText:
+                                                        AppText.matchIsFull,
+                                                    maxLines: 5,
+                                                    subAlign: TextAlign.center,
+                                                    subText: AppText
+                                                        .thisMatchHasReachedItsMaximumCapacity,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                      );
+                                      return;
+                                    }
+            
+                                    final result = await model.joinMatch(matchId);
                                     if (!context.mounted) return;
-                                    AppSnackBar.show(
-                                      'You are hosting this match.',
-                                    );
-                                    return;
-                                  }
-
-                                  if (model.hasJoined) {
-                                    final result = await model.leaveMatch(
-                                      matchId,
-                                    );
-                                    if (!context.mounted) return;
-                                    if (!result &&
-                                        model.joinLeaveError != null) {
+            
+                                    if (!result && model.joinLeaveError != null) {
                                       AppSnackBar.show(
                                         model.joinLeaveError!,
-                                        backgroundColor:
-                                            context.appColors.error,
+                                        backgroundColor: context.appColors.error,
                                       );
                                     } else if (result) {
                                       AppSnackBar.show(
-                                        'Left match successfully',
+                                        'Joined match successfully!',
                                         backgroundColor:
                                             context.appColors.primary,
                                       );
                                     }
-                                    return;
-                                  }
-
-                                  final int roster = model.rosterCount;
-                                  final int total = match.participantsTotal;
-                                  final bool isFull = roster >= total;
-
-                                  if (isFull) {
-                                    if (!context.mounted) return;
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: true,
-                                      builder: (dialogContext) =>
-                                          CustomBottomSheetWidget(
-                                            isCenter: true,
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  AppAssets
-                                                      .joiningMatchPeopelIcon,
-                                                  fit: BoxFit.scaleDown,
-                                                ),
-                                                SizedBox(height: context.h(16)),
-                                                NormalText(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  titleText:
-                                                      AppText.matchIsFull,
-                                                  maxLines: 5,
-                                                  subAlign: TextAlign.center,
-                                                  subText: AppText
-                                                      .thisMatchHasReachedItsMaximumCapacity,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                    );
-                                    return;
-                                  }
-
-                                  final result = await model.joinMatch(matchId);
-                                  if (!context.mounted) return;
-
-                                  if (!result && model.joinLeaveError != null) {
-                                    AppSnackBar.show(
-                                      model.joinLeaveError!,
-                                      backgroundColor: context.appColors.error,
-                                    );
-                                  } else if (result) {
-                                    AppSnackBar.show(
-                                      'Joined match successfully!',
-                                      backgroundColor:
-                                          context.appColors.primary,
-                                    );
-                                  }
-                                },
+                                  },
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
