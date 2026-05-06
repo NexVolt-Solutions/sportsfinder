@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,10 +7,12 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Constants/google_maps_config.dart';
+import 'package:sport_finding/core/utils/google_maps_js_loader.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/Constants/responsive_text_scaler.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/widgets/tap_outside_unfocus.dart';
 import 'package:sport_finding/firebase_options.dart';
@@ -76,6 +79,7 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GoogleMapsConfig.loadEnv();
+  await ensureGoogleMapsScriptLoaded();
   final notificationService = NotificationService();
   await FcmService.instance.initialize(
     notificationService: notificationService,
@@ -88,17 +92,29 @@ Future<void> main() async {
     nav.pushNamedAndRemoveUntil(RoutesName.LoginScreen, (route) => false);
   };
   runApp(
-    MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => notificationService)],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        scaffoldMessengerKey: rootScaffoldMessengerKey,
-        navigatorKey: rootNavigatorKey,
-        initialRoute: _materialInitialRoute(),
-        onGenerateInitialRoutes: _onGenerateInitialRoutes,
-        onGenerateRoute: Routes.generateRoute,
-        builder: (context, child) => TapOutsideUnfocus(child: child),
+    DevicePreview(
+      enabled: !kReleaseMode,
+      builder: (context) => MultiProvider(
+        providers: [ChangeNotifierProvider(create: (_) => notificationService)],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          locale: DevicePreview.locale(context),
+          theme: AppTheme.light,
+          scaffoldMessengerKey: rootScaffoldMessengerKey,
+          navigatorKey: rootNavigatorKey,
+          initialRoute: _materialInitialRoute(),
+          onGenerateInitialRoutes: _onGenerateInitialRoutes,
+          onGenerateRoute: Routes.generateRoute,
+          builder: (context, child) {
+            final scaled = MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: appResponsiveTextScaler(context),
+              ),
+              child: TapOutsideUnfocus(child: child),
+            );
+            return DevicePreview.appBuilder(context, scaled);
+          },
+        ),
       ),
     ),
   );

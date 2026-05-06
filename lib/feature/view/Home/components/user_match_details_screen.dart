@@ -222,12 +222,11 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                       SectionHeaderWidget(title: AppText.participatedPlayers),
                       if (model.rosterCount == 0) ...[
                         Padding(
-                          padding: context.padSym(v: 12),
-                          child: Text(
-                            AppText.noPlayersOnRoster,
-                            style: context.appText.text14W400.copyWith(
-                              color: context.appColors.greyDark,
-                            ),
+                          padding: context.padSym(v: 32),
+                          child: Center(  
+                            child: NormalText (titleText: AppText.noPlayersOnRoster, titleStyle: context.appText.text14W400.copyWith(
+                                color: context.appColors.greyDark,
+                              )),
                           ),
                         ),
                       ] else ...[
@@ -245,7 +244,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                                 displayName: name,
                               );
                             },
-                            title: model.rosterNameAt(index),
+                              title: model.rosterNameAt(index),
                             subTitle: model.rosterSkillAt(index),
                           ),
                         ),
@@ -259,34 +258,32 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                 child: Padding(
                   padding: EdgeInsets.only(
                     top: context.h(5),
-                    bottom: context.h(20),
-                    right: context.w(20),
+                     right: context.w(20),
                     left: context.w(20),
                   ),
-                  child: model.isJoinLeaveLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : CustomButton(
-                          text: isHostedByCurrentUser
-                              ? AppText.startMatch
-                              : isCancelled
-                              ? 'Match Cancelled'
-                              : isCompleted
-                              ? 'Match Completed'
-                              : isPending && !model.hasJoined
-                              ? 'Match Not Started'
-                              : model.hasJoined
-                              ? AppText.leaveMatch
-                              : AppText.joinMatch,
-                          color: isHostedByCurrentUser
-                              ? context.appColors.primary
-                              : joinDisabledByStatus
-                              ? context.appColors.greylight
-                              : model.hasJoined
-                              ? context.appColors.error
-                              : context.appColors.primary,
-                          onTap: joinDisabledByStatus
-                              ? null
-                              : () async {
+                  child: CustomButton(
+                    isLoading: model.isJoinLeaveLoading,
+                    text: isHostedByCurrentUser
+                        ? AppText.startMatch
+                        : isCancelled
+                        ? 'Match Cancelled'
+                        : isCompleted
+                        ? 'Match Completed'
+                        : isPending && !model.hasJoined
+                        ? 'Match Not Started'
+                        : model.hasJoined
+                        ? AppText.leaveMatch
+                        : AppText.joinMatch,
+                    color: isHostedByCurrentUser
+                        ? context.appColors.primary
+                        : joinDisabledByStatus
+                        ? context.appColors.greylight
+                        : model.hasJoined
+                        ? context.appColors.error
+                        : context.appColors.primary,
+                    onTap: joinDisabledByStatus
+                        ? null
+                        : () async {
                                   final matchId = match.id;
                                   if (matchId.isEmpty) {
                                     return;
@@ -378,7 +375,7 @@ class _UserMatchDetailsScreenState extends State<UserMatchDetailsScreen> {
                                     );
                                   }
                                 },
-                        ),
+                  ),
                 ),
               ),
             ],

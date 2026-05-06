@@ -16,11 +16,16 @@ class AppText {
   }
 
   static const String didntReceiveTheCodeResend = 'Didn’t receive the code?';
+  static const String removePlayer = 'Remove Player';
   static const String skip = 'Skip';
+  static const String accept = 'Accept';
   static const String sportFinding = 'SportFinding';
   static const String uploadYourPicture = 'Upload your picture';
   static const String done = 'Done';
   static const String welcomeBack = 'Welcome Back';
+  static const String address = 'Address';
+  static const String matchAddress = 'Match Address';
+  static const String remove = 'Remove';
   static const String createAccount = 'Create Account';
   static const String whatsYourSkillLevel = 'What\'s your skill level?';
   static const String chooseYourSports = 'Choose Your Sports';
@@ -458,5 +463,6 @@ class AppText {
       'This action cannot be undone. Only the host can delete a match.';
   static const String matchDeletedSuccessfully = 'Match deleted successfully';
   static const String cancel = 'Cancel';
+  static const String cancelMatch = 'Cancel Match';
   static const String failedToDeleteMatch = 'Failed to delete match';
 }

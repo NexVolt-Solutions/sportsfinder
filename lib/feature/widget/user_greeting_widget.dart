@@ -22,7 +22,8 @@ class UserGreetingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Row(mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppAvatar(
           size: context.w(44),
@@ -36,11 +37,11 @@ class UserGreetingWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              NormalText(titleText: title),
+              NormalText(titleText: title, titleStyle: context.appText.text16W600),
               NormalText(
                 subText: locName,
                 maxLines: 2,
-                subStyle: context.appText.text14W500,
+                subStyle: context.appText.text14W600,
               ),
               if (isShow && subTitle != null && subTitle!.isNotEmpty)
                 NormalText(

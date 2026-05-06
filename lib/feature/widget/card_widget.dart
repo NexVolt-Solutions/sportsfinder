@@ -87,7 +87,8 @@ class CardWidget extends StatelessWidget {
           ? HitTestBehavior.opaque
           : HitTestBehavior.deferToChild,
       child: Card(
-        margin: context.padSym(v: kIsWeb ? 0 : 8),
+        // margin for web
+        margin: context.padSym(v: kIsWeb ? 8 : 0),
         elevation: kIsWeb ? 0 : elevation,
         shadowColor: Colors.black.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(

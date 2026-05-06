@@ -22,6 +22,9 @@ class MatchCardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keep chip width stable when swapping label ↔ spinner ("Invited" is widest).
+    final minLabelWidth = context.w(40);
+
     final button = Container(
       padding: context.padSym(h: kIsWeb ? 12 : 10, v: kIsWeb ? 6 : 4),
       decoration: BoxDecoration(
@@ -31,22 +34,27 @@ class MatchCardButton extends StatelessWidget {
             ? Border.all(color: const Color(0xFFD7E7F7))
             : null,
       ),
-      child: isLoading
-          ? SizedBox(
-              width: kIsWeb ? 18 : 16,
-              height: kIsWeb ? 18 : 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(textColor),
-              ),
-            )
-          : NormalText(
-              titleText: text,
-              titleStyle: context.appText.text12W600.copyWith(
-                height: 1.5,
-                color: textColor,
-              ),
-            ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: minLabelWidth),
+        child: Center(
+          child: isLoading
+              ? SizedBox(
+                  width: kIsWeb ? 18 : 16,
+                  height: kIsWeb ? 18 : 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(context.appColors.primary),
+                  ),  
+                )
+              : NormalText(
+                  titleText: text,
+                  titleStyle: context.appText.text12W600.copyWith(
+                    height: 1.5,
+                    color: textColor,
+                  ),
+                ),
+        ),
+      ),
     );
     return GestureDetector(
       onTap: isLoading ? null : ontap,
