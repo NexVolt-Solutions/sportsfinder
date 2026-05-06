@@ -1,4 +1,6 @@
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -155,78 +157,128 @@ class ProfileDetailStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
 
-    Widget buildCard(
-      Widget icon,
-      String value,
-      String label,
-      VoidCallback? onTap,
-    ) {
-      return Expanded(
-        child: GestureDetector(
-          onTap: onTap,
-          child: CardWidget(
-            // padding: context.padSym(h: 12, v: 16),
-            child: Column(
-              children: [
-                icon,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final rowW = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final gap = rowW < 320
+            ? 4.0
+            : rowW < 360
+            ? 6.0
+            : 10.0;
+        final slotW = (rowW - 3 * gap) / 4;
+        final iconSize = math.min(18.0, math.max(14.0, slotW * 0.28));
+        final valueSize = math.min(14.0, math.max(10.0, slotW * 0.22));
+        final labelSize = math.min(11.0, math.max(8.5, slotW * 0.18));
+        final padH = slotW < 52 ? 4.0 : (slotW < 64 ? 6.0 : 8.0);
 
-                SizedBox(height: 6),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: c.onSurface,
-                  ),
+        Widget buildCard(
+          Widget icon,
+          String value,
+          String label,
+          VoidCallback? onTap,
+        ) {
+          return Expanded(
+            flex: 1,
+            child: GestureDetector(
+              onTap: onTap,
+              child: CardWidget(
+                padding: EdgeInsets.symmetric(horizontal: padH, vertical: 12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: SizedBox(
+                        width: iconSize,
+                        height: iconSize,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: icon,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: math.min(8.0, slotW * 0.12)),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: valueSize,
+                        fontWeight: FontWeight.bold,
+                        color: c.onSurface,
+                        height: 1.15,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: math.min(4.0, slotW * 0.06)),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: labelSize,
+                        color: c.greyDark,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ],
                 ),
-                Text(label, style: TextStyle(fontSize: 11, color: c.greyDark)),
-              ],
+              ),
             ),
-          ),
-        ),
-      );
-    }
+          );
+        }
 
-    return Row(
-      children: [
-        buildCard(
-          SvgPicture.asset(
-            AppAssets.follow,
-            width: 18,
-            height: 18,
-            colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
-          ),
-          "$followersCount",
-          AppText.followers,
-          onFollowersTap,
-        ),
-        SizedBox(width: 10),
-        buildCard(
-          SvgPicture.asset(
-            AppAssets.follower,
-            width: 18,
-            height: 18,
-            colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
-          ),
-          "$followingCount",
-          AppText.following,
-          onFollowingTap,
-        ),
-        SizedBox(width: 10),
-        buildCard(
-          Icon(Icons.star, color: c.greyDark, size: 18),
-          ratingValue,
-          AppText.rating,
-          onRatingTap,
-        ),
-        SizedBox(width: 10),
-        buildCard(
-          Icon(Icons.sports_soccer_rounded, color: c.greyDark, size: 18),
-          matchesPlayedValue,
-          AppText.matches,
-          onMatchesTap,
-        ),
-      ],
+        // [ListView] gives this row unbounded max height; [CrossAxisAlignment.stretch]
+        // is invalid there and triggers a layout assert.
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            buildCard(
+              SvgPicture.asset(
+                AppAssets.follow,
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
+              ),
+              '$followersCount',
+              AppText.followers,
+              onFollowersTap,
+            ),
+            SizedBox(width: gap),
+            buildCard(
+              SvgPicture.asset(
+                AppAssets.follower,
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(c.greyDark, BlendMode.srcIn),
+              ),
+              '$followingCount',
+              AppText.following,
+              onFollowingTap,
+            ),
+            SizedBox(width: gap),
+            buildCard(
+              Icon(Icons.star, color: c.greyDark, size: 18),
+              ratingValue,
+              AppText.rating,
+              onRatingTap,
+            ),
+            SizedBox(width: gap),
+            buildCard(
+              Icon(Icons.sports_soccer_rounded, color: c.greyDark, size: 18),
+              matchesPlayedValue,
+              AppText.matches,
+              onMatchesTap,
+            ),
+          ],
+        );
+      },
     );
   }
 }

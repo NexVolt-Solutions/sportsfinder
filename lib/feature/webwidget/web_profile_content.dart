@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -231,32 +233,58 @@ class WebProfileContent extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        _StatCard(
-                          value: followersValue,
-                          label: AppText.followers,
-                          onTap: onFollowersTap,
-                        ),
-                        SizedBox(width: context.w(16)),
-                        _StatCard(
-                          value: followingValue,
-                          label: AppText.following,
-                          onTap: onFollowingTap,
-                        ),
-                        SizedBox(width: context.w(16)),
-                        _StatCard(
-                          value: ratingValue,
-                          label: AppText.rating,
-                          onTap: onRatingTap,
-                        ),
-                        SizedBox(width: context.w(16)),
-                        _StatCard(
-                          value: matchesPlayedValue,
-                          label: 'Matches Played',
-                          onTap: onMatchesTap,
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final rowW = constraints.maxWidth.isFinite
+                            ? constraints.maxWidth
+                            : MediaQuery.sizeOf(context).width;
+                        final gap = rowW < 400
+                            ? 8.0
+                            : rowW < 900
+                            ? 12.0
+                            : 16.0;
+                        final slotW = (rowW - 3 * gap) / 4;
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                value: followersValue,
+                                label: AppText.followers,
+                                onTap: onFollowersTap,
+                                slotWidth: slotW,
+                              ),
+                            ),
+                            SizedBox(width: gap),
+                            Expanded(
+                              child: _StatCard(
+                                value: followingValue,
+                                label: AppText.following,
+                                onTap: onFollowingTap,
+                                slotWidth: slotW,
+                              ),
+                            ),
+                            SizedBox(width: gap),
+                            Expanded(
+                              child: _StatCard(
+                                value: ratingValue,
+                                label: AppText.rating,
+                                onTap: onRatingTap,
+                                slotWidth: slotW,
+                              ),
+                            ),
+                            SizedBox(width: gap),
+                            Expanded(
+                              child: _StatCard(
+                                value: matchesPlayedValue,
+                                label: AppText.matchesPlayed,
+                                onTap: onMatchesTap,
+                                slotWidth: slotW,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     SizedBox(height: context.h(20)),
                     WebDashboardPanel(
@@ -342,40 +370,59 @@ class WebProfileContent extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.value, required this.label, this.onTap});
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.slotWidth,
+    this.onTap,
+  });
 
   final String value;
   final String label;
   final VoidCallback? onTap;
+  /// Width of one stat slot (row minus gaps / 4); drives padding and font scale.
+  final double slotWidth;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(context.radius(12)),
-        child: WebDashboardPanel(
-          backgroundColor: context.appColors.blue10,
-          // height: context.h(146),
-          padding: context.padAll(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                value,
-                style: context.appText.text28W700.copyWith(
-                  color: context.appColors.onSurface,
-                ),
+    final pad = math.min(20.0, math.max(8.0, slotWidth * 0.22));
+    final valueSize = math.min(28.0, math.max(14.0, slotWidth * 0.34));
+    final labelSize = math.min(12.0, math.max(9.0, slotWidth * 0.14));
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(context.radius(12)),
+      child: WebDashboardPanel(
+        backgroundColor: context.appColors.blue10,
+        padding: EdgeInsets.all(pad),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.appText.text28W700.copyWith(
+                color: context.appColors.onSurface,
+                fontSize: valueSize,
               ),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: context.appText.text12W400.copyWith(
-                  color: context.appColors.greyDark,
-                ),
+            ),
+            SizedBox(height: math.min(8.0, pad * 0.35)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              softWrap: true,
+              style: context.appText.text12W400.copyWith(
+                color: context.appColors.greyDark,
+                fontSize: labelSize,
+                height: 1.2,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
