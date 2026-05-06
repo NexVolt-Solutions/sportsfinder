@@ -53,8 +53,6 @@ class PublicProfileViewModel extends ChangeNotifier {
   int? _followersCountOverride;
   bool? _canRateOverride;
 
-  /// True when opening from settings (no args) or empty [userId], or when the
-  /// selected user is the logged-in account.
   bool get _viewingSelf {
     if (_args == null) return true;
     final uid = _args.userId.trim();

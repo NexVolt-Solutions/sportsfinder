@@ -46,7 +46,7 @@ class DropdownFormFieldWidget extends StatelessWidget {
           decoration: InputDecoration(
             alignLabelWithHint: true,
             isDense: true,
-            constraints: BoxConstraints(minHeight: context.h(64)),
+            constraints: AppFormFieldLayout.singleLineConstraints(context),
             label: Text(
               label,
               style: context.appText.text16W400.copyWith(color: c.onSurface),
@@ -59,27 +59,26 @@ class DropdownFormFieldWidget extends StatelessWidget {
             errorStyle: AppFormFieldLayout.errorStyle(context),
             errorMaxLines: 2,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(context.radius(12)),
+              borderRadius: AppFormFieldLayout.borderRadius(context),
               borderSide: BorderSide(color: c.greylight, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(context.radius(12)),
+              borderRadius: AppFormFieldLayout.borderRadius(context),
               borderSide: BorderSide(color: c.greylight, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(context.radius(12)),
+              borderRadius: AppFormFieldLayout.borderRadius(context),
               borderSide: BorderSide(color: c.primary, width: 1),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(context.radius(12)),
+              borderRadius: AppFormFieldLayout.borderRadius(context),
               borderSide: BorderSide(color: c.error, width: 1),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(context.radius(12)),
+              borderRadius: AppFormFieldLayout.borderRadius(context),
               borderSide: BorderSide(color: c.error, width: 1),
             ),
-            contentPadding: AppFormFieldLayout.contentPadding(context),
-          ),
+           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: state.value,

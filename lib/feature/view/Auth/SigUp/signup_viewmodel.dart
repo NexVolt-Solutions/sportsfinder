@@ -187,7 +187,8 @@ class SignUpViewModel extends ChangeNotifier {
   static Future<void> _ensureGoogleSignInInitialized() {
     return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
       clientId: _googleClientId.isEmpty ? null : _googleClientId,
-      serverClientId: _resolvedServerClientId,
+      // Web does NOT support `serverClientId` (google_sign_in_web asserts this).
+      serverClientId: kIsWeb ? null : _resolvedServerClientId,
     );
   }
 

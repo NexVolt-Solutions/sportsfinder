@@ -223,7 +223,8 @@ class ProfileScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = model.profileData[index];
                     return Padding(
-                      padding: context.padSym(v: 8),
+                      // Mobile had too much vertical gap between cards.
+                      padding: context.padSym(v: 4),
                       child: CustomSettingCard(
                         icon: item['leading'],
                         title: item['title'],

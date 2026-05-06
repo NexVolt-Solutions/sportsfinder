@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sport_finding/Data/Repositories/GoogleAuth/google_auth_repository.dart';
@@ -43,6 +43,16 @@ class LoginScreenViewModel extends ChangeNotifier {
     'GOOGLE_SERVER_CLIENT_ID',
   );
 
+  static String? get _resolvedWebClientId {
+    if (_googleClientId.isNotEmpty) {
+      return _googleClientId;
+    }
+    if (kGoogleOauth2WebClientId.isNotEmpty) {
+      return kGoogleOauth2WebClientId;
+    }
+    return null;
+  }
+
   static String? get _resolvedServerClientId {
     if (_googleServerClientId.isNotEmpty) {
       return _googleServerClientId;
@@ -73,7 +83,7 @@ class LoginScreenViewModel extends ChangeNotifier {
     if (_googleSignInInitialization == null) {
       _logGoogle(
         'GoogleSignIn.initialize: '
-        'clientId=${_describeOAuthId(_googleClientId.isEmpty ? null : _googleClientId)} '
+        'clientId=${_describeOAuthId(_resolvedWebClientId)} '
         'serverClientId=${_describeOAuthId(_resolvedServerClientId)} '
         '(${_googleServerClientId.isNotEmpty
             ? "GOOGLE_SERVER_CLIENT_ID"
@@ -83,8 +93,9 @@ class LoginScreenViewModel extends ChangeNotifier {
       );
     }
     return _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
-      clientId: _googleClientId.isEmpty ? null : _googleClientId,
-      serverClientId: _resolvedServerClientId,
+      // Web requires a `clientId` and does NOT support `serverClientId`.
+      clientId: _resolvedWebClientId,
+      serverClientId: kIsWeb ? null : _resolvedServerClientId,
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/match_form_limits.dart';
+import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -40,7 +41,7 @@ class MaxPlayersStepperField extends StatelessWidget {
           decoration: BoxDecoration(
             color: c.transparent,
             border: Border.all(color: c.greylight, width: 1),
-            borderRadius: BorderRadius.circular(context.radius(12)),
+            borderRadius: AppFormFieldLayout.borderRadius(context),
           ),
           child: Row(
             children: [
@@ -81,7 +82,7 @@ class MaxPlayersStepperField extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final c = context.appColors;
-    final r = context.radius(12);
+    final r = AppFormFieldLayout.controlRadius(context);
     return Material(
       color: c.transparent,
       child: InkWell(
@@ -94,7 +95,7 @@ class MaxPlayersStepperField extends StatelessWidget {
               ),
         child: SizedBox(
           width: context.w(48),
-          height: context.h(48),
+          height: AppFormFieldLayout.controlHeight(context),
           child: Icon(
             icon,
             size: context.w(22),

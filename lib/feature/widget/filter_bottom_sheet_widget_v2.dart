@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
+import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
 import 'package:sport_finding/feature/viewModel/filter_bottom_sheet_view_model.dart';
@@ -359,7 +360,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
                                 Navigator.pop(context);
                               },
                               child: Container(
-                                height: context.h(48),
+                                height: AppFormFieldLayout.controlHeight(context),
                                 decoration: BoxDecoration(
                                   color: context.appColors.onPrimary,
                                   borderRadius: BorderRadius.circular(

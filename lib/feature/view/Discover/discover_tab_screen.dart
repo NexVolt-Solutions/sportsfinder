@@ -12,9 +12,9 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/discovery_card.dart';
-import 'package:sport_finding/feature/widget/discovery_search_field.dart';
 import 'package:sport_finding/feature/widget/filter_bottom_sheet_widget_v2.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
 /// Discover tab content: search, sport filters, and list of discovery match cards.
@@ -156,10 +156,13 @@ class _DiscoverTabContent extends StatelessWidget {
               ],
               NormalText(titleText: AppText.discover),
               SizedBox(height: context.sh(20)),
-              DiscoverySearchField(
+              SearchBarWidget(
                 controller: model.searchController,
                 hintText: AppText.searchMatches,
-                onChanged: (_) => model.onSearchChanged(),
+                isShow: true,
+                onChanged: (value) {
+                  model.onSearchChanged();
+                },
                 onFilterTap: () {
                   showModalBottomSheet(
                     context: context,

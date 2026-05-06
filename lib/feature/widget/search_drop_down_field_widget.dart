@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/places_search_result.dart';
 
 /// Searchable dropdown field - FIXED VERSION
@@ -76,6 +75,7 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
       decoration: InputDecoration(
         alignLabelWithHint: true,
         isDense: true,
+        constraints: AppFormFieldLayout.singleLineConstraints(context),
         label: widget.label != null
             ? Text(
                 widget.label!,
@@ -85,22 +85,21 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
         filled: true,
         fillColor: c.transparent,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(context.radius(12)),
+          borderRadius: AppFormFieldLayout.borderRadius(context),
           borderSide: BorderSide(color: c.greylight, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(context.radius(12)),
+          borderRadius: AppFormFieldLayout.borderRadius(context),
           borderSide: BorderSide(color: c.greylight, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(context.radius(12)),
+          borderRadius: AppFormFieldLayout.borderRadius(context),
           borderSide: BorderSide(color: c.primary, width: 1),
         ),
-        contentPadding: AppFormFieldLayout.contentPadding(context),
-      ),
+       ),
       child: InkWell(
         onTap: _openDropdown,
-        borderRadius: BorderRadius.circular(context.radius(12)),
+        borderRadius: AppFormFieldLayout.borderRadius(context),
         child: Row(
           children: [
             Expanded(
