@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/DeviceToken/device_token_repository.dart';
 import 'package:sport_finding/Data/model/DeviceToken/device_token_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
+import 'package:sport_finding/core/Network/fcm_local_notifications.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
@@ -32,7 +33,8 @@ class FcmService {
   bool _isTokenSyncInFlight = false;
   int _tokenRetryAttempt = 0;
   bool _webTokenSyncBlockedByNetworkPolicy = false;
-  bool _tokenSyncBlockedByHardFailure = false;
+  DateTime? _tokenSyncHardFailureUntil;
+  static const Duration _hardFailureCooldown = Duration(minutes: 30);
   static const List<Duration> _tokenRetryDelays = <Duration>[
     Duration(seconds: 1),
     Duration(seconds: 2),
@@ -73,6 +75,10 @@ class FcmService {
       tag: 'FcmService',
     );
 
+    if (!kIsWeb) {
+      await FcmLocalNotifications.init();
+    }
+
     await _syncCurrentToken();
 
     _tokenRefreshSub = messaging.onTokenRefresh.listen((token) async {
@@ -84,6 +90,7 @@ class FcmService {
         'Foreground FCM received: ${message.messageId ?? 'no-id'}',
         tag: 'FcmService',
       );
+      unawaited(FcmLocalNotifications.showForeground(message));
       unawaited(notificationService.fetchNotifications());
     });
 
@@ -111,9 +118,9 @@ class FcmService {
 
   /// Call after login, signup (with session), Google auth, or web token bootstrap.
   Future<void> registerTokenWithBackendIfAuthenticated() async {
-    if (_tokenSyncBlockedByHardFailure) {
+    if (_isInHardFailureCooldown()) {
       AppLogger.warning(
-        'Skipping FCM token sync: blocked by previous hard Firebase Installations failure',
+        'Skipping FCM token sync: in hard-failure cooldown window',
         tag: 'FcmService',
       );
       return;
@@ -186,7 +193,7 @@ class FcmService {
   }
 
   Future<void> _syncCurrentToken() async {
-    if (_tokenSyncBlockedByHardFailure) return;
+    if (_isInHardFailureCooldown()) return;
     if (_isTokenSyncInFlight) return;
     _tokenRetryTimer?.cancel();
     _isTokenSyncInFlight = true;
@@ -196,12 +203,13 @@ class FcmService {
       _tokenRetryAttempt = 0;
     } catch (e, stackTrace) {
       if (_isHardFcmTokenFailure(e)) {
-        _tokenSyncBlockedByHardFailure = true;
+        _tokenSyncHardFailureUntil = DateTime.now().add(_hardFailureCooldown);
         _tokenRetryTimer?.cancel();
         _tokenRetryTimer = null;
         AppLogger.warning(
           'FCM token sync disabled due to hard Firebase Installations failure '
-          '(FIS auth/unavailable). App will continue without push token until restart.',
+          '(FIS auth/unavailable). App will continue without push token temporarily '
+          'and retry later.',
           tag: 'FcmService',
         );
         AppLogger.error(
@@ -242,13 +250,23 @@ class FcmService {
 
   late final WidgetsBindingObserver _appLifecycleObserver =
       _FcmLifecycleObserver(onResumed: () {
-        if (_tokenSyncBlockedByHardFailure ||
+        if (_isInHardFailureCooldown() ||
             _isTokenSyncInFlight ||
             _tokenRetryTimer != null) {
           return;
         }
         unawaited(_syncCurrentToken());
       });
+
+  bool _isInHardFailureCooldown() {
+    final until = _tokenSyncHardFailureUntil;
+    if (until == null) return false;
+    if (DateTime.now().isAfter(until)) {
+      _tokenSyncHardFailureUntil = null;
+      return false;
+    }
+    return true;
+  }
 
   bool _isHardFcmTokenFailure(Object error) {
     final value = error.toString().toLowerCase();

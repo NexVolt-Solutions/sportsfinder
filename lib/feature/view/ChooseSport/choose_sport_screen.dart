@@ -6,6 +6,8 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/location_onboarding_gate.dart';
+import 'package:sport_finding/core/utils/onboarding_navigation.dart';
 import 'package:sport_finding/feature/view/ChooseSport/ChooseSportViewModel/choose_sport_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_icon_widget.dart';
@@ -22,6 +24,8 @@ class ChooseSportScreen extends StatefulWidget {
 }
 
 class _ChooseSportScreenState extends State<ChooseSportScreen> {
+  bool _continueBusy = false;
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ChooseSportScreenViewModel>(
@@ -46,45 +50,55 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                       subColor: context.appColors.greylight,
                     ),
                     SizedBox(height: context.h(20)),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: model.sports.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.1,
+                    if (model.isLoading)
+                      Padding(
+                        padding: EdgeInsets.only(top: context.h(48)),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: context.appColors.primary,
                           ),
-                      itemBuilder: (context, index) {
-                        final sport = model.sports[index];
-                        final isSelected = model.selectedIndex == index;
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: model.sports.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 1.1,
+                            ),
+                        itemBuilder: (context, index) {
+                          final sport = model.sports[index];
+                          final isSelected = model.selectedIndex == index;
 
-                        return CardWidget(
-                          padding: context.padSym(h: 12, v: 14),
-                          borderColor: isSelected
-                              ? context.appColors.primary
-                              : context.appColors.blue10,
-                          onTap: () => model.selectSkill(index),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CardIconWidget(
-                                imageAsset: sport.imagePath,
-                                isSelected: isSelected,
-                              ),
-                              SizedBox(height: context.h(12)),
-                              NormalText(
-                                titleText: sport.title,
-                                titleStyle: context.appText.text14W600,
-                                titleColor: context.appColors.onSurface,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                          return CardWidget(
+                            padding: context.padSym(h: 12, v: 14),
+                            borderColor: isSelected
+                                ? context.appColors.primary
+                                : context.appColors.blue10,
+                            onTap: () => model.selectSkill(index),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CardIconWidget(
+                                  imageAsset: sport.imagePath,
+                                  isSelected: isSelected,
+                                ),
+                                SizedBox(height: context.h(12)),
+                                NormalText(
+                                  titleText: sport.title,
+                                  titleStyle: context.appText.text14W600,
+                                  titleColor: context.appColors.onSurface,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -98,6 +112,7 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                 child: CustomButton(
                   text: AppText.continueText,
                   color: context.appColors.primary,
+                  isLoading: model.isLoading || _continueBusy,
                   onTap: () async {
                     if (!model.hasSelection) {
                       AppSnackBar.show(
@@ -110,10 +125,23 @@ class _ChooseSportScreenState extends State<ChooseSportScreen> {
                       model.selectedSport!,
                     );
                     if (!context.mounted) return;
-                    Navigator.pushNamed(
-                      context,
-                      RoutesName.locationAccessScreen,
-                    );
+
+                    setState(() => _continueBusy = true);
+                    try {
+                      if (await hasUsableLocationForOnboarding()) {
+                        await persistCurrentLocationFromDevice();
+                        if (!context.mounted) return;
+                        await finishOnboardingAndOpenHome(context);
+                        return;
+                      }
+                      if (!context.mounted) return;
+                      Navigator.pushNamed(
+                        context,
+                        RoutesName.locationAccessScreen,
+                      );
+                    } finally {
+                      if (mounted) setState(() => _continueBusy = false);
+                    }
                   },
                 ),
               ),

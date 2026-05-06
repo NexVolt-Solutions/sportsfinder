@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -8,6 +10,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
+import 'package:sport_finding/feature/view/Auth/Login/web_google_sign_in_button.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/auth_footer_text.dart';
@@ -26,6 +29,48 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _webGoogleAuthSub;
+
+  @override
+  void dispose() {
+    _webGoogleAuthSub?.cancel();
+    super.dispose();
+  }
+
+  void _ensureWebGoogleListener(LoginScreenViewModel model) {
+    if (!kIsWeb || _webGoogleAuthSub != null) return;
+    _webGoogleAuthSub = GoogleSignIn.instance.authenticationEvents.listen(
+      (event) async {
+        if (event is! GoogleSignInAuthenticationEventSignIn) return;
+        final idToken = event.user.authentication.idToken;
+        if (idToken == null || idToken.isEmpty) {
+          if (!mounted) return;
+          AppSnackBar.show(
+            'Google ID token not received. Check Firebase/Google setup.',
+            behavior: SnackBarBehavior.floating,
+          );
+          return;
+        }
+
+        final result = await model.loginWithGoogleIdToken(idToken: idToken);
+        if (!mounted || result == null) return;
+
+        if (result == "SKILL_LEVEL") {
+          Navigator.pushReplacementNamed(context, RoutesName.skillLevelScreen);
+        } else if (result == "HOME") {
+          Navigator.pushReplacementNamed(
+            context,
+            RoutesName.bottomBarScreen,
+            arguments: BottomBarScreenViewModel.homeIndex,
+          );
+        } else {
+          AppSnackBar.show(result, behavior: SnackBarBehavior.floating);
+        }
+      },
+      onError: (_) {},
+    );
+  }
+
   Future<void> _submitLogin(
     BuildContext context,
     LoginScreenViewModel model,
@@ -72,6 +117,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildForm(BuildContext context, LoginScreenViewModel model) {
+    _ensureWebGoogleListener(model);
+    if (kIsWeb) {
+      // Initialize GIS SDK early so the button doesn't stay on "Getting ready..."
+      unawaited(model.ensureGoogleInitializedForWeb());
+    }
     return ListView(
       shrinkWrap: true,
       padding: EdgeInsets.zero,
@@ -132,12 +182,17 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () => _submitLogin(context, model),
         ),
         SizedBox(height: context.h(12)),
-        SocialButtonWidget(
-          imagePath: AppAssets.gmailIcon,
-          text: AppText.continueWithGoogle,
-          isLoading: model.isGoogleLoading,
-          onTap: () => _submitGoogle(context, model),
-        ),
+        if (kIsWeb)
+          Center(
+            child: buildWebGoogleSignInButton(),
+          )
+        else
+          SocialButtonWidget(
+            imagePath: AppAssets.gmailIcon,
+            text: AppText.continueWithGoogle,
+            isLoading: model.isGoogleLoading,
+            onTap: () => _submitGoogle(context, model),
+          ),
         SizedBox(height: context.h(12)),
         AuthFooterText(
           normalText: kIsWeb

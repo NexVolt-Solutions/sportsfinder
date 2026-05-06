@@ -43,46 +43,56 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                       subColor: context.appColors.greylight,
                     ),
                     SizedBox(height: context.h(8)),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: model.skills.length,
-                      itemBuilder: (context, index) {
-                        final skill = model.skills[index];
-                        final isSelected = model.selectedIndex == index;
-
-                        return CardWidget(
-                          padding: context.padSym(h: 12, v: 14),
-                          borderColor: isSelected
-                              ? context.appColors.primary
-                              : Colors.transparent,
-                          onTap: () => model.selectSkill(index),
-                          child: Row(
-                            children: [
-                              CardIconWidget(
-                                imageAsset: model.getImage(
-                                  skill,
-                                ), // STATIC IMAGE
-                                isSelected: isSelected,
-                              ),
-
-                              SizedBox(width: context.h(20)),
-
-                              NormalText(
-                                titleText: skill, // API TEXT
-                                titleStyle: context.appText.text14W600,
-                                titleColor: context.appColors.onSurface,
-                                subText: model.getSubtitle(
-                                  skill,
-                                ), // STATIC SUBTITLE
-                                subStyle: context.appText.text12W400,
-                                subColor: context.appColors.greyDark,
-                              ),
-                            ],
+                    if (model.isLoading)
+                      Padding(
+                        padding: EdgeInsets.only(top: context.h(48)),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: context.appColors.primary,
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: model.skills.length,
+                        itemBuilder: (context, index) {
+                          final skill = model.skills[index];
+                          final isSelected = model.selectedIndex == index;
+
+                          return CardWidget(
+                            padding: context.padSym(h: 12, v: 14),
+                            borderColor: isSelected
+                                ? context.appColors.primary
+                                : Colors.transparent,
+                            onTap: () => model.selectSkill(index),
+                            child: Row(
+                              children: [
+                                CardIconWidget(
+                                  imageAsset: model.getImage(
+                                    skill,
+                                  ), // STATIC IMAGE
+                                  isSelected: isSelected,
+                                ),
+
+                                SizedBox(width: context.h(20)),
+
+                                NormalText(
+                                  titleText: skill, // API TEXT
+                                  titleStyle: context.appText.text14W600,
+                                  titleColor: context.appColors.onSurface,
+                                  subText: model.getSubtitle(
+                                    skill,
+                                  ), // STATIC SUBTITLE
+                                  subStyle: context.appText.text12W400,
+                                  subColor: context.appColors.greyDark,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -96,6 +106,7 @@ class _SkillLevelScreenState extends State<SkillLevelScreen> {
                 child: CustomButton(
                   text: AppText.continueText,
                   color: context.appColors.primary,
+                  isLoading: model.isLoading,
                   onTap: () async {
                     if (!model.hasSelection) {
                       AppSnackBar.show(

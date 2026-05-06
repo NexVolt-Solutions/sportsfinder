@@ -40,33 +40,34 @@ class SocialButtonWidget extends StatelessWidget {
               ? Border.all(color: borderColor ?? c.primary)
               : null,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isLoading)
-              SizedBox(
-                height: context.h(20),
-                width: context.h(20),
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: textColor ?? c.primary,
+        child: isLoading
+            ? Center(
+                child: SizedBox(
+                  height: context.h(22),
+                  width: context.h(22),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: textColor ?? c.primary,
+                  ),
                 ),
               )
-            else
-              SvgPicture.asset(
-                imagePath,
-                fit: BoxFit.contain,
-                height: context.h(20),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    imagePath,
+                    fit: BoxFit.contain,
+                    height: context.h(20),
+                  ),
+                  SizedBox(width: context.w(12)),
+                  Text(
+                    text,
+                    style: context.appText.text14W400.copyWith(
+                      color: textColor ?? c.primary,
+                    ),
+                  ),
+                ],
               ),
-            SizedBox(width: context.w(12)),
-            Text(
-              isLoading ? 'Signing in...' : text,
-              style: context.appText.text14W400.copyWith(
-                color: textColor ?? c.primary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

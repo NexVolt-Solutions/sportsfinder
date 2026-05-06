@@ -25,7 +25,7 @@ class SectionHeaderWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
+        Expanded(flex: 2,
           child: NormalText(
             crossAxisAlignment: CrossAxisAlignment.start,
             titleText: title,
@@ -44,16 +44,17 @@ class SectionHeaderWidget extends StatelessWidget {
                 children: [
                   Flexible(
                     child: NormalText(
+                      
                       crossAxisAlignment: CrossAxisAlignment.center,
                       titleText: actionText!,
+                      titleStyle: context.appText.text14W600.copyWith(color: context.appColors.primary,decoration: TextDecoration.underline,decorationColor:context.appColors.primary,decorationThickness: 2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       titleColor: context.appColors.primary,
                     ),
                   ),
 
-                  SizedBox(width: context.w(10)),
-                  SvgPicture.asset(icon ?? AppAssets.nextIcon),
+                   // SvgPicture.asset(icon ?? AppAssets.nextIcon, width: context.w(14), height: context.h(14)),
                 ],
               ),
             ),

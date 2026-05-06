@@ -17,12 +17,10 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
-/// Discover tab content: search, sport filters, and list of discovery match cards.
-class DiscoverTabScreen extends StatelessWidget {
+ class DiscoverTabScreen extends StatelessWidget {
   const DiscoverTabScreen({super.key, this.embedInBottomBar = false});
 
-  /// When true, [BottomBarScreen] supplies the shared [AppBarWidget].
-  final bool embedInBottomBar;
+   final bool embedInBottomBar;
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +191,7 @@ String _formatStatus(String raw) {
   return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }
 
-/// Match rows use [GlobalMatchCard] via [DiscoveryCard] — keep in sync with Home.
-class _MatchesList extends StatelessWidget {
+ class _MatchesList extends StatelessWidget {
   const _MatchesList({required this.model});
 
   final DiscoveryTabViewModel model;
@@ -236,8 +233,7 @@ class _MatchesList extends StatelessWidget {
       separatorBuilder: (_, _) => SizedBox(height: context.sh(0)),
       itemBuilder: (context, index) {
         final match = matches[index];
-        // Global match row (same widget as Home / All Upcoming).
-        return DiscoveryCard(
+         return DiscoveryCard(
           match: match,
           onCardTap: () => match.pushMatchOrHostScreen(context),
           onSeeAllTap: () {

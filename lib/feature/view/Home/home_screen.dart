@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             SizedBox(height: context.h(24)),
             SearchBarWidget(isShow: false),
-            SizedBox(height: context.h(16)),
+            SizedBox(height: context.h(14)),
             Row(
               children: [
                 Expanded(
@@ -141,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
 
-            SizedBox(height: context.h(16)),
+            SizedBox(height: context.h(14)),
             SectionHeaderWidget(
               title: AppText.allUpcomingMatches,
               actionText: AppText.seeAll,

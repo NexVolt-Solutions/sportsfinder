@@ -935,12 +935,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Consumer<EditProfileScreenViewModel>(
                       builder: (context, vm, _) {
                         return CustomButton(
-                          text: vm.isLoading
-                              ? 'Saving...'
-                              : AppText.saveChanges,
+                          text: AppText.saveChanges,
+                          isLoading: vm.isLoading,
                           color: c.primary,
                           colorText: c.onPrimary,
-                          onTap: vm.isLoading ? () {} : _onSave,
+                          onTap: _onSave,
                         );
                       },
                     ),

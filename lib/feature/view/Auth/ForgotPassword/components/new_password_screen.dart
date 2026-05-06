@@ -84,30 +84,27 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               ),
               SizedBox(height: context.h(20)),
               CustomButton(
-                onTap: model.isLoading
-                    ? null
-                    : () async {
-                        final errorMessage = await model.resetPassword();
+                onTap: () async {
+                  final errorMessage = await model.resetPassword();
 
-                        if (!context.mounted) return;
+                  if (!context.mounted) return;
 
-                        if (errorMessage == null) {
-                          AppSnackBar.show(
-                            'Password reset successfully! Please log in with your new password.',
-                          );
+                  if (errorMessage == null) {
+                    AppSnackBar.show(
+                      'Password reset successfully! Please log in with your new password.',
+                    );
 
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            RoutesName.LoginScreen,
-                            (route) => false,
-                          );
-                        } else {
-                          AppSnackBar.show(errorMessage);
-                        }
-                      },
-                text: model.isLoading
-                    ? "Please wait..."
-                    : AppText.resetPasswordButton,
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      RoutesName.LoginScreen,
+                      (route) => false,
+                    );
+                  } else {
+                    AppSnackBar.show(errorMessage);
+                  }
+                },
+                text: AppText.resetPasswordButton,
+                isLoading: model.isLoading,
                 color: context.appColors.primary,
               ),
             ],

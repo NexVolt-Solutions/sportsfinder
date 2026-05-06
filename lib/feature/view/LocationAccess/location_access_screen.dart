@@ -7,12 +7,8 @@ import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
-import 'package:sport_finding/core/utils/onboarding_profile_sync.dart';
-import 'package:sport_finding/core/utils/auth_route_resolver.dart';
-import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/core/utils/onboarding_navigation.dart';
 import 'package:sport_finding/feature/view/LocationAccess/LocationAccessViewModel/location_access_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
@@ -32,15 +28,7 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
   Future<void> _finishOnboardingAndOpenHome(BuildContext context) async {
     if (_navigated) return;
     _navigated = true;
-    await syncPendingOnboardingToServer();
-    final isComplete = await AuthRouteResolver.isCurrentUserProfileComplete();
-    await AppPreferences.setOnboardingCompleted(isComplete);
-    if (!context.mounted) return;
-    Navigator.pushReplacementNamed(
-      context,
-      RoutesName.bottomBarScreen,
-      arguments: BottomBarScreenViewModel.homeIndex,
-    );
+    await finishOnboardingAndOpenHome(context);
   }
 
   Future<void> _tryAutoCompleteIfLocationAllowed() async {
@@ -103,13 +91,10 @@ class _LocationAccessScreenState extends State<LocationAccessScreen> {
               mainAxisSize: MainAxisSize.min, // IMPORTANT 🔥
               children: [
                 CustomButton(
-                  text: model.isRequestingLocation
-                      ? 'Getting location...'
-                      : AppText.allowLocation,
+                  text: AppText.allowLocation,
+                  isLoading: model.isRequestingLocation,
                   color: context.appColors.primary,
-                  onTap: model.isRequestingLocation
-                      ? null
-                      : () => _handleAllowLocationTap(context),
+                  onTap: () => _handleAllowLocationTap(context),
                 ),
                 SizedBox(height: context.h(12)),
                 GestureDetector(

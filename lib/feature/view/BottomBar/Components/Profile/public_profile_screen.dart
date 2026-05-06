@@ -486,17 +486,12 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             ),
             SizedBox(height: context.h(18)),
             CustomButton(
-              text: (widget.model.isSubmittingReview || _isSubmittingLocal)
-                  ? '${AppText.submitReview}...'
-                  : AppText.submitReview,
+              text: AppText.submitReview,
+              isLoading:
+                  widget.model.isSubmittingReview || _isSubmittingLocal,
               color: c.primary,
               colorText: c.onPrimary,
-              onTap:
-                  (widget.model.isSubmittingReview ||
-                      _isSubmittingLocal ||
-                      !widget.model.canRateProfile)
-                  ? null
-                  : _submit,
+              onTap: widget.model.canRateProfile ? _submit : null,
             ),
           ],
         ),
@@ -537,6 +532,7 @@ class _FollowMessageRow extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isFollowLoading)
                     SizedBox(
@@ -549,21 +545,20 @@ class _FollowMessageRow extends StatelessWidget {
                         ),
                       ),
                     )
-                  else
+                  else ...[
                     Icon(
                       isFollowing ? Icons.check : Icons.person_add_alt_1,
                       size: 22,
                       color: isFollowing ? c.primary : c.onPrimary,
                     ),
-                  SizedBox(width: context.w(4)),
-                  NormalText(
-                    titleText: isFollowLoading
-                        ? '${AppText.following}...'
-                        : isFollowing
-                        ? AppText.following
-                        : AppText.follow,
-                    titleColor: isFollowing ? c.primary : c.onPrimary,
-                  ),
+                    SizedBox(width: context.w(4)),
+                    NormalText(
+                      titleText: isFollowing
+                          ? AppText.following
+                          : AppText.follow,
+                      titleColor: isFollowing ? c.primary : c.onPrimary,
+                    ),
+                  ],
                 ],
               ),
             ),

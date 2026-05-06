@@ -4,9 +4,7 @@ import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
-/// Outlined field with [−] [value] [+] to pick max players in
-/// [MatchFormLimits.maxPlayersMin]..[MatchFormLimits.maxPlayersMax].
-class MaxPlayersStepperField extends StatelessWidget {
+  class MaxPlayersStepperField extends StatelessWidget {
   const MaxPlayersStepperField({
     super.key,
     required this.value,
@@ -34,40 +32,44 @@ class MaxPlayersStepperField extends StatelessWidget {
             padding: EdgeInsets.only(bottom: context.h(8)),
             child: Text(
               label,
-              style: t.text16W400.copyWith(color: c.onSurface),
+              style: t.text16W600.copyWith(color: c.onSurface),
             ),
           ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: c.transparent,
-            border: Border.all(color: c.greylight, width: 1),
-            borderRadius: AppFormFieldLayout.borderRadius(context),
-          ),
-          child: Row(
-            children: [
-              _sideButton(
-                context: context,
-                icon: Icons.remove_rounded,
-                isLeft: true,
-                enabled: canDec,
-                onTap: () => onChanged(v - 1),
-              ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    '$v',
-                    style: t.text18W600.copyWith(color: c.onSurface),
+        SizedBox(
+          height:context.h(46),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: c.transparent,
+              border: Border.all(color: c.greylight, width: 1),
+              borderRadius: AppFormFieldLayout.borderRadius(context),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _sideButton(
+                  context: context,
+                  icon: Icons.remove_rounded,
+                  isLeft: true,
+                  enabled: canDec,
+                  onTap: () => onChanged(v - 1),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      '$v',
+                      style: t.text18W600.copyWith(color: c.onSurface),
+                    ),
                   ),
                 ),
-              ),
-              _sideButton(
-                context: context,
-                icon: Icons.add_rounded,
-                isLeft: false,
-                enabled: canInc,
-                onTap: () => onChanged(v + 1),
-              ),
-            ],
+                _sideButton(
+                  context: context,
+                  icon: Icons.add_rounded,
+                  isLeft: false,
+                  enabled: canInc,
+                  onTap: () => onChanged(v + 1),
+                ),
+              ],
+            ),
           ),
         ),
       ],

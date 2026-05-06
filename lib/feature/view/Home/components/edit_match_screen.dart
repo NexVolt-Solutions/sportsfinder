@@ -473,9 +473,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                         return Column(
                           children: [
                             CustomButton(
-                              text: state.isLoading
-                                  ? 'Saving...'
-                                  : AppText.saveChanges,
+                              text: AppText.saveChanges,
                               color: context.appColors.primary,
                               isLoading: state.isLoading,
                               onTap: busy
@@ -498,9 +496,7 @@ class _EditMatchScreenState extends State<EditMatchScreen> {
                             ),
                             SizedBox(height: context.h(12)),
                             CustomButton(
-                              text: state.isDeleting
-                                  ? AppText.deleting
-                                  : AppText.deleteMatch,
+                              text: AppText.deleteMatch,
                               color: context.appColors.transparent,
                               colorText: context.appColors.error,
                               borderColor: context.appColors.error,

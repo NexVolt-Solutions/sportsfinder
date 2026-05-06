@@ -139,7 +139,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
           },
         ),
         SectionHeaderWidget(title: AppText.basicInfo),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         TextFormFieldWidget(
           label: AppText.matchTitle,
           hintText: AppText.matchTitleHit,
@@ -151,16 +151,16 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             return null;
           },
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         TextFormFieldWidget(
           label: AppText.description,
           hintText: AppText.descriptionHit,
           controller: model.descriptionController,
           maxLines: 5,
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         SectionHeaderWidget(title: AppText.schedule),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         TextFormFieldWidget(
           label: AppText.date,
           hintText: AppText.dateHit,
@@ -192,7 +192,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             }
           },
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         TextFormFieldWidget(
           label: AppText.time,
           hintText: AppText.dateHit,
@@ -223,7 +223,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             }
           },
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         TextFormFieldWidget(
           label: AppText.location,
           hintText: 'Tap to search location...',
@@ -258,7 +258,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             }
           },
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         TextFormFieldWidget(
           label: AppText.matchDuration,
           controller: model.matchDurationController,
@@ -273,7 +273,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
           ),
           onTap: () => _showDurationPicker(context, model),
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
           selector: (_, m) => (
             m.selectedSportType,
@@ -305,7 +305,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             );
           },
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
           selector: (_, m) => (
             m.selectedSkillLevel,
@@ -337,7 +337,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             );
           },
         ),
-        SizedBox(height: context.h(16)),
+        SizedBox(height: context.h(10)),
         Selector<CreateMatchViewModel, int>(
           selector: (_, m) => m.maxPlayers,
           builder: (context, maxPlayers, _) {
@@ -510,7 +510,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                     ),
                     SizedBox(height: context.h(8)),
                     SectionHeaderWidget(title: AppText.basicInfo),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     TextFormFieldWidget(
                       label: AppText.matchTitle,
                       hintText: AppText.matchTitleHit,
@@ -522,14 +522,14 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     TextFormFieldWidget(
                       label: AppText.description,
                       hintText: AppText.descriptionHit,
                       controller: model.descriptionController,
                       maxLines: 5,
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
                       selector: (_, m) => (
                         m.selectedSportType,
@@ -561,7 +561,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
                       selector: (_, m) => (
                         m.selectedSkillLevel,
@@ -593,9 +593,9 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     SectionHeaderWidget(title: AppText.schedule),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     TextFormFieldWidget(
                       label: AppText.date,
                       hintText: AppText.dateHit,
@@ -632,7 +632,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         }
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     TextFormFieldWidget(
                       label: AppText.time,
                       hintText: AppText.dateHit,
@@ -666,7 +666,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         }
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     TextFormFieldWidget(
                       label: AppText.location,
                       hintText: 'Tap to search location...',
@@ -701,7 +701,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         }
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     TextFormFieldWidget(
                       label: AppText.matchDuration,
                       controller: model.matchDurationController,
@@ -716,7 +716,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                       ),
                       onTap: () => _showDurationPicker(context, model),
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     Selector<CreateMatchViewModel, int>(
                       selector: (_, m) => m.maxPlayers,
                       builder: (context, maxPlayers, _) {
@@ -727,7 +727,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: context.h(16)),
+                    SizedBox(height: context.h(10)),
                     Selector<CreateMatchViewModel, (bool, bool)>(
                       selector: (_, m) => (m.isEditMode, m.isLoading),
                       builder: (context, state, _) {

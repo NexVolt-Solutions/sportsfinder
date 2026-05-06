@@ -9,6 +9,7 @@ class MatchCardButton extends StatelessWidget {
   final Color color;
   final Color textColor;
   final VoidCallback? ontap;
+  final bool isLoading;
 
   const MatchCardButton({
     super.key,
@@ -16,6 +17,7 @@ class MatchCardButton extends StatelessWidget {
     required this.color,
     required this.textColor,
     this.ontap,
+    this.isLoading = false,
   });
 
   @override
@@ -29,16 +31,25 @@ class MatchCardButton extends StatelessWidget {
             ? Border.all(color: const Color(0xFFD7E7F7))
             : null,
       ),
-      child: NormalText(
-        titleText: text,
-        titleStyle: context.appText.text12W600.copyWith(
-          height: 1.5,
-          color: textColor,
-        ),
-      ),
+      child: isLoading
+          ? SizedBox(
+              width: kIsWeb ? 18 : 16,
+              height: kIsWeb ? 18 : 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(textColor),
+              ),
+            )
+          : NormalText(
+              titleText: text,
+              titleStyle: context.appText.text12W600.copyWith(
+                height: 1.5,
+                color: textColor,
+              ),
+            ),
     );
     return GestureDetector(
-      onTap: ontap,
+      onTap: isLoading ? null : ontap,
       child: kIsWeb ? button : Card(margin: EdgeInsets.zero, child: button),
     );
   }

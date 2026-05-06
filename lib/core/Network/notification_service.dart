@@ -282,9 +282,15 @@ class NotificationService extends ChangeNotifier {
     final index = notifications.indexWhere((item) => item.id == incoming.id);
     if (index >= 0) {
       notifications[index] = incoming;
-      return;
+    } else {
+      notifications = <NotificationModel>[incoming, ...notifications];
     }
-    notifications = <NotificationModel>[incoming, ...notifications];
+    _sortNotificationsNewestFirst();
+  }
+
+  /// Newest first so Today/Yesterday/Earlier sections show latest at the top.
+  void _sortNotificationsNewestFirst() {
+    notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   void _scheduleReconnect() {
@@ -313,6 +319,7 @@ class NotificationService extends ChangeNotifier {
       await _loadHiddenNotificationState();
       final response = await _repo.getNotifications();
       notifications = response.items.where((item) => !_shouldHideNotification(item)).toList();
+      _sortNotificationsNewestFirst();
       AppLogger.success(
         'Notifications fetched successfully: ${notifications.length} item(s)',
         tag: 'NotificationService',

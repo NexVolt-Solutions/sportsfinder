@@ -147,7 +147,8 @@ class SignUp extends StatelessWidget {
                     AppSnackBar.show(error);
                   }
                 },
-                text: kIsWeb ? 'Create Account' : AppText.signIn,
+                text: AppText.signUp,
+                isLoading: model.isLoading,
                 color: context.appColors.primary,
               ),
               SizedBox(height: context.h(12)),

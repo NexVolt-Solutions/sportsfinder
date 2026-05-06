@@ -59,26 +59,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               SizedBox(height: context.h(20)),
               CustomButton(
-                onTap: model.isLoading
-                    ? null
-                    : () async {
-                        final result = await model.forgotPassword();
+                onTap: () async {
+                  final result = await model.forgotPassword();
 
-                        if (!context.mounted) return;
+                  if (!context.mounted) return;
 
-                        if (result == null) {
-                          Navigator.pushNamed(
-                            context,
-                            RoutesName.verificationScreen,
-                            arguments: model.emailController.text.trim(),
-                          );
-                        } else {
-                          AppSnackBar.show(result);
-                        }
-                      },
-                text: model.isLoading
-                    ? "Please wait..."
-                    : AppText.sendResetCode,
+                  if (result == null) {
+                    Navigator.pushNamed(
+                      context,
+                      RoutesName.verificationScreen,
+                      arguments: model.emailController.text.trim(),
+                    );
+                  } else {
+                    AppSnackBar.show(result);
+                  }
+                },
+                text: AppText.sendResetCode,
+                isLoading: model.isLoading,
                 color: context.appColors.primary,
               ),
             ],

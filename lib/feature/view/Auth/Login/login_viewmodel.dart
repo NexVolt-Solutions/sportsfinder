@@ -99,6 +99,15 @@ class LoginScreenViewModel extends ChangeNotifier {
     );
   }
 
+  /// Web-only: make sure GIS SDK is initialized before rendering the button.
+  Future<void> ensureGoogleInitializedForWeb() async {
+    try {
+      await _ensureGoogleSignInInitialized();
+    } catch (e) {
+      _logGoogle('ensureGoogleInitializedForWeb: failed type=${e.runtimeType} message=$e');
+    }
+  }
+
   Future<String?> loginUser() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return 'Please fill all the fields';
@@ -156,13 +165,16 @@ class LoginScreenViewModel extends ChangeNotifier {
       final supportsAuth = GoogleSignIn.instance.supportsAuthenticate();
       _logGoogle('loginWithGoogle: supportsAuthenticate()=$supportsAuth');
       if (!supportsAuth) {
-        _logGoogle('loginWithGoogle: early exit — not supported on platform');
-        return 'Google sign-in is not supported on this platform.';
+        _logGoogle(
+          'loginWithGoogle: platform does not support authenticate(); '
+          'web must use google_sign_in_web renderButton',
+        );
+        return 'Google sign-in is not supported with this button on web. '
+            'Use the web Google button.';
       }
-
-      _logGoogle('loginWithGoogle: calling authenticate() with scopeHint');
       String? idToken;
       try {
+        _logGoogle('loginWithGoogle: calling authenticate() with scopeHint');
         final GoogleSignInAccount account = await GoogleSignIn.instance
             .authenticate(scopeHint: const ['email', 'profile', 'openid']);
         idToken = account.authentication.idToken;
@@ -174,10 +186,10 @@ class LoginScreenViewModel extends ChangeNotifier {
       } on GoogleSignInException catch (e) {
         if (e.code != GoogleSignInExceptionCode.canceled) rethrow;
         _logGoogle(
-          'loginWithGoogle: authenticate() canceled; trying silent lightweight fallback',
+          'loginWithGoogle: authenticate/signIn canceled; trying silent lightweight fallback',
         );
-        final fallbackAccount = await GoogleSignIn.instance
-            .attemptLightweightAuthentication();
+        final fallbackAccount =
+            await GoogleSignIn.instance.attemptLightweightAuthentication();
         if (fallbackAccount == null) {
           _logGoogle(
             'loginWithGoogle: lightweight fallback returned null (still canceled/no cached auth)',
@@ -200,6 +212,35 @@ class LoginScreenViewModel extends ChangeNotifier {
         return 'Google ID token not received. Check Firebase/Google setup.';
       }
 
+      return await loginWithGoogleIdToken(idToken: idToken);
+    } on GoogleSignInException catch (e, st) {
+      _logGoogle(
+        'loginWithGoogle: GoogleSignInException '
+        'code=${e.code} description=${e.description} runtimeType=${e.runtimeType}',
+      );
+      debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
+      return _googleErrorMessage(e);
+    } catch (e, st) {
+      _logGoogle(
+        'loginWithGoogle: unhandled error type=${e.runtimeType} message=$e',
+      );
+      debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
+      final msg = _cleanError(e);
+      if (msg.contains('audience mismatch') ||
+          msg.contains('Google token audience')) {
+        return 'Sign-in failed: the server rejected the Google token audience. '
+            'The API must verify ID tokens using the Firebase Web client ID: '
+            '$kGoogleIdTokenExpectedAudience (same as GoogleSignIn serverClientId).';
+      }
+      return msg;
+    } finally {
+      _isGoogleLoading = false;
+      notifyListeners();
+      _logGoogle('loginWithGoogle: finished (loading cleared)');
+    }
+  }
+
+  Future<String?> loginWithGoogleIdToken({required String idToken}) async {
       if (kDebugMode) {
         final aud = idTokenGoogleAud(idToken);
         _logGoogle(
@@ -241,31 +282,6 @@ class LoginScreenViewModel extends ChangeNotifier {
       final route = await AuthRouteResolver.resolvePostAuthTag();
       _logGoogle('loginWithGoogle: success → route=$route');
       return route;
-    } on GoogleSignInException catch (e, st) {
-      _logGoogle(
-        'loginWithGoogle: GoogleSignInException '
-        'code=${e.code} description=${e.description} runtimeType=${e.runtimeType}',
-      );
-      debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
-      return _googleErrorMessage(e);
-    } catch (e, st) {
-      _logGoogle(
-        'loginWithGoogle: unhandled error type=${e.runtimeType} message=$e',
-      );
-      debugPrintStack(label: '[GoogleAuth] stack', stackTrace: st);
-      final msg = _cleanError(e);
-      if (msg.contains('audience mismatch') ||
-          msg.contains('Google token audience')) {
-        return 'Sign-in failed: the server rejected the Google token audience. '
-            'The API must verify ID tokens using the Firebase Web client ID: '
-            '$kGoogleIdTokenExpectedAudience (same as GoogleSignIn serverClientId).';
-      }
-      return msg;
-    } finally {
-      _isGoogleLoading = false;
-      notifyListeners();
-      _logGoogle('loginWithGoogle: finished (loading cleared)');
-    }
   }
 
   Future<void> _saveTokens(

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sport_finding/core/Network/google_places_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/location_onboarding_gate.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 
 class LocationAccessScreenViewModel extends ChangeNotifier {
@@ -20,42 +21,12 @@ class LocationAccessScreenViewModel extends ChangeNotifier {
 
   /// Location is on, device already has while-in-use (or always) — skip onboarding.
   Future<bool> hasUsableLocationPermission() async {
-    if (!await Geolocator.isLocationServiceEnabled()) return false;
-    final p = await Geolocator.checkPermission();
-    return p == LocationPermission.whileInUse || p == LocationPermission.always;
+    return hasUsableLocationForOnboarding();
   }
 
   /// Save coordinates + optional name without blocking the UI (after fast navigate).
   Future<void> saveLocationInBackground() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) return;
-      final p = await Geolocator.checkPermission();
-      if (p != LocationPermission.whileInUse &&
-          p != LocationPermission.always) {
-        return;
-      }
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-      final address = await _googlePlacesService.reverseGeocode(
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
-      await AppPreferences.saveCurrentLocation(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        locationName: address,
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Background location save failed.',
-        tag: 'LocationAccessScreen',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
+    await persistCurrentLocationFromDevice();
   }
 
   Future<void> _fetchPositionAndPersist() async {

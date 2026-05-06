@@ -11,6 +11,7 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/widgets/tap_outside_unfocus.dart';
 import 'package:sport_finding/firebase_options.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -97,6 +98,7 @@ Future<void> main() async {
         initialRoute: _materialInitialRoute(),
         onGenerateInitialRoutes: _onGenerateInitialRoutes,
         onGenerateRoute: Routes.generateRoute,
+        builder: (context, child) => TapOutsideUnfocus(child: child),
       ),
     ),
   );

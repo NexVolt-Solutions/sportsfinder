@@ -96,11 +96,8 @@ class PersonInvitedCard extends StatelessWidget {
           if (isShow)
             MatchCardButton(
               ontap: isInvited || isLoading || isActionDisabled ? null : ontap,
-              text: isLoading
-                  ? 'Inviting...'
-                  : isInvited
-                  ? 'Invited'
-                  : AppText.invite,
+              isLoading: isLoading,
+              text: isInvited ? 'Invited' : AppText.invite,
               color: isActionDisabled
                   ? context.appColors.greylight
                   : isInvited || isLoading
