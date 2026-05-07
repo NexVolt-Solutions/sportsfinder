@@ -197,22 +197,33 @@ class ChatScreenViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final fileName = (xFile.name).trim().isNotEmpty ? xFile.name.trim() : 'image';
+    final fileName =
+        (xFile.name).trim().isNotEmpty ? xFile.name.trim() : 'image';
     final bytes = await xFile.readAsBytes();
 
     try {
-      final url = await _chatUploadRepository.upload(
-        fileField: 'file',
+      final targetUserId = _boundTargetUserId.trim();
+      if (targetUserId.isEmpty) {
+        throw Exception('Chat target user id missing');
+      }
+      final upload = await _chatUploadRepository.uploadDirectChatAttachment(
+        targetUserId: targetUserId,
         fileName: fileName,
         bytes: bytes,
-        fields: const <String, String>{'context': 'chat', 'kind': 'image'},
       );
+
+      final url = upload.mediaUrl.trim();
+      final mime = upload.mimeType;
+      final returnedName = upload.fileName ?? fileName;
+      final sizeBytes = upload.sizeBytes;
 
       final sent = _matchChatService!.sendChatMessage(
         content: url,
         messageType: 'image',
         mediaUrl: url,
-        fileName: fileName,
+        fileName: returnedName,
+        mimeType: mime,
+        sizeBytes: sizeBytes,
       );
 
       if (sent) {
@@ -220,14 +231,18 @@ class ChatScreenViewModel extends ChangeNotifier {
           url,
           type: ChatMessageType.image,
           mediaUrl: url,
-          fileName: fileName,
+          fileName: returnedName,
+          mimeType: mime,
+          sizeBytes: sizeBytes,
         );
       } else {
         _appendFailedOutgoing(
           url,
           type: ChatMessageType.image,
           mediaUrl: url,
-          fileName: fileName,
+          fileName: returnedName,
+          mimeType: mime,
+          sizeBytes: sizeBytes,
         );
       }
       notifyListeners();
@@ -250,36 +265,44 @@ class ChatScreenViewModel extends ChangeNotifier {
     final fileName = (file.name).trim().isNotEmpty ? file.name.trim() : 'file';
 
     try {
-      final String url;
+      final targetUserId = _boundTargetUserId.trim();
+      if (targetUserId.isEmpty) {
+        throw Exception('Chat target user id missing');
+      }
+
+      final ChatAttachmentUploadResult upload;
       if (kIsWeb) {
         final bytes = file.bytes;
         if (bytes == null || bytes.isEmpty) {
           throw Exception('Missing file bytes');
         }
-        url = await _chatUploadRepository.upload(
-          fileField: 'file',
+        upload = await _chatUploadRepository.uploadDirectChatAttachment(
+          targetUserId: targetUserId,
           fileName: fileName,
           bytes: bytes,
-          fields: const <String, String>{'context': 'chat', 'kind': 'file'},
         );
       } else {
         final path = (file.path ?? '').trim();
         if (path.isEmpty) throw Exception('Missing file path');
-        url = await _chatUploadRepository.upload(
-          fileField: 'file',
+        upload = await _chatUploadRepository.uploadDirectChatAttachment(
+          targetUserId: targetUserId,
           fileName: fileName,
           file: File(path),
-          fields: const <String, String>{'context': 'chat', 'kind': 'file'},
         );
       }
+
+      final url = upload.mediaUrl.trim();
+      final mime = upload.mimeType;
+      final returnedName = upload.fileName ?? fileName;
+      final sizeBytes = upload.sizeBytes ?? file.size;
 
       final sent = _matchChatService!.sendChatMessage(
         content: url,
         messageType: 'file',
         mediaUrl: url,
-        fileName: fileName,
-        sizeBytes: file.size,
-        mimeType: file.extension,
+        fileName: returnedName,
+        sizeBytes: sizeBytes,
+        mimeType: mime,
       );
 
       if (sent) {
@@ -287,18 +310,18 @@ class ChatScreenViewModel extends ChangeNotifier {
           url,
           type: ChatMessageType.file,
           mediaUrl: url,
-          fileName: fileName,
-          sizeBytes: file.size,
-          mimeType: file.extension,
+          fileName: returnedName,
+          sizeBytes: sizeBytes,
+          mimeType: mime,
         );
       } else {
         _appendFailedOutgoing(
           url,
           type: ChatMessageType.file,
           mediaUrl: url,
-          fileName: fileName,
-          sizeBytes: file.size,
-          mimeType: file.extension,
+          fileName: returnedName,
+          sizeBytes: sizeBytes,
+          mimeType: mime,
         );
       }
       notifyListeners();

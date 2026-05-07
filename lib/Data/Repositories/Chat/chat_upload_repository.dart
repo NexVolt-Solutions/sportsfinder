@@ -3,29 +3,39 @@ import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sport_finding/core/Network/api_service.dart';
 
+class ChatAttachmentUploadResult {
+  const ChatAttachmentUploadResult({
+    required this.mediaUrl,
+    this.mimeType,
+    this.fileName,
+    this.sizeBytes,
+  });
+
+  final String mediaUrl;
+  final String? mimeType;
+  final String? fileName;
+  final int? sizeBytes;
+}
+
 class ChatUploadRepository {
-  ChatUploadRepository({ApiService? apiService}) : _apiService = apiService ?? ApiService();
+  ChatUploadRepository({ApiService? apiService})
+      : _apiService = apiService ?? ApiService();
 
   final ApiService _apiService;
 
-  /// Uploads a chat attachment and returns a public URL.
+  /// `POST /api/v1/users/{user_id}/attachments`
   ///
-  /// Backend contract can evolve; we try common response keys: `url`, `media_url`,
-  /// `file_url`, `path`.
-  ///
-  /// Configure endpoint via `--dart-define=CHAT_UPLOAD_ENDPOINT=/api/v1/...`
-  static const String _endpoint = String.fromEnvironment(
-    'CHAT_UPLOAD_ENDPOINT',
-    defaultValue: '/api/v1/uploads',
-  );
-
-  Future<String> upload({
-    required String fileField,
+  /// Returns `{ media_url, mime_type, file_name, size_bytes }`.
+  Future<ChatAttachmentUploadResult> uploadDirectChatAttachment({
+    required String targetUserId,
     required String fileName,
     File? file,
     List<int>? bytes,
-    Map<String, String>? fields,
   }) async {
+    final trimmedTargetUserId = targetUserId.trim();
+    if (trimmedTargetUserId.isEmpty) {
+      throw Exception('Missing target user id');
+    }
     if (fileName.trim().isEmpty) {
       throw Exception('Missing attachment file name');
     }
@@ -37,25 +47,31 @@ class ChatUploadRepository {
     }
 
     final res = await _apiService.postMultipart(
-      _endpoint,
-      fields: fields ?? const <String, String>{},
+      '/api/v1/users/$trimmedTargetUserId/attachments',
+      fields: const <String, String>{},
       file: file,
       fileBytes: bytes,
       fileName: fileName,
-      fileField: fileField,
+      fileField: 'file',
     );
 
-    final url = (res['url'] ??
-            res['media_url'] ??
-            res['file_url'] ??
-            res['path'] ??
-            '')
-        .toString()
-        .trim();
-    if (url.isEmpty) {
+    final mediaUrl = (res['media_url'] ?? '').toString().trim();
+    if (mediaUrl.isEmpty) {
       throw Exception('Upload succeeded but no url returned');
     }
-    return url;
+
+    final mimeType = res['mime_type']?.toString().trim();
+    final returnedName = res['file_name']?.toString().trim();
+    final sizeBytes = res['size_bytes'] is num
+        ? (res['size_bytes'] as num).toInt()
+        : int.tryParse('${res['size_bytes'] ?? ''}');
+
+    return ChatAttachmentUploadResult(
+      mediaUrl: mediaUrl,
+      mimeType: (mimeType ?? '').isEmpty ? null : mimeType,
+      fileName: (returnedName ?? '').isEmpty ? null : returnedName,
+      sizeBytes: sizeBytes,
+    );
   }
 }
 
