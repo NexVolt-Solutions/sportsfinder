@@ -23,9 +23,7 @@ class ChatUploadRepository {
 
   final ApiService _apiService;
 
-  /// `POST /api/v1/users/{user_id}/attachments`
-  ///
-  /// Returns `{ media_url, mime_type, file_name, size_bytes }`.
+ 
   Future<ChatAttachmentUploadResult> uploadDirectChatAttachment({
     required String targetUserId,
     required String fileName,
