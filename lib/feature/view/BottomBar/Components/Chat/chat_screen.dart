@@ -596,8 +596,38 @@ class _ChatScreenState extends State<ChatScreen> {
     final isMe = msg.isMe;
     final selectedBg = context.appColors.primary.withValues(alpha: 0.12);
     final hasMedia = (msg.mediaUrl ?? '').trim().isNotEmpty;
+    bool isProbablyImage(String? url, String? mime) {
+      final u = (url ?? '').trim().toLowerCase();
+      final m = (mime ?? '').trim().toLowerCase();
+      if (u.isEmpty && m.isEmpty) return false;
+
+      // URL extension wins (avoids bad mime types like `image/pdf`).
+      if (u.endsWith('.jpg') ||
+          u.endsWith('.jpeg') ||
+          u.endsWith('.png') ||
+          u.endsWith('.webp') ||
+          u.endsWith('.gif')) {
+        return true;
+      }
+      if (u.endsWith('.pdf') ||
+          u.endsWith('.doc') ||
+          u.endsWith('.docx') ||
+          u.endsWith('.xls') ||
+          u.endsWith('.xlsx') ||
+          u.endsWith('.ppt') ||
+          u.endsWith('.pptx') ||
+          u.endsWith('.zip') ||
+          u.endsWith('.rar')) {
+        return false;
+      }
+
+      // Fallback to mime type when URL isn't informative.
+      if (m == 'image/pdf' || m == 'application/pdf') return false;
+      return m.startsWith('image/');
+    }
+
     final inferredType = hasMedia
-        ? (((msg.mimeType ?? '').toLowerCase().startsWith('image/'))
+        ? (isProbablyImage(msg.mediaUrl ?? msg.thumbnailUrl, msg.mimeType)
               ? ChatMessageType.image
               : ChatMessageType.file)
         : msg.type;
@@ -662,9 +692,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         : (effectiveType == ChatMessageType.text
                             ? msg.text
                             : (effectiveType == ChatMessageType.image
-                                ? ((msg.fileName ?? 'Photo').trim().isEmpty
-                                      ? 'Photo'
-                                      : (msg.fileName ?? 'Photo').trim())
+                                ? ''
                                 : ((msg.fileName ?? 'File').trim().isEmpty
                                       ? 'File'
                                       : (msg.fileName ?? 'File').trim()))),
@@ -694,18 +722,57 @@ class _ChatScreenState extends State<ChatScreen> {
                       borderRadius: BorderRadius.circular(context.radius(10)),
                       child: AspectRatio(
                         aspectRatio: 16 / 10,
-                        child: Image.network(
-                          (msg.mediaUrl ?? msg.thumbnailUrl ?? '').trim(),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: context.appColors.blue10,
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Image unavailable',
-                              style: context.appText.text12W500.copyWith(
-                                color: context.appColors.greylight,
+                        child: InkWell(
+                          onTap: isSelectionMode
+                              ? null
+                              : () {
+                                  final url =
+                                      (msg.mediaUrl ?? msg.thumbnailUrl ?? '')
+                                          .trim();
+                                  if (url.isEmpty) return;
+                                  _openImagePreview(context, url);
+                                },
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                (msg.mediaUrl ?? msg.thumbnailUrl ?? '').trim(),
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stackTrace) => Container(
+                                  color: context.appColors.blue10,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Image unavailable',
+                                    style: context.appText.text12W500.copyWith(
+                                      color: context.appColors.greylight,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                              Positioned(
+                                right: context.w(8),
+                                bottom: context.h(8),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: context.w(8),
+                                    vertical: context.h(4),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.45),
+                                    borderRadius: BorderRadius.circular(
+                                      context.radius(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    msg.time,
+                                    style: context.appText.text12W500.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -753,6 +820,55 @@ class _ChatScreenState extends State<ChatScreen> {
     return model.messages
         .where((m) => _selectedMessageLocalIds.contains(m.localId))
         .toList();
+  }
+
+  Future<void> _openImagePreview(BuildContext context, String url) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: EdgeInsets.zero,
+          backgroundColor: Colors.black,
+          child: SafeArea(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: InteractiveViewer(
+                    minScale: 0.9,
+                    maxScale: 4,
+                    child: Center(
+                      child: Image.network(
+                        url,
+                        fit: BoxFit.contain,
+                        errorBuilder: (ctx, error, stackTrace) => Text(
+                          'Image unavailable',
+                          style: ctx.appText.text14W600.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(dialogContext),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _confirmDeleteSelected(
