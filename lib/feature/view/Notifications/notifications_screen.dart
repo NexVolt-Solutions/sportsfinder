@@ -446,12 +446,13 @@ class _NotificationCard extends StatelessWidget {
   final VoidCallback? onPrimaryTap;
   final VoidCallback? onSecondaryTap;
 
-  bool get _inviteActionsBusy => inviteLoadingPhase != null;
-
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
     final hasActions = item.showActions && item.primaryActionText != null;
+    final phase = inviteLoadingPhase;
+    final isAccepting = phase == InviteLoadingPhase.accepting;
+    final isDeclining = phase == InviteLoadingPhase.declining;
 
     return CardWidget(
       onTap: onTap,
@@ -536,27 +537,22 @@ class _NotificationCard extends StatelessWidget {
                   Row(
                     children: [
                       _ActionPill(
-                        text: inviteLoadingPhase == InviteLoadingPhase.accepting
-                            ? 'Accepting...'
+                        label: isAccepting
+                            ? 'Accepting'
                             : item.primaryActionText!,
                         filled: item.isPrimaryActionFilled,
-                        onTap: _inviteActionsBusy ? null : onPrimaryTap,
-                        muted: _inviteActionsBusy &&
-                            inviteLoadingPhase !=
-                                InviteLoadingPhase.accepting,
+                        showProgress: isAccepting,
+                        onTap: phase == null ? onPrimaryTap : null,
                       ),
                       if (item.secondaryActionText != null) ...[
                         SizedBox(width: context.w(8)),
                         _ActionPill(
-                          text: inviteLoadingPhase ==
-                                  InviteLoadingPhase.declining
-                              ? 'Declining...'
+                          label: isDeclining
+                              ? 'Declining'
                               : item.secondaryActionText!,
                           filled: false,
-                          onTap: _inviteActionsBusy ? null : onSecondaryTap,
-                          muted: _inviteActionsBusy &&
-                              inviteLoadingPhase !=
-                                  InviteLoadingPhase.declining,
+                          showProgress: isDeclining,
+                          onTap: phase == null ? onSecondaryTap : null,
                         ),
                       ],
                     ],
@@ -573,41 +569,56 @@ class _NotificationCard extends StatelessWidget {
 
 class _ActionPill extends StatelessWidget {
   const _ActionPill({
-    required this.text,
+    required this.label,
     required this.filled,
+    this.showProgress = false,
     this.onTap,
-    this.muted = false,
   });
 
-  final String text;
+  final String label;
   final bool filled;
+  final bool showProgress;
   final VoidCallback? onTap;
-  final bool muted;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return Opacity(
-      opacity: muted ? 0.42 : 1.0,
-      child: InkWell(
-        onTap: muted ? null : onTap,
-        borderRadius: BorderRadius.circular(context.radius(14)),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.w(12),
-            vertical: context.h(3),
-          ),
-          decoration: BoxDecoration(
-            color: filled ? c.primary : c.onPrimary.withValues(alpha: 0.0),
-            borderRadius: BorderRadius.circular(context.radius(14)),
-            border: Border.all(color: c.primary, width: 1.1),
-          ),
-          child: Text(
-            text,
-            style: context.appText.text16W500.copyWith(
-              color: filled ? c.onPrimary : c.primary,
+    final busy = showProgress;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(context.radius(14)),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: context.w(12),
+          vertical: context.h(3),
+        ),
+        decoration: BoxDecoration(
+          color: filled ? c.primary : c.onPrimary.withValues(alpha: 0.0),
+          borderRadius: BorderRadius.circular(context.radius(14)),
+          border: Border.all(color: c.primary, width: 1.1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (busy) ...[
+              SizedBox(
+                width: context.w(14),
+                height: context.w(14),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: filled ? c.onPrimary : c.primary,
+                ),
+              ),
+              SizedBox(width: context.w(6)),
+            ],
+            Text(
+              busy ? '$label...' : label,
+              style: context.appText.text16W500.copyWith(
+                color: filled ? c.onPrimary : c.primary,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
