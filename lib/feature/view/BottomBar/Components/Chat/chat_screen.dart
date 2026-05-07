@@ -719,7 +719,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Padding(
                     padding: EdgeInsets.only(top: context.h(8)),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(context.radius(10)),
+                      borderRadius: BorderRadius.zero,
                       child: AspectRatio(
                         aspectRatio: 16 / 10,
                         child: InkWell(

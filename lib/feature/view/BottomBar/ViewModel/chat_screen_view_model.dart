@@ -697,6 +697,7 @@ class ChatScreenViewModel extends ChangeNotifier {
         );
       }
     } catch (e) {
+      _log('deleteMessages failed scope=$scope err=$e');
       _messages
         ..clear()
         ..addAll(before);

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show VoidCallback, kIsWeb;
+import 'package:flutter/foundation.dart' show VoidCallback, kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
@@ -304,6 +304,10 @@ class ApiService {
       if (response.body.isEmpty) return null;
       return jsonDecode(response.body);
     } else {
+      // Helpful for debugging API contract mismatches (e.g. scope rules).
+      debugPrint(
+        '[ApiService] DELETE failed status=${response.statusCode} url=$url body=${response.body}',
+      );
       throw Exception("Failed to delete data: ${response.body}");
     }
   }
