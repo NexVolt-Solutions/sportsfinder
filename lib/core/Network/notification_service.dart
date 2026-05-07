@@ -266,6 +266,10 @@ class NotificationService extends ChangeNotifier {
         : (payload is Map ? Map<String, dynamic>.from(payload) : <String, dynamic>{});
     final notificationMap = <String, dynamic>{
       ...payloadMap,
+      if (event['recipient_id'] != null) 'recipient_id': event['recipient_id'],
+      if (event['recipient_user_id'] != null)
+        'recipient_user_id': event['recipient_user_id'],
+      if (event['user_id'] != null) 'user_id': event['user_id'],
       if (payloadMap['id'] == null)
         'id': '${notificationType.isNotEmpty ? notificationType : 'notification'}_${DateTime.now().microsecondsSinceEpoch}',
       if (payloadMap['type'] == null)
@@ -279,6 +283,14 @@ class NotificationService extends ChangeNotifier {
   }
 
   void _upsertNotification(NotificationModel incoming) {
+    final uid = ProfileService().profile?.id;
+    if (!incoming.isAddressedToCurrentUser(uid)) {
+      AppLogger.warning(
+        'Skipping realtime notification not for current user (id=${incoming.id})',
+        tag: 'NotificationService',
+      );
+      return;
+    }
     final index = notifications.indexWhere((item) => item.id == incoming.id);
     if (index >= 0) {
       notifications[index] = incoming;
@@ -318,7 +330,21 @@ class NotificationService extends ChangeNotifier {
     try {
       await _loadHiddenNotificationState();
       final response = await _repo.getNotifications();
-      notifications = response.items.where((item) => !_shouldHideNotification(item)).toList();
+      final currentUserId = ProfileService().profile?.id;
+      final afterHide = response.items
+          .where((item) => !_shouldHideNotification(item))
+          .toList();
+      final visible = afterHide
+          .where((item) => item.isAddressedToCurrentUser(currentUserId))
+          .toList();
+      final droppedWrongUser = afterHide.length - visible.length;
+      if (droppedWrongUser > 0) {
+        AppLogger.warning(
+          'Ignored $droppedWrongUser notification(s) not addressed to current user',
+          tag: 'NotificationService',
+        );
+      }
+      notifications = visible;
       _sortNotificationsNewestFirst();
       AppLogger.success(
         'Notifications fetched successfully: ${notifications.length} item(s)',

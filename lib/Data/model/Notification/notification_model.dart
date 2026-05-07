@@ -5,13 +5,28 @@ class NotificationModel {
   final bool isRead;
   final DateTime createdAt;
 
+  /// When the API includes this, the client can drop rows not meant for the
+  /// logged-in account (defense in depth). Null = legacy / token-only scope.
+  final String? recipientUserId;
+
   NotificationModel({
     required this.id,
     required this.type,
     required this.payload,
     required this.isRead,
     required this.createdAt,
+    this.recipientUserId,
   });
+
+  /// Whether this row should appear for [currentUserId] (from `/users/me`).
+  /// If [recipientUserId] is absent, we assume the API already scoped by token.
+  bool isAddressedToCurrentUser(String? currentUserId) {
+    final r = recipientUserId?.trim();
+    if (r == null || r.isEmpty) return true;
+    final u = currentUserId?.trim();
+    if (u == null || u.isEmpty) return true;
+    return r == u;
+  }
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     final rawPayload = json['payload'];
@@ -37,6 +52,8 @@ class NotificationModel {
       if (json['text'] != null) 'text': json['text'],
     };
 
+    final recipient = _parseRecipientId(json);
+
     return NotificationModel(
       id: json['id'] ?? '',
       type: json['type'] ?? '',
@@ -44,7 +61,29 @@ class NotificationModel {
       isRead: json['is_read'] ?? false,
       createdAt:
           DateTime.tryParse('${json['created_at'] ?? ''}') ?? DateTime.now(),
+      recipientUserId: recipient,
     );
+  }
+
+  static String? _parseRecipientId(Map<String, dynamic> json) {
+    String? pick(dynamic v) {
+      final s = v?.toString().trim();
+      if (s == null || s.isEmpty || s.toLowerCase() == 'null') return null;
+      return s;
+    }
+
+    final direct = pick(json['recipient_id']) ??
+        pick(json['recipient_user_id']) ??
+        pick(json['user_id']) ??
+        pick(json['account_id']);
+    if (direct != null) return direct;
+
+    final recipient = json['recipient'];
+    if (recipient is Map) {
+      final id = recipient['id'] ?? recipient['user_id'];
+      return pick(id);
+    }
+    return null;
   }
 
   NotificationModel copyWith({
@@ -53,6 +92,7 @@ class NotificationModel {
     Map<String, dynamic>? payload,
     bool? isRead,
     DateTime? createdAt,
+    String? recipientUserId,
   }) {
     return NotificationModel(
       id: id ?? this.id,
@@ -60,6 +100,7 @@ class NotificationModel {
       payload: payload ?? this.payload,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
+      recipientUserId: recipientUserId ?? this.recipientUserId,
     );
   }
 
