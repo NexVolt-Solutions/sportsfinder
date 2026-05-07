@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
+import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
 
 import 'dart:async';
 
@@ -16,6 +17,7 @@ class ChatMessage {
   final bool isPending;
   final bool isFailed;
   final String localId;
+  final String? messageId;
 
   const ChatMessage({
     required this.text,
@@ -25,6 +27,7 @@ class ChatMessage {
     this.isPending = false,
     this.isFailed = false,
     this.localId = '',
+    this.messageId,
   });
 
   ChatMessage copyWith({
@@ -35,6 +38,7 @@ class ChatMessage {
     bool? isPending,
     bool? isFailed,
     String? localId,
+    String? messageId,
   }) {
     return ChatMessage(
       text: text ?? this.text,
@@ -44,6 +48,7 @@ class ChatMessage {
       isPending: isPending ?? this.isPending,
       isFailed: isFailed ?? this.isFailed,
       localId: localId ?? this.localId,
+      messageId: messageId ?? this.messageId,
     );
   }
 }
@@ -91,6 +96,8 @@ class ChatScreenViewModel extends ChangeNotifier {
   int _localMessageCounter = 0;
   final Map<String, Timer> _pendingFailTimers = <String, Timer>{};
   static const Duration _pendingFailureTimeout = Duration(seconds: 12);
+  final DirectMessagesRepository _directMessagesRepository =
+      DirectMessagesRepository();
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isEmpty => _messages.isEmpty;
@@ -273,6 +280,7 @@ class ChatScreenViewModel extends ChangeNotifier {
         time: DateTimeFormatters.chatTime(now),
         date: DateTimeFormatters.chatDate(now),
         isMe: isMine,
+        messageId: id.isNotEmpty ? id : null,
       ),
     );
   }
@@ -348,9 +356,86 @@ class ChatScreenViewModel extends ChangeNotifier {
       isFailed: false,
       time: DateTimeFormatters.chatTime(sentAtLocal),
       date: DateTimeFormatters.chatDate(sentAtLocal),
+      messageId: message.messageId.trim().isEmpty ? null : message.messageId.trim(),
     );
     _log('pending reconciled with server ack localId=$localId');
     return true;
+  }
+
+  Future<void> deleteMessage(
+    ChatMessage message, {
+    required DeleteMessageScope scope,
+  }) async {
+    final idx = _messages.indexWhere((m) => m.localId == message.localId);
+    if (idx < 0) return;
+
+    final removed = _messages.removeAt(idx);
+    notifyListeners();
+
+    // Local-only message (pending/failed) or missing IDs: just delete locally.
+    final targetUserId = _boundTargetUserId.trim();
+    final messageId = (removed.messageId ?? '').trim();
+    if (targetUserId.isEmpty || messageId.isEmpty) {
+      return;
+    }
+
+    try {
+      await _directMessagesRepository.deleteDirectMessage(
+        userId: targetUserId,
+        messageId: messageId,
+        scope: scope,
+      );
+    } catch (e) {
+      // rollback
+      _messages.insert(idx, removed);
+      _errorMessage = 'Failed to delete message.';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteMessages(
+    List<ChatMessage> messages, {
+    required DeleteMessageScope scope,
+  }) async {
+    if (messages.isEmpty) return;
+
+    // Snapshot current state for rollback
+    final before = List<ChatMessage>.from(_messages);
+
+    final idsToDelete = messages
+        .map((m) => m.localId.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    if (idsToDelete.isEmpty) return;
+
+    // Optimistic remove locally
+    _messages.removeWhere((m) => idsToDelete.contains(m.localId.trim()));
+    notifyListeners();
+
+    // Delete server-side only for those that have server IDs
+    final targetUserId = _boundTargetUserId.trim();
+    if (targetUserId.isEmpty) return;
+
+    try {
+      for (final m in messages) {
+        final messageId = (m.messageId ?? '').trim();
+        if (messageId.isEmpty) continue;
+        await _directMessagesRepository.deleteDirectMessage(
+          userId: targetUserId,
+          messageId: messageId,
+          scope: scope,
+        );
+      }
+    } catch (e) {
+      _messages
+        ..clear()
+        ..addAll(before);
+      _errorMessage = 'Failed to delete message(s).';
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> _disposeRealtimeOnly() async {

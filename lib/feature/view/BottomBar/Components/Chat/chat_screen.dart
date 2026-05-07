@@ -8,7 +8,9 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
+ import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
+import 'package:sport_finding/feature/widget/app_dialog.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.targetUserId});
@@ -24,6 +26,9 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _boundRealtimeChat = false;
   int _lastRenderedMessageCount = 0;
+  final Set<String> _selectedMessageLocalIds = <String>{};
+
+  bool get _isSelectionMode => _selectedMessageLocalIds.isNotEmpty;
 
   @override
   void didChangeDependencies() {
@@ -58,6 +63,23 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _exitSelectionMode() {
+    if (_selectedMessageLocalIds.isEmpty) return;
+    setState(() => _selectedMessageLocalIds.clear());
+  }
+
+  void _toggleSelected(ChatMessage msg) {
+    final id = msg.localId.trim();
+    if (id.isEmpty) return;
+    setState(() {
+      if (_selectedMessageLocalIds.contains(id)) {
+        _selectedMessageLocalIds.remove(id);
+      } else {
+        _selectedMessageLocalIds.add(id);
+      }
+    });
   }
 
   @override
@@ -152,7 +174,13 @@ class _ChatScreenState extends State<ChatScreen> {
                       Row(
                         children: [
                           GestureDetector(
-                            onTap: () => Navigator.pop(context),
+                            onTap: () {
+                              if (_isSelectionMode) {
+                                _exitSelectionMode();
+                                return;
+                              }
+                              Navigator.pop(context);
+                            },
                             child: SvgPicture.asset(AppAssets.backIcon),
                           ),
                           SizedBox(width: context.w(12)),
@@ -161,16 +189,28 @@ class _ChatScreenState extends State<ChatScreen> {
                             backgroundColor: context.appColors.greylight,
                           ),
                           SizedBox(width: context.w(12)),
-                          NormalText(
-                            titleText: model.contactName,
-                            subText: subtitle,
-                            subColor: context.appColors.greylight,
-                          ),
+                          _isSelectionMode
+                              ? NormalText(
+                                  titleText:
+                                      '${_selectedMessageLocalIds.length} selected',
+                                  subText: 'Tap messages to select more',
+                                  subColor: context.appColors.greylight,
+                                )
+                              : NormalText(
+                                  titleText: model.contactName,
+                                  subText: subtitle,
+                                  subColor: context.appColors.greylight,
+                                ),
                         ],
                       ),
                       GestureDetector(
-                        onTap: () {},
-                        child: SvgPicture.asset(AppAssets.menuIcon),
+                        onTap: () async {
+                          if (!_isSelectionMode) return;
+                          await _confirmDeleteSelected(context, model);
+                        },
+                        child: _isSelectionMode
+                            ? const Icon(Icons.delete_outline)
+                            : SvgPicture.asset(AppAssets.menuIcon),
                       ),
                     ],
                   ),
@@ -205,6 +245,18 @@ class _ChatScreenState extends State<ChatScreen> {
                                   _buildMessageBubble(
                                     context,
                                     msg,
+                                    isSelected: _selectedMessageLocalIds
+                                        .contains(msg.localId),
+                                    isSelectionMode: _isSelectionMode,
+                                    onToggleSelected: () => _toggleSelected(msg),
+                                    onEnterSelection: () {
+                                      final id = msg.localId.trim();
+                                      if (id.isEmpty) return;
+                                      if (_selectedMessageLocalIds.contains(id)) {
+                                        return;
+                                      }
+                                      setState(() => _selectedMessageLocalIds.add(id));
+                                    },
                                     onRetry: msg.isFailed
                                         ? () => model.retryMessage(msg.localId)
                                         : null,
@@ -277,63 +329,161 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageBubble(
     BuildContext context,
     ChatMessage msg, {
+    required bool isSelected,
+    required bool isSelectionMode,
+    required VoidCallback onToggleSelected,
+    required VoidCallback onEnterSelection,
     VoidCallback? onRetry,
   }) {
     final isMe = msg.isMe;
+    final selectedBg = context.appColors.primary.withValues(alpha: 0.12);
 
     return Padding(
       padding: EdgeInsets.only(bottom: context.h(10)),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          constraints: BoxConstraints(maxWidth: context.screenWidth * 0.68),
-          padding: context.padSym(h: 12, v: 6),
-          decoration: BoxDecoration(
-            color: isMe ? context.appColors.primary : Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(18),
-              topRight: const Radius.circular(18),
-              bottomLeft: Radius.circular(isMe ? 18 : 4),
-              bottomRight: Radius.circular(isMe ? 4 : 18),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: context.appColors.onSurface.withValues(alpha: 0.06),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+        child: GestureDetector(
+          onLongPress: () {
+            if (isSelectionMode) return;
+            onEnterSelection();
+          },
+          onTap: () {
+            if (!isSelectionMode) return;
+            onToggleSelected();
+          },
+          child: Container(
+            constraints: BoxConstraints(maxWidth: context.screenWidth * 0.68),
+            padding: context.padSym(h: 12, v: 6),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedBg
+                  : (isMe ? context.appColors.primary : Colors.white),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isMe ? 18 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 18),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: onRetry,
-                behavior: HitTestBehavior.opaque,
-                child: NormalText(
-                  titleText: msg.text,
-                  titleColor: isMe
-                      ? context.appColors.onPrimary
-                      : context.appColors.onSurface,
-                  titleFontWeight: FontWeight.w400,
-                  titleFontSize: context.text(16),
-                  sizeBoxheight: context.h(4),
-                  subText: msg.isFailed
-                      ? 'Failed • Tap to retry'
-                      : (msg.isPending ? 'Sending...' : msg.time),
-                  subColor: msg.isFailed
-                      ? context.appColors.error
-                      : (isMe
-                            ? context.appColors.onPrimary.withValues(alpha: 0.7)
-                            : context.appColors.greylight),
-                  subFontSize: context.text(12),
-                  subFontWeight: FontWeight.w400,
+              boxShadow: [
+                BoxShadow(
+                  color: context.appColors.onSurface.withValues(alpha: 0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-            ],
+              ],
+              border: isSelected
+                  ? Border.all(
+                      color: context.appColors.primary.withValues(alpha: 0.6),
+                      width: 1,
+                    )
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: isSelectionMode ? null : onRetry,
+                  behavior: HitTestBehavior.opaque,
+                  child: NormalText(
+                    titleText: msg.text,
+                    titleColor: isMe
+                        ? context.appColors.onPrimary
+                        : context.appColors.onSurface,
+                    titleFontWeight: FontWeight.w400,
+                    titleFontSize: context.text(16),
+                    sizeBoxheight: context.h(4),
+                    subText: msg.isFailed
+                        ? 'Failed • Tap to retry'
+                        : (msg.isPending ? 'Sending...' : msg.time),
+                    subColor: msg.isFailed
+                        ? context.appColors.error
+                        : (isMe
+                              ? context.appColors.onPrimary
+                                  .withValues(alpha: 0.7)
+                              : context.appColors.greylight),
+                    subFontSize: context.text(12),
+                    subFontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  List<ChatMessage> _selectedMessages(ChatScreenViewModel model) {
+    if (_selectedMessageLocalIds.isEmpty) return const <ChatMessage>[];
+    return model.messages
+        .where((m) => _selectedMessageLocalIds.contains(m.localId))
+        .toList();
+  }
+
+  Future<void> _confirmDeleteSelected(
+    BuildContext context,
+    ChatScreenViewModel model,
+  ) async {
+    final selected = _selectedMessages(model);
+    if (selected.isEmpty) {
+      _exitSelectionMode();
+      return;
+    }
+    await _showDeleteDialog(context, model, selected);
+  }
+
+  Future<void> _showDeleteDialog(
+    BuildContext context,
+    ChatScreenViewModel model,
+    List<ChatMessage> selected,
+  ) async {
+    final canDeleteForEveryone = selected.isNotEmpty &&
+        selected.every((m) =>
+            m.isMe && (m.messageId ?? '').trim().isNotEmpty && !m.isPending);
+
+    final count = selected.length;
+
+    await showAppDialog<void>(
+      context,
+      title: 'Delete ${count == 1 ? 'message' : 'messages'}?',
+      message: count == 1
+          ? 'Choose how you want to delete this message.'
+          : 'Choose how you want to delete $count messages.',
+      actions: [
+        AppDialogAction(
+          label: 'Delete for me',
+          isDefault: true,
+          onPressed: (dialogContext) async {
+            Navigator.pop(dialogContext);
+            try {
+              await model.deleteMessages(
+                selected,
+                scope: DeleteMessageScope.me,
+              );
+              if (mounted) _exitSelectionMode();
+            } catch (_) {}
+          },
+        ),
+        if (canDeleteForEveryone)
+          AppDialogAction(
+            label: 'Delete for everyone',
+            isDestructive: true,
+            onPressed: (dialogContext) async {
+              Navigator.pop(dialogContext);
+              try {
+                await model.deleteMessages(
+                  selected,
+                  scope: DeleteMessageScope.both,
+                );
+                if (mounted) _exitSelectionMode();
+              } catch (_) {}
+            },
+          ),
+        AppDialogAction(
+          label: 'Cancel',
+          onPressed: (dialogContext) => Navigator.pop(dialogContext),
+        ),
+      ],
     );
   }
 }

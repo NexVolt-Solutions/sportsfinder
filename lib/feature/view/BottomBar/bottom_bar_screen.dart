@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/widgets/bottom_bar_shell_widgets.dart';
 import 'package:sport_finding/feature/view/Discover/discover_tab_screen.dart';
 import 'package:sport_finding/feature/view/Home/components/all_upcoming_matches.dart';
@@ -30,7 +33,7 @@ List<Widget> _bottomBarTabChildren() => <Widget>[
   const DiscoverTabScreen(embedInBottomBar: true),
   ChangeNotifierProvider(
     create: (_) => HomeScreenViewModel(),
-    child: const HomeScreen(showAppBar: false),
+    child: const HomeScreen(),
   ),
   const ChatListScreen(embedInBottomBar: true),
   const ProfileScreen(embedInBottomBar: true),
@@ -95,6 +98,7 @@ class _BottomBarContent extends StatefulWidget {
 }
 
 class _BottomBarContentState extends State<_BottomBarContent> {
+  static const int _chatTabIndex = 3;
   bool _appliedRouteTab = false;
   bool _requestedInitialNotifications = false;
   bool _requestedInitialProfile = false;
@@ -142,11 +146,53 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     Navigator.pushNamed(context, RoutesName.notificationsScreen);
   }
 
+  Future<void> _pickAndOpenUserForChat(BuildContext context) async {
+    final selected = await Navigator.pushNamed(
+      context,
+      RoutesName.allMemberScreen,
+    );
+    if (!context.mounted || selected is! ChatRouteArgs) return;
+
+    final selectedName = selected.contactName.trim();
+    final selectedTargetUserId = (selected.targetUserId ?? '').trim();
+    if (selectedName.isEmpty || selectedTargetUserId.isEmpty) return;
+
+    ChatListScreenViewModel.upsertThread(
+      userName: selectedName,
+      targetUserId: selectedTargetUserId,
+      lastMessage: 'Chat started',
+      lastAt: DateTime.now(),
+      unreadCount: 0,
+      isOnline: true,
+    );
+
+    await Navigator.pushNamed(
+      context,
+      RoutesName.chatScreen,
+      arguments: selected,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      floatingActionButton: Consumer<BottomBarScreenViewModel>(
+        builder: (context, vm, _) {
+          if (vm.selectedIndex != _chatTabIndex) return const SizedBox.shrink();
+          return Padding(
+            padding: context.paddingOnly(bottom: 65),
+            child: FloatingActionButton(
+              elevation: 2,
+              onPressed: () => _pickAndOpenUserForChat(context),
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
+          );
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Consumer<BottomBarScreenViewModel>(
         builder: (context, vm, _) => MainFrame(
           showDecorationLayer: !kIsWeb,

@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 /// Central keys for [SharedPreferences]. Auth tokens persist across app restarts
 /// and hot restarts; onboarding completion is kept across logout so setup
@@ -18,6 +19,7 @@ class AppPreferences {
   static const String _keyLocationSearchHistory = 'location_search_history';
   static const String _keyHiddenNotificationIds = 'hidden_notification_ids';
   static const String _keyNotificationsClearedAt = 'notifications_cleared_at';
+  static const String _keyChatThreadsV1 = 'chat_threads_v1';
   static const int _maxLocationSearchHistory = 12;
 
   /// Recent location strings from [LocationSearchScreen] (newest first).
@@ -80,6 +82,39 @@ class AppPreferences {
   static Future<void> clearHiddenNotificationIds() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyHiddenNotificationIds);
+  }
+
+  // --- chat threads (stored locally) ---
+
+  /// Stored as JSON string of a list of maps.
+  static Future<List<Map<String, dynamic>>> getChatThreads() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keyChatThreadsV1);
+    if (raw == null || raw.trim().isEmpty) return <Map<String, dynamic>>[];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <Map<String, dynamic>>[];
+      return decoded
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  static Future<void> setChatThreads(List<Map<String, dynamic>> threads) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cleaned = threads
+        .map((e) => Map<String, dynamic>.from(e))
+        .where((e) => (e['userName']?.toString().trim() ?? '').isNotEmpty)
+        .toList();
+    await prefs.setString(_keyChatThreadsV1, jsonEncode(cleaned));
+  }
+
+  static Future<void> clearChatThreads() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyChatThreadsV1);
   }
 
   static Future<DateTime?> getNotificationsClearedAt() async {
@@ -218,5 +253,6 @@ class AppPreferences {
     await clearHiddenNotificationIds();
     await setNotificationsClearedAt(null);
     await clearPendingOnboardingSportSkill();
+    await clearChatThreads();
   }
 }

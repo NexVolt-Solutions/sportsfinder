@@ -1,16 +1,13 @@
 // splash_background.dart
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
-
+ import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_theme.dart';
+ 
 class MainFrame extends StatelessWidget {
   const MainFrame({super.key, this.child, this.showDecorationLayer = true});
 
   final Widget? child;
 
-  /// When false, only [child] is built — no [SafeArea] or full-screen fill.
-  /// Use inside [BottomBarScreen] tabs so one outer [MainFrame] owns the layout.
-  final bool showDecorationLayer;
+    final bool showDecorationLayer;
 
   @override
   Widget build(BuildContext context) {
@@ -18,40 +15,38 @@ class MainFrame extends StatelessWidget {
     if (!showDecorationLayer) {
       return content;
     }
-    final canvas = Theme.of(context).scaffoldBackgroundColor;
-    return SafeArea(
+     return SafeArea(
       child: Stack(
         fit: StackFit.expand,
         children: [
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: kIsWeb ? AppColors.whitecolor : canvas,
-                // gradient: kIsWeb
-                //     ? const LinearGradient(
-                //         begin: Alignment.topLeft,
-                //         end: Alignment.bottomRight,
-                //         colors: [
-                //           Color(0xFFF8FBFF),
-                //           Color(0xFFEFF7FF),
-                //           Color(0xFFF7FBFF),
-                //         ],
-                //       )
-                //     : null,
+                 gradient: 
+                  const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFF8FBFF),
+                          Color(0xFFEFF7FF),
+                          Color(0xFFF7FBFF),
+                        ],
+                      )
+                  
               ),
             ),
           ),
-          if (kIsWeb)
+        
             Positioned(
               top: 80,
               right: -80,
-              child: _GlowCircle(size: 220, color: const Color(0x223DA5FF)),
+              child: _GlowCircle(size: 220, color:context.appColors.blue20),
             ),
-          if (kIsWeb)
+         
             Positioned(
               bottom: 40,
               left: -80,
-              child: _GlowCircle(size: 180, color: const Color(0x1A8FD3FF)),
+              child: _GlowCircle(size: 180,color:context.appColors.blue20),
             ),
           Positioned.fill(child: content),
         ],

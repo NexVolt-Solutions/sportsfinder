@@ -72,54 +72,24 @@ class CardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors;
-    final effectiveRadius = borderRadius ?? context.radius(kIsWeb ? 18 : 12);
-    final effectiveBackground =
-        backgroundColor ?? (kIsWeb ? AppColors.blue10 : null);
-    final effectiveBorderColor = isActive
-        ? (activeBorderColor ?? c.primary)
-        : (borderColor ??
-              (kIsWeb ? const Color(0xFFD7E7F7) : Colors.transparent));
-
+ 
     return GestureDetector(
       onTap: onTap,
       behavior: onTap != null
           ? HitTestBehavior.opaque
           : HitTestBehavior.deferToChild,
       child: Card(
-        // margin for web
-        margin: context.padSym(v: kIsWeb ? 8 : 0),
-        elevation: kIsWeb ? 0 : elevation,
-        shadowColor: Colors.black.withValues(alpha: 0.12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(effectiveRadius),
-        ),
-        color: Colors.transparent,
         child: Container(
           padding:
-              padding ??
-              context.padSym(h: kIsWeb ? 18 : 12, v: kIsWeb ? 18 : 12),
+              padding ?? context.padSym(h: 16, v: 16),
           decoration: BoxDecoration(
-            color: effectiveBackground,
-            gradient: kIsWeb
-                ? null
-                : LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.blue10, AppColors.blue20],
-                  ),
-            borderRadius: BorderRadius.circular(effectiveRadius),
-            border: Border.all(color: effectiveBorderColor, width: 1.5),
-            boxShadow: kIsWeb
-                ? const [
-                    BoxShadow(
-                      color: Color(0x0B0E4A84),
-                      blurRadius: 18,
-                      offset: Offset(0, 8),
-                    ),
-                  ]
-                : null,
-          ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [context.appColors.blue10, context.appColors.blue20],
+            ),
+            borderRadius: BorderRadius.circular(context.radius( 12)),
+           ),
           child: child ?? const SizedBox(),
         ),
       ),

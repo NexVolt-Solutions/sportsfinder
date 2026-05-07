@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_svg/svg.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
@@ -22,17 +23,13 @@ class GlobalMatchCard extends StatelessWidget {
     return match.host.id.isNotEmpty && match.host.id == myId;
   }
 
-  // ─────────────────────────── Sizing helpers ────────────────────────────
+  static double contentHeight(BuildContext context) =>
+      kIsWeb ? context.h(220) : context.h(168);
 
-  /// Fixed inner content height so hosted/non-hosted cards stay aligned.
-  static double contentHeight(BuildContext context) => context.sh(168);
+   static double listSlotHeight(BuildContext context) =>
+      kIsWeb ? context.h(256) : context.h(180);
 
-  /// Total slot height: inner content + CardWidget margin (24) + vertical padding (36).
-  static double listSlotHeight(BuildContext context) =>
-      contentHeight(context) + 40;
-
-  // ──────────────────────────── Constructors ─────────────────────────────
-
+ 
   const GlobalMatchCard({
     super.key,
     required this.takenPlayer,
@@ -138,86 +135,63 @@ class GlobalMatchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = context.appColors.primary;
     final showHostingChip = isHostedByCurrentUser && showHostingBadge;
-    final innerH = contentHeight(context);
-    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final isCompactCard = innerH <= 155 || textScale > 1.0;
-    final chipTopGap = isCompactCard
-        ? 2.0
-        : context.sh(showHostingChip ? 4 : 6);
-    final sectionGap = isCompactCard
-        ? 4.0
-        : context.sh(showHostingChip ? 4 : 8);
-    final metaGap = isCompactCard ? 2.0 : context.sh(showHostingChip ? 3 : 4);
+
+    final isCompactCard = !kIsWeb;
+    final chipTopGap = isCompactCard ? 2.0 : 8.0;
+    final sectionGap = isCompactCard ? 2.0 : 8.0;
+    final metaGap = isCompactCard ? 2.0 : 8.0;
 
     return CardWidget(
       onTap: cardOnTap,
-      padding: context.padSym(h: 16, v: 18),
+      padding: context.padSym(h: 16, v: isCompactCard ? 12 : 16),
       child: SizedBox(
-        height: innerH,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        height: kIsWeb?260:180,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            // ── Left column: match details ──
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title + sport type
-                  NormalText(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    titleText: hostName,
-                    titleColor: AppColors.blackcolor,
-                    subText: matchName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  // "You are hosting" chip
-                  if (showHostingChip) ...[
-                    SizedBox(height: chipTopGap),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _HostingChip(
-                        primary: primary,
-                        compact: isCompactCard,
-                      ),
-                    ),
-                  ],
-
-                  SizedBox(height: sectionGap),
-
-                  // Location row
-                  _IconLabelRow(icon: AppAssets.homeLocIcon, label: loc),
-
-                  SizedBox(height: metaGap),
-
-                  // Time row
-                  _IconLabelRow(icon: AppAssets.homeTimeIcon, label: time),
-
-                  SizedBox(height: sectionGap),
-
-                  // Player count
-                  PlayerCountWidget(
-                    playerNo1: takenPlayer,
-                    playerNo2: totalPlayer,
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Right column: distance + see all ──
-            if (showTrailingActions) ...[
-              SizedBox(width: context.sw(12)),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                NormalText(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  titleText: hostName,
+                  titleColor: AppColors.blackcolor,
+                  subText: matchName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (showTrailingActions) ...[
                   MatchCardButton(
                     ontap: () {},
                     text: '${distance?.toStringAsFixed(1) ?? '0.0'} km',
                     color: context.appColors.surface,
                     textColor: AppColors.bluecolor,
                   ),
+                ],
+              ],
+            ),
+            if (showHostingChip) ...[
+              SizedBox(height: chipTopGap),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _HostingChip(primary: primary),
+              ),
+            ],
+            SizedBox(height: sectionGap),
+            _IconLabelRow(icon: AppAssets.homeLocIcon, label: loc),
+            SizedBox(height: metaGap),
+            _IconLabelRow(icon: AppAssets.homeTimeIcon, label: time),
+            SizedBox(height: sectionGap),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                PlayerCountWidget(
+                  playerNo1: takenPlayer,
+                  playerNo2: totalPlayer,
+                ),
+                if (showTrailingActions) ...[
                   MatchCardButton(
                     ontap: matchOnTap ?? () {},
                     text: AppText.seeAll,
@@ -225,8 +199,8 @@ class GlobalMatchCard extends StatelessWidget {
                     textColor: AppColors.whitecolor,
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),
@@ -234,22 +208,19 @@ class GlobalMatchCard extends StatelessWidget {
   }
 }
 
-// ──────────────────────────── Private widgets ──────────────────────────────
-
-/// "You are hosting" badge shown on cards owned by the current user.
-class _HostingChip extends StatelessWidget {
-  const _HostingChip({required this.primary, required this.compact});
+ 
+ class _HostingChip extends StatelessWidget {
+  const _HostingChip({required this.primary, });
 
   final Color primary;
-  final bool compact;
-
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
+    width: context.sw(115),
       padding: EdgeInsets.symmetric(
-        horizontal: context.sw(8),
-        vertical: compact ? 2.0 : context.sh(4),
-      ),
+        horizontal: context.sw(4),
+       ),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(context.radius(6)),
@@ -258,7 +229,7 @@ class _HostingChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Icon(Icons.verified_rounded, size: compact ? 13 : 15, color: primary),
+          Icon(Icons.verified_rounded, size: 15, color: primary),
           SizedBox(width: context.sw(4)),
           Expanded(
             child: Text(
@@ -267,10 +238,7 @@ class _HostingChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               softWrap: false,
               style:
-                  (compact
-                          ? context.appText.text12W600.copyWith(fontSize: 10)
-                          : context.appText.text12W600)
-                      .copyWith(color: primary),
+                  context.appText.text12W600.copyWith(color: primary),
             ),
           ),
         ],

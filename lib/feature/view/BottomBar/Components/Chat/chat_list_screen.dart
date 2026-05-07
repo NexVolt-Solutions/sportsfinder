@@ -12,11 +12,14 @@ import 'package:sport_finding/core/Network/match_chat_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/web/web_chat_content.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/search_bar_widget.dart';
+import 'package:sport_finding/feature/widget/app_dialog.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key, this.embedInBottomBar = false});
@@ -29,9 +32,12 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
+  static const int _chatTabIndex = 3;
+
   ChatListScreenViewModel? _vm;
   ChatListScreenViewModel get _safeVm => _vm ??= ChatListScreenViewModel();
   final TextEditingController _webMessageController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   int? _selectedWebThreadIndex;
   final Map<String, List<WebChatMessageItem>> _webThreadMessages =
       <String, List<WebChatMessageItem>>{};
@@ -43,6 +49,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       <String, StreamSubscription<String>>{};
   String? _activeWebThreadKey;
   int _webLocalMessageCounter = 0;
+  bool _wasActiveBottomBarTab = false;
 
   String _threadKey(ChatThreadPreview thread) {
     final targetUserId = (thread.targetUserId ?? '').trim();
@@ -183,8 +190,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _safeVm.refreshDirectChats();
+    });
+  }
+
+  @override
   void dispose() {
     _webMessageController.dispose();
+    _searchController.dispose();
     for (final sub in _webMessageSubs.values) {
       sub.cancel();
     }
@@ -199,117 +215,169 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomBarSelectedIndex =
+        widget.embedInBottomBar
+            ? context.select<BottomBarScreenViewModel, int>(
+                (vm) => vm.selectedIndex,
+              )
+            : null;
+    final isActiveTab = bottomBarSelectedIndex == _chatTabIndex;
+
+    if (widget.embedInBottomBar && _wasActiveBottomBarTab && !isActiveTab) {
+      // Tab changed away from Chat; clear ephemeral UI state.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _searchController.clear();
+        _webMessageController.clear();
+        if (_selectedWebThreadIndex != null) {
+          setState(() => _selectedWebThreadIndex = null);
+        } else {
+          setState(() {});
+        }
+      });
+    }
+    if (widget.embedInBottomBar) {
+      _wasActiveBottomBarTab = isActiveTab;
+    }
+
     return ChangeNotifierProvider.value(
       value: _safeVm,
       child: Consumer<ChatListScreenViewModel>(
         builder: (context, model, _) {
-          if (kIsWeb && widget.embedInBottomBar) {
-            return WebChatContent(
-              model: model,
-              selectedThreadIndex: _selectedWebThreadIndex,
-              activeMessages:
-                  (_selectedWebThreadIndex != null &&
-                      _selectedWebThreadIndex! >= 0 &&
-                      _selectedWebThreadIndex! < model.threads.length)
-                  ? List<WebChatMessageItem>.unmodifiable(
-                      _webThreadMessages[_threadKey(
-                            model.threads[_selectedWebThreadIndex!],
-                          )] ??
-                          const <WebChatMessageItem>[],
-                    )
-                  : const <WebChatMessageItem>[],
-              messageController: _webMessageController,
-              onThreadSelected: (index) {
-                setState(() => _selectedWebThreadIndex = index);
-                _bindSelectedWebThread();
-              },
-              onPickUser: _pickAndOpenUser,
-              onClearChat: () {
-                _webMessageController.clear();
-                setState(() => _selectedWebThreadIndex = null);
-              },
-              onDeleteChat: () {
-                final selectedIndex = _selectedWebThreadIndex;
-                if (selectedIndex == null ||
-                    selectedIndex < 0 ||
-                    selectedIndex >= model.threads.length) {
-                  return;
-                }
-                final thread = model.threads[selectedIndex];
-                _webThreadMessages.remove(_threadKey(thread));
-                _disposeWebThread(_threadKey(thread));
-                ChatListScreenViewModel.removeThread(
-                  targetUserId: thread.targetUserId,
-                  userName: thread.userName,
-                );
-                _webMessageController.clear();
-                setState(() => _selectedWebThreadIndex = null);
-              },
-              onSendMessage: () {
-                final selectedIndex = _selectedWebThreadIndex;
-                if (!model.hasThreads ||
-                    selectedIndex == null ||
-                    selectedIndex < 0 ||
-                    selectedIndex >= model.threads.length) {
-                  return;
-                }
-                final activeThread = model.threads[selectedIndex];
-                final text = _webMessageController.text.trim();
-                if (text.isEmpty) return;
-                final now = DateTime.now();
-                final key = _threadKey(activeThread);
-                _bindWebThread(activeThread);
-                final list = _webThreadMessages.putIfAbsent(
-                  key,
-                  () => <WebChatMessageItem>[],
-                );
-                _webLocalMessageCounter += 1;
-                final localId = 'web_local_${_webLocalMessageCounter}_${now.microsecondsSinceEpoch}';
-                list.add(
-                  WebChatMessageItem(
-                    text: text,
-                    time:
-                        MaterialLocalizations.of(
+          final query = _searchController.text.trim().toLowerCase();
+          final allThreads = model.threads;
+          final List<int> indexMap = <int>[];
+          final List<ChatThreadPreview> filteredThreads = <ChatThreadPreview>[];
+          for (var i = 0; i < allThreads.length; i++) {
+            final t = allThreads[i];
+            if (query.isEmpty) {
+              indexMap.add(i);
+              filteredThreads.add(t);
+              continue;
+            }
+            final haystack =
+                '${t.userName} ${t.lastMessage}'.toLowerCase();
+            if (haystack.contains(query)) {
+              indexMap.add(i);
+              filteredThreads.add(t);
+            }
+          }
+
+          final filteredSelectedIndex = _selectedWebThreadIndex == null
+              ? null
+              : indexMap.indexOf(_selectedWebThreadIndex!);
+
+          final Widget content = (kIsWeb && widget.embedInBottomBar)
+              ? WebChatContent(
+                  model: model,
+                  threads: filteredThreads,
+                  selectedThreadIndex:
+                      (filteredSelectedIndex != null && filteredSelectedIndex >= 0)
+                          ? filteredSelectedIndex
+                          : null,
+                  activeMessages:
+                      (_selectedWebThreadIndex != null &&
+                              _selectedWebThreadIndex! >= 0 &&
+                              _selectedWebThreadIndex! < allThreads.length)
+                          ? List<WebChatMessageItem>.unmodifiable(
+                              _webThreadMessages[_threadKey(
+                                    allThreads[_selectedWebThreadIndex!],
+                                  )] ??
+                                  const <WebChatMessageItem>[],
+                            )
+                          : const <WebChatMessageItem>[],
+                  messageController: _webMessageController,
+                  searchController: _searchController,
+                  onSearchChanged: (_) => setState(() {}),
+                  searchQuery: _searchController.text,
+                  onThreadSelected: (index) {
+                    final mapped =
+                        (index != null && index >= 0 && index < indexMap.length)
+                            ? indexMap[index]
+                            : null;
+                    setState(() => _selectedWebThreadIndex = mapped);
+                    _bindSelectedWebThread();
+                  },
+                  onPickUser: _pickAndOpenUser,
+                  onClearChat: () {
+                    _webMessageController.clear();
+                    setState(() => _selectedWebThreadIndex = null);
+                  },
+                  onDeleteChat: () {
+                    final selectedIndex = _selectedWebThreadIndex;
+                    if (selectedIndex == null ||
+                        selectedIndex < 0 ||
+                        selectedIndex >= model.threads.length) {
+                      return;
+                    }
+                    final thread = model.threads[selectedIndex];
+                    _webThreadMessages.remove(_threadKey(thread));
+                    _disposeWebThread(_threadKey(thread));
+                    ChatListScreenViewModel.removeThread(
+                      targetUserId: thread.targetUserId,
+                      userName: thread.userName,
+                    );
+                    _webMessageController.clear();
+                    setState(() => _selectedWebThreadIndex = null);
+                  },
+                  onSendMessage: () {
+                    final selectedIndex = _selectedWebThreadIndex;
+                    if (!model.hasThreads ||
+                        selectedIndex == null ||
+                        selectedIndex < 0 ||
+                        selectedIndex >= model.threads.length) {
+                      return;
+                    }
+                    final activeThread = model.threads[selectedIndex];
+                    final text = _webMessageController.text.trim();
+                    if (text.isEmpty) return;
+                    final now = DateTime.now();
+                    final key = _threadKey(activeThread);
+                    _bindWebThread(activeThread);
+                    final list = _webThreadMessages.putIfAbsent(
+                      key,
+                      () => <WebChatMessageItem>[],
+                    );
+                    _webLocalMessageCounter += 1;
+                    final localId =
+                        'web_local_${_webLocalMessageCounter}_${now.microsecondsSinceEpoch}';
+                    list.add(
+                      WebChatMessageItem(
+                        text: text,
+                        time: MaterialLocalizations.of(
                           context,
                         ).formatTimeOfDay(TimeOfDay.fromDateTime(now)),
-                    isMe: true,
-                    isPending: true,
-                    localId: localId,
-                  ),
-                );
-                final sent = _webThreadServices[key]?.sendMessage(text) ?? false;
-                if (!sent) {
-                  final index = list.indexWhere((item) => item.localId == localId);
-                  if (index >= 0) {
-                    list[index] = list[index].copyWith(
-                      isPending: false,
-                      isFailed: true,
+                        isMe: true,
+                        isPending: true,
+                        localId: localId,
+                      ),
                     );
-                  }
-                }
-                ChatListScreenViewModel.upsertThread(
-                  userName: activeThread.userName,
-                  targetUserId: activeThread.targetUserId,
-                  lastMessage: text,
-                  lastAt: now,
-                );
-                _webMessageController.clear();
-                setState(() {});
-              },
-            );
-          }
-          return Scaffold(
-            backgroundColor: widget.embedInBottomBar
-                ? Colors.transparent
-                : null,
-            floatingActionButton: FloatingActionButton(
-              onPressed: _pickAndOpenUser,
-              backgroundColor: Theme.of(context).primaryColor,
-              child: Icon(Icons.add, color: Colors.white),
-            ),
-            body: MainFrame(
+                    final sent =
+                        _webThreadServices[key]?.sendMessage(text) ?? false;
+                    if (!sent) {
+                      final index = list.indexWhere(
+                        (item) => item.localId == localId,
+                      );
+                      if (index >= 0) {
+                        list[index] = list[index].copyWith(
+                          isPending: false,
+                          isFailed: true,
+                        );
+                      }
+                    }
+                    ChatListScreenViewModel.upsertThread(
+                      userName: activeThread.userName,
+                      targetUserId: activeThread.targetUserId,
+                      lastMessage: text,
+                      lastAt: now,
+                    );
+                    _webMessageController.clear();
+                    setState(() {});
+                  },
+                )
+              : MainFrame(
               showDecorationLayer: !widget.embedInBottomBar,
-              child: Column(
+               child: Column(
                 children: [
                   if (!widget.embedInBottomBar)
                     Padding(
@@ -320,69 +388,200 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ),
                     ),
                   Expanded(
-                    child: model.hasThreads
-                        ? ListView.separated(
-                            padding: context.padSym(h: 20, v: 8),
-                            itemCount: model.threads.length,
-                            separatorBuilder: (_, _) =>
-                                SizedBox(height: context.h(10)),
-                            itemBuilder: (context, index) {
-                              final t = model.threads[index];
-                              return GestureDetector(
-                                onTap: () async {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RoutesName.chatScreen,
-                                    arguments: ChatRouteArgs(
-                                      contactName: t.userName,
-                                      targetUserId: t.targetUserId,
-                                      isOnline: t.isOnline,
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  padding: context.padSym(h: 12, v: 10),
-                                  decoration: BoxDecoration(
-                                    color: context.appColors.blue10,
-                                    borderRadius: BorderRadius.circular(
-                                      context.radius(12),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: context.radius(22),
-                                        backgroundColor:
-                                            context.appColors.greylight,
-                                        child: Text(
-                                          t.userName.isNotEmpty
-                                              ? t.userName[0].toUpperCase()
-                                              : 'U',
-                                        ),
-                                      ),
-                                      SizedBox(width: context.w(12)),
-                                      Expanded(
-                                        child: NormalText(
-                                          titleText: t.userName,
-                                          subText: t.lastMessage,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      SizedBox(width: context.w(8)),
-                                      Text(
-                                        t.lastTime,
-                                        style: context.appText.text12W500
-                                            .copyWith(
-                                              color:
-                                                  context.appColors.greylight,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
+                    child: (model.hasThreads ||
+                            _searchController.text.trim().isNotEmpty)
+                        ? Column(
+                            children: [
+                              Padding(
+                                padding: context.padSym(h: 20, v: 8),
+                                child: SearchBarWidget(
+                                  isShow: false,
+                                  controller: _searchController,
+                                  hintText: 'Search chats...',
+                                  onChanged: (_) => setState(() {}),
                                 ),
-                              );
-                            },
+                              ),
+                              Expanded(
+                                child: filteredThreads.isNotEmpty
+                                    ? ListView.separated(
+                                        padding: context.padSym(h: 20, v: 8),
+                                        itemCount: filteredThreads.length,
+                                        separatorBuilder: (_, _) =>
+                                            SizedBox(height: context.h(10)),
+                                        itemBuilder: (context, index) {
+                                          final t = filteredThreads[index];
+                                          final targetUserId =
+                                              (t.targetUserId ?? '').trim();
+                                          final canDelete = targetUserId.isNotEmpty;
+
+                                          Widget row = GestureDetector(
+                                            onTap: () async {
+                                              Navigator.pushNamed(
+                                                context,
+                                                RoutesName.chatScreen,
+                                                arguments: ChatRouteArgs(
+                                                  contactName: t.userName,
+                                                  targetUserId: t.targetUserId,
+                                                  isOnline: t.isOnline,
+                                                ),
+                                              );
+                                            },
+                                            child: Container(
+                                              padding: context.padSym(
+                                                h: 12,
+                                                v: 10,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: context.appColors.blue10,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  context.radius(12),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: context.radius(22),
+                                                    backgroundColor: context
+                                                        .appColors.greylight,
+                                                    child: (t.avatarUrl ?? '')
+                                                            .trim()
+                                                            .isNotEmpty
+                                                        ? ClipOval(
+                                                            child: Image.network(
+                                                              t.avatarUrl!.trim(),
+                                                              width: context.w(44),
+                                                              height: context.w(44),
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (
+                                                                context,
+                                                                error,
+                                                                stackTrace,
+                                                              ) {
+                                                                return Center(
+                                                                  child: Text(
+                                                                    t.userName
+                                                                            .isNotEmpty
+                                                                        ? t.userName[
+                                                                                0]
+                                                                            .toUpperCase()
+                                                                        : 'U',
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          )
+                                                        : Text(
+                                                            t.userName.isNotEmpty
+                                                                ? t.userName[0]
+                                                                    .toUpperCase()
+                                                                : 'U',
+                                                          ),
+                                                  ),
+                                                  SizedBox(width: context.w(12)),
+                                                  Expanded(
+                                                    child: NormalText(
+                                                      titleText: t.userName,
+                                                      subText: t.lastMessage,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: context.w(8)),
+                                                  Text(
+                                                    t.lastTime,
+                                                    style: context
+                                                        .appText
+                                                        .text12W500
+                                                        .copyWith(
+                                                          color: context
+                                                              .appColors
+                                                              .greylight,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+
+                                          if (!canDelete) return row;
+
+                                          return Dismissible(
+                                            key: ValueKey<String>(
+                                              'chat-$targetUserId',
+                                            ),
+                                            direction: DismissDirection.endToStart,
+                                            confirmDismiss: (_) async {
+                                              final ok = await showAppDialog<bool>(
+                                                context,
+                                                title: 'Delete chat?',
+                                                message:
+                                                    'Remove conversation with ${t.userName} from your chat list?',
+                                                barrierDismissible: true,
+                                                actions: [
+                                                  AppDialogAction(
+                                                    label: 'Cancel',
+                                                    onPressed: (dialogContext) =>
+                                                        Navigator.pop(dialogContext, false),
+                                                  ),
+                                                  AppDialogAction(
+                                                    label: 'Delete',
+                                                    isDestructive: true,
+                                                    onPressed: (dialogContext) =>
+                                                        Navigator.pop(dialogContext, true),
+                                                  ),
+                                                ],
+                                              );
+                                              return ok ?? false;
+                                            },
+                                            onDismissed: (_) async {
+                                              try {
+                                                await model.deleteConversation(
+                                                  targetUserId: targetUserId,
+                                                );
+                                              } catch (e) {
+                                                if (!context.mounted) return;
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Failed to delete: $e',
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            background: Container(
+                                              padding: context.padSym(h: 16),
+                                              alignment: Alignment.centerRight,
+                                              decoration: BoxDecoration(
+                                                color: context.appColors.error,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  context.radius(12),
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.delete,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            child: row,
+                                          );
+                                        },
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          'No data found',
+                                          style: context.appText.text14W400
+                                              .copyWith(
+                                            color: context.appColors.greylight,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ],
                           )
                         : LayoutBuilder(
                             builder: (context, constraints) {
@@ -424,7 +623,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                 ],
               ),
+            );
+
+          if (widget.embedInBottomBar) {
+            // BottomBarScreen owns the Scaffold (and FAB).
+            return content;
+          }
+
+          return Scaffold(
+            body: content,
+            floatingActionButton: FloatingActionButton(
+              onPressed: _pickAndOpenUser,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
             ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           );
         },
       ),

@@ -9,6 +9,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/discovery_match_navigation.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Discover/viewModel/discovery_tab_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/discovery_card.dart';
@@ -31,10 +32,18 @@ import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.d
   }
 }
 
-class _DiscoverTabContent extends StatelessWidget {
+class _DiscoverTabContent extends StatefulWidget {
   const _DiscoverTabContent({required this.embedInBottomBar});
 
   final bool embedInBottomBar;
+
+  @override
+  State<_DiscoverTabContent> createState() => _DiscoverTabContentState();
+}
+
+class _DiscoverTabContentState extends State<_DiscoverTabContent> {
+  static const int _discoverTabIndex = 1;
+  bool _wasActiveBottomBarTab = false;
 
   Widget _buildNotificationBell(BuildContext context) {
     final c = context.appColors;
@@ -75,6 +84,23 @@ class _DiscoverTabContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<DiscoveryTabViewModel>(
       builder: (context, model, _) {
+        final selectedIndex = widget.embedInBottomBar
+            ? context.select<BottomBarScreenViewModel, int>(
+                (vm) => vm.selectedIndex,
+              )
+            : null;
+        final isActiveTab = selectedIndex == _discoverTabIndex;
+        if (widget.embedInBottomBar && _wasActiveBottomBarTab && !isActiveTab) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            model.searchController.clear();
+            model.onSearchChanged();
+          });
+        }
+        if (widget.embedInBottomBar) {
+          _wasActiveBottomBarTab = isActiveTab;
+        }
+
         final notificationService = context.watch<NotificationService>();
         if (kIsWeb) {
           final rows = model.filteredMatches
@@ -137,7 +163,7 @@ class _DiscoverTabContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!embedInBottomBar) ...[
+              if (!widget.embedInBottomBar) ...[
                 AppBarWidget(
                   onTapFirst: () => Navigator.pop(context),
                   leading: NormalText(titleText: AppText.sportFinding),
@@ -233,17 +259,20 @@ String _formatStatus(String raw) {
       separatorBuilder: (_, _) => SizedBox(height: context.sh(0)),
       itemBuilder: (context, index) {
         final match = matches[index];
-         return DiscoveryCard(
-          match: match,
-          onCardTap: () => match.pushMatchOrHostScreen(context),
-          onSeeAllTap: () {
-            Navigator.pushNamed(
-              context,
-              RoutesName.seeAllInvatedPlayerScreen,
-              arguments: match,
-            );
-          },
-        );
+         return Padding(
+           padding: context.padSym(v: 6),
+           child: DiscoveryCard(
+            match: match,
+            onCardTap: () => match.pushMatchOrHostScreen(context),
+            onSeeAllTap: () {
+              Navigator.pushNamed(
+                context,
+                RoutesName.seeAllInvatedPlayerScreen,
+                arguments: match,
+              );
+            },
+                   ),
+         );
       },
     );
   }

@@ -49,6 +49,7 @@ class WebChatContent extends StatelessWidget {
   const WebChatContent({
     super.key,
     required this.model,
+    required this.threads,
     required this.selectedThreadIndex,
     required this.messageController,
     required this.onThreadSelected,
@@ -57,9 +58,13 @@ class WebChatContent extends StatelessWidget {
     required this.onClearChat,
     required this.onDeleteChat,
     required this.activeMessages,
+    this.searchController,
+    this.onSearchChanged,
+    this.searchQuery = '',
   });
 
   final ChatListScreenViewModel model;
+  final List<ChatThreadPreview> threads;
   final int? selectedThreadIndex;
   final TextEditingController messageController;
   final ValueChanged<int?> onThreadSelected;
@@ -68,20 +73,27 @@ class WebChatContent extends StatelessWidget {
   final VoidCallback onClearChat;
   final VoidCallback onDeleteChat;
   final List<WebChatMessageItem> activeMessages;
+  final TextEditingController? searchController;
+  final ValueChanged<String>? onSearchChanged;
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context) {
-    final hasThreads = model.hasThreads;
+    final hasThreads = threads.isNotEmpty;
+    final normalizedQuery = searchQuery.trim();
+    final isFiltering = normalizedQuery.isNotEmpty;
+    final hasAnyThreads = model.hasThreads;
+    final showNoMatches = isFiltering && hasAnyThreads && !hasThreads;
     final safeSelected =
         hasThreads &&
             selectedThreadIndex != null &&
             selectedThreadIndex! >= 0 &&
-            selectedThreadIndex! < model.threads.length
+            selectedThreadIndex! < threads.length
         ? selectedThreadIndex
         : null;
     final activeThread = safeSelected == null
         ? null
-        : model.threads[safeSelected];
+        : threads[safeSelected];
 
     return MainFrame(
       showDecorationLayer: false,
@@ -96,7 +108,7 @@ class WebChatContent extends StatelessWidget {
             ),
             SizedBox(height: context.h(16)),
             Expanded(
-              child: hasThreads
+              child: (hasThreads || showNoMatches)
                   ? Row(
                       children: [
                         Expanded(
@@ -105,20 +117,26 @@ class WebChatContent extends StatelessWidget {
                             children: [
                               Column(
                                 children: [
-                                  SearchBarWidget(isShow: false),
+                                  SearchBarWidget(
+                                    isShow: false,
+                                    controller: searchController,
+                                    hintText: 'Search chats...',
+                                    onChanged: onSearchChanged,
+                                  ),
                                   SizedBox(height: context.h(10)),
 
-                                  Row(
-                                    children: [
-                                      const WebFilterChip(
-                                        label: 'All',
-                                        selected: true,
-                                      ),
-                                      SizedBox(width: context.w(6)),
-                                      const WebFilterChip(label: 'Unread'),
-                                      SizedBox(width: context.w(6)),
-                                    ],
-                                  ),
+                                  if (!showNoMatches)
+                                    Row(
+                                      children: [
+                                        const WebFilterChip(
+                                          label: 'All',
+                                          selected: true,
+                                        ),
+                                        SizedBox(width: context.w(6)),
+                                        const WebFilterChip(label: 'Unread'),
+                                        SizedBox(width: context.w(6)),
+                                      ],
+                                    ),
                                 ],
                               ),
                               SizedBox(height: context.h(10)),
@@ -136,88 +154,120 @@ class WebChatContent extends StatelessWidget {
                                       width: 0.1,
                                     ),
                                   ),
-                                  child: ListView.separated(
-                                    itemCount: model.threads.length,
-                                    separatorBuilder: (_, _) =>
-                                        SizedBox(height: context.h(8)),
-                                    itemBuilder: (context, index) {
-                                      final thread = model.threads[index];
-                                      final isSelected = index == safeSelected;
-                                      return InkWell(
-                                        onTap: () => onThreadSelected(index),
-                                        child: Container(
-                                          padding: context.padSym(h: 10, v: 10),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? context.appColors.white
-                                                : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(
-                                              context.radius(12),
+                                  child: showNoMatches
+                                      ? Center(
+                                          child: Text(
+                                            'No data found',
+                                            style: context.appText.text14W400
+                                                .copyWith(
+                                              color: context.appColors.greylight,
                                             ),
                                           ),
-                                          child: Row(
-                                            children: [
-                                              AppAvatar(
-                                                size: context.w(34),
-                                                fallbackText: thread.userName,
-                                                backgroundColor:
-                                                    context.appColors.white,
-                                                iconColor:
-                                                    context.appColors.primary,
-                                              ),
-                                              SizedBox(width: context.w(10)),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                        )
+                                      : ListView.separated(
+                                          itemCount: threads.length,
+                                          separatorBuilder: (_, _) =>
+                                              SizedBox(height: context.h(8)),
+                                          itemBuilder: (context, index) {
+                                            final thread = threads[index];
+                                            final isSelected =
+                                                index == safeSelected;
+                                            return InkWell(
+                                              onTap: () =>
+                                                  onThreadSelected(index),
+                                              child: Container(
+                                                padding: context.padSym(
+                                                  h: 10,
+                                                  v: 10,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? context.appColors.white
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                    context.radius(12),
+                                                  ),
+                                                ),
+                                                child: Row(
                                                   children: [
-                                                    Text(
-                                                      thread.userName,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: context
-                                                          .appText
-                                                          .text14W500,
+                                                    AppAvatar(
+                                                      size: context.w(34),
+                                                      fallbackText:
+                                                          thread.userName,
+                                                      imageUrl: (thread.avatarUrl ??
+                                                                  '')
+                                                              .trim()
+                                                              .isEmpty
+                                                          ? null
+                                                          : thread.avatarUrl!
+                                                              .trim(),
+                                                      backgroundColor: context
+                                                          .appColors.white,
+                                                      iconColor: context
+                                                          .appColors.primary,
                                                     ),
                                                     SizedBox(
-                                                      height: context.h(2),
+                                                      width: context.w(10),
+                                                    ),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            thread.userName,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: context
+                                                                .appText
+                                                                .text14W500,
+                                                          ),
+                                                          SizedBox(
+                                                            height:
+                                                                context.h(2),
+                                                          ),
+                                                          Text(
+                                                            thread.lastMessage,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: context
+                                                                .appText
+                                                                .text12W400
+                                                                .copyWith(
+                                                                  color: context
+                                                                      .appColors
+                                                                      .greyDark,
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: context.w(6),
                                                     ),
                                                     Text(
-                                                      thread.lastMessage,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                      thread.lastTime,
                                                       style: context
                                                           .appText
                                                           .text12W400
                                                           .copyWith(
                                                             color: context
                                                                 .appColors
-                                                                .greyDark,
+                                                                .greylight,
                                                           ),
                                                     ),
                                                   ],
                                                 ),
                                               ),
-                                              SizedBox(width: context.w(6)),
-                                              Text(
-                                                thread.lastTime,
-                                                style: context
-                                                    .appText
-                                                    .text12W400
-                                                    .copyWith(
-                                                      color: context
-                                                          .appColors
-                                                          .greylight,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
+                                            );
+                                          },
                                         ),
-                                      );
-                                    },
-                                  ),
                                 ),
                               ),
                             ],

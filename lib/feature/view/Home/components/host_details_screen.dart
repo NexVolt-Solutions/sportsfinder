@@ -32,6 +32,7 @@ import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/user_match_card_widget.dart';
 import 'package:sport_finding/feature/widget/match_location_map_card.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:sport_finding/feature/widget/app_dialog.dart';
 
 class HostDetailsScreen extends StatefulWidget {
   const HostDetailsScreen({super.key});
@@ -196,22 +197,21 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
       tag: 'HostDetailsScreen',
     );
 
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(AppText.deleteMatchConfirmationTitle),
-        content: const Text(AppText.deleteMatchConfirmationMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(AppText.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(AppText.deleteMatch),
-          ),
-        ],
-      ),
+    final shouldDelete = await showAppDialog<bool>(
+      context,
+      title: AppText.deleteMatchConfirmationTitle,
+      message: AppText.deleteMatchConfirmationMessage,
+      actions: [
+        AppDialogAction(
+          label: AppText.cancel,
+          onPressed: (dialogContext) => Navigator.pop(dialogContext, false),
+        ),
+        AppDialogAction(
+          label: AppText.deleteMatch,
+          isDestructive: true,
+          onPressed: (dialogContext) => Navigator.pop(dialogContext, true),
+        ),
+      ],
     );
 
     AppLogger.debug(

@@ -29,6 +29,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
+import 'package:sport_finding/feature/widget/app_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
@@ -75,22 +76,21 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(AppText.logoutConfirmationTitle),
-        content: const Text(AppText.logoutConfirmationMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(AppText.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(AppText.logout),
-          ),
-        ],
-      ),
+    final shouldLogout = await showAppDialog<bool>(
+      context,
+      title: AppText.logoutConfirmationTitle,
+      message: AppText.logoutConfirmationMessage,
+      actions: [
+        AppDialogAction(
+          label: AppText.cancel,
+          onPressed: (dialogContext) => Navigator.pop(dialogContext, false),
+        ),
+        AppDialogAction(
+          label: AppText.logout,
+          isDestructive: true,
+          onPressed: (dialogContext) => Navigator.pop(dialogContext, true),
+        ),
+      ],
     );
 
     if (shouldLogout != true || !context.mounted) return;

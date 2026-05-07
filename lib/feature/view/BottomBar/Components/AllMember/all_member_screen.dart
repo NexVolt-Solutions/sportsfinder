@@ -29,10 +29,9 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: context.h(20)),
-                AppBarWidget(
+                 AppBarWidget(
                   onTapFirst: () => Navigator.pop(context),
-                  title: AppText.sportFinding,
+                  title: AppText.invitePlayers,
                 ),
                 NormalText(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,21 +73,24 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                                 ? user.sports!.first
                                 : null;
 
-                            return PersonInvitedCard(
-                              avatarUrl: user.avatarUrl,
-                              cardOnTap: () => Navigator.pop(
-                                context,
-                                ChatRouteArgs(
-                                  contactName: (user.fullName ?? '').trim(),
-                                  targetUserId: (user.id ?? '').trim(),
-                                  isOnline: true,
+                            return Padding(
+                              padding: context.paddingOnly(bottom: context.h(10)),
+                              child: PersonInvitedCard(
+                                avatarUrl: user.avatarUrl,
+                                cardOnTap: () => Navigator.pop(
+                                  context,
+                                  ChatRouteArgs(
+                                    contactName: (user.fullName ?? '').trim(),
+                                    targetUserId: (user.id ?? '').trim(),
+                                    isOnline: true,
+                                  ),
                                 ),
+                                playerName: user.fullName,
+                                matchLevel: firstSport?.skillLevel ?? '',
+                                matchName: firstSport?.sport ?? '',
+                                destance: user.location ?? '',
+                                ontap: () {},
                               ),
-                              playerName: user.fullName,
-                              matchLevel: firstSport?.skillLevel ?? '',
-                              matchName: firstSport?.sport ?? '',
-                              destance: user.location ?? '',
-                              ontap: () {},
                             );
                           },
                         ),
