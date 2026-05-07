@@ -33,6 +33,7 @@ import 'package:sport_finding/feature/view/Onboarding/OnBoardingViewModel/onboar
 import 'package:sport_finding/feature/view/Auth/Otp/OtpScreenViewModel/otp_verification_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Auth/SigUp/signup_viewmodel.dart';
 import 'package:sport_finding/feature/view/SkillLevelScreen/SkillLevelViewModel/skill_level_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Notifications/viewModel/notifications_screen_view_model.dart';
 
 /// Central place for all route-level ChangeNotifier wiring.
 class RouteProviders {
@@ -152,7 +153,10 @@ class RouteProviders {
           child: child,
         );
       case RoutesName.notificationsScreen:
-        return child;
+        return ChangeNotifierProvider(
+          create: (_) => NotificationsScreenViewModel(),
+          child: child,
+        );
       case RoutesName.forgotPasswordScreen:
         return ChangeNotifierProvider(
           create: (_) => ForgotPasswordScreenViewModel(

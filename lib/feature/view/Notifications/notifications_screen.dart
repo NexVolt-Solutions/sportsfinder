@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/Repositories/MatchInvitation/invite_action_repository.dart';
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
@@ -15,6 +14,7 @@ import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/feature/view/Notifications/viewModel/notifications_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -27,12 +27,6 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final InviteActionRepository _inviteActionRepository =
-      InviteActionRepository();
-  final Map<String, bool> _actionLoading = <String, bool>{};
-  final Map<String, _ResolvedInviteAction> _resolvedInviteActions =
-      <String, _ResolvedInviteAction>{};
-
   @override
   void initState() {
     super.initState();
@@ -69,98 +63,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     NotificationModel item,
     bool accept,
   ) async {
-    final matchId = item.matchId;
-    final actionLabel = accept ? 'accept' : 'decline';
-    AppLogger.info(
-      'Notification action tapped: $actionLabel '
-      'for notificationId=${item.id}, matchId=$matchId',
-      tag: 'NotificationsScreen',
+    final vm = context.read<NotificationsScreenViewModel>();
+    final notificationService = context.read<NotificationService>();
+
+    final outcome = await vm.submitInviteResponse(
+      item: item,
+      accept: accept,
+      notificationService: notificationService,
     );
-    if (matchId.isEmpty) {
-      if (!mounted) return;
-      AppSnackBar.show('Match id is missing');
+
+    if (!mounted) return;
+
+    if (!outcome.isSuccess) {
+      final msg = outcome.message ??
+          (outcome.rawError != null
+              ? messageFromApiException(outcome.rawError!)
+              : 'Something went wrong');
+      AppSnackBar.show(msg);
       return;
     }
 
-    setState(() {
-      _actionLoading[item.id] = true;
-    });
+    AppSnackBar.show(outcome.message ?? '');
 
-    try {
-      AppLogger.debug(
-        'Hitting $actionLabel invite API for matchId=$matchId',
-        tag: 'NotificationsScreen',
-      );
-      final response = accept
-          ? await _inviteActionRepository.acceptInvite(matchId: matchId)
-          : await _inviteActionRepository.declineInvite(matchId: matchId);
-
-      AppLogger.success(
-        '${accept ? 'Accept' : 'Decline'} invite API hit succeeded for '
-        'notificationId=${item.id}, matchId=$matchId',
-        tag: 'NotificationsScreen',
-      );
-      AppLogger.debug(
-        'Notification action response: ${response.message}',
-        tag: 'NotificationsScreen',
-      );
-
-      if (accept) {
-        AppLogger.info(
-          'Accepted invitation will appear in participated players after '
-          'the roster is refreshed for matchId=$matchId',
-          tag: 'NotificationsScreen',
-        );
-      } else {
-        AppLogger.info(
-          'Declined invitation completed for matchId=$matchId; '
-          'no participant will be stored',
-          tag: 'NotificationsScreen',
-        );
-      }
-
-      if (!mounted) return;
-      final notificationService = context.read<NotificationService>();
-      await notificationService.markAsRead(item.id);
-
-      if (!mounted) return;
-      setState(() {
-        _resolvedInviteActions[item.id] = accept
-            ? _ResolvedInviteAction.accepted
-            : _ResolvedInviteAction.declined;
-      });
-
-      AppLogger.info(
-        'Notification invite actions hidden after $actionLabel action: '
-        'notificationId=${item.id}',
-        tag: 'NotificationsScreen',
-      );
-
-      AppSnackBar.show(
-        response.message.isNotEmpty
-            ? response.message
-            : (accept ? 'Invitation accepted' : 'Invitation declined'),
-      );
-
-      if (accept && mounted) {
-        // After accepting an invite, take the user straight to the match.
-        _navigateForNotification(item);
-      }
-    } catch (e) {
-      AppLogger.error(
-        '$actionLabel invite API failed for notificationId=${item.id}, '
-        'matchId=$matchId',
-        tag: 'NotificationsScreen',
-        error: e,
-      );
-      if (!mounted) return;
-      AppSnackBar.show(messageFromApiException(e));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _actionLoading.remove(item.id);
-        });
-      }
+    if (outcome.navigateToMatchOnAccept && outcome.item != null) {
+      _navigateForNotification(outcome.item!);
     }
   }
 
@@ -259,15 +185,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (service.notifications.isEmpty) return;
     await service.clearAllNotifications();
     if (!mounted) return;
-    setState(() {
-      _actionLoading.clear();
-      _resolvedInviteActions.clear();
-    });
+    context.read<NotificationsScreenViewModel>().clearInviteState();
     AppSnackBar.show('All messages cleared');
   }
 
   List<Widget> _buildSection(
-    BuildContext context, {
+    BuildContext context,
+    NotificationsScreenViewModel vm, {
     required String title,
     required List<NotificationModel> items,
     bool addTopSpacing = false,
@@ -278,32 +202,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (addTopSpacing) SizedBox(height: context.h(8)),
       NormalText(titleText: title, titleStyle: context.appText.text16W600),
       SizedBox(height: context.h(10)),
-      ...items.map(_buildNotificationCard),
+      ...items.map((n) => _buildNotificationCard(context, vm, n)),
       if (addBottomSpacing) SizedBox(height: context.h(8)),
     ];
   }
 
-  Widget _buildNotificationCard(NotificationModel n) {
-    return _NotificationCard(
-      item: _NotificationItem.fromModel(
-        n,
-        rightLabel: _relativeLabel(n.createdAt),
-        resolvedInviteAction: _resolvedInviteActions[n.id],
+  Widget _buildNotificationCard(
+    BuildContext context,
+    NotificationsScreenViewModel vm,
+    NotificationModel n,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: context.h(12)),
+      child: _NotificationCard(
+        item: _NotificationItem.fromModel(
+          n,
+          rightLabel: _relativeLabel(n.createdAt),
+          resolvedInviteAction: vm.resolvedInviteFor(n.id),
+        ),
+        inviteLoadingPhase: vm.invitePhaseFor(n.id),
+        onTap: () => _handleNotificationTap(n),
+        onPrimaryTap: n.isInvitation
+            ? () => _handleInvitationAction(n, true)
+            : null,
+        onSecondaryTap: n.isInvitation
+            ? () => _handleInvitationAction(n, false)
+            : null,
       ),
-      isActionLoading: _actionLoading[n.id] == true,
-      onTap: () => _handleNotificationTap(n),
-      onPrimaryTap: n.isInvitation
-          ? () => _handleInvitationAction(n, true)
-          : null,
-      onSecondaryTap: n.isInvitation
-          ? () => _handleInvitationAction(n, false)
-          : null,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final vm = context.watch<NotificationsScreenViewModel>();
     final service = context.watch<NotificationService>();
     final visibleNotifications = service.notifications;
     final todayItems = visibleNotifications
@@ -321,7 +253,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: service.isLoading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
-                padding: context.padSym(h: 20, v: 20),
+                padding: context.padSym(h: 20),
                 children: [
                   _NotificationsHeader(
                     service: service,
@@ -332,17 +264,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   SizedBox(height: context.h(12)),
                   ..._buildSection(
                     context,
+                    vm,
                     title: AppText.today,
                     items: todayItems,
                     addBottomSpacing: true,
                   ),
                   ..._buildSection(
                     context,
+                    vm,
                     title: AppText.yesterday,
                     items: yesterdayItems,
                   ),
                   ..._buildSection(
                     context,
+                    vm,
                     title: AppText.earlier,
                     items: earlierItems,
                     addTopSpacing: true,
@@ -400,7 +335,7 @@ class _NotificationItem {
   factory _NotificationItem.fromModel(
     NotificationModel model, {
     required String rightLabel,
-    _ResolvedInviteAction? resolvedInviteAction,
+    ResolvedInviteAction? resolvedInviteAction,
   }) {
     final subtitle = model.displaySubtitle;
     final showActions = model.isInvitation && resolvedInviteAction == null;
@@ -496,17 +431,19 @@ class _NotificationsHeader extends StatelessWidget {
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
     required this.item,
-    this.isActionLoading = false,
+    this.inviteLoadingPhase,
     this.onTap,
     this.onPrimaryTap,
     this.onSecondaryTap,
   });
 
   final _NotificationItem item;
-  final bool isActionLoading;
+  final InviteLoadingPhase? inviteLoadingPhase;
   final VoidCallback? onTap;
   final VoidCallback? onPrimaryTap;
   final VoidCallback? onSecondaryTap;
+
+  bool get _inviteActionsBusy => inviteLoadingPhase != null;
 
   @override
   Widget build(BuildContext context) {
@@ -593,33 +530,34 @@ class _NotificationCard extends StatelessWidget {
                 ],
                 if (hasActions) ...[
                   SizedBox(height: context.h(8)),
-                  if (isActionLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                  Row(
+                    children: [
+                      _ActionPill(
+                        text: inviteLoadingPhase == InviteLoadingPhase.accepting
+                            ? 'Accepting...'
+                            : item.primaryActionText!,
+                        filled: item.isPrimaryActionFilled,
+                        onTap: _inviteActionsBusy ? null : onPrimaryTap,
+                        muted: _inviteActionsBusy &&
+                            inviteLoadingPhase !=
+                                InviteLoadingPhase.accepting,
                       ),
-                    )
-                  else
-                    Row(
-                      children: [
+                      if (item.secondaryActionText != null) ...[
+                        SizedBox(width: context.w(8)),
                         _ActionPill(
-                          text: item.primaryActionText!,
-                          filled: item.isPrimaryActionFilled,
-                          onTap: onPrimaryTap,
+                          text: inviteLoadingPhase ==
+                                  InviteLoadingPhase.declining
+                              ? 'Declining...'
+                              : item.secondaryActionText!,
+                          filled: false,
+                          onTap: _inviteActionsBusy ? null : onSecondaryTap,
+                          muted: _inviteActionsBusy &&
+                              inviteLoadingPhase !=
+                                  InviteLoadingPhase.declining,
                         ),
-                        if (item.secondaryActionText != null) ...[
-                          SizedBox(width: context.w(8)),
-                          _ActionPill(
-                            text: item.secondaryActionText!,
-                            filled: false,
-                            onTap: onSecondaryTap,
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
+                  ),
                 ],
               ],
             ),
@@ -631,39 +569,46 @@ class _NotificationCard extends StatelessWidget {
 }
 
 class _ActionPill extends StatelessWidget {
-  const _ActionPill({required this.text, required this.filled, this.onTap});
+  const _ActionPill({
+    required this.text,
+    required this.filled,
+    this.onTap,
+    this.muted = false,
+  });
 
   final String text;
   final bool filled;
   final VoidCallback? onTap;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(context.radius(14)),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: context.w(12),
-          vertical: context.h(3),
-        ),
-        decoration: BoxDecoration(
-          color: filled ? c.primary : c.onPrimary.withValues(alpha: 0.0),
-          borderRadius: BorderRadius.circular(context.radius(14)),
-          border: Border.all(color: c.primary, width: 1.1),
-        ),
-        child: Text(
-          text,
-          style: context.appText.text16W500.copyWith(
-            color: filled ? c.onPrimary : c.primary,
+    return Opacity(
+      opacity: muted ? 0.42 : 1.0,
+      child: InkWell(
+        onTap: muted ? null : onTap,
+        borderRadius: BorderRadius.circular(context.radius(14)),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.w(12),
+            vertical: context.h(3),
+          ),
+          decoration: BoxDecoration(
+            color: filled ? c.primary : c.onPrimary.withValues(alpha: 0.0),
+            borderRadius: BorderRadius.circular(context.radius(14)),
+            border: Border.all(color: c.primary, width: 1.1),
+          ),
+          child: Text(
+            text,
+            style: context.appText.text16W500.copyWith(
+              color: filled ? c.onPrimary : c.primary,
+            ),
           ),
         ),
       ),
     );
   }
 }
-
-enum _ResolvedInviteAction { accepted, declined }
 
 enum _NotificationMenuAction { readAll, clearMessages }
