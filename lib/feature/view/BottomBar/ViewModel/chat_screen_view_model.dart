@@ -18,6 +18,7 @@ class ChatMessage {
   final bool isFailed;
   final String localId;
   final String? messageId;
+  final bool isDeleted;
 
   const ChatMessage({
     required this.text,
@@ -28,6 +29,7 @@ class ChatMessage {
     this.isFailed = false,
     this.localId = '',
     this.messageId,
+    this.isDeleted = false,
   });
 
   ChatMessage copyWith({
@@ -39,6 +41,7 @@ class ChatMessage {
     bool? isFailed,
     String? localId,
     String? messageId,
+    bool? isDeleted,
   }) {
     return ChatMessage(
       text: text ?? this.text,
@@ -49,6 +52,7 @@ class ChatMessage {
       isFailed: isFailed ?? this.isFailed,
       localId: localId ?? this.localId,
       messageId: messageId ?? this.messageId,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }
@@ -265,6 +269,18 @@ class ChatScreenViewModel extends ChangeNotifier {
   void _appendRealtimeMessage(RealtimeChatMessage message) {
     final id = message.messageId.trim();
     if (id.isNotEmpty && !_messageIds.add(id)) {
+      // Forward-compat: backend may send deletion/read events for an existing message.
+      if (message.isDeleted) {
+        final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == id);
+        if (idx >= 0) {
+          _messages[idx] = _messages[idx].copyWith(
+            text: '',
+            isDeleted: true,
+            isPending: false,
+            isFailed: false,
+          );
+        }
+      }
       return;
     }
 
@@ -281,6 +297,7 @@ class ChatScreenViewModel extends ChangeNotifier {
         date: DateTimeFormatters.chatDate(now),
         isMe: isMine,
         messageId: id.isNotEmpty ? id : null,
+        isDeleted: message.isDeleted,
       ),
     );
   }

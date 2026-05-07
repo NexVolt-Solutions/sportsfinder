@@ -28,6 +28,11 @@ class RealtimeChatMessage {
     required this.content,
     required this.sentAt,
     this.senderAvatar,
+    this.isDeleted = false,
+    this.deletedAt,
+    this.deletedScope,
+    this.deliveredAt,
+    this.readAt,
   });
 
   final String messageId;
@@ -36,8 +41,17 @@ class RealtimeChatMessage {
   final String? senderAvatar;
   final String content;
   final DateTime sentAt;
+  final bool isDeleted;
+  final DateTime? deletedAt;
+  final String? deletedScope; // "me" | "both"
+  final DateTime? deliveredAt;
+  final DateTime? readAt;
 
   factory RealtimeChatMessage.fromJson(Map<String, dynamic> json) {
+    final isDeletedRaw = json['is_deleted'] ?? json['deleted'] ?? false;
+    final isDeleted = isDeletedRaw is bool
+        ? isDeletedRaw
+        : ('$isDeletedRaw'.toLowerCase() == 'true');
     return RealtimeChatMessage(
       messageId: '${json['message_id'] ?? ''}',
       senderId: '${json['sender_id'] ?? ''}',
@@ -45,6 +59,11 @@ class RealtimeChatMessage {
       senderAvatar: json['sender_avatar']?.toString(),
       content: '${json['content'] ?? ''}',
       sentAt: DateTime.tryParse('${json['sent_at'] ?? ''}') ?? DateTime.now(),
+      isDeleted: isDeleted,
+      deletedAt: DateTime.tryParse('${json['deleted_at'] ?? ''}'),
+      deletedScope: (json['deleted_scope'] ?? json['scope'])?.toString(),
+      deliveredAt: DateTime.tryParse('${json['delivered_at'] ?? ''}'),
+      readAt: DateTime.tryParse('${json['read_at'] ?? ''}'),
     );
   }
 }
@@ -217,6 +236,22 @@ class MatchChatService {
         debugPrint(
           '[MatchChatService] [WS] incoming messageId=${event['message_id']} sender=${event['sender_id']}',
         );
+        break;
+      // Forward-compat: treat delete/read/delivered as events that the UI can react to.
+      case 'message_deleted':
+        _messageController.add(
+          RealtimeChatMessage.fromJson(<String, dynamic>{
+            ...event,
+            'is_deleted': true,
+          }),
+        );
+        break;
+      case 'message_read':
+      case 'message_delivered':
+      case 'typing_start':
+      case 'typing_stop':
+      case 'presence_update':
+        // Not yet consumed by UI; ignore safely.
         break;
       case 'error':
         _errorController.add('${event['detail'] ?? 'Unknown error'}');

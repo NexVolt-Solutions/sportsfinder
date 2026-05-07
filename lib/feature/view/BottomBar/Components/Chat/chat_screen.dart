@@ -67,12 +67,20 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _exitSelectionMode() {
     if (_selectedMessageLocalIds.isEmpty) return;
+    debugPrint(
+      '[ChatScreen] exitSelectionMode count=${_selectedMessageLocalIds.length}',
+    );
     setState(() => _selectedMessageLocalIds.clear());
   }
 
   void _toggleSelected(ChatMessage msg) {
     final id = msg.localId.trim();
     if (id.isEmpty) return;
+    debugPrint(
+      '[ChatScreen] toggleSelected localId=$id currentlySelected=${_selectedMessageLocalIds.contains(id)} '
+      'selectionCount=${_selectedMessageLocalIds.length} messageId=${msg.messageId} isMe=${msg.isMe} '
+      'pending=${msg.isPending} failed=${msg.isFailed} deleted=${msg.isDeleted}',
+    );
     setState(() {
       if (_selectedMessageLocalIds.contains(id)) {
         _selectedMessageLocalIds.remove(id);
@@ -80,6 +88,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _selectedMessageLocalIds.add(id);
       }
     });
+    debugPrint(
+      '[ChatScreen] selectionCountAfter=${_selectedMessageLocalIds.length}',
+    );
   }
 
   @override
@@ -206,6 +217,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       GestureDetector(
                         onTap: () async {
                           if (!_isSelectionMode) return;
+                          debugPrint(
+                            '[ChatScreen] deleteIconTap selectionCount=${_selectedMessageLocalIds.length}',
+                          );
                           await _confirmDeleteSelected(context, model);
                         },
                         child: _isSelectionMode
@@ -255,7 +269,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                       if (_selectedMessageLocalIds.contains(id)) {
                                         return;
                                       }
+                                      debugPrint(
+                                        '[ChatScreen] enterSelectionMode localId=$id messageId=${msg.messageId} isMe=${msg.isMe}',
+                                      );
                                       setState(() => _selectedMessageLocalIds.add(id));
+                                      debugPrint(
+                                        '[ChatScreen] selectionCountAfterEnter=${_selectedMessageLocalIds.length}',
+                                      );
                                     },
                                     onRetry: msg.isFailed
                                         ? () => model.retryMessage(msg.localId)
@@ -345,10 +365,16 @@ class _ChatScreenState extends State<ChatScreen> {
         child: GestureDetector(
           onLongPress: () {
             if (isSelectionMode) return;
+            debugPrint(
+              '[ChatScreen] bubbleLongPress localId=${msg.localId} messageId=${msg.messageId} isMe=${msg.isMe}',
+            );
             onEnterSelection();
           },
           onTap: () {
             if (!isSelectionMode) return;
+            debugPrint(
+              '[ChatScreen] bubbleTap (selectionMode) localId=${msg.localId} messageId=${msg.messageId}',
+            );
             onToggleSelected();
           },
           child: Container(
@@ -385,7 +411,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onTap: isSelectionMode ? null : onRetry,
                   behavior: HitTestBehavior.opaque,
                   child: NormalText(
-                    titleText: msg.text,
+                    titleText: msg.isDeleted ? 'This message was deleted' : msg.text,
                     titleColor: isMe
                         ? context.appColors.onPrimary
                         : context.appColors.onSurface,
