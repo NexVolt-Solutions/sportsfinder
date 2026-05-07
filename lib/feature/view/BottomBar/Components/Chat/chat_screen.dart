@@ -595,6 +595,14 @@ class _ChatScreenState extends State<ChatScreen> {
   }) {
     final isMe = msg.isMe;
     final selectedBg = context.appColors.primary.withValues(alpha: 0.12);
+    final hasMedia = (msg.mediaUrl ?? '').trim().isNotEmpty;
+    final inferredType = hasMedia
+        ? (((msg.mimeType ?? '').toLowerCase().startsWith('image/'))
+              ? ChatMessageType.image
+              : ChatMessageType.file)
+        : msg.type;
+    final effectiveType =
+        (msg.type == ChatMessageType.text && hasMedia) ? inferredType : msg.type;
 
     return Padding(
       padding: EdgeInsets.only(bottom: context.h(10)),
@@ -651,11 +659,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: NormalText(
                     titleText: msg.isDeleted
                         ? 'This message was deleted'
-                        : (msg.type == ChatMessageType.text
+                        : (effectiveType == ChatMessageType.text
                             ? msg.text
-                            : (msg.type == ChatMessageType.image
-                                ? '[Image]'
-                                : '[File]')),
+                            : (effectiveType == ChatMessageType.image
+                                ? ((msg.fileName ?? 'Photo').trim().isEmpty
+                                      ? 'Photo'
+                                      : (msg.fileName ?? 'Photo').trim())
+                                : ((msg.fileName ?? 'File').trim().isEmpty
+                                      ? 'File'
+                                      : (msg.fileName ?? 'File').trim()))),
                     titleColor: isMe
                         ? context.appColors.onPrimary
                         : context.appColors.onSurface,
@@ -675,7 +687,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     subFontWeight: FontWeight.w400,
                   ),
                 ),
-                if (!msg.isDeleted && msg.type == ChatMessageType.image)
+                if (!msg.isDeleted && effectiveType == ChatMessageType.image)
                   Padding(
                     padding: EdgeInsets.only(top: context.h(8)),
                     child: ClipRRect(
@@ -699,7 +711,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                if (!msg.isDeleted && msg.type == ChatMessageType.file)
+                if (!msg.isDeleted && effectiveType == ChatMessageType.file)
                   Padding(
                     padding: EdgeInsets.only(top: context.h(8)),
                     child: Row(

@@ -199,18 +199,29 @@ class ChatScreenViewModel extends ChangeNotifier {
 
     final fileName =
         (xFile.name).trim().isNotEmpty ? xFile.name.trim() : 'image';
-    final bytes = await xFile.readAsBytes();
 
     try {
       final targetUserId = _boundTargetUserId.trim();
       if (targetUserId.isEmpty) {
         throw Exception('Chat target user id missing');
       }
-      final upload = await _chatUploadRepository.uploadDirectChatAttachment(
-        targetUserId: targetUserId,
-        fileName: fileName,
-        bytes: bytes,
-      );
+      final ChatAttachmentUploadResult upload;
+      if (kIsWeb) {
+        final bytes = await xFile.readAsBytes();
+        upload = await _chatUploadRepository.uploadDirectChatAttachment(
+          targetUserId: targetUserId,
+          fileName: fileName,
+          bytes: bytes,
+        );
+      } else {
+        final path = xFile.path.trim();
+        if (path.isEmpty) throw Exception('Missing image path');
+        upload = await _chatUploadRepository.uploadDirectChatAttachment(
+          targetUserId: targetUserId,
+          fileName: fileName,
+          file: File(path),
+        );
+      }
 
       final url = upload.mediaUrl.trim();
       final mime = upload.mimeType;
@@ -249,7 +260,7 @@ class ChatScreenViewModel extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Failed to upload image.';
       notifyListeners();
-      rethrow;
+      return;
     }
   }
 
