@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -8,7 +11,7 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
- import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
 import 'package:sport_finding/feature/widget/app_dialog.dart';
 
@@ -117,12 +120,247 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Padding(
               padding: EdgeInsets.only(
                 top: context.h(10),
-                bottom: context.h(16),
-                left: context.w(20),
-                right: context.w(20),
+                  right: context.w(14),
               ),
               child: Row(
                 children: [
+                  GestureDetector(
+                    onTap: () async {
+                      if (_isSelectionMode) return;
+                      await showModalBottomSheet<void>(
+                        
+                        context: context,
+                        isScrollControlled: false,
+                        backgroundColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(context.radius(16)),
+                          ),
+                        ),
+                        builder: (sheetContext) {
+                          final c = sheetContext.appColors;
+                          final t = sheetContext.appText;
+                          final radius = Radius.circular(context.radius(20));
+
+                          Widget actionCard({
+                            required IconData icon,
+                            required String title,
+                            required String subtitle,
+                            required VoidCallback onTap,
+                          }) {
+                            return Expanded(
+                              child: Material(
+                                color: Colors.white,
+                                elevation: 3,
+                                shadowColor:
+                                    c.greyDark.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(
+                                  context.radius(16),
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(
+                                    context.radius(16),
+                                  ),
+                                  onTap: onTap,
+                                  child: Padding(
+                                    padding: context.padAll(14),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          width: context.w(44),
+                                          height: context.w(44),
+                                          decoration: BoxDecoration(
+                                            color: c.primary.withValues(
+                                              alpha: 0.10,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              context.radius(14),
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            icon,
+                                            color: c.primary,
+                                            size: context.w(22),
+                                          ),
+                                        ),
+                                        SizedBox(height: context.h(10)),
+                                        Text(
+                                          title,
+                                          style: t.text14W600.copyWith(
+                                            color: c.greyDark,
+                                          ),
+                                        ),
+                                        SizedBox(height: context.h(4)),
+                                        Text(
+                                          subtitle,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: t.text12W400.copyWith(
+                                            color: c.greylight,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return SafeArea(
+                            child: Padding(
+                              padding: EdgeInsets.zero,
+                              child: ClipRRect(
+                                borderRadius:
+                                    BorderRadius.vertical(top: radius),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius:
+                                        BorderRadius.vertical(top: radius),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(height: context.h(10)),
+                                      Container(
+                                        width: context.w(46),
+                                        height: context.h(5),
+                                        decoration: BoxDecoration(
+                                          color: c.greylight.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            context.radius(20),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: context.h(14)),
+                                      Padding(
+                                        padding: context.padSym(h: 16),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Send attachment',
+                                                    style: t.text16W600
+                                                        .copyWith(
+                                                      color: c.greyDark,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: context.h(4),
+                                                  ),
+                                                  Text(
+                                                    'Choose what you want to share',
+                                                    style: t.text12W400
+                                                        .copyWith(
+                                                      color: c.greylight,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Material(
+                                              color: Colors.white,
+                                              shape: const CircleBorder(),
+                                              child: InkWell(
+                                                customBorder:
+                                                    const CircleBorder(),
+                                                onTap: () =>
+                                                    Navigator.pop(sheetContext),
+                                                child: Padding(
+                                                  padding: context.padAll(10),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    color: c.greyDark,
+                                                    size: context.w(18),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(height: context.h(14)),
+                                      Padding(
+                                        padding: context.padSym(h: 16),
+                                        child: Row(
+                                          children: [
+                                            actionCard(
+                                              icon: Icons.image_outlined,
+                                              title: 'Photo',
+                                              subtitle:
+                                                  'Upload from your gallery',
+                                              onTap: () async {
+                                                Navigator.pop(sheetContext);
+                                                final xFile =
+                                                    await ImagePicker()
+                                                        .pickImage(
+                                                  source: ImageSource.gallery,
+                                                  imageQuality: 85,
+                                                );
+                                                if (!mounted || xFile == null) {
+                                                  return;
+                                                }
+                                                await model
+                                                    .sendImageAttachment(xFile);
+                                              },
+                                            ),
+                                            SizedBox(width: context.w(12)),
+                                            actionCard(
+                                              icon: Icons
+                                                  .insert_drive_file_outlined,
+                                              title: 'File',
+                                              subtitle:
+                                                  'Share documents or PDFs',
+                                              onTap: () async {
+                                                Navigator.pop(sheetContext);
+                                                final res =
+                                                    await FilePicker.pickFiles(
+                                                  allowMultiple: false,
+                                                  withData: kIsWeb,
+                                                );
+                                                final file =
+                                                    res?.files.isNotEmpty ==
+                                                            true
+                                                        ? res!.files.first
+                                                        : null;
+                                                if (!mounted || file == null) {
+                                                  return;
+                                                }
+                                                await model
+                                                    .sendFileAttachment(file);
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(height: context.h(16)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Padding(
+                      padding: context.padAll(10),
+                      child: Icon(
+                        Icons.attach_file,
+                        color: context.appColors.greylight,
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
@@ -411,7 +649,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   onTap: isSelectionMode ? null : onRetry,
                   behavior: HitTestBehavior.opaque,
                   child: NormalText(
-                    titleText: msg.isDeleted ? 'This message was deleted' : msg.text,
+                    titleText: msg.isDeleted
+                        ? 'This message was deleted'
+                        : (msg.type == ChatMessageType.text
+                            ? msg.text
+                            : (msg.type == ChatMessageType.image
+                                ? '[Image]'
+                                : '[File]')),
                     titleColor: isMe
                         ? context.appColors.onPrimary
                         : context.appColors.onSurface,
@@ -431,6 +675,59 @@ class _ChatScreenState extends State<ChatScreen> {
                     subFontWeight: FontWeight.w400,
                   ),
                 ),
+                if (!msg.isDeleted && msg.type == ChatMessageType.image)
+                  Padding(
+                    padding: EdgeInsets.only(top: context.h(8)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(context.radius(10)),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 10,
+                        child: Image.network(
+                          (msg.mediaUrl ?? msg.thumbnailUrl ?? '').trim(),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: context.appColors.blue10,
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Image unavailable',
+                              style: context.appText.text12W500.copyWith(
+                                color: context.appColors.greylight,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!msg.isDeleted && msg.type == ChatMessageType.file)
+                  Padding(
+                    padding: EdgeInsets.only(top: context.h(8)),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.insert_drive_file_outlined,
+                          size: 18,
+                          color: isMe
+                              ? context.appColors.onPrimary
+                                  .withValues(alpha: 0.85)
+                              : context.appColors.greyDark,
+                        ),
+                        SizedBox(width: context.w(8)),
+                        Expanded(
+                          child: Text(
+                            (msg.fileName ?? 'File').trim(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.appText.text12W600.copyWith(
+                              color: isMe
+                                  ? context.appColors.onPrimary
+                                  : context.appColors.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

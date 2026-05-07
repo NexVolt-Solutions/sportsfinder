@@ -27,6 +27,12 @@ class RealtimeChatMessage {
     required this.senderName,
     required this.content,
     required this.sentAt,
+    this.messageType,
+    this.mediaUrl,
+    this.thumbnailUrl,
+    this.mimeType,
+    this.fileName,
+    this.sizeBytes,
     this.senderAvatar,
     this.isDeleted = false,
     this.deletedAt,
@@ -41,6 +47,12 @@ class RealtimeChatMessage {
   final String? senderAvatar;
   final String content;
   final DateTime sentAt;
+  final String? messageType; // "text" | "image" | "file"
+  final String? mediaUrl;
+  final String? thumbnailUrl;
+  final String? mimeType;
+  final String? fileName;
+  final int? sizeBytes;
   final bool isDeleted;
   final DateTime? deletedAt;
   final String? deletedScope; // "me" | "both"
@@ -59,6 +71,12 @@ class RealtimeChatMessage {
       senderAvatar: json['sender_avatar']?.toString(),
       content: '${json['content'] ?? ''}',
       sentAt: DateTime.tryParse('${json['sent_at'] ?? ''}') ?? DateTime.now(),
+      messageType: (json['type'] ?? json['message_type'])?.toString(),
+      mediaUrl: (json['media_url'] ?? json['file_url'])?.toString(),
+      thumbnailUrl: (json['thumbnail_url'] ?? json['thumb_url'])?.toString(),
+      mimeType: (json['mime_type'] ?? json['mime'])?.toString(),
+      fileName: (json['file_name'] ?? json['filename'])?.toString(),
+      sizeBytes: json['size_bytes'] is num ? (json['size_bytes'] as num).toInt() : null,
       isDeleted: isDeleted,
       deletedAt: DateTime.tryParse('${json['deleted_at'] ?? ''}'),
       deletedScope: (json['deleted_scope'] ?? json['scope'])?.toString(),
@@ -261,8 +279,28 @@ class MatchChatService {
   }
 
   bool sendMessage(String content) {
+    return sendChatMessage(content: content);
+  }
+
+  /// Sends a chat message payload.
+  ///
+  /// For attachments, pass `messageType` as `"image"` or `"file"` and include
+  /// `mediaUrl` (and optional metadata). For forward compatibility, we include
+  /// these fields even if the backend currently ignores them.
+  bool sendChatMessage({
+    required String content,
+    String messageType = 'text',
+    String? mediaUrl,
+    String? thumbnailUrl,
+    String? mimeType,
+    String? fileName,
+    int? sizeBytes,
+  }) {
     final trimmed = content.trim();
-    if (trimmed.isEmpty) return false;
+    final trimmedType = messageType.trim().isEmpty
+        ? 'text'
+        : messageType.trim().toLowerCase();
+    if (trimmed.isEmpty && (mediaUrl ?? '').trim().isEmpty) return false;
     if (trimmed.length > 1000) {
       _errorController.add('Message too long (max 1000 characters)');
       return false;
@@ -276,9 +314,21 @@ class MatchChatService {
       return false;
     }
 
-    debugPrint('[MatchChatService] [WS] send message len=${trimmed.length}');
+    debugPrint(
+      '[MatchChatService] [WS] send message type=$trimmedType len=${trimmed.length} hasMedia=${(mediaUrl ?? '').trim().isNotEmpty}',
+    );
     _channel?.sink.add(
-      jsonEncode(<String, dynamic>{'type': 'chat_message', 'content': trimmed}),
+      jsonEncode(<String, dynamic>{
+        'type': 'chat_message',
+        'content': trimmed,
+        'message_type': trimmedType,
+        if (mediaUrl?.trim().isNotEmpty ?? false) 'media_url': mediaUrl!.trim(),
+        if (thumbnailUrl?.trim().isNotEmpty ?? false)
+          'thumbnail_url': thumbnailUrl!.trim(),
+        if (mimeType?.trim().isNotEmpty ?? false) 'mime_type': mimeType!.trim(),
+        if (fileName?.trim().isNotEmpty ?? false) 'file_name': fileName!.trim(),
+        if (sizeBytes != null) 'size_bytes': sizeBytes,
+      }),
     );
     return true;
   }

@@ -1,4 +1,7 @@
+import 'dart:io' show File;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/match_chat_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
@@ -6,8 +9,27 @@ import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
-
+import 'package:sport_finding/Data/Repositories/Chat/chat_upload_repository.dart';
 import 'dart:async';
+
+enum ChatMessageType {
+  text,
+  image,
+  file,
+}
+
+ChatMessageType _parseChatMessageType(String? raw) {
+  final v = (raw ?? '').trim().toLowerCase();
+  switch (v) {
+    case 'image':
+      return ChatMessageType.image;
+    case 'file':
+      return ChatMessageType.file;
+    case 'text':
+    default:
+      return ChatMessageType.text;
+  }
+}
 
 class ChatMessage {
   final String text;
@@ -19,6 +41,12 @@ class ChatMessage {
   final String localId;
   final String? messageId;
   final bool isDeleted;
+  final ChatMessageType type;
+  final String? mediaUrl;
+  final String? thumbnailUrl;
+  final String? mimeType;
+  final String? fileName;
+  final int? sizeBytes;
 
   const ChatMessage({
     required this.text,
@@ -30,6 +58,12 @@ class ChatMessage {
     this.localId = '',
     this.messageId,
     this.isDeleted = false,
+    this.type = ChatMessageType.text,
+    this.mediaUrl,
+    this.thumbnailUrl,
+    this.mimeType,
+    this.fileName,
+    this.sizeBytes,
   });
 
   ChatMessage copyWith({
@@ -42,6 +76,12 @@ class ChatMessage {
     String? localId,
     String? messageId,
     bool? isDeleted,
+    ChatMessageType? type,
+    String? mediaUrl,
+    String? thumbnailUrl,
+    String? mimeType,
+    String? fileName,
+    int? sizeBytes,
   }) {
     return ChatMessage(
       text: text ?? this.text,
@@ -53,6 +93,12 @@ class ChatMessage {
       localId: localId ?? this.localId,
       messageId: messageId ?? this.messageId,
       isDeleted: isDeleted ?? this.isDeleted,
+      type: type ?? this.type,
+      mediaUrl: mediaUrl ?? this.mediaUrl,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      mimeType: mimeType ?? this.mimeType,
+      fileName: fileName ?? this.fileName,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
     );
   }
 }
@@ -102,6 +148,7 @@ class ChatScreenViewModel extends ChangeNotifier {
   static const Duration _pendingFailureTimeout = Duration(seconds: 12);
   final DirectMessagesRepository _directMessagesRepository =
       DirectMessagesRepository();
+  final ChatUploadRepository _chatUploadRepository = ChatUploadRepository();
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isEmpty => _messages.isEmpty;
@@ -139,6 +186,127 @@ class ChatScreenViewModel extends ChangeNotifier {
       _appendFailedOutgoing(trimmed);
     }
     notifyListeners();
+  }
+
+  Future<void> sendImageAttachment(XFile xFile) async {
+    if (_matchChatService == null) {
+      _errorMessage = 'This chat is not connected to the backend yet.';
+      notifyListeners();
+      return;
+    }
+    _errorMessage = null;
+    notifyListeners();
+
+    final fileName = (xFile.name).trim().isNotEmpty ? xFile.name.trim() : 'image';
+    final bytes = await xFile.readAsBytes();
+
+    try {
+      final url = await _chatUploadRepository.upload(
+        fileField: 'file',
+        fileName: fileName,
+        bytes: bytes,
+        fields: const <String, String>{'context': 'chat', 'kind': 'image'},
+      );
+
+      final sent = _matchChatService!.sendChatMessage(
+        content: url,
+        messageType: 'image',
+        mediaUrl: url,
+        fileName: fileName,
+      );
+
+      if (sent) {
+        _appendPendingOutgoing(
+          url,
+          type: ChatMessageType.image,
+          mediaUrl: url,
+          fileName: fileName,
+        );
+      } else {
+        _appendFailedOutgoing(
+          url,
+          type: ChatMessageType.image,
+          mediaUrl: url,
+          fileName: fileName,
+        );
+      }
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to upload image.';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> sendFileAttachment(PlatformFile file) async {
+    if (_matchChatService == null) {
+      _errorMessage = 'This chat is not connected to the backend yet.';
+      notifyListeners();
+      return;
+    }
+    _errorMessage = null;
+    notifyListeners();
+
+    final fileName = (file.name).trim().isNotEmpty ? file.name.trim() : 'file';
+
+    try {
+      final String url;
+      if (kIsWeb) {
+        final bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) {
+          throw Exception('Missing file bytes');
+        }
+        url = await _chatUploadRepository.upload(
+          fileField: 'file',
+          fileName: fileName,
+          bytes: bytes,
+          fields: const <String, String>{'context': 'chat', 'kind': 'file'},
+        );
+      } else {
+        final path = (file.path ?? '').trim();
+        if (path.isEmpty) throw Exception('Missing file path');
+        url = await _chatUploadRepository.upload(
+          fileField: 'file',
+          fileName: fileName,
+          file: File(path),
+          fields: const <String, String>{'context': 'chat', 'kind': 'file'},
+        );
+      }
+
+      final sent = _matchChatService!.sendChatMessage(
+        content: url,
+        messageType: 'file',
+        mediaUrl: url,
+        fileName: fileName,
+        sizeBytes: file.size,
+        mimeType: file.extension,
+      );
+
+      if (sent) {
+        _appendPendingOutgoing(
+          url,
+          type: ChatMessageType.file,
+          mediaUrl: url,
+          fileName: fileName,
+          sizeBytes: file.size,
+          mimeType: file.extension,
+        );
+      } else {
+        _appendFailedOutgoing(
+          url,
+          type: ChatMessageType.file,
+          mediaUrl: url,
+          fileName: fileName,
+          sizeBytes: file.size,
+          mimeType: file.extension,
+        );
+      }
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to upload file.';
+      notifyListeners();
+      rethrow;
+    }
   }
 
   void retryMessage(String localId) {
@@ -290,19 +458,38 @@ class ChatScreenViewModel extends ChangeNotifier {
     if (isMine && _reconcilePendingOutgoing(message, now)) {
       return;
     }
+
+    final serverMessageId = id.isNotEmpty ? id : null;
+    final localId = serverMessageId ?? 'rt_${now.microsecondsSinceEpoch}';
+    final parsedType = _parseChatMessageType(message.messageType);
     _messages.add(
       ChatMessage(
         text: message.content,
         time: DateTimeFormatters.chatTime(now),
         date: DateTimeFormatters.chatDate(now),
         isMe: isMine,
-        messageId: id.isNotEmpty ? id : null,
+        localId: localId,
+        messageId: serverMessageId,
         isDeleted: message.isDeleted,
+        type: parsedType,
+        mediaUrl: message.mediaUrl,
+        thumbnailUrl: message.thumbnailUrl,
+        mimeType: message.mimeType,
+        fileName: message.fileName,
+        sizeBytes: message.sizeBytes,
       ),
     );
   }
 
-  void _appendPendingOutgoing(String content) {
+  void _appendPendingOutgoing(
+    String content, {
+    ChatMessageType type = ChatMessageType.text,
+    String? mediaUrl,
+    String? thumbnailUrl,
+    String? mimeType,
+    String? fileName,
+    int? sizeBytes,
+  }) {
     final now = DateTime.now();
     _localMessageCounter += 1;
     _messages.add(
@@ -313,6 +500,12 @@ class ChatScreenViewModel extends ChangeNotifier {
         isMe: true,
         isPending: true,
         localId: 'local_${_localMessageCounter}_${now.microsecondsSinceEpoch}',
+        type: type,
+        mediaUrl: mediaUrl,
+        thumbnailUrl: thumbnailUrl,
+        mimeType: mimeType,
+        fileName: fileName,
+        sizeBytes: sizeBytes,
       ),
     );
     _schedulePendingFailure(_messages.last.localId);
@@ -320,7 +513,7 @@ class ChatScreenViewModel extends ChangeNotifier {
       ChatListScreenViewModel.upsertThread(
         userName: contactName,
         targetUserId: _boundTargetUserId,
-        lastMessage: content,
+        lastMessage: type == ChatMessageType.text ? content : (fileName ?? ''),
         lastAt: DateTime.now(),
         unreadCount: 0,
         isOnline: isOnline,
@@ -329,7 +522,15 @@ class ChatScreenViewModel extends ChangeNotifier {
     _log('pending message added localId=${_messages.last.localId}');
   }
 
-  void _appendFailedOutgoing(String content) {
+  void _appendFailedOutgoing(
+    String content, {
+    ChatMessageType type = ChatMessageType.text,
+    String? mediaUrl,
+    String? thumbnailUrl,
+    String? mimeType,
+    String? fileName,
+    int? sizeBytes,
+  }) {
     final now = DateTime.now();
     _localMessageCounter += 1;
     _messages.add(
@@ -340,6 +541,12 @@ class ChatScreenViewModel extends ChangeNotifier {
         isMe: true,
         isFailed: true,
         localId: 'local_${_localMessageCounter}_${now.microsecondsSinceEpoch}',
+        type: type,
+        mediaUrl: mediaUrl,
+        thumbnailUrl: thumbnailUrl,
+        mimeType: mimeType,
+        fileName: fileName,
+        sizeBytes: sizeBytes,
       ),
     );
     _log('failed message added (immediate)');
@@ -359,7 +566,10 @@ class ChatScreenViewModel extends ChangeNotifier {
     });
   }
 
-  bool _reconcilePendingOutgoing(RealtimeChatMessage message, DateTime sentAtLocal) {
+  bool _reconcilePendingOutgoing(
+    RealtimeChatMessage message,
+    DateTime sentAtLocal,
+  ) {
     final content = message.content.trim();
     if (content.isEmpty) return false;
     final pendingIndex = _messages.indexWhere(
@@ -368,12 +578,19 @@ class ChatScreenViewModel extends ChangeNotifier {
     if (pendingIndex < 0) return false;
     final localId = _messages[pendingIndex].localId;
     _pendingFailTimers.remove(localId)?.cancel();
+    final parsedType = _parseChatMessageType(message.messageType);
     _messages[pendingIndex] = _messages[pendingIndex].copyWith(
       isPending: false,
       isFailed: false,
       time: DateTimeFormatters.chatTime(sentAtLocal),
       date: DateTimeFormatters.chatDate(sentAtLocal),
       messageId: message.messageId.trim().isEmpty ? null : message.messageId.trim(),
+      type: parsedType,
+      mediaUrl: message.mediaUrl,
+      thumbnailUrl: message.thumbnailUrl,
+      mimeType: message.mimeType,
+      fileName: message.fileName,
+      sizeBytes: message.sizeBytes,
     );
     _log('pending reconciled with server ack localId=$localId');
     return true;
