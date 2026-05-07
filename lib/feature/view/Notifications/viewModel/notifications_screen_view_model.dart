@@ -77,12 +77,19 @@ class NotificationsScreenViewModel extends ChangeNotifier {
     required NotificationModel item,
     required bool accept,
     required NotificationService notificationService,
+    required String currentUserId,
   }) async {
     final matchId = item.matchId.trim();
     final actionLabel = accept ? 'accept' : 'decline';
 
     if (matchId.isEmpty) {
       return InviteActionUiOutcome.missingMatchId();
+    }
+
+    if (!accept && currentUserId.trim().isEmpty) {
+      return InviteActionUiOutcome.failure(
+        Exception('Your profile is still loading. Try again in a moment.'),
+      );
     }
 
     AppLogger.info(
@@ -104,7 +111,10 @@ class NotificationsScreenViewModel extends ChangeNotifier {
 
       final response = accept
           ? await _inviteRepository.acceptInvite(matchId: matchId)
-          : await _inviteRepository.declineInvite(matchId: matchId);
+          : await _inviteRepository.declineInvite(
+              matchId: matchId,
+              inviteeUserId: currentUserId,
+            );
 
       AppLogger.success(
         '${accept ? 'Accept' : 'Decline'} invite API succeeded for '

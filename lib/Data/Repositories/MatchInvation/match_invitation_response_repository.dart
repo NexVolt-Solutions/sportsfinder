@@ -54,7 +54,14 @@ class MatchInvitationResponseRepository {
 
   /// Decline a match invitation
   /// Notifies the host about the declined invitation
-  Future<DeclineInviteResponse> declineInvite({required String matchId}) async {
+  Future<DeclineInviteResponse> declineInvite({
+    required String matchId,
+    required String inviteeUserId,
+  }) async {
+    final uid = inviteeUserId.trim();
+    if (uid.isEmpty) {
+      throw ArgumentError('inviteeUserId is required');
+    }
     try {
       AppLogger.info(
         'Declining match invitation...',
@@ -62,9 +69,9 @@ class MatchInvitationResponseRepository {
       );
       AppLogger.debug('Match ID: $matchId', tag: 'InviteResponseRepo');
 
-      // POST /api/v1/matches/{match_id}/invite/decline
+      // POST /api/v1/matches/{match_id}/invite/{invitee_user_id}/decline
       final response = await _api.post(
-        '/api/v1/matches/$matchId/invite/decline',
+        '/api/v1/matches/$matchId/invite/$uid/decline',
       );
 
       AppLogger.success('Match invitation declined', tag: 'InviteResponseRepo');

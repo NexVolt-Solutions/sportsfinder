@@ -66,10 +66,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final vm = context.read<NotificationsScreenViewModel>();
     final notificationService = context.read<NotificationService>();
 
+    final myUserId = ProfileService().profile?.id.trim() ?? '';
+
     final outcome = await vm.submitInviteResponse(
       item: item,
       accept: accept,
       notificationService: notificationService,
+      currentUserId: myUserId,
     );
 
     if (!mounted) return;
