@@ -39,7 +39,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   ChatListScreenViewModel get _safeVm => _vm ??= ChatListScreenViewModel();
   final TextEditingController _webMessageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
-  int? _selectedWebThreadIndex;
+  String? _selectedWebTargetUserId;
   bool _webUnreadOnly = false;
   final Map<String, List<WebChatMessageItem>> _webThreadMessages =
       <String, List<WebChatMessageItem>>{};
@@ -59,6 +59,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return 'name:${thread.userName.trim().toLowerCase()}';
   }
 
+  ChatThreadPreview? _findThreadByTargetUserId(String? targetUserId) {
+    final id = (targetUserId ?? '').trim();
+    if (id.isEmpty) return null;
+    for (final t in _safeVm.threads) {
+      if ((t.targetUserId ?? '').trim() == id) return t;
+    }
+    return null;
+  }
+
   Future<void> _pickAndOpenUser() async {
     final selected = await Navigator.pushNamed(
       context,
@@ -75,7 +84,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       () => <WebChatMessageItem>[],
     );
     if (kIsWeb && widget.embedInBottomBar) {
-      setState(() => _selectedWebThreadIndex = 0);
+      setState(() => _selectedWebTargetUserId = selectedTargetUserId);
       await _bindSelectedWebThread();
       return;
     }
@@ -88,10 +97,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<void> _bindSelectedWebThread() async {
     if (!kIsWeb || !widget.embedInBottomBar) return;
-    final selectedIndex = _selectedWebThreadIndex;
-    if (selectedIndex == null) return;
-    if (selectedIndex < 0 || selectedIndex >= _safeVm.threads.length) return;
-    await _bindWebThread(_safeVm.threads[selectedIndex]);
+    final selected = _findThreadByTargetUserId(_selectedWebTargetUserId);
+    if (selected == null) return;
+    await _bindWebThread(selected);
   }
 
   Future<void> _bindWebThread(ChatThreadPreview thread) async {
@@ -455,8 +463,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
         if (!mounted) return;
         _searchController.clear();
         _webMessageController.clear();
-        if (_selectedWebThreadIndex != null) {
-          setState(() => _selectedWebThreadIndex = null);
+        if (_selectedWebTargetUserId != null) {
+          setState(() => _selectedWebTargetUserId = null);
         } else {
           setState(() {});
         }
@@ -472,27 +480,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
         builder: (context, model, _) {
           final query = _searchController.text.trim().toLowerCase();
           final allThreads = model.threads;
-          final List<int> indexMap = <int>[];
           final List<ChatThreadPreview> filteredThreads = <ChatThreadPreview>[];
           for (var i = 0; i < allThreads.length; i++) {
             final t = allThreads[i];
             if (_webUnreadOnly && t.unreadCount <= 0) continue;
             if (query.isEmpty) {
-              indexMap.add(i);
               filteredThreads.add(t);
               continue;
             }
             final haystack =
                 '${t.userName} ${t.lastMessage}'.toLowerCase();
             if (haystack.contains(query)) {
-              indexMap.add(i);
               filteredThreads.add(t);
             }
           }
 
-          final filteredSelectedIndex = _selectedWebThreadIndex == null
+          final filteredSelectedIndex = _selectedWebTargetUserId == null
               ? null
-              : indexMap.indexOf(_selectedWebThreadIndex!);
+              : filteredThreads.indexWhere(
+                  (t) =>
+                      (t.targetUserId ?? '').trim() ==
+                      (_selectedWebTargetUserId ?? '').trim(),
+                );
 
           final Widget content = (kIsWeb && widget.embedInBottomBar)
               ? LayoutBuilder(
@@ -508,17 +517,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   model: model,
                   threads: filteredThreads,
                   selectedThreadIndex:
-                      (filteredSelectedIndex != null && filteredSelectedIndex >= 0)
+                      (filteredSelectedIndex != null &&
+                              filteredSelectedIndex >= 0)
                           ? filteredSelectedIndex
                           : null,
                   activeMessages:
-                      (_selectedWebThreadIndex != null &&
-                              _selectedWebThreadIndex! >= 0 &&
-                              _selectedWebThreadIndex! < allThreads.length)
+                      (_selectedWebTargetUserId != null)
                           ? List<WebChatMessageItem>.unmodifiable(
-                              _webThreadMessages[_threadKey(
-                                    allThreads[_selectedWebThreadIndex!],
-                                  )] ??
+                              _webThreadMessages[
+                                    'user:${(_selectedWebTargetUserId ?? '').trim()}'
+                                  ] ??
                                   const <WebChatMessageItem>[],
                             )
                           : const <WebChatMessageItem>[],
@@ -529,16 +537,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   showUnreadOnly: _webUnreadOnly,
                   onUnreadToggle: (v) => setState(() => _webUnreadOnly = v),
                   onThreadSelected: (index) {
-                    final mapped =
-                        (index != null && index >= 0 && index < indexMap.length)
-                            ? indexMap[index]
-                            : null;
-                    setState(() => _selectedWebThreadIndex = mapped);
-                    if (mapped != null) {
-                      final t = model.threads[mapped];
+                    final selected = (index != null &&
+                            index >= 0 &&
+                            index < filteredThreads.length)
+                        ? filteredThreads[index]
+                        : null;
+                    setState(() => _selectedWebTargetUserId = selected?.targetUserId);
+                    if (selected != null) {
                       ChatListScreenViewModel.markRead(
-                        userName: t.userName,
-                        targetUserId: t.targetUserId,
+                        userName: selected.userName,
+                        targetUserId: selected.targetUserId,
                       );
                     }
                     _bindSelectedWebThread();
@@ -546,16 +554,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   onPickUser: _pickAndOpenUser,
                   onClearChat: () {
                     _webMessageController.clear();
-                    setState(() => _selectedWebThreadIndex = null);
+                    setState(() => _selectedWebTargetUserId = null);
                   },
                   onDeleteChat: () {
-                    final selectedIndex = _selectedWebThreadIndex;
-                    if (selectedIndex == null ||
-                        selectedIndex < 0 ||
-                        selectedIndex >= model.threads.length) {
-                      return;
-                    }
-                    final thread = model.threads[selectedIndex];
+                    final thread =
+                        _findThreadByTargetUserId(_selectedWebTargetUserId);
+                    if (thread == null) return;
                     _webThreadMessages.remove(_threadKey(thread));
                     _disposeWebThread(_threadKey(thread));
                     ChatListScreenViewModel.removeThread(
@@ -563,17 +567,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       userName: thread.userName,
                     );
                     _webMessageController.clear();
-                    setState(() => _selectedWebThreadIndex = null);
+                    setState(() => _selectedWebTargetUserId = null);
                   },
                   onSendMessage: () {
-                    final selectedIndex = _selectedWebThreadIndex;
-                    if (!model.hasThreads ||
-                        selectedIndex == null ||
-                        selectedIndex < 0 ||
-                        selectedIndex >= model.threads.length) {
-                      return;
-                    }
-                    final activeThread = model.threads[selectedIndex];
+                    if (!model.hasThreads) return;
+                    final activeThread =
+                        _findThreadByTargetUserId(_selectedWebTargetUserId);
+                    if (activeThread == null) return;
                     final text = _webMessageController.text.trim();
                     if (text.isEmpty) return;
                     final now = DateTime.now();

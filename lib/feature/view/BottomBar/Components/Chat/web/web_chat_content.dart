@@ -87,14 +87,17 @@ class WebChatContent extends StatefulWidget {
 
 class _WebChatContentState extends State<WebChatContent> {
   final ScrollController _messagesScrollController = ScrollController();
+  int _scrollJob = 0;
 
   @override
   void dispose() {
+    _scrollJob++;
     _messagesScrollController.dispose();
     super.dispose();
   }
 
   void _scrollToBottom({bool animated = true}) {
+    if (!mounted) return;
     if (!_messagesScrollController.hasClients) return;
     final max = _messagesScrollController.position.maxScrollExtent;
     if (animated) {
@@ -112,11 +115,15 @@ class _WebChatContentState extends State<WebChatContent> {
   void didUpdateWidget(covariant WebChatContent oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final threadChanged = oldWidget.selectedThreadIndex != widget.selectedThreadIndex;
-    final messagesChanged = oldWidget.activeMessages.length != widget.activeMessages.length;
+    final threadChanged =
+        oldWidget.selectedThreadIndex != widget.selectedThreadIndex;
+    final messagesChanged =
+        oldWidget.activeMessages.length != widget.activeMessages.length;
 
     if (threadChanged || messagesChanged) {
+      final job = ++_scrollJob;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || job != _scrollJob) return;
         _scrollToBottom(animated: false);
       });
     }
@@ -154,6 +161,12 @@ class _WebChatContentState extends State<WebChatContent> {
     final activeThread = safeSelected == null
         ? null
         : threads[safeSelected];
+
+    debugPrint(
+      '[WebChat] build thread=${activeThread?.targetUserId ?? '-'} '
+      'selected=$selectedThreadIndex safe=$safeSelected '
+      'msgs=${activeMessages.length} threads=${threads.length}',
+    );
 
     return MainFrame(
       showDecorationLayer: false,
@@ -288,11 +301,8 @@ class _WebChatContentState extends State<WebChatContent> {
                                                         decoration:
                                                             BoxDecoration(
                                                           color: isSelected
-                                                              ? context
-                                                                  .appColors
-                                                                  .white
-                                                              : Colors
-                                                                  .transparent,
+                                                              ? context.appColors.blue10
+                                                              : context.appColors.white,
                                                           borderRadius:
                                                               BorderRadius
                                                                   .circular(
@@ -300,6 +310,36 @@ class _WebChatContentState extends State<WebChatContent> {
                                                               12,
                                                             ),
                                                           ),
+                                                          border: isSelected
+                                                              ? Border.all(
+                                                                  color: context
+                                                                      .appColors
+                                                                      .primary
+                                                                      .withValues(
+                                                                        alpha: 0.35,
+                                                                      ),
+                                                                  width: 1,
+                                                                )
+                                                              : null,
+                                                          boxShadow: isSelected
+                                                              ? [
+                                                                  BoxShadow(
+                                                                    color: context
+                                                                        .appColors
+                                                                        .primary
+                                                                        .withValues(
+                                                                          alpha: 0.08,
+                                                                        ),
+                                                                    blurRadius:
+                                                                        18,
+                                                                    offset:
+                                                                        const Offset(
+                                                                      0,
+                                                                      10,
+                                                                    ),
+                                                                  ),
+                                                                ]
+                                                              : null,
                                                         ),
                                                         child: Row(
                                                           children: [
@@ -345,7 +385,16 @@ class _WebChatContentState extends State<WebChatContent> {
                                                                             .ellipsis,
                                                                     style: context
                                                                         .appText
-                                                                        .text14W500,
+                                                                        .text14W500
+                                                                        .copyWith(
+                                                                          color: isSelected
+                                                                              ? context
+                                                                                  .appColors
+                                                                                  .primary
+                                                                              : context
+                                                                                  .appColors
+                                                                                  .greyDark,
+                                                                        ),
                                                                   ),
                                                                   SizedBox(
                                                                     height: context
@@ -362,9 +411,16 @@ class _WebChatContentState extends State<WebChatContent> {
                                                                         .appText
                                                                         .text12W400
                                                                         .copyWith(
-                                                                          color: context
-                                                                              .appColors
-                                                                              .greyDark,
+                                                                          color: isSelected
+                                                                              ? context
+                                                                                  .appColors
+                                                                                  .primary
+                                                                                  .withValues(
+                                                                                    alpha: 0.72,
+                                                                                  )
+                                                                              : context
+                                                                                  .appColors
+                                                                                  .greyDark,
                                                                         ),
                                                                   ),
                                                                 ],
@@ -598,6 +654,9 @@ class _WebChatContentState extends State<WebChatContent> {
                                                   ),
                                                 )
                                               : ListView.builder(
+                                                  key: ValueKey(
+                                                    activeThread.targetUserId,
+                                                  ),
                                                   controller:
                                                       _messagesScrollController,
                                                   itemCount:
@@ -655,28 +714,53 @@ class _WebChatContentState extends State<WebChatContent> {
                                                         .isEmpty) {
                                                       return;
                                                     }
+                                                    debugPrint(
+                                                      '[WebChat] submit-send target=${activeThread.targetUserId} '
+                                                      'len=${messageController.text.trim().length}',
+                                                    );
                                                     widget.onSendMessage();
+                                                    final job = ++_scrollJob;
                                                     WidgetsBinding.instance
                                                         .addPostFrameCallback(
-                                                      (_) => _scrollToBottom(
-                                                        animated: true,
-                                                      ),
+                                                      (_) {
+                                                        if (!mounted ||
+                                                            job != _scrollJob) {
+                                                          return;
+                                                        }
+                                                        _scrollToBottom(
+                                                          animated: true,
+                                                        );
+                                                      },
                                                     );
                                                   },
                                                   onChanged: (_) {
+                                                    final job = ++_scrollJob;
                                                     WidgetsBinding.instance
                                                         .addPostFrameCallback(
-                                                      (_) => _scrollToBottom(
-                                                        animated: false,
-                                                      ),
+                                                      (_) {
+                                                        if (!mounted ||
+                                                            job != _scrollJob) {
+                                                          return;
+                                                        }
+                                                        _scrollToBottom(
+                                                          animated: false,
+                                                        );
+                                                      },
                                                     );
                                                   },
                                                   onTap: () {
+                                                    final job = ++_scrollJob;
                                                     WidgetsBinding.instance
                                                         .addPostFrameCallback(
-                                                      (_) => _scrollToBottom(
-                                                        animated: false,
-                                                      ),
+                                                      (_) {
+                                                        if (!mounted ||
+                                                            job != _scrollJob) {
+                                                          return;
+                                                        }
+                                                        _scrollToBottom(
+                                                          animated: false,
+                                                        );
+                                                      },
                                                     );
                                                   },
                                                 ),
@@ -686,12 +770,23 @@ class _WebChatContentState extends State<WebChatContent> {
                                                onPressed: activeThread == null
                                                    ? null
                                                    : () {
+                                                       debugPrint(
+                                                         '[WebChat] click-send target=${activeThread.targetUserId} '
+                                                         'len=${messageController.text.trim().length}',
+                                                       );
                                                        widget.onSendMessage();
+                                                       final job = ++_scrollJob;
                                                        WidgetsBinding.instance
                                                            .addPostFrameCallback(
-                                                         (_) => _scrollToBottom(
-                                                           animated: true,
-                                                         ),
+                                                         (_) {
+                                                           if (!mounted ||
+                                                               job != _scrollJob) {
+                                                             return;
+                                                           }
+                                                           _scrollToBottom(
+                                                             animated: true,
+                                                           );
+                                                         },
                                                        );
                                                      },
                                                icon: Icon(
