@@ -73,20 +73,16 @@ class HomeScreenViewModel extends ChangeNotifier {
     try {
       sportsError = null;
       final options = await PlatformOptionsStore.instance.load();
-      sports = options.sportOptions
-          .where((sport) => sport.isPopular)
-          .take(5)
-          .map(
-            (sport) => Sport(
-              id: sport.id,
-              iconKey: sport.iconKey,
-              category: sport.category,
-              isPopular: sport.isPopular,
-              imagePath: _assetForSport(sport.iconKey),
-              title: sport.name,
-            ),
-          )
-          .toList();
+      sports = options.sportOptions.map((sport) {
+        return Sport(
+          id: sport.id,
+          iconKey: sport.iconKey,
+          category: sport.category,
+          isPopular: sport.isPopular,
+          imagePath: _assetForSport(sport.iconKey),
+          title: sport.name,
+        );
+      }).toList();
     } catch (e) {
       sportsError = e.toString();
       sports = [];

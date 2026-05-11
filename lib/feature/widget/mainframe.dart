@@ -1,5 +1,6 @@
 // splash_background.dart
- import 'package:flutter/material.dart';
+ import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
  
 class MainFrame extends StatelessWidget {
@@ -22,7 +23,9 @@ class MainFrame extends StatelessWidget {
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                 gradient: 
+                 gradient: kIsWeb
+                  ? null
+                  : 
                   const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,

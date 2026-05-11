@@ -19,22 +19,22 @@ class WebDashboardPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      padding: padding ?? context.padSym(h: 18, v: 18),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.whitecolor,
-        borderRadius: BorderRadius.circular(context.radius(18)),
-        border: Border.all(color: AppColors.transparent),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0B0E4A84),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+    return Card(
+      color: backgroundColor ?? context.appColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(context.radius(12)),
       ),
-      child: child,
+      child: Container(
+        height: height,
+        padding: padding ?? context.padSym(h: 20, v: 20),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? context.appColors.blue10,
+          borderRadius: BorderRadius.circular(context.radius(12)),
+          border: Border.all(color: context.appColors.transparent),
+         
+        ),
+        child: child,
+      ),
     );
   }
 }
