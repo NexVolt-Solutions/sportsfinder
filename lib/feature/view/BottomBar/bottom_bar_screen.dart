@@ -18,6 +18,7 @@ import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/webwidget/web_home_content.dart';
 
 class BottomBarScreen extends StatelessWidget {
   const BottomBarScreen({super.key});
@@ -33,7 +34,11 @@ List<Widget> _bottomBarTabChildren() => <Widget>[
   const DiscoverTabScreen(embedInBottomBar: true),
   ChangeNotifierProvider(
     create: (_) => HomeScreenViewModel(),
-    child: const HomeScreen(),
+    child: kIsWeb
+        ? Consumer<HomeScreenViewModel>(
+            builder: (context, model, _) => WebHomeContent(model: model),
+          )
+        : const HomeScreen(),
   ),
   const ChatListScreen(embedInBottomBar: true),
   const ProfileScreen(embedInBottomBar: true),

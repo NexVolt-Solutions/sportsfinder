@@ -1,34 +1,9 @@
-// import 'package:flutter/material.dart';
-// import 'package:sport_finding/core/Constants/app_assets.dart';
-// import 'package:sport_finding/core/Constants/app_text.dart';
-// import 'package:sport_finding/Data/model/sport.dart';
-
-// class ChooseSportScreenViewModel extends ChangeNotifier {
-//   int selectedIndex = -1;
-
-//   bool get hasSelection => selectedIndex >= 0;
-
-//   final List<Sport> sports = [
-//     Sport(imagePath: AppAssets.footBallIcon, title: AppText.football),
-//     Sport(imagePath: AppAssets.basketBallIcon, title: AppText.basketball),
-//     Sport(imagePath: AppAssets.tableTennisIcon, title: AppText.tennis),
-//     Sport(imagePath: AppAssets.volleyBallIcon, title: AppText.volleyball),
-//     Sport(imagePath: AppAssets.batIcon, title: AppText.cricket),
-//   ];
-
-//   void selectSkill(int index) {
-//     selectedIndex = index;
-//     notifyListeners();
-//   }
-// }
 import 'package:flutter/foundation.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
-import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/sport.dart';
 import 'package:sport_finding/core/Network/platform_options_store.dart';
 
 class ChooseSportScreenViewModel extends ChangeNotifier {
-
   void _log(String message) {
     if (kDebugMode) {
       debugPrint(message);
@@ -55,14 +30,18 @@ class ChooseSportScreenViewModel extends ChangeNotifier {
 
     try {
       final o = await PlatformOptionsStore.instance.load();
-      final sportsList = o.sports;
+      final sportsList = o.sportOptions;
 
       _log("Raw Sports Response: $sportsList");
 
       sports = sportsList.map((sport) {
         return Sport(
-          imagePath: _getImageForSport(sport),
-          title: _getTitleForSport(sport),
+          id: sport.id,
+          iconKey: sport.iconKey,
+          category: sport.category,
+          isPopular: sport.isPopular,
+          imagePath: _getImageForSport(sport.iconKey),
+          title: sport.name,
         );
       }).toList();
 
@@ -74,9 +53,7 @@ class ChooseSportScreenViewModel extends ChangeNotifier {
       _log("========== FETCH SPORTS ERROR ==========");
       _log("Error: $e");
       _log("StackTrace: $stackTrace");
-
-      sports = _defaultSports();
-      _log("Fallback to default sports list");
+      sports = [];
     }
 
     isLoading = false;
@@ -93,17 +70,22 @@ class ChooseSportScreenViewModel extends ChangeNotifier {
   }
 
   /// Map sport names to assets
-  String _getImageForSport(String sport) {
-    switch (sport.toLowerCase()) {
+  String _getImageForSport(String iconKey) {
+    final key = iconKey.trim();
+    switch (key.toLowerCase().replaceAll('-', '_').replaceAll(' ', '_')) {
       case 'football':
+      case 'soccer':
         return AppAssets.footBallIcon;
       case 'basketball':
         return AppAssets.basketBallIcon;
       case 'tennis':
+      case 'table_tennis':
         return AppAssets.tableTennisIcon;
       case 'volleyball':
         return AppAssets.volleyBallIcon;
       case 'badminton':
+      case 'padel':
+      case 'squash':
         return AppAssets.tableTennisIcon;
       case 'cricket':
         return AppAssets.batIcon;
@@ -112,39 +94,9 @@ class ChooseSportScreenViewModel extends ChangeNotifier {
     }
   }
 
-  /// Map sport names to titles
-  String _getTitleForSport(String sport) {
-    switch (sport.toLowerCase()) {
-      case 'football':
-        return AppText.football;
-      case 'basketball':
-        return AppText.basketball;
-      case 'tennis':
-        return AppText.tennis;
-      case 'volleyball':
-        return AppText.volleyball;
-      case 'badminton':
-        return AppText.badminton;
-      case 'cricket':
-        return AppText.cricket;
-      default:
-        return sport;
-    }
-  }
-
-  List<Sport> _defaultSports() {
-    return [
-      Sport(imagePath: AppAssets.footBallIcon, title: AppText.football),
-      Sport(imagePath: AppAssets.basketBallIcon, title: AppText.basketball),
-      Sport(imagePath: AppAssets.tableTennisIcon, title: AppText.tennis),
-      Sport(imagePath: AppAssets.volleyBallIcon, title: AppText.volleyball),
-      Sport(imagePath: AppAssets.batIcon, title: AppText.cricket),
-    ];
-  }
-
   String? get selectedSport {
     if (hasSelection && selectedIndex < sports.length) {
-      return sports[selectedIndex].title;
+      return sports[selectedIndex].id;
     }
     return null;
   }

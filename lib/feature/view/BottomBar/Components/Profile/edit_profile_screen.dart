@@ -587,6 +587,7 @@ import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
+import 'package:sport_finding/core/Network/platform_options_store.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/update_profile_provider.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
@@ -617,21 +618,12 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  static const List<String> _sportOptions = [
-    AppText.basketball,
-    AppText.football,
-    AppText.tennis,
-    AppText.volleyball,
-  ];
-
-  static const List<String> _skillOptions = [
-    AppText.beginner,
-    AppText.intermediate,
-    AppText.advanced,
-  ];
-
   late final TextEditingController _nameController;
   late final TextEditingController _bioController;
+  List<String> _sportOptions = [];
+  List<String> _skillOptions = [];
+  bool _optionsLoading = true;
+  String? _optionsError;
   String? _sportValue;
   String? _skillValue;
 
@@ -640,13 +632,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName ?? '');
     _bioController = TextEditingController(text: widget.initialBio ?? '');
+    _loadOptions();
+  }
 
-    _sportValue = _sportOptions.contains(widget.initialSport)
-        ? widget.initialSport
-        : null;
-    _skillValue = _skillOptions.contains(widget.initialSkill)
-        ? widget.initialSkill
-        : null;
+  Future<void> _loadOptions() async {
+    try {
+      final options = await PlatformOptionsStore.instance.load();
+      if (!mounted) return;
+      setState(() {
+        _sportOptions = options.sports;
+        _skillOptions = options.skills;
+        _sportValue = _sportOptions.contains(widget.initialSport)
+            ? widget.initialSport
+            : null;
+        _skillValue = _skillOptions.contains(widget.initialSkill)
+            ? widget.initialSkill
+            : null;
+        _optionsError = null;
+        _optionsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sportOptions = [];
+        _skillOptions = [];
+        _sportValue = null;
+        _skillValue = null;
+        _optionsError = e.toString();
+        _optionsLoading = false;
+      });
+    }
   }
 
   @override
@@ -778,7 +793,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       height: avatarSize,
                                     );
                                   }
-                                  if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                                  if (avatarUrl != null &&
+                                      avatarUrl.isNotEmpty) {
                                     return Image.network(
                                       avatarUrl,
                                       fit: BoxFit.cover,
@@ -878,6 +894,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       keyboardType: TextInputType.multiline,
                     ),
                     SizedBox(height: context.h(16)),
+                    if (_optionsError != null) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _optionsError!,
+                          style: t.text12W400.copyWith(color: c.error),
+                        ),
+                      ),
+                      SizedBox(height: context.h(12)),
+                    ],
                     DropdownButtonFormField<String>(
                       key: const ValueKey('sport_dropdown'),
                       isExpanded: true,
@@ -900,9 +926,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           )
                           .toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _sportValue = v);
-                      },
+                      onChanged: _optionsLoading || _sportOptions.isEmpty
+                          ? null
+                          : (v) {
+                              if (v != null) setState(() => _sportValue = v);
+                            },
                     ),
                     SizedBox(height: context.h(16)),
                     DropdownButtonFormField<String>(
@@ -927,9 +955,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           )
                           .toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _skillValue = v);
-                      },
+                      onChanged: _optionsLoading || _skillOptions.isEmpty
+                          ? null
+                          : (v) {
+                              if (v != null) setState(() => _skillValue = v);
+                            },
                     ),
                     SizedBox(height: context.h(28)),
                     Consumer<EditProfileScreenViewModel>(
@@ -967,7 +997,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 // import 'package:sport_finding/feature/widget/mainframe.dart';
 // import 'package:sport_finding/feature/widget/normal_text.dart';
 // import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
- 
+
 // class EditProfileScreen extends StatefulWidget {
 //   const EditProfileScreen({
 //     super.key,

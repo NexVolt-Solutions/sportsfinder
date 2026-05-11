@@ -11,6 +11,7 @@ import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
+import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class BottomBarWebMetrics {
@@ -18,6 +19,7 @@ class BottomBarWebMetrics {
 
   static const double designWidth = 1440;
   static const double designHeight = 1169;
+  static const double webHeaderHeight = 68;
   static const double barHeight = 64;
   static const double barBottomPadding = 4;
   static const double barRadius = 12;
@@ -84,10 +86,7 @@ class BottomBarNotificationBell extends StatelessWidget {
 }
 
 class BottomBarTopBar extends StatelessWidget {
-  const BottomBarTopBar({
-    super.key,
-    required this.onNotificationTap,
-  });
+  const BottomBarTopBar({super.key, required this.onNotificationTap});
 
   final VoidCallback onNotificationTap;
 
@@ -166,10 +165,8 @@ class BottomBarWebNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final bg = isSelected
-        ? c.primary.withValues(alpha: 0.12)
-        : Colors.transparent;
-    final color = isSelected ? c.primary : c.greyDark;
+    final bg = isSelected ? c.primary : Colors.transparent;
+    final color = isSelected ? c.onPrimary : c.greyDark;
 
     return GestureDetector(
       onTap: onTap,
@@ -177,34 +174,18 @@ class BottomBarWebNavItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: BottomBarWebMetrics.w(context, 16),
-          vertical: BottomBarWebMetrics.h(context, 12),
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(BottomBarWebMetrics.w(context, 14)),
-          border: Border.all(
-            color: isSelected
-                ? c.primary.withValues(alpha: 0.18)
-                : Colors.transparent,
-          ),
-        ),
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        decoration: BoxDecoration(color: bg),
         child: Row(
           children: [
-            iconPath == AppAssets.webHomeIcon
-                ? SvgPicture.asset(
-                    iconPath,
-                    width: BottomBarWebMetrics.navIconSize,
-                    height: BottomBarWebMetrics.navIconSize,
-                  )
-                : SvgPicture.asset(
-                    iconPath,
-                    width: BottomBarWebMetrics.navIconSize,
-                    height: BottomBarWebMetrics.navIconSize,
-                    colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-                  ),
-            SizedBox(width: BottomBarWebMetrics.w(context, 12)),
+            SvgPicture.asset(
+              iconPath,
+              width: BottomBarWebMetrics.navIconSize,
+              height: BottomBarWebMetrics.navIconSize,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 label,
@@ -220,7 +201,7 @@ class BottomBarWebNavItem extends StatelessWidget {
   }
 }
 
-class BottomBarTabStack extends StatelessWidget {
+class BottomBarTabStack extends StatefulWidget {
   const BottomBarTabStack({
     super.key,
     required this.selectedIndex,
@@ -231,29 +212,63 @@ class BottomBarTabStack extends StatelessWidget {
   final List<Widget> children;
 
   @override
+  State<BottomBarTabStack> createState() => _BottomBarTabStackState();
+}
+
+class _BottomBarTabStackState extends State<BottomBarTabStack> {
+  late List<bool> _builtTabs;
+
+  @override
+  void initState() {
+    super.initState();
+    _builtTabs = List<bool>.filled(widget.children.length, false);
+    _markSelectedTabBuilt();
+  }
+
+  @override
+  void didUpdateWidget(covariant BottomBarTabStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_builtTabs.length != widget.children.length) {
+      _builtTabs = List<bool>.generate(
+        widget.children.length,
+        (index) => index < _builtTabs.length && _builtTabs[index],
+      );
+    }
+    _markSelectedTabBuilt();
+  }
+
+  void _markSelectedTabBuilt() {
+    if (widget.children.isEmpty) return;
+    final index = widget.selectedIndex.clamp(0, widget.children.length - 1);
+    _builtTabs[index] = true;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: IndexedStack(
-        index: selectedIndex.clamp(0, children.length - 1),
+        index: widget.selectedIndex.clamp(0, widget.children.length - 1),
         sizing: StackFit.expand,
-        children: children,
+        children: [
+          for (var i = 0; i < widget.children.length; i++)
+            _builtTabs[i] ? widget.children[i] : const SizedBox.expand(),
+        ],
       ),
     );
   }
 }
 
 class BottomBarBottomNav extends StatelessWidget {
-  const BottomBarBottomNav({
-    super.key,
-    required this.viewModel,
-  });
+  const BottomBarBottomNav({super.key, required this.viewModel});
 
   final BottomBarScreenViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: BottomBarWebMetrics.barBottomPadding),
+      padding: const EdgeInsets.only(
+        bottom: BottomBarWebMetrics.barBottomPadding,
+      ),
       child: SizedBox(
         height: BottomBarWebMetrics.bottomChromeHeight(context),
         width: double.infinity,
@@ -276,7 +291,10 @@ class BottomBarBottomNav extends StatelessWidget {
                     BoxShadow(
                       color: context.appColors.blue20,
                       blurRadius: BottomBarWebMetrics.barShadowBlur,
-                      offset: const Offset(0, BottomBarWebMetrics.barShadowOffset),
+                      offset: const Offset(
+                        0,
+                        BottomBarWebMetrics.barShadowOffset,
+                      ),
                     ),
                   ],
                 ),
@@ -321,11 +339,13 @@ class BottomBarBottomNav extends StatelessWidget {
               ),
             ),
             Positioned(
-              bottom: BottomBarWebMetrics.barHeight / 2 -
+              bottom:
+                  BottomBarWebMetrics.barHeight / 2 -
                   BottomBarWebMetrics.homeButtonSize / 1.1,
               child: GestureDetector(
-                onTap: () =>
-                    viewModel.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
+                onTap: () => viewModel.setSelectedIndex(
+                  BottomBarScreenViewModel.homeIndex,
+                ),
                 child: SvgPicture.asset(AppAssets.homeIcon),
               ),
             ),
@@ -356,42 +376,56 @@ class BottomBarWebTopBar extends StatelessWidget {
         ? viewModel.userEmail.trim()
         : 'user@sports.com';
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: BottomBarWebMetrics.w(context, 32),
-        vertical: BottomBarWebMetrics.h(context, 22),
-      ),
+      height: BottomBarWebMetrics.webHeaderHeight,
+      padding: const EdgeInsets.only(right: 32),
       decoration: BoxDecoration(
+        color: c.surface,
         border: Border(
-          bottom: BorderSide(color: c.greylight.withValues(alpha: 0.4)),
+          bottom: BorderSide(color: c.greylight.withValues(alpha: 0.18)),
         ),
       ),
       child: Row(
         children: [
-          Expanded(
-            child: BottomBarTopBar(onNotificationTap: onNotificationTap),
-          ),
-          SizedBox(width: BottomBarWebMetrics.w(context, 20)),
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: BottomBarWebMetrics.w(context, 12),
-              vertical: BottomBarWebMetrics.h(context, 8),
-            ),
+            width: BottomBarWebMetrics.webSidebarWidth,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
-              color: c.surface,
-              border: Border.all(color: c.greylight.withValues(alpha: 0.45)),
-              borderRadius: BorderRadius.circular(
-                BottomBarWebMetrics.w(context, 24),
+              border: Border(
+                right: BorderSide(color: c.greylight.withValues(alpha: 0.16)),
               ),
             ),
             child: Row(
               children: [
+                Image.asset(
+                  AppAssets.mainLogo,
+                  width: 34,
+                  height: 34,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  AppText.sportFinding,
+                  style: context.appText.text18Bold.copyWith(
+                    color: c.onSurface,
+                    fontSize: 22,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: onNotificationTap,
+            child: Row(
+              children: [
                 AppAvatar(
-                  size: BottomBarWebMetrics.w(context, 36),
+                  size: 42,
                   imageUrl: viewModel.userImage,
                   fallbackText: userName,
                 ),
-                SizedBox(width: BottomBarWebMetrics.w(context, 10)),
+                const SizedBox(width: 10),
                 Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -433,42 +467,16 @@ class BottomBarWebSidebar extends StatelessWidget {
 
     return Container(
       width: BottomBarWebMetrics.webSidebarWidth,
-      margin: EdgeInsets.fromLTRB(
-        BottomBarWebMetrics.w(context, 16),
-        BottomBarWebMetrics.h(context, 16),
-        BottomBarWebMetrics.w(context, 12),
-        BottomBarWebMetrics.h(context, 16),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        BottomBarWebMetrics.w(context, 16),
-        BottomBarWebMetrics.h(context, 20),
-        BottomBarWebMetrics.w(context, 16),
-        BottomBarWebMetrics.h(context, 20),
-      ),
+      padding: const EdgeInsets.only(top: 44, bottom: 26),
       decoration: BoxDecoration(
         color: c.surface,
-        borderRadius: BorderRadius.circular(BottomBarWebMetrics.w(context, 24)),
-        boxShadow: [
-          BoxShadow(
-            color: c.blue20,
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border(
+          right: BorderSide(color: c.greylight.withValues(alpha: 0.16)),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            AppText.sportFinding,
-            style: context.appText.text18Bold.copyWith(color: c.onSurface),
-          ),
-          SizedBox(height: BottomBarWebMetrics.h(context, 6)),
-          Text(
-            'Dashboard',
-            style: context.appText.text12W400.copyWith(color: c.greylight),
-          ),
-          SizedBox(height: BottomBarWebMetrics.h(context, 28)),
           BottomBarWebNavItem(
             iconPath: AppAssets.webHomeIcon,
             label: 'Home',
@@ -477,28 +485,28 @@ class BottomBarWebSidebar extends StatelessWidget {
             onTap: () =>
                 viewModel.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
           ),
-          SizedBox(height: BottomBarWebMetrics.h(context, 10)),
+          const SizedBox(height: 2),
           BottomBarWebNavItem(
             iconPath: AppAssets.searchBarIcon,
             label: 'Discover Matches',
             isSelected: viewModel.selectedIndex == 1,
             onTap: () => viewModel.setSelectedIndex(1),
           ),
-          SizedBox(height: BottomBarWebMetrics.h(context, 10)),
+          const SizedBox(height: 2),
           BottomBarWebNavItem(
             iconPath: AppAssets.matchesIcon,
             label: 'My Matches',
             isSelected: viewModel.selectedIndex == 0,
             onTap: () => viewModel.setSelectedIndex(0),
           ),
-          SizedBox(height: BottomBarWebMetrics.h(context, 10)),
+          const SizedBox(height: 2),
           BottomBarWebNavItem(
             iconPath: AppAssets.chatIcon,
             label: 'Chat',
             isSelected: viewModel.selectedIndex == 3,
             onTap: () => viewModel.setSelectedIndex(3),
           ),
-          SizedBox(height: BottomBarWebMetrics.h(context, 10)),
+          const SizedBox(height: 2),
           BottomBarWebNavItem(
             iconPath: AppAssets.profileIcon,
             label: 'Profile',
@@ -508,28 +516,15 @@ class BottomBarWebSidebar extends StatelessWidget {
           const Spacer(),
           GestureDetector(
             onTap: onLogout,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: BottomBarWebMetrics.w(context, 14),
-                vertical: BottomBarWebMetrics.h(context, 12),
-              ),
-              decoration: BoxDecoration(
-                color: c.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(
-                  BottomBarWebMetrics.w(context, 16),
-                ),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.logout_rounded,
-                    size: BottomBarWebMetrics.w(context, 18),
-                    color: c.error,
-                  ),
-                  SizedBox(width: BottomBarWebMetrics.w(context, 8)),
+                  Icon(Icons.logout_rounded, size: 20, color: c.error),
+                  const SizedBox(width: 12),
                   Text(
                     AppText.logout,
-                    style: context.appText.text14W500.copyWith(color: c.error),
+                    style: context.appText.text16W600.copyWith(color: c.error),
                   ),
                 ],
               ),
@@ -557,49 +552,29 @@ class BottomBarWebLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: BottomBarWebMetrics.designWidth,
-          maxHeight: BottomBarWebMetrics.designHeight,
+    return Column(
+      children: [
+        BottomBarWebTopBar(
+          viewModel: viewModel,
+          onNotificationTap: onNotificationTap,
         ),
-        child: Padding(
-          padding: EdgeInsets.all(BottomBarWebMetrics.w(context, 16)),
+        Expanded(
           child: Row(
             children: [
-              BottomBarWebSidebar(
-                viewModel: viewModel,
-                onLogout: onLogout,
-              ),
+              BottomBarWebSidebar(viewModel: viewModel, onLogout: onLogout),
               Expanded(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: context.appColors.surface.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(
-                      BottomBarWebMetrics.w(context, 24),
-                    ),
-                    border: Border.all(
-                      color: context.appColors.greylight.withValues(
-                        alpha: 0.35,
-                      ),
-                    ),
-                  ),
+                child: MainFrame(
+                  showDecorationLayer: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BottomBarWebTopBar(
-                        viewModel: viewModel,
-                        onNotificationTap: onNotificationTap,
-                      ),
-                      tabStack,
-                    ],
+                    children: [tabStack],
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }

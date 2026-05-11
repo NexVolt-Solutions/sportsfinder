@@ -18,10 +18,10 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
- class DiscoverTabScreen extends StatelessWidget {
+class DiscoverTabScreen extends StatelessWidget {
   const DiscoverTabScreen({super.key, this.embedInBottomBar = false});
 
-   final bool embedInBottomBar;
+  final bool embedInBottomBar;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +90,12 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
               )
             : null;
         final isActiveTab = selectedIndex == _discoverTabIndex;
+        if (!widget.embedInBottomBar || isActiveTab) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            model.ensureLoaded();
+          });
+        }
         if (widget.embedInBottomBar && _wasActiveBottomBarTab && !isActiveTab) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
@@ -217,7 +223,7 @@ String _formatStatus(String raw) {
   return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }
 
- class _MatchesList extends StatelessWidget {
+class _MatchesList extends StatelessWidget {
   const _MatchesList({required this.model});
 
   final DiscoveryTabViewModel model;
@@ -259,9 +265,9 @@ String _formatStatus(String raw) {
       separatorBuilder: (_, _) => SizedBox(height: context.sh(0)),
       itemBuilder: (context, index) {
         final match = matches[index];
-         return Padding(
-           padding: context.padSym(v: 6),
-           child: DiscoveryCard(
+        return Padding(
+          padding: context.padSym(v: 6),
+          child: DiscoveryCard(
             match: match,
             onCardTap: () => match.pushMatchOrHostScreen(context),
             onSeeAllTap: () {
@@ -271,8 +277,8 @@ String _formatStatus(String raw) {
                 arguments: match,
               );
             },
-                   ),
-         );
+          ),
+        );
       },
     );
   }

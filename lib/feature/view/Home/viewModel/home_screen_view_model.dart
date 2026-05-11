@@ -6,6 +6,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/match.dart';
 import 'package:sport_finding/Data/model/sport.dart';
 import 'package:sport_finding/core/Network/deleted_matches_service.dart';
+import 'package:sport_finding/core/Network/platform_options_store.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 
 class HomeScreenViewModel extends ChangeNotifier {
@@ -20,6 +21,7 @@ class HomeScreenViewModel extends ChangeNotifier {
     DeletedMatchesService().addListener(_onDeletedMatchesChanged);
 
     Future.microtask(_loadUpcomingMatches);
+    Future.microtask(_loadSports);
   }
 
   final MatchesRepo _matchesRepo = MatchesRepo();
@@ -29,6 +31,7 @@ class HomeScreenViewModel extends ChangeNotifier {
 
   bool matchesLoading = false;
   String? matchesError;
+  String? sportsError;
   bool hasMoreUpcoming = false;
 
   // Add this getter anywhere — in the ViewModel or as a helper
@@ -64,13 +67,33 @@ class HomeScreenViewModel extends ChangeNotifier {
     Match(imagePath: AppAssets.matchesIcon, title: AppText.filters),
   ];
 
-  final List<Sport> sports = [
-    Sport(imagePath: AppAssets.footBallIcon, title: AppText.football),
-    Sport(imagePath: AppAssets.basketBallIcon, title: AppText.basketball),
-    Sport(imagePath: AppAssets.tableTennisIcon, title: AppText.tennis),
-    Sport(imagePath: AppAssets.volleyBallIcon, title: AppText.volleyball),
-    Sport(imagePath: AppAssets.batIcon, title: AppText.cricket),
-  ];
+  List<Sport> sports = [];
+
+  Future<void> _loadSports() async {
+    try {
+      sportsError = null;
+      final options = await PlatformOptionsStore.instance.load();
+      sports = options.sportOptions
+          .where((sport) => sport.isPopular)
+          .take(5)
+          .map(
+            (sport) => Sport(
+              id: sport.id,
+              iconKey: sport.iconKey,
+              category: sport.category,
+              isPopular: sport.isPopular,
+              imagePath: _assetForSport(sport.iconKey),
+              title: sport.name,
+            ),
+          )
+          .toList();
+    } catch (e) {
+      sportsError = e.toString();
+      sports = [];
+    } finally {
+      notifyListeners();
+    }
+  }
 
   Future<void> _loadUpcomingMatches() async {
     matchesLoading = true;
@@ -97,13 +120,12 @@ class HomeScreenViewModel extends ChangeNotifier {
       }
       final nowUtc = DateTime.now().toUtc();
 
-      matches =
-          merged.values.where((m) {
+      matches = merged.values.where((m) {
         final start = m.scheduledStartUtc;
-            return start != null &&
-                start.isAfter(nowUtc) &&
-                !DeletedMatchesService().isDeleted(m.id);
-          }).toList();
+        return start != null &&
+            start.isAfter(nowUtc) &&
+            !DeletedMatchesService().isDeleted(m.id);
+      }).toList();
       hasMoreUpcoming = allRes.hasNext || myRes.hasNext;
 
       _resortMatches();
@@ -152,4 +174,27 @@ class HomeScreenViewModel extends ChangeNotifier {
   String get avatarUrl => profileService.avatarUrl;
   bool get isLoading => profileService.isLoading;
   String? get errorMessage => profileService.errorMessage;
+}
+
+String _assetForSport(String iconKey) {
+  final key = iconKey.trim();
+  switch (key.toLowerCase().replaceAll('-', '_').replaceAll(' ', '_')) {
+    case 'football':
+    case 'soccer':
+      return AppAssets.footBallIcon;
+    case 'basketball':
+      return AppAssets.basketBallIcon;
+    case 'tennis':
+    case 'table_tennis':
+    case 'badminton':
+    case 'padel':
+    case 'squash':
+      return AppAssets.tableTennisIcon;
+    case 'volleyball':
+      return AppAssets.volleyBallIcon;
+    case 'cricket':
+      return AppAssets.batIcon;
+    default:
+      return AppAssets.footBallIcon;
+  }
 }
