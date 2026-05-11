@@ -30,23 +30,21 @@ class WebHomeContent extends StatelessWidget {
         Row(
           children: [
             AppAvatar(
-              size: context.w(48),
+              size: context.h(48),
               imageUrl: model.avatarUrl,
               fallbackText: model.fullName,
             ),
             SizedBox(width: context.w(12)),
             NormalText(
               titleText: model.timeGreeting,
-              subText: model.fullName.isNotEmpty ? model.fullName : 'Player',
-              subStyle: context.appText.text16W500.copyWith(
-                color: context.appColors.greylight,
-              ),
+               subText: model.fullName.isNotEmpty ? model.fullName : 'Player',
+              
             ),
           ],
         ),
-        SizedBox(height: context.h(30)),
+        SizedBox(height: context.h(57)),
         SearchBarWidget(),
-        SizedBox(height: context.h(28)),
+        SizedBox(height: context.h(36)),
         SizedBox(
           height: 106,
           child: Row(
@@ -55,7 +53,7 @@ class WebHomeContent extends StatelessWidget {
                 child: WebQuickActionCard(
                   icon: Icon(
                     Icons.add_rounded,
-                    color: context.appColors.onSurface,
+                    color: context.appColors.greyDark,
                   ),
                   title: 'Create Matches',
                   onTap: () {
@@ -68,7 +66,7 @@ class WebHomeContent extends StatelessWidget {
                 child: WebQuickActionCard(
                   icon: Icon(
                     Icons.emoji_events_outlined,
-                    color: context.appColors.onSurface,
+                    color: context.appColors.greyDark,
                   ),
                   title: 'Find Matches',
                   onTap: () {
