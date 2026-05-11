@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
@@ -175,62 +174,99 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     ChatListScreenViewModel.upsertThread(
       userName: selectedName,
       targetUserId: selectedTargetUserId,
+      avatarUrl: selected.contactAvatarUrl,
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),
       unreadCount: 0,
       isOnline: true,
     );
 
-    await Navigator.pushNamed(
-      context,
-      RoutesName.chatScreen,
-      arguments: selected,
+    await ChatListRealtimeCoordinator.disposeListSocketIfBound(
+      selectedTargetUserId,
     );
+    if (!context.mounted) return;
+    ChatListRealtimeCoordinator.beginFullScreenDirectChat(selectedTargetUserId);
+    try {
+      await Navigator.pushNamed(
+        context,
+        RoutesName.chatScreen,
+        arguments: selected,
+      );
+    } finally {
+      ChatListRealtimeCoordinator.endFullScreenDirectChat(selectedTargetUserId);
+      await ChatListRealtimeCoordinator.syncEmbeddedNowIfRegistered();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-     
-       body: Consumer<BottomBarScreenViewModel>(
-        builder: (context, vm, _) => MainFrame(
-          showDecorationLayer: !kIsWeb,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final useMobileChrome = width < _webToMobileBreakpoint;
-              final tabChildren = _tabChildren(forceMobileLayout: kIsWeb && useMobileChrome);
+    return Consumer<BottomBarScreenViewModel>(
+      builder: (context, vm, _) {
+        final width = MediaQuery.sizeOf(context).width;
+        final useMobileChrome = width < _webToMobileBreakpoint;
+        // Native + narrow web: [ChatListScreen] has no local FAB when embedInBottomBar.
+        // Wide web: [WebChatContent] provides its own "+" control.
+        final showChatNewMessageFab =
+            vm.selectedIndex == _chatTabIndex && (!kIsWeb || useMobileChrome);
 
-              final tabStack = BottomBarTabStack(
-                selectedIndex: vm.selectedIndex,
-                children: tabChildren,
-              );
+        // [BottomBarBottomNav] lives inside [body], so the FAB must be lifted by
+        // that chrome height or it sits on / under the pill bar.
+        final chatFabLift = BottomBarWebMetrics.barBottomPadding +
+            BottomBarWebMetrics.bottomChromeHeight(context);
 
-              if (kIsWeb && !useMobileChrome) {
-                return BottomBarWebLayout(
-                  viewModel: vm,
-                  tabStack: tabStack,
-                  onNotificationTap: () => _handleNotificationTap(context),
-                  onLogout: () => logoutFromBottomBar(context),
-                );
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  BottomBarTopBar(
-                    onNotificationTap: () => _handleNotificationTap(context),
+        return Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          floatingActionButton: showChatNewMessageFab
+              ? Padding(
+                  padding: EdgeInsets.only(bottom: chatFabLift),
+                  child: FloatingActionButton(
+                    onPressed: () => _pickAndOpenUserForChat(context),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: const Icon(Icons.add, color: Colors.white),
                   ),
-                  tabStack,
-                  BottomBarBottomNav(viewModel: vm),
-                ],
-              );
-            },
+                )
+              : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          body: MainFrame(
+            showDecorationLayer: !kIsWeb,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final innerWidth = constraints.maxWidth;
+                final innerUseMobileChrome = innerWidth < _webToMobileBreakpoint;
+                final tabChildren = _tabChildren(
+                  forceMobileLayout: kIsWeb && innerUseMobileChrome,
+                );
+
+                final tabStack = BottomBarTabStack(
+                  selectedIndex: vm.selectedIndex,
+                  children: tabChildren,
+                );
+
+                if (kIsWeb && !innerUseMobileChrome) {
+                  return BottomBarWebLayout(
+                    viewModel: vm,
+                    tabStack: tabStack,
+                    onNotificationTap: () => _handleNotificationTap(context),
+                    onLogout: () => logoutFromBottomBar(context),
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BottomBarTopBar(
+                      onNotificationTap: () => _handleNotificationTap(context),
+                    ),
+                    tabStack,
+                    BottomBarBottomNav(viewModel: vm),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

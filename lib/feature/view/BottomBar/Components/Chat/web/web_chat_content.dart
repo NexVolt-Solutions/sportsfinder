@@ -1,5 +1,8 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
+import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
@@ -17,6 +20,9 @@ class WebChatMessageItem {
     this.isPending = false,
     this.isFailed = false,
     this.localId = '',
+    this.messageId,
+    this.readAt,
+    this.deliveredAt,
   });
 
   final String text;
@@ -25,6 +31,9 @@ class WebChatMessageItem {
   final bool isPending;
   final bool isFailed;
   final String localId;
+  final String? messageId;
+  final DateTime? readAt;
+  final DateTime? deliveredAt;
 
   WebChatMessageItem copyWith({
     String? text,
@@ -33,6 +42,9 @@ class WebChatMessageItem {
     bool? isPending,
     bool? isFailed,
     String? localId,
+    String? messageId,
+    DateTime? readAt,
+    DateTime? deliveredAt,
   }) {
     return WebChatMessageItem(
       text: text ?? this.text,
@@ -41,6 +53,9 @@ class WebChatMessageItem {
       isPending: isPending ?? this.isPending,
       isFailed: isFailed ?? this.isFailed,
       localId: localId ?? this.localId,
+      messageId: messageId ?? this.messageId,
+      readAt: readAt ?? this.readAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
 }
@@ -89,16 +104,27 @@ class _WebChatContentState extends State<WebChatContent> {
   final ScrollController _messagesScrollController = ScrollController();
   int _scrollJob = 0;
 
+  /// Defers work until after layout; avoids crashes when the web engine view
+  /// is torn down (e.g. hot restart) while a frame is still pending.
+  void _whenFrameSafe(void Function() fn, {required int job}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || job != _scrollJob) return;
+      if (PlatformDispatcher.instance.views.isEmpty) return;
+      try {
+        fn();
+      } catch (e, _) {
+        debugPrint('[WebChat] post-frame work skipped: $e');
+      }
+    });
+  }
+
   @override
   void reassemble() {
     super.reassemble();
     // Hot reload on web can reset scroll position; keep the chat pinned
     // to the visual bottom (newest message) like mobile/WhatsApp.
     final job = ++_scrollJob;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || job != _scrollJob) return;
-      _scrollToBottom(animated: false);
-    });
+    _whenFrameSafe(() => _scrollToBottom(animated: false), job: job);
   }
 
   @override
@@ -135,10 +161,7 @@ class _WebChatContentState extends State<WebChatContent> {
 
     if (threadChanged || messagesChanged) {
       final job = ++_scrollJob;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || job != _scrollJob) return;
-        _scrollToBottom(animated: false);
-      });
+      _whenFrameSafe(() => _scrollToBottom(animated: false), job: job);
     }
   }
 
@@ -356,28 +379,63 @@ class _WebChatContentState extends State<WebChatContent> {
                                                         ),
                                                         child: Row(
                                                           children: [
-                                                            AppAvatar(
-                                                              size:
-                                                                  context.w(34),
-                                                              fallbackText:
-                                                                  thread
-                                                                      .userName,
-                                                              imageUrl: (thread
-                                                                              .avatarUrl ??
-                                                                          '')
-                                                                      .trim()
-                                                                      .isEmpty
-                                                                  ? null
-                                                                  : thread
-                                                                      .avatarUrl!
-                                                                      .trim(),
-                                                              backgroundColor:
-                                                                  context
+                                                            Stack(
+                                                              clipBehavior:
+                                                                  Clip.none,
+                                                              children: [
+                                                                AppAvatar(
+                                                                  size: context
+                                                                      .w(34),
+                                                                  fallbackText:
+                                                                      thread
+                                                                          .userName,
+                                                                  imageUrl: (thread.avatarUrl ??
+                                                                              '')
+                                                                          .trim()
+                                                                          .isEmpty
+                                                                      ? null
+                                                                      : thread
+                                                                          .avatarUrl!
+                                                                          .trim(),
+                                                                  backgroundColor:
+                                                                      context
+                                                                          .appColors
+                                                                          .white,
+                                                                  iconColor: context
                                                                       .appColors
-                                                                      .white,
-                                                              iconColor: context
-                                                                  .appColors
-                                                                  .primary,
+                                                                      .primary,
+                                                                ),
+                                                                if (thread
+                                                                    .isOnline)
+                                                                  Positioned(
+                                                                    right: 0,
+                                                                    bottom: 0,
+                                                                    child:
+                                                                        Container(
+                                                                      width: context
+                                                                          .w(10),
+                                                                      height: context
+                                                                          .w(10),
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        color: const Color(
+                                                                          0xFF25D366,
+                                                                        ),
+                                                                        shape: BoxShape
+                                                                            .circle,
+                                                                        border:
+                                                                            Border.all(
+                                                                          color: context
+                                                                                  .appColors
+                                                                                  .white ??
+                                                                              Colors.white,
+                                                                          width:
+                                                                              1.5,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                              ],
                                                             ),
                                                             SizedBox(
                                                               width:
@@ -434,6 +492,49 @@ class _WebChatContentState extends State<WebChatContent> {
                                                                               : context
                                                                                   .appColors
                                                                                   .greyDark,
+                                                                        ),
+                                                                  ),
+                                                                  SizedBox(
+                                                                    height: context
+                                                                        .h(2),
+                                                                  ),
+                                                                  Text(
+                                                                    () {
+                                                                      if (thread
+                                                                          .isOnline) {
+                                                                        return 'Online';
+                                                                      }
+                                                                      final iso =
+                                                                          (thread.lastSeenIso ??
+                                                                                  '')
+                                                                              .trim();
+                                                                      if (iso
+                                                                          .isEmpty) {
+                                                                        return 'Offline';
+                                                                      }
+                                                                      final parsed =
+                                                                          DateTime.tryParse(
+                                                                        iso,
+                                                                      );
+                                                                      if (parsed ==
+                                                                          null) {
+                                                                        return 'Offline';
+                                                                      }
+                                                                      return 'Last seen ${DateTimeFormatters.relativeLabel(parsed.toLocal())}';
+                                                                    }(),
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: context
+                                                                        .appText
+                                                                        .text12W400
+                                                                        .copyWith(
+                                                                          fontSize:
+                                                                              context.text(10),
+                                                                          color: context
+                                                                              .appColors
+                                                                              .greylight,
                                                                         ),
                                                                   ),
                                                                 ],
@@ -572,6 +673,9 @@ class _WebChatContentState extends State<WebChatContent> {
                                     children: [
                                       AppAvatar(
                                         size: context.w(36),
+                                        imageUrl: normalizeImageUrl(
+                                          activeThread?.avatarUrl,
+                                        ),
                                         fallbackText: activeThread?.userName,
                                         backgroundColor:
                                             context.appColors.blue10,
@@ -579,9 +683,44 @@ class _WebChatContentState extends State<WebChatContent> {
                                       ),
                                       SizedBox(width: context.w(10)),
                                       Expanded(
-                                        child: Text(
-                                          activeThread?.userName ?? '',
-                                          style: context.appText.text14W500,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              activeThread?.userName ?? '',
+                                              style:
+                                                  context.appText.text14W500,
+                                            ),
+                                            if (activeThread != null) ...[
+                                              SizedBox(height: context.h(2)),
+                                              Text(
+                                                () {
+                                                  if (activeThread.isOnline) {
+                                                    return 'Online';
+                                                  }
+                                                  final iso =
+                                                      (activeThread.lastSeenIso ??
+                                                              '')
+                                                          .trim();
+                                                  if (iso.isEmpty) {
+                                                    return 'Offline';
+                                                  }
+                                                  final parsed =
+                                                      DateTime.tryParse(iso);
+                                                  if (parsed == null) {
+                                                    return 'Offline';
+                                                  }
+                                                  return 'Last seen ${DateTimeFormatters.relativeLabel(parsed.toLocal())}';
+                                                }(),
+                                                style: context.appText.text12W400
+                                                    .copyWith(
+                                                  color: context
+                                                      .appColors.greylight,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ),
                                       if (activeThread != null)
@@ -701,6 +840,9 @@ class _WebChatContentState extends State<WebChatContent> {
                                                               .isPending,
                                                           isFailed:
                                                               message.isFailed,
+                                                          readAt: message.readAt,
+                                                          deliveredAt:
+                                                              message.deliveredAt,
                                                           maxWidth:
                                                               messageMaxWidth,
                                                         ),
@@ -738,47 +880,29 @@ class _WebChatContentState extends State<WebChatContent> {
                                                     );
                                                     widget.onSendMessage();
                                                     final job = ++_scrollJob;
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback(
-                                                      (_) {
-                                                        if (!mounted ||
-                                                            job != _scrollJob) {
-                                                          return;
-                                                        }
-                                                        _scrollToBottom(
-                                                          animated: true,
-                                                        );
-                                                      },
+                                                    _whenFrameSafe(
+                                                      () => _scrollToBottom(
+                                                        animated: true,
+                                                      ),
+                                                      job: job,
                                                     );
                                                   },
                                                   onChanged: (_) {
                                                     final job = ++_scrollJob;
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback(
-                                                      (_) {
-                                                        if (!mounted ||
-                                                            job != _scrollJob) {
-                                                          return;
-                                                        }
-                                                        _scrollToBottom(
-                                                          animated: false,
-                                                        );
-                                                      },
+                                                    _whenFrameSafe(
+                                                      () => _scrollToBottom(
+                                                        animated: false,
+                                                      ),
+                                                      job: job,
                                                     );
                                                   },
                                                   onTap: () {
                                                     final job = ++_scrollJob;
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback(
-                                                      (_) {
-                                                        if (!mounted ||
-                                                            job != _scrollJob) {
-                                                          return;
-                                                        }
-                                                        _scrollToBottom(
-                                                          animated: false,
-                                                        );
-                                                      },
+                                                    _whenFrameSafe(
+                                                      () => _scrollToBottom(
+                                                        animated: false,
+                                                      ),
+                                                      job: job,
                                                     );
                                                   },
                                                 ),
@@ -794,17 +918,11 @@ class _WebChatContentState extends State<WebChatContent> {
                                                        );
                                                        widget.onSendMessage();
                                                        final job = ++_scrollJob;
-                                                       WidgetsBinding.instance
-                                                           .addPostFrameCallback(
-                                                         (_) {
-                                                           if (!mounted ||
-                                                               job != _scrollJob) {
-                                                             return;
-                                                           }
-                                                           _scrollToBottom(
-                                                             animated: true,
-                                                           );
-                                                         },
+                                                       _whenFrameSafe(
+                                                         () => _scrollToBottom(
+                                                           animated: true,
+                                                         ),
+                                                         job: job,
                                                        );
                                                      },
                                                icon: Icon(
@@ -888,6 +1006,8 @@ class WebBubble extends StatelessWidget {
     required this.isMe,
     this.isPending = false,
     this.isFailed = false,
+    this.readAt,
+    this.deliveredAt,
     this.maxWidth,
   });
 
@@ -896,6 +1016,8 @@ class WebBubble extends StatelessWidget {
   final bool isMe;
   final bool isPending;
   final bool isFailed;
+  final DateTime? readAt;
+  final DateTime? deliveredAt;
   final double? maxWidth;
 
   @override
@@ -923,26 +1045,32 @@ class WebBubble extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: context.h(2)),
-                    child: Icon(
-                      Icons.done_all_rounded,
-                      size: context.w(14),
-                      color: c.onPrimary.withValues(alpha: 0.85),
+                  if (!isPending && !isFailed)
+                    Padding(
+                      padding: EdgeInsets.only(top: context.h(2)),
+                      child: Icon(
+                        (readAt != null || deliveredAt != null)
+                            ? Icons.done_all_rounded
+                            : Icons.done_rounded,
+                        size: context.w(14),
+                        color: readAt != null
+                            ? Colors.lightBlueAccent
+                            : c.onPrimary.withValues(alpha: 0.85),
+                      ),
                     ),
-                  ),
-                  SizedBox(width: context.w(8)),
+                  if (!isPending && !isFailed) SizedBox(width: context.w(8)),
                   Expanded(
-                    child: NormalText(titleText: text,
+                    child: NormalText(
+                      titleText: text,
                       titleStyle: context.appText.text14W400.copyWith(
                         color: c.onPrimary,
                       ),
-                    ), 
+                    ),
                   ),
                 ],
               )
             else
-                NormalText  (
+              NormalText(
                 titleText: text,
                 titleStyle: context.appText.text14W400.copyWith(
                   color: c.greyDark,
@@ -951,9 +1079,16 @@ class WebBubble extends StatelessWidget {
             SizedBox(height: context.h(6)),
             Align(
               alignment: Alignment.centerRight,
-              child: NormalText(titleText: isFailed ? 'Failed' : (isPending ? 'Sending...' : time),
+              child: NormalText(
+                titleText: isFailed
+                    ? 'Failed'
+                    : (isPending ? 'Sending...' : time),
                 titleStyle: context.appText.text12W400.copyWith(
-                  color: isFailed ? c.error : (isMe ? c.onPrimary.withValues(alpha: 0.85) : c.greylight.withValues(alpha: 0.9)),
+                  color: isFailed
+                      ? c.error
+                      : (isMe
+                          ? c.onPrimary.withValues(alpha: 0.85)
+                          : c.greylight.withValues(alpha: 0.9)),
                 ),
               ),
             ),

@@ -282,6 +282,8 @@ class AppText {
   static const String discover = 'Discover';
   static const String match = 'Match';
   static const String chat = 'Chat';
+  /// Shown in the chat list after the user clears messages locally (web/mobile).
+  static const String chatClearedPreview = 'No messages yet';
   static const String profile = 'Profile';
 
   static const String online = 'Online';

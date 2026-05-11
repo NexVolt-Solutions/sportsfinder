@@ -1,13 +1,17 @@
 import 'dart:io' show File;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
+import 'package:sport_finding/core/Network/chat_realtime_events.dart';
+import 'package:sport_finding/core/Network/fcm_local_notifications.dart';
 import 'package:sport_finding/core/Network/match_chat_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
 import 'package:sport_finding/Data/Repositories/Chat/chat_upload_repository.dart';
 import 'dart:async';
@@ -47,6 +51,10 @@ class ChatMessage {
   final String? mimeType;
   final String? fileName;
   final int? sizeBytes;
+  /// Server read receipt time (UTC), when the peer has read this outgoing message.
+  final DateTime? readAt;
+  /// Server delivery receipt (UTC), when the message reached the peer's device/server.
+  final DateTime? deliveredAt;
 
   const ChatMessage({
     required this.text,
@@ -64,6 +72,8 @@ class ChatMessage {
     this.mimeType,
     this.fileName,
     this.sizeBytes,
+    this.readAt,
+    this.deliveredAt,
   });
 
   ChatMessage copyWith({
@@ -82,6 +92,8 @@ class ChatMessage {
     String? mimeType,
     String? fileName,
     int? sizeBytes,
+    DateTime? readAt,
+    DateTime? deliveredAt,
   }) {
     return ChatMessage(
       text: text ?? this.text,
@@ -99,6 +111,8 @@ class ChatMessage {
       mimeType: mimeType ?? this.mimeType,
       fileName: fileName ?? this.fileName,
       sizeBytes: sizeBytes ?? this.sizeBytes,
+      readAt: readAt ?? this.readAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
 }
@@ -112,23 +126,30 @@ class ChatScreenViewModel extends ChangeNotifier {
   ChatScreenViewModel({
     this.contactName = AppText.alexJohnson,
     this.isOnline = true,
+    String? contactAvatarUrl,
     MatchChatServiceFactory? chatServiceFactory,
     AccessTokenProvider? accessTokenProvider,
     CurrentUserIdProvider? currentUserIdProvider,
-  }) : _chatServiceFactory =
-           chatServiceFactory ??
+  }) : _routeContactAvatarUrl = (() {
+         final t = (contactAvatarUrl ?? '').trim();
+         return t.isEmpty ? null : t;
+       })(),
+       _chatServiceFactory = chatServiceFactory ??
            ((accessToken, targetUserId) => MatchChatService(
-             accessToken: accessToken,
-             targetUserId: targetUserId,
-           )),
+                 accessToken: accessToken,
+                 targetUserId: targetUserId,
+               )),
        _accessTokenProvider =
            accessTokenProvider ?? AppPreferences.getAccessToken,
-       _currentUserIdProvider =
-           currentUserIdProvider ??
+       _currentUserIdProvider = currentUserIdProvider ??
            (() => ProfileService().profile?.id.trim() ?? '');
 
   final String contactName;
   final bool isOnline;
+  final String? _routeContactAvatarUrl;
+  String? _peerAvatarUrlFromMessages;
+  bool _peerOnline = true;
+  DateTime? _peerLastSeenUtc;
   final MatchChatServiceFactory _chatServiceFactory;
   final AccessTokenProvider _accessTokenProvider;
   final CurrentUserIdProvider _currentUserIdProvider;
@@ -139,6 +160,8 @@ class ChatScreenViewModel extends ChangeNotifier {
   StreamSubscription<void>? _connectedSub;
   StreamSubscription<RealtimeChatMessage>? _messageSub;
   StreamSubscription<String>? _errorSub;
+  StreamSubscription<ChatPresenceEvent>? _presenceSub;
+  StreamSubscription<ChatReceiptEvent>? _receiptSub;
   bool _isConnected = false;
   String? _errorMessage;
   bool _isBindingRealtime = false;
@@ -155,7 +178,21 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool get isConnected => _isConnected;
   String? get errorMessage => _errorMessage;
   bool get isRealtimeChatBound => _matchChatService != null;
-  String get activeChatSubtitle => 'Live chat';
+  String get activeChatSubtitle {
+    if (!_isConnected) return 'Connecting...';
+    if (_peerOnline) return 'Online';
+    if (_peerLastSeenUtc != null) {
+      return 'Last seen ${DateTimeFormatters.relativeLabel(_peerLastSeenUtc!.toLocal())}';
+    }
+    return 'Offline';
+  }
+
+  /// Resolved peer avatar for header / thread row (route arg, else latest peer `sender_avatar` from WS/history).
+  String? get contactDisplayAvatarUrl {
+    final peer = normalizeImageUrl(_peerAvatarUrlFromMessages);
+    if (peer != null && peer.isNotEmpty) return peer;
+    return normalizeImageUrl(_routeContactAvatarUrl);
+  }
 
   void _log(String message) {
     debugPrint('[ChatScreenVM] $message');
@@ -386,6 +423,9 @@ class ChatScreenViewModel extends ChangeNotifier {
     if (trimmedTargetUserId.isEmpty || _isBindingRealtime) return;
     _log('bindDirectChat start targetUserId=$trimmedTargetUserId');
     _boundTargetUserId = trimmedTargetUserId;
+    _peerOnline = isOnline;
+    _peerLastSeenUtc = null;
+    _peerAvatarUrlFromMessages = null;
 
     final token = await _accessTokenProvider();
     if (token == null || token.isEmpty) {
@@ -407,7 +447,6 @@ class ChatScreenViewModel extends ChangeNotifier {
 
     try {
       final history = await service.loadHistory();
-      history.sort((a, b) => a.sentAt.compareTo(b.sentAt));
       _messages.clear();
       _messageIds.clear();
       for (final item in history) {
@@ -417,10 +456,11 @@ class ChatScreenViewModel extends ChangeNotifier {
       ChatListScreenViewModel.upsertThread(
         userName: contactName,
         targetUserId: _boundTargetUserId,
+        avatarUrl: contactDisplayAvatarUrl,
         lastMessage: history.isNotEmpty ? history.last.content : 'Chat started',
         lastAt: history.isNotEmpty ? history.last.sentAt : DateTime.now(),
         unreadCount: 0,
-        isOnline: isOnline,
+        isOnline: _peerOnline,
       );
     } catch (e) {
       _errorMessage = 'Could not load direct chat history: $e';
@@ -441,16 +481,53 @@ class ChatScreenViewModel extends ChangeNotifier {
         'direct ws message id=${msg.messageId} sender=${msg.senderId} '
         'isMine=$isMine myId=$myId targetUserId=$_boundTargetUserId len=${msg.content.length}',
       );
+ 
+      if (!kIsWeb && !isMine) {
+        _maybeNotifyIncomingDirectChatWhileBackgrounded(msg);
+      }
       _appendRealtimeMessage(msg);
       ChatListScreenViewModel.upsertThread(
         userName: contactName,
         targetUserId: _boundTargetUserId,
+        avatarUrl: contactDisplayAvatarUrl,
         lastMessage: msg.content,
         lastAt: msg.sentAt,
         unreadCount: 0,
-        isOnline: isOnline,
+        isOnline: _peerOnline,
       );
       _errorMessage = null;
+      notifyListeners();
+    });
+
+    _presenceSub = service.onPresence.listen((ChatPresenceEvent e) {
+      final peerId = _boundTargetUserId.trim();
+      if (peerId.isEmpty || e.userId.trim() != peerId) return;
+      final st = e.status.trim().toLowerCase();
+      _peerOnline =
+          st == 'online' || st == 'active' || st == 'available';
+      _peerLastSeenUtc =
+          _peerOnline ? null : (e.sentAt ?? DateTime.now().toUtc());
+      ChatListScreenViewModel.applyPresenceForUser(
+        subjectUserId: peerId,
+        status: e.status,
+        sentAt: e.sentAt,
+      );
+      notifyListeners();
+    });
+
+    _receiptSub = service.onReceipt.listen((ChatReceiptEvent r) {
+      final mid = r.messageId.trim();
+      if (mid.isEmpty) return;
+      final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == mid);
+      if (idx < 0) return;
+      final at = r.at ?? DateTime.now().toUtc();
+      if (r.kind == 'read') {
+        _messages[idx] = _messages[idx].copyWith(readAt: at);
+      } else if (r.kind == 'delivered') {
+        _messages[idx] = _messages[idx].copyWith(deliveredAt: at);
+      } else {
+        return;
+      }
       notifyListeners();
     });
 
@@ -468,6 +545,34 @@ class ChatScreenViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// WebSocket can stay connected briefly when the user backgrounds the app on
+  /// a chat screen. FCM alone does not fire unless the **server** sends a push;
+  /// this covers that gap for direct messages only.
+  void _maybeNotifyIncomingDirectChatWhileBackgrounded(
+    RealtimeChatMessage msg,
+  ) {
+    final state = WidgetsBinding.instance.lifecycleState;
+    final background = state != null && state != AppLifecycleState.resumed;
+    if (!background) return;
+    final title = msg.senderName.trim().isNotEmpty
+        ? msg.senderName.trim()
+        : AppText.sportFinding;
+    final raw = msg.content.trim();
+    if (raw.isEmpty) return;
+    final body = raw.length > 120 ? '${raw.substring(0, 117)}...' : raw;
+    unawaited(
+      FcmLocalNotifications.showSimple(
+        title: title,
+        body: body,
+        payload: <String, dynamic>{
+          'type': 'direct_chat',
+          'sender_id': msg.senderId,
+          'message_id': msg.messageId,
+        },
+      ),
+    );
+  }
+
   void _appendRealtimeMessage(RealtimeChatMessage message) {
     final id = message.messageId.trim();
     if (id.isNotEmpty && !_messageIds.add(id)) {
@@ -482,13 +587,24 @@ class ChatScreenViewModel extends ChangeNotifier {
             isFailed: false,
           );
         }
+      } else if (message.readAt != null || message.deliveredAt != null) {
+        final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == id);
+        if (idx >= 0) {
+          _messages[idx] = _messages[idx].copyWith(
+            readAt: message.readAt ?? _messages[idx].readAt,
+            deliveredAt: message.deliveredAt ?? _messages[idx].deliveredAt,
+          );
+        }
       }
+      _maybeCapturePeerAvatar(message);
+      notifyListeners();
       return;
     }
 
     final now = message.sentAt.toLocal();
     final myId = _currentUserIdProvider();
     final isMine = myId.isNotEmpty && message.senderId.trim() == myId;
+    _maybeCapturePeerAvatar(message);
     if (isMine && _reconcilePendingOutgoing(message, now)) {
       return;
     }
@@ -511,8 +627,19 @@ class ChatScreenViewModel extends ChangeNotifier {
         mimeType: message.mimeType,
         fileName: message.fileName,
         sizeBytes: message.sizeBytes,
+        readAt: message.readAt,
+        deliveredAt: message.deliveredAt,
       ),
     );
+  }
+
+  void _maybeCapturePeerAvatar(RealtimeChatMessage message) {
+    final myId = _currentUserIdProvider();
+    final isMine = myId.isNotEmpty && message.senderId.trim() == myId;
+    if (isMine) return;
+    final av = (message.senderAvatar ?? '').trim();
+    if (av.isEmpty) return;
+    _peerAvatarUrlFromMessages = av;
   }
 
   void _appendPendingOutgoing(
@@ -547,10 +674,11 @@ class ChatScreenViewModel extends ChangeNotifier {
       ChatListScreenViewModel.upsertThread(
         userName: contactName,
         targetUserId: _boundTargetUserId,
+        avatarUrl: contactDisplayAvatarUrl,
         lastMessage: type == ChatMessageType.text ? content : (fileName ?? ''),
         lastAt: DateTime.now(),
         unreadCount: 0,
-        isOnline: isOnline,
+        isOnline: _peerOnline,
       );
     }
     _log('pending message added localId=${_messages.last.localId}');
@@ -625,6 +753,8 @@ class ChatScreenViewModel extends ChangeNotifier {
       mimeType: message.mimeType,
       fileName: message.fileName,
       sizeBytes: message.sizeBytes,
+      readAt: message.readAt,
+      deliveredAt: message.deliveredAt,
     );
     _log('pending reconciled with server ack localId=$localId');
     return true;
@@ -716,9 +846,13 @@ class ChatScreenViewModel extends ChangeNotifier {
     await _connectedSub?.cancel();
     await _messageSub?.cancel();
     await _errorSub?.cancel();
+    await _presenceSub?.cancel();
+    await _receiptSub?.cancel();
     _connectedSub = null;
     _messageSub = null;
     _errorSub = null;
+    _presenceSub = null;
+    _receiptSub = null;
     _matchChatService?.dispose();
     _matchChatService = null;
     _isConnected = false;

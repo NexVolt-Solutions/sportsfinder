@@ -11,6 +11,7 @@ import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -82,7 +83,10 @@ class FcmService {
     await _syncCurrentToken();
 
     _tokenRefreshSub = messaging.onTokenRefresh.listen((token) async {
-      await _syncTokenToBackend(token);
+      final ok = await _syncTokenToBackend(token);
+      if (!ok) {
+        _scheduleTokenRetry();
+      }
     });
 
     _onMessageSub = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -201,7 +205,16 @@ class FcmService {
     _isTokenSyncInFlight = true;
     try {
       final token = await FirebaseMessaging.instance.getToken();
-      await _syncTokenToBackend(token);
+      final registered = await _syncTokenToBackend(token);
+      if (!registered) {
+        AppLogger.warning(
+          'FCM device token not registered with backend (transient network). '
+          'Scheduling retry.',
+          tag: 'FcmService',
+        );
+        _scheduleTokenRetry();
+        return;
+      }
       _tokenRetryAttempt = 0;
     } catch (e, stackTrace) {
       if (_isHardFcmTokenFailure(e)) {
@@ -277,10 +290,13 @@ class FcmService {
         value.contains('firebase installations service is unavailable');
   }
 
-  Future<void> _syncTokenToBackend(String? token) async {
+  /// Returns `true` if the backend accepted the token or there was nothing to
+  /// send. Returns `false` when a **transient** network error should trigger a
+  /// retry (see [isTransientNetworkError]).
+  Future<bool> _syncTokenToBackend(String? token) async {
     if (token == null || token.trim().isEmpty) {
       AppLogger.warning('FCM token unavailable', tag: 'FcmService');
-      return;
+      return true;
     }
 
     final access = await AppPreferences.getAccessToken();
@@ -289,7 +305,7 @@ class FcmService {
         'Skipping FCM registration: no backend access token',
         tag: 'FcmService',
       );
-      return;
+      return true;
     }
 
     AppLogger.debug(
@@ -302,14 +318,14 @@ class FcmService {
         'Skipping FCM token sync on unsupported platform',
         tag: 'FcmService',
       );
-      return;
+      return true;
     }
     if (kIsWeb && _webTokenSyncBlockedByNetworkPolicy) {
       AppLogger.debug(
         'Skipping FCM token sync on web after prior network/CORS failure',
         tag: 'FcmService',
       );
-      return;
+      return true;
     }
 
     try {
@@ -322,6 +338,7 @@ class FcmService {
             : 'FCM token synced',
         tag: 'FcmService',
       );
+      return true;
     } catch (e) {
       if (kIsWeb && _looksLikeBrowserNetworkPolicyFailure(e)) {
         _webTokenSyncBlockedByNetworkPolicy = true;
@@ -330,9 +347,13 @@ class FcmService {
           'Will skip further web sync attempts until app reload.',
           tag: 'FcmService',
         );
-        return;
+        return true;
+      }
+      if (isTransientNetworkError(e)) {
+        return false;
       }
       AppLogger.error('Failed to sync FCM token', tag: 'FcmService', error: e);
+      return true;
     }
   }
 

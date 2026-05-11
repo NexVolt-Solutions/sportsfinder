@@ -39,7 +39,6 @@ class WebAuthSplitShell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Image.asset(
                               AppAssets.mainLogo,
@@ -52,10 +51,14 @@ class WebAuthSplitShell extends StatelessWidget {
                               ),
                             ),
                             SizedBox(width: context.w(18)),
-                            Text(
-                              AppText.sportFinding,
-                              style: context.appText.text28W500.copyWith(
-                                color: c.onSurface,
+                            Expanded(
+                              child: Text(
+                                AppText.sportFinding,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.appText.text28W500.copyWith(
+                                  color: c.onSurface,
+                                ),
                               ),
                             ),
                           ],

@@ -14,6 +14,7 @@ import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -230,11 +231,18 @@ class NotificationService extends ChangeNotifier {
       return;
     }
     _lastSocketErrorFingerprint = fingerprint;
-    AppLogger.error(
-      'Notification WebSocket error',
-      tag: 'NotificationService',
-      error: error,
-    );
+    if (isTransientNetworkError(error)) {
+      AppLogger.warning(
+        'Notification WebSocket error (transient network): $error',
+        tag: 'NotificationService',
+      );
+    } else {
+      AppLogger.error(
+        'Notification WebSocket error',
+        tag: 'NotificationService',
+        error: error,
+      );
+    }
     _cleanupRealtimeState();
     _scheduleReconnect();
   }

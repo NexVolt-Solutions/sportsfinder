@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
@@ -14,6 +16,7 @@ import 'package:sport_finding/core/Routes/routes.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Constants/responsive_text_scaler.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/core/widgets/tap_outside_unfocus.dart';
 import 'package:sport_finding/firebase_options.dart';
 
@@ -103,17 +106,38 @@ List<Route<dynamic>> _onGenerateInitialRoutes(String initialRoute) {
   ];
 }
 
+Future<void> _bootstrapMapsAndFcmAfterFirstFrame({
+  required NotificationService notificationService,
+}) async {
+  try {
+    await ensureGoogleMapsScriptLoaded();
+  } catch (e, st) {
+    AppLogger.warning(
+      'Google Maps script load failed ($e). Maps may not work until fixed.',
+      tag: 'main',
+    );
+    AppLogger.debug('$st', tag: 'main');
+  }
+  try {
+    await FcmService.instance.initialize(
+      notificationService: notificationService,
+      navigatorKey: rootNavigatorKey,
+    );
+  } catch (e, st) {
+    AppLogger.warning(
+      'FCM init failed ($e). Push may be unavailable until reload.',
+      tag: 'main',
+    );
+    AppLogger.debug('$st', tag: 'main');
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GoogleMapsConfig.loadEnv();
-  await ensureGoogleMapsScriptLoaded();
   final notificationService = NotificationService();
-  await FcmService.instance.initialize(
-    notificationService: notificationService,
-    navigatorKey: rootNavigatorKey,
-  );
   ApiService.onUnauthorized = () {
     ProfileService().clear();
     final nav = rootNavigatorKey.currentState;
@@ -147,4 +171,14 @@ Future<void> main() async {
       ),
     ),
   );
+
+  // Maps + FCM must not block [runApp]: slow/blocked Google Maps JS or FCM
+  // would otherwise leave a permanent white screen on web.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(
+      _bootstrapMapsAndFcmAfterFirstFrame(
+        notificationService: notificationService,
+      ),
+    );
+  });
 }

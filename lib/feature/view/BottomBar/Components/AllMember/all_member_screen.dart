@@ -83,6 +83,7 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                                     contactName: (user.fullName ?? '').trim(),
                                     targetUserId: (user.id ?? '').trim(),
                                     isOnline: true,
+                                    contactAvatarUrl: user.avatarUrl,
                                   ),
                                 ),
                                 playerName: user.fullName,

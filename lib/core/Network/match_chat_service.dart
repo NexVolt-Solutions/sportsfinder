@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/chat_realtime_events.dart';
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -13,6 +14,28 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 typedef ChatWsConnector =
     WebSocketChannel Function(Uri uri, Map<String, dynamic> headers);
 typedef ReconnectDelayForAttempt = Duration Function(int attempt);
+
+bool _chatJsonTruthy(dynamic v) {
+  if (v == null) return false;
+  if (v is bool) return v;
+  final s = '$v'.trim().toLowerCase();
+  return s == 'true' || s == '1' || s == 'yes' || s == 'y';
+}
+
+DateTime? _chatParseUtc(dynamic v) {
+  if (v == null) return null;
+  final s = '$v'.trim();
+  if (s.isEmpty) return null;
+  return DateTime.tryParse(s)?.toUtc();
+}
+
+DateTime? _chatFirstUtc(Map<String, dynamic> json, List<String> keys) {
+  for (final k in keys) {
+    final d = _chatParseUtc(json[k]);
+    if (d != null) return d;
+  }
+  return null;
+}
 
 class ChatHistoryException implements Exception {
   ChatHistoryException(this.statusCode);
@@ -66,13 +89,63 @@ class RealtimeChatMessage {
     final isDeleted = isDeletedRaw is bool
         ? isDeletedRaw
         : ('$isDeletedRaw'.toLowerCase() == 'true');
+    final sentAt =
+        DateTime.tryParse('${json['sent_at'] ?? ''}') ?? DateTime.now();
+    final sentUtc = sentAt.toUtc();
+
+    var readAt = _chatFirstUtc(json, [
+      'read_at',
+      'readAt',
+      'read_timestamp',
+      'read_time',
+      'seen_at',
+      'seenAt',
+    ]);
+    final readStatus =
+        '${json['status'] ?? json['receipt'] ?? json['state'] ?? ''}'
+            .trim()
+            .toLowerCase();
+    if (readAt == null &&
+        (_chatJsonTruthy(json['is_read'] ?? json['read'] ?? json['seen']) ||
+            readStatus == 'read' ||
+            readStatus == 'seen')) {
+      readAt = _chatFirstUtc(json, [
+            'updated_at',
+            'delivered_at',
+            'deliveredAt',
+            'sent_at',
+            'sentAt',
+          ]) ??
+          sentUtc;
+    }
+
+    var deliveredAt = _chatFirstUtc(json, [
+      'delivered_at',
+      'deliveredAt',
+      'delivery_at',
+      'deliveryAt',
+    ]);
+    final deliveryStatus =
+        '${json['delivery_status'] ?? json['delivery'] ?? ''}'
+            .trim()
+            .toLowerCase();
+    if (deliveredAt == null &&
+        (_chatJsonTruthy(
+              json['is_delivered'] ?? json['delivered'] ?? json['received'],
+            ) ||
+            deliveryStatus == 'delivered' ||
+            deliveryStatus == 'received')) {
+      deliveredAt = _chatFirstUtc(json, ['updated_at', 'sent_at', 'sentAt']) ??
+          sentUtc;
+    }
+
     return RealtimeChatMessage(
       messageId: '${json['message_id'] ?? ''}',
       senderId: '${json['sender_id'] ?? ''}',
       senderName: '${json['sender_name'] ?? ''}',
       senderAvatar: json['sender_avatar']?.toString(),
       content: '${json['content'] ?? ''}',
-      sentAt: DateTime.tryParse('${json['sent_at'] ?? ''}') ?? DateTime.now(),
+      sentAt: sentAt,
       messageType: (json['type'] ?? json['message_type'])?.toString(),
       mediaUrl: (json['media_url'] ?? json['file_url'])?.toString(),
       thumbnailUrl: (json['thumbnail_url'] ?? json['thumb_url'])?.toString(),
@@ -84,8 +157,8 @@ class RealtimeChatMessage {
       isDeleted: isDeleted,
       deletedAt: DateTime.tryParse('${json['deleted_at'] ?? ''}'),
       deletedScope: (json['deleted_scope'] ?? json['scope'])?.toString(),
-      deliveredAt: DateTime.tryParse('${json['delivered_at'] ?? ''}'),
-      readAt: DateTime.tryParse('${json['read_at'] ?? ''}'),
+      deliveredAt: deliveredAt,
+      readAt: readAt,
     );
   }
 }
@@ -121,10 +194,14 @@ class MatchChatService {
   final _messageController = StreamController<RealtimeChatMessage>.broadcast();
   final _errorController = StreamController<String>.broadcast();
   final _connectedController = StreamController<void>.broadcast();
+  final _presenceController = StreamController<ChatPresenceEvent>.broadcast();
+  final _receiptController = StreamController<ChatReceiptEvent>.broadcast();
 
   Stream<RealtimeChatMessage> get onMessage => _messageController.stream;
   Stream<String> get onError => _errorController.stream;
   Stream<void> get onConnected => _connectedController.stream;
+  Stream<ChatPresenceEvent> get onPresence => _presenceController.stream;
+  Stream<ChatReceiptEvent> get onReceipt => _receiptController.stream;
 
   String get _chatPath {
     final resolvedTargetUserId = targetUserId?.trim() ?? '';
@@ -194,6 +271,8 @@ class MatchChatService {
               RealtimeChatMessage.fromJson(Map<String, dynamic>.from(item)),
         )
         .toList();
+    // API returns newest-first; UI (and mobile VM) expect chronological order.
+    history.sort((a, b) => a.sentAt.compareTo(b.sentAt));
     debugPrint(
       '[MatchChatService] [History] loaded count=${history.length} targetUserId=$targetUserId',
     );
@@ -267,16 +346,48 @@ class MatchChatService {
           }),
         );
         break;
+      case 'presence_update':
+        final presence = ChatPresenceEvent.tryParse(event);
+        if (presence != null && !_presenceController.isClosed) {
+          _presenceController.add(presence);
+        }
+        break;
       case 'message_read':
+      case 'read_receipt':
+      case 'read':
+      case 'chat_read':
+      case 'chat_message_read':
+        final read = ChatReceiptEvent.tryParseRead(event);
+        if (read != null && !_receiptController.isClosed) {
+          _receiptController.add(read);
+        }
+        break;
       case 'message_delivered':
+      case 'delivered':
+      case 'message_received':
+      case 'chat_delivered':
+        final delivered = ChatReceiptEvent.tryParseDelivered(event);
+        if (delivered != null && !_receiptController.isClosed) {
+          _receiptController.add(delivered);
+        }
+        break;
       case 'typing_start':
       case 'typing_stop':
-      case 'presence_update':
-        // Not yet consumed by UI; ignore safely.
         break;
       case 'error':
         _errorController.add('${event['detail'] ?? 'Unknown error'}');
         debugPrint('[MatchChatService] [WS] server error ${event['detail']}');
+        break;
+      default:
+        final readImp = ChatReceiptEvent.tryParseReadIfImplied(event);
+        if (readImp != null && !_receiptController.isClosed) {
+          _receiptController.add(readImp);
+          break;
+        }
+        final delImp = ChatReceiptEvent.tryParseDeliveredIfImplied(event);
+        if (delImp != null && !_receiptController.isClosed) {
+          _receiptController.add(delImp);
+        }
         break;
     }
   }
@@ -382,5 +493,7 @@ class MatchChatService {
     _messageController.close();
     _errorController.close();
     _connectedController.close();
+    _presenceController.close();
+    _receiptController.close();
   }
 }

@@ -10,6 +10,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
@@ -29,6 +30,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _boundRealtimeChat = false;
+  String? _sessionTargetUserId;
   int _lastRenderedMessageCount = 0;
   final Set<String> _selectedMessageLocalIds = <String>{};
 
@@ -55,6 +57,8 @@ class _ChatScreenState extends State<ChatScreen> {
     debugPrint('[ChatScreen] binding targetUserId=$targetUserId');
 
     _boundRealtimeChat = true;
+    _sessionTargetUserId = targetUserId;
+    ChatListRealtimeCoordinator.beginFullScreenDirectChat(targetUserId);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final vm = context.read<ChatScreenViewModel>();
@@ -66,6 +70,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    final t = _sessionTargetUserId?.trim();
+    if (t != null && t.isNotEmpty) {
+      ChatListRealtimeCoordinator.endFullScreenDirectChat(t);
+    }
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -436,9 +444,12 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: SvgPicture.asset(AppAssets.backIcon),
                           ),
                           SizedBox(width: context.w(12)),
-                          CircleAvatar(
-                            radius: context.radius(21),
-                            backgroundColor: context.appColors.greylight,
+                          AppAvatar(
+                            size: context.radius(21) * 2,
+                            imageUrl: model.contactDisplayAvatarUrl,
+                            fallbackText: model.contactName,
+                            backgroundColor: context.appColors.blue10,
+                            iconColor: context.appColors.primary,
                           ),
                           SizedBox(width: context.w(12)),
                           _isSelectionMode
@@ -707,7 +718,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     sizeBoxheight: context.h(4),
                     subText: msg.isFailed
                         ? 'Failed • Tap to retry'
-                        : (msg.isPending ? 'Sending...' : msg.time),
+                        : (msg.isPending
+                            ? 'Sending...'
+                            : (isMe ? '' : msg.time)),
                     subColor: msg.isFailed
                         ? context.appColors.error
                         : (isMe
@@ -718,6 +731,37 @@ class _ChatScreenState extends State<ChatScreen> {
                     subFontWeight: FontWeight.w400,
                   ),
                 ),
+                if (isMe &&
+                    !msg.isDeleted &&
+                    !msg.isFailed &&
+                    !msg.isPending &&
+                    effectiveType == ChatMessageType.text)
+                  Padding(
+                    padding: EdgeInsets.only(top: context.h(4)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          msg.time,
+                          style: context.appText.text12W400.copyWith(
+                            color: context.appColors.onPrimary
+                                .withValues(alpha: 0.72),
+                          ),
+                        ),
+                        SizedBox(width: context.w(4)),
+                        Icon(
+                          (msg.readAt != null || msg.deliveredAt != null)
+                              ? Icons.done_all_rounded
+                              : Icons.done_rounded,
+                          size: context.w(14),
+                          color: msg.readAt != null
+                              ? Colors.lightBlueAccent
+                              : context.appColors.onPrimary
+                                  .withValues(alpha: 0.75),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (!msg.isDeleted && effectiveType == ChatMessageType.image)
                   Padding(
                     padding: EdgeInsets.only(top: context.h(8)),

@@ -368,6 +368,7 @@ class PublicProfileViewModel extends ChangeNotifier {
         contactName: fullName.isNotEmpty ? fullName : 'Player Chat',
         targetUserId: selectedUserId,
         isOnline: true,
+        contactAvatarUrl: avatarUrl.isNotEmpty ? avatarUrl : null,
       ),
     );
   }

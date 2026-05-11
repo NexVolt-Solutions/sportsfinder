@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:sport_finding/Data/model/DeviceToken/device_token_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 
 class DeviceTokenRepository {
   DeviceTokenRepository({ApiService? apiService})
@@ -24,10 +25,16 @@ class DeviceTokenRepository {
       return DeviceTokenResponseModel.fromJson(Map<String, dynamic>.from(response));
     } catch (e, stackTrace) {
       if (!_shouldRetryWithFallback(e)) {
-        log(
-          '[DeviceTokenRepository] registerDeviceToken failed: $e',
-          stackTrace: stackTrace,
-        );
+        if (isTransientNetworkError(e)) {
+          log(
+            '[DeviceTokenRepository] registerDeviceToken failed (transient network): $e',
+          );
+        } else {
+          log(
+            '[DeviceTokenRepository] registerDeviceToken failed: $e',
+            stackTrace: stackTrace,
+          );
+        }
         rethrow;
       }
       log(

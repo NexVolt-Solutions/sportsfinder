@@ -149,6 +149,7 @@ class RouteProviders {
           create: (_) => ChatScreenViewModel(
             contactName: args.contactName,
             isOnline: args.isOnline,
+            contactAvatarUrl: args.contactAvatarUrl,
           ),
           child: child,
         );
