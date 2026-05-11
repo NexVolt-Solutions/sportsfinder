@@ -24,10 +24,12 @@ class AllUpcomingMatches extends StatefulWidget {
     super.key,
     this.embedAsBottomTab = false,
     this.listTitle,
+    this.forceMobileLayout = false,
   });
 
   final bool embedAsBottomTab;
   final String? listTitle;
+  final bool forceMobileLayout;
 
   @override
   State<AllUpcomingMatches> createState() => _AllUpcomingMatchesState();
@@ -57,11 +59,59 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
     }
   }
 
+  Future<void> _confirmAndDeleteMatch(
+    BuildContext context,
+    AllUpcommingMatchesViewModel model,
+    String matchId,
+    String matchTitle,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(AppText.deleteMatchConfirmationTitle),
+          content: Text(
+            '${AppText.deleteMatchConfirmationMessage}\n\n“$matchTitle”',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(AppText.cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: dialogContext.appColors.error,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text(AppText.deleteMatch),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final err = await model.deleteMatchById(matchId);
+    if (!context.mounted) return;
+
+    if (err == null) {
+      AppSnackBar.show(
+        AppText.matchDeletedSuccessfully,
+        backgroundColor: context.appColors.primary,
+      );
+    } else {
+      AppSnackBar.show(
+        err,
+        backgroundColor: context.appColors.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AllUpcommingMatchesViewModel>(
       builder: (context, model, _) {
-        if (kIsWeb && widget.embedAsBottomTab) {
+        if (kIsWeb && widget.embedAsBottomTab && !widget.forceMobileLayout) {
           final rows = model.matches
               .map(
                 (match) => WebMatchTableRowData(
@@ -85,18 +135,63 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                       arguments: DiscoveryMatch.fromAllMatches(match),
                     );
                   },
-                  onDelete: () => _openMatchDetails(
-                    context,
-                    model,
-                    DiscoveryMatch.fromAllMatches(match),
-                  ),
+                  onDelete:
+                      model.listScope == UpcomingMatchesScope.myMatches
+                      ? () => _confirmAndDeleteMatch(
+                          context,
+                          model,
+                          match.id,
+                          match.title,
+                        )
+                      : null,
                 ),
               )
               .toList();
+
+          IconData webEmptyIcon = Icons.search_off_rounded;
+          String webEmptyLabel = AppText.noMatchesFound;
+          String webEmptyDescription = AppText.matchesTrySearchOrFilters;
+
+          if (model.isLoading) {
+            webEmptyIcon = Icons.hourglass_empty_outlined;
+            webEmptyLabel = 'Loading matches...';
+            webEmptyDescription = '';
+          } else if (model.listScope == UpcomingMatchesScope.myMatches) {
+            if (model.showSearchOrFilterEmptyState) {
+              webEmptyIcon = Icons.search_off_rounded;
+              webEmptyLabel = AppText.noMatchesFound;
+              webEmptyDescription = AppText.matchesTrySearchOrFilters;
+            } else {
+              webEmptyIcon = Icons.event_note_outlined;
+              webEmptyLabel = AppText.noHostedMatchesYet;
+              webEmptyDescription = AppText.myMatchesWebEmptySubtitle;
+            }
+          } else {
+            if (model.showSearchOrFilterEmptyState) {
+              webEmptyIcon = Icons.search_off_rounded;
+              webEmptyLabel = AppText.noMatchesFound;
+              webEmptyDescription = AppText.matchesTrySearchOrFilters;
+            } else {
+              webEmptyIcon = Icons.calendar_month_outlined;
+              webEmptyLabel = AppText.noMatchesFound;
+              webEmptyDescription = AppText.allUpcomingWebEmptySubtitle;
+            }
+          }
+
           return WebMatchesManagementSection(
             title: widget.listTitle ?? 'Matches Management',
             subtitle: '${rows.length} total matches',
             onSearchChanged: model.searchMatches,
+            headerTrailing:
+                model.listScope == UpcomingMatchesScope.myMatches
+                    ? FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, RoutesName.createMatchScreen);
+                        },
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Create Match'),
+                      )
+                    : null,
             onSportsTap: () {
               showModalBottomSheet(
                 context: context,
@@ -140,11 +235,9 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
               );
             },
             rows: rows,
-            emptyLabel: model.isLoading
-                ? 'Loading matches...'
-                : model.listScope == UpcomingMatchesScope.myMatches
-                ? AppText.noHostedMatchesYet
-                : AppText.noMatchesFound,
+            emptyLabel: webEmptyLabel,
+            emptyDescription: webEmptyDescription,
+            emptyIcon: webEmptyIcon,
           );
         }
 

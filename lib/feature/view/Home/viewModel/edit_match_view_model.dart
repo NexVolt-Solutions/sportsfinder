@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
 import 'package:sport_finding/Data/model/DeleteMAtch/delete_match_Model.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
@@ -17,8 +16,12 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/location_selection_result.dart';
 
 class EditMatchViewModel extends ChangeNotifier {
+  bool _isDisposed = false;
+
   void _safeNotifyListeners() {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    if (_isDisposed) return;
+    Future<void>.microtask(() {
+      if (_isDisposed) return;
       notifyListeners();
     });
   }
@@ -397,6 +400,7 @@ class EditMatchViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     matchTitleController.dispose();
     descriptionController.dispose();
     dateController.dispose();

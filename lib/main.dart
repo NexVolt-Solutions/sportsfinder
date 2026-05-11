@@ -23,7 +23,23 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 /// booting `app_start_screen`, which breaks OAuth redirects.
 String _materialInitialRoute() {
   if (!kIsWeb) return RoutesName.appStartScreen;
-  var path = Uri.base.path;
+  final uri = Uri.base;
+
+  // If we are using hash-based routes (e.g. `/#create_match_screen`),
+  // the "route" lives in the fragment, while `path` stays `/`.
+  final frag = uri.fragment.trim();
+  if (frag.isNotEmpty) {
+    // Keep this conservative: if a fragment is an OAuth payload, ignore it.
+    final lowered = frag.toLowerCase();
+    final looksLikeOAuthPayload =
+        (lowered.contains('access_token=') && lowered.contains('token_type=')) ||
+        lowered.startsWith('refresh_token=');
+    if (!looksLikeOAuthPayload) {
+      return frag;
+    }
+  }
+
+  var path = uri.path;
   if (path.isEmpty || path == '/') return RoutesName.appStartScreen;
   if (path.length > 1 && path.endsWith('/')) {
     path = path.substring(0, path.length - 1);
@@ -38,6 +54,19 @@ List<Route<dynamic>> _onGenerateInitialRoutes(String initialRoute) {
     return <Route<dynamic>>[
       Routes.generateRoute(RouteSettings(name: initialRoute)),
     ];
+  }
+
+  // When Flutter gives us `/` but the browser URL is `/#some_route`,
+  // use the fragment so refresh/deep-link stays on the same screen.
+  if (initialRoute.isEmpty ||
+      initialRoute == '/' ||
+      initialRoute == RoutesName.appStartScreen) {
+    final frag = Uri.base.fragment.trim();
+    if (frag.isNotEmpty) {
+      return <Route<dynamic>>[
+        Routes.generateRoute(RouteSettings(name: frag)),
+      ];
+    }
   }
 
   var path = initialRoute;

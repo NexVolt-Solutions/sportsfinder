@@ -1,14 +1,16 @@
- 
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
 import 'package:sport_finding/core/Network/deleted_matches_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
   final MatchesRepo _repo = MatchesRepo();
+  final DeleteMatchRepo _deleteRepo = DeleteMatchRepo();
 
   // ================= DATA =================
   List<AllMatches> allMatches = [];
@@ -22,6 +24,23 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   // ================= FILTERS =================
   int selectedIndex = 0;
   FilterData? currentFilters;
+
+  /// Last non-empty search query from [searchMatches]; cleared when query is empty.
+  String _searchQuery = '';
+
+  /// Exposed for web empty-state copy (search vs “no matches yet”).
+  String get lastSearchQuery => _searchQuery;
+
+  /// Matches visible for this tab before applying the search text filter.
+  bool get hasAnyMatchesInCurrentScope => _scopedBaseMatches().isNotEmpty;
+
+  /// True when the list is empty because search/filters hid rows, not because there is no data.
+  bool get showSearchOrFilterEmptyState {
+    if (matches.isNotEmpty) return false;
+    if (_searchQuery.isNotEmpty) return true;
+    if (hasAnyMatchesInCurrentScope && currentFilters != null) return true;
+    return false;
+  }
 
   final UpcomingMatchesScope scope;
 
@@ -44,7 +63,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void _onProfileChanged() {
     if (scope != UpcomingMatchesScope.myMatches) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future<void>.microtask(() {
       if (_isDisposed) return;
       _rebuildVisibleMatches();
       notifyListeners();
@@ -132,10 +151,11 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   // ================= SEARCH =================
   void searchMatches(String query) {
-    if (query.isEmpty) {
+    _searchQuery = query.trim();
+    if (_searchQuery.isEmpty) {
       _rebuildVisibleMatches();
     } else {
-      final q = query.toLowerCase();
+      final q = _searchQuery.toLowerCase();
 
       matches = _scopedBaseMatches().where((m) {
         return m.title.toLowerCase().contains(q) ||
@@ -257,6 +277,23 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     matches.removeWhere((m) => m.id == trimmedId);
     DeletedMatchesService().markDeleted(trimmedId);
     notifyListeners();
+  }
+
+  /// Deletes on the server, then removes locally. Returns `null` on success,
+  /// or an error message string on failure.
+  Future<String?> deleteMatchById(String matchId) async {
+    if (_isDisposed) return 'Not available';
+    final trimmedId = matchId.trim();
+    if (trimmedId.isEmpty) return 'Match ID is missing';
+
+    try {
+      await _deleteRepo.deleteMatch(matchId: trimmedId);
+      if (_isDisposed) return null;
+      removeMatchById(trimmedId);
+      return null;
+    } catch (e) {
+      return messageFromApiException(e);
+    }
   }
 
   List<AllMatches> _scopedBaseMatches() {

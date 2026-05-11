@@ -5,7 +5,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 class AppFormFieldLayout {
   AppFormFieldLayout._();
 
-  static double controlHeight(BuildContext context) => context.h(50);
+  static double controlHeight(BuildContext context) => context.h(48);
 
   static BoxConstraints singleLineConstraints(BuildContext context) =>
       BoxConstraints(minHeight: controlHeight(context));
@@ -18,18 +18,18 @@ class AppFormFieldLayout {
   static EdgeInsets contentPadding(BuildContext context) {
     return EdgeInsets.fromLTRB(
       context.w(20),
-      context.h(12),
+      context.h(8),
       context.w(20),
-      context.h(12),
+      context.h(8),
     );
   }
 
   static EdgeInsets contentPaddingMultiline(BuildContext context) {
     return EdgeInsets.fromLTRB(
        context.w(20),
-      context.h(12),
+          context.h(8),
       context.w(20),
-      context.h(12),
+      context.h(8),
     );
   }
 

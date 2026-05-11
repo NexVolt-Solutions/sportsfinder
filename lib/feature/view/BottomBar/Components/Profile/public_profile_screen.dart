@@ -516,9 +516,11 @@ class _FollowMessageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: context.w(10),
+      runSpacing: context.h(10),
       children: [
         GestureDetector(
           onTap: isFollowLoading || onFollow == null
@@ -573,6 +575,7 @@ class _FollowMessageRow extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   SvgPicture.asset(AppAssets.chat, width: 22, height: 22),
                   SizedBox(width: context.w(4)),

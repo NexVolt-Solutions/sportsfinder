@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
-import 'package:sport_finding/core/Constants/app_theme.dart';
+ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class WebDashboardPanel extends StatelessWidget {

@@ -60,6 +60,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             onChanged: widget.onChanged,
             textInputAction: TextInputAction.search,
             preffixIcon: Icons.search_rounded,
+            controlHeight: context.h(48),
           ),
         ),   if (widget.isShow)
         SizedBox(width: context.w(12)),

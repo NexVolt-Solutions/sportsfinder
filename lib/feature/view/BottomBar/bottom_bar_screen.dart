@@ -29,36 +29,27 @@ class BottomBarScreen extends StatelessWidget {
   }
 }
 
-List<Widget> _bottomBarTabChildren() => <Widget>[
-  const _MyMatchesTabSlot(),
-  const DiscoverTabScreen(embedInBottomBar: true),
-  ChangeNotifierProvider(
-    create: (_) => HomeScreenViewModel(),
-    child: kIsWeb
-        ? Consumer<HomeScreenViewModel>(
-            builder: (context, model, _) => WebHomeContent(model: model),
-          )
-        : const HomeScreen(),
-  ),
-  const ChatListScreen(embedInBottomBar: true),
-  const ProfileScreen(embedInBottomBar: true),
-];
+// (moved into _BottomBarContentState to support responsive layouts)
 
 class _MyMatchesTabSlot extends StatelessWidget {
-  const _MyMatchesTabSlot();
+  const _MyMatchesTabSlot({required this.forceMobileLayout});
+
+  final bool forceMobileLayout;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) =>
           AllUpcommingMatchesViewModel(scope: UpcomingMatchesScope.myMatches),
-      child: const _MyMatchesFetchWhenTabSelected(),
+      child: _MyMatchesFetchWhenTabSelected(forceMobileLayout: forceMobileLayout),
     );
   }
 }
 
 class _MyMatchesFetchWhenTabSelected extends StatefulWidget {
-  const _MyMatchesFetchWhenTabSelected();
+  const _MyMatchesFetchWhenTabSelected({required this.forceMobileLayout});
+
+  final bool forceMobileLayout;
 
   @override
   State<_MyMatchesFetchWhenTabSelected> createState() =>
@@ -88,9 +79,10 @@ class _MyMatchesFetchWhenTabSelectedState
       }
     }
 
-    return const AllUpcomingMatches(
+    return AllUpcomingMatches(
       embedAsBottomTab: true,
       listTitle: AppText.myMatches,
+      forceMobileLayout: widget.forceMobileLayout,
     );
   }
 }
@@ -109,7 +101,23 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   bool _requestedInitialNotifications = false;
   bool _requestedInitialProfile = false;
 
-  late final List<Widget> _tabChildren = _bottomBarTabChildren();
+  List<Widget> _tabChildren({required bool forceMobileLayout}) => <Widget>[
+        _MyMatchesTabSlot(forceMobileLayout: forceMobileLayout),
+        DiscoverTabScreen(
+          embedInBottomBar: true,
+          forceMobileLayout: forceMobileLayout,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => HomeScreenViewModel(),
+          child: kIsWeb && !forceMobileLayout
+              ? Consumer<HomeScreenViewModel>(
+                  builder: (context, model, _) => WebHomeContent(model: model),
+                )
+              : const HomeScreen(),
+        ),
+        const ChatListScreen(embedInBottomBar: true),
+        const ProfileScreen(embedInBottomBar: true),
+      ];
 
   @override
   void didChangeDependencies() {
@@ -136,7 +144,8 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! int) return;
     _appliedRouteTab = true;
-    final maxIndex = _tabChildren.length - 1;
+    // Tab count is stable regardless of responsive layout.
+    const maxIndex = 4;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<BottomBarScreenViewModel>().setSelectedIndex(
@@ -206,10 +215,11 @@ class _BottomBarContentState extends State<_BottomBarContent> {
             builder: (context, constraints) {
               final width = constraints.maxWidth;
               final useMobileChrome = width < _webToMobileBreakpoint;
+              final tabChildren = _tabChildren(forceMobileLayout: kIsWeb && useMobileChrome);
 
               final tabStack = BottomBarTabStack(
                 selectedIndex: vm.selectedIndex,
-                children: _tabChildren,
+                children: tabChildren,
               );
 
               if (kIsWeb && !useMobileChrome) {

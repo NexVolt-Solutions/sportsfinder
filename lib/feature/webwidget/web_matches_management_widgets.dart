@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 
 class WebMatchesToolbar extends StatelessWidget {
   const WebMatchesToolbar({
     super.key,
     required this.onSearchChanged,
+    this.onFilterTap,
     this.onSportsTap,
     this.onDateTap,
     this.onLocationTap,
@@ -16,6 +18,7 @@ class WebMatchesToolbar extends StatelessWidget {
   });
 
   final ValueChanged<String> onSearchChanged;
+  final VoidCallback? onFilterTap;
   final VoidCallback? onSportsTap;
   final VoidCallback? onDateTap;
   final VoidCallback? onLocationTap;
@@ -26,29 +29,11 @@ class WebMatchesToolbar extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
-            height: context.h(44),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF2F8FF),
-              borderRadius: BorderRadius.circular(context.radius(12)),
-              border: Border.all(color: const Color(0xFF6BB5FF)),
-            ),
-            child: TextField(
-              onChanged: onSearchChanged,
-              decoration: InputDecoration(
-                hintText: searchHint,
-                hintStyle: context.appText.text12W400.copyWith(
-                  color: context.appColors.greylight,
-                ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: context.appColors.greylight,
-                  size: 18,
-                ),
-                border: InputBorder.none,
-                contentPadding: context.padSym(h: 12, v: 10),
-              ),
-            ),
+          child: SearchBarWidget(
+            hintText: searchHint,
+            onChanged: onSearchChanged,
+            isShow: onFilterTap != null,
+            onFilterTap: onFilterTap,
           ),
         ),
         SizedBox(width: context.w(12)),
@@ -60,6 +45,57 @@ class WebMatchesToolbar extends StatelessWidget {
         SizedBox(width: context.w(8)),
         _ToolbarFilterChip(label: 'Location', onTap: onLocationTap),
       ],
+    );
+  }
+}
+
+class _ToolbarFilterChip extends StatelessWidget {
+  const _ToolbarFilterChip({
+    required this.label,
+    this.isSelected = false,
+    this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = const Color(0xFF6BB5FF);
+    final fillColor =
+        isSelected ? context.appColors.primary : Colors.transparent;
+    final textColor =
+        isSelected ? context.appColors.onPrimary : context.appColors.primary;
+    return InkWell(
+      borderRadius: BorderRadius.circular(context.radius(10)),
+      onTap: onTap,
+      child: Container(
+        height: context.h(36),
+        padding: context.padSym(h: 14, v: 8),
+        decoration: BoxDecoration(
+          color: fillColor,
+          borderRadius: BorderRadius.circular(context.radius(10)),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: context.appText.text12W500.copyWith(color: textColor),
+            ),
+            if (!isSelected) ...[
+              SizedBox(width: context.w(4)),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16,
+                color: textColor,
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -93,20 +129,77 @@ class WebMatchesManagementSection extends StatelessWidget {
     required this.subtitle,
     required this.onSearchChanged,
     required this.rows,
+    this.onFilterTap,
     this.onSportsTap,
     this.onDateTap,
     this.onLocationTap,
+    this.headerTrailing,
     this.emptyLabel = 'No matches found',
+    this.emptyDescription = 'Try changing your search or filters.',
+    this.emptyIcon = Icons.search_off_rounded,
   });
 
   final String title;
   final String subtitle;
   final ValueChanged<String> onSearchChanged;
   final List<WebMatchTableRowData> rows;
+  final VoidCallback? onFilterTap;
   final VoidCallback? onSportsTap;
   final VoidCallback? onDateTap;
   final VoidCallback? onLocationTap;
+  final Widget? headerTrailing;
   final String emptyLabel;
+  final String emptyDescription;
+  final IconData emptyIcon;
+
+  Widget _emptyState(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: context.w(420)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: context.w(64),
+              height: context.w(64),
+              decoration: BoxDecoration(
+                color: context.appColors.blue20.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(context.radius(18)),
+                border: Border.all(
+                  color: context.appColors.primary.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Icon(
+                emptyIcon,
+                color: context.appColors.primary,
+                size: 30,
+              ),
+            ),
+            SizedBox(height: context.h(14)),
+            Text(
+              emptyLabel,
+              textAlign: TextAlign.center,
+              style: context.appText.text16W600.copyWith(
+                color: context.appColors.onSurface,
+              ),
+            ),
+            if (emptyDescription.trim().isNotEmpty) ...[
+              SizedBox(height: context.h(6)),
+              Text(
+                emptyDescription,
+                textAlign: TextAlign.center,
+                style: context.appText.text14W400.copyWith(
+                  color: context.appColors.greyDark,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,149 +210,157 @@ class WebMatchesManagementSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            WebDashboardTitle(title: title, subtitle: subtitle),
+            WebDashboardTitle(
+              title: title,
+              subtitle: subtitle,
+              trailing: headerTrailing,
+            ),
             SizedBox(height: context.h(16)),
             WebMatchesToolbar(
               onSearchChanged: onSearchChanged,
+              onFilterTap: onFilterTap,
               onSportsTap: onSportsTap,
               onDateTap: onDateTap,
               onLocationTap: onLocationTap,
             ),
-            SizedBox(height: context.h(18)),
+            SizedBox(height: context.h(16)),
             Expanded(
-              child: WebDashboardPanel(
-                backgroundColor: context.appColors.blue10,
-                padding: context.padSym(h: 18, v: 18),
-                child: rows.isEmpty
-                    ? Center(
-                        child: Text(
-                          emptyLabel,
-                          style: context.appText.text14W400.copyWith(
-                            color: context.appColors.greyDark,
-                          ),
-                        ),
-                      )
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          return SingleChildScrollView(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: constraints.maxWidth,
-                              ),
-                              child: DataTable(
-                                // // headingRowHeight: context.h(44),
-                                // dataRowMinHeight: context.h(64),
-                                // dataRowMaxHeight: context.h(78),
-                                dividerThickness: 1.0,
-                                columnSpacing: context.w(24),
-                                horizontalMargin: 0,
-                                border: TableBorder(
-                                  horizontalInside: BorderSide(
-                                    color: AppColors.whitecolor,
-                                  ),
-                                  // top: BorderSide(
-                                  //   color: tableDividerColor,
-                                  //   width: 1,
-                                  // ),
+              child: Card(
+                  child: Container(
+                  decoration: BoxDecoration(
+                    color: context.appColors.blue10,
+                    borderRadius: BorderRadius.circular(context.radius(14)),
+                  
+                  ),
+                  padding: context.padSym(h: 22, v: 20),
+                  child: rows.isEmpty
+                      ? _emptyState(context)
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
                                 ),
-                                headingTextStyle: context.appText.text12W500
-                                    .copyWith(
+                                child: Theme(
+                                  data: Theme.of(context).copyWith(
+                                    dividerColor:
+                                        context.appColors.greylight.withValues(
+                                      alpha: 0.16,
+                                    ),
+                                  ),
+                                  child: DataTable(
+                                    headingRowHeight: context.h(44),
+                                    dataRowMinHeight: context.h(64),
+                                    dataRowMaxHeight: context.h(74),
+                                    dividerThickness: 0.6,
+                                    columnSpacing: context.w(34),
+                                    horizontalMargin: 0,
+                                    headingTextStyle:
+                                        context.appText.text12W500.copyWith(
                                       color: context.appColors.greyDark,
                                     ),
-                                dataTextStyle: context.appText.text12W400
-                                    .copyWith(
+                                    dataTextStyle:
+                                        context.appText.text12W400.copyWith(
                                       color: context.appColors.onSurface,
                                     ),
-                                columns: const [
-                                  DataColumn(label: Text('Matches')),
-                                  DataColumn(label: Text('Sports Type')),
-                                  DataColumn(label: Text('Players')),
-                                  DataColumn(label: Text('Location')),
-                                  DataColumn(label: Text("Match's Status")),
-                                  DataColumn(label: Text('Actions')),
-                                ],
-                                rows: rows.map((row) {
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(
-                                        SizedBox(child: Text(row.title)),
-                                      ),
-                                      DataCell(Text(row.sport)),
-                                      DataCell(Text(row.players)),
-                                      DataCell(
-                                        SizedBox(
-                                          width: context.w(170),
-                                          child: Text(
-                                            row.location,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Container(
-                                          padding: context.padSym(h: 12, v: 6),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.bluecolor,
-                                            borderRadius: BorderRadius.circular(
-                                              context.radius(12),
+                                    columns:   [
+                                      DataColumn(label: NormalText(titleText: 'Matches',
+                                      titleStyle: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onSurface,
+                                    ),
+                                      )),
+                                      DataColumn(label: NormalText(titleText: 'Sports Type',
+                                      titleStyle: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onSurface,
+                                    ),
+                                        )),
+                                      DataColumn(label: NormalText(titleText: 'Players',
+                                      titleStyle: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onSurface,
+                                    ),
+                                      )),
+                                      DataColumn(label: NormalText(titleText: 'Location')),
+                                      DataColumn(label: NormalText(titleText: "Match's Status",
+                                      titleStyle: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onSurface,
+                                    ),
+                                      )),
+                                      DataColumn(label: NormalText(titleText: 'Actions',
+                                      titleStyle: context.appText.text14Bold.copyWith(
+                                      color: context.appColors.onSurface,
+                                    ),
+                                      )),
+                                    ],
+                                    rows: rows.map((row) {
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(
+                                            SizedBox(
+                                              width: context.w(130),
+                                              child: Text(
+                                                row.title,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
                                           ),
-                                          child: Text(
-                                            row.status,
-                                            style: context.appText.text12W500
-                                                .copyWith(
-                                                  color: AppColors.whitecolor,
+                                          DataCell(
+                                            SizedBox(
+                                              width: context.w(110),
+                                              child: Text(
+                                                row.sport,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(Text(row.players)),
+                                          DataCell(
+                                            SizedBox(
+                                            width: context.w(220),
+                                              child: Text(
+                                                row.location,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Container(
+                                              padding: context.padSym(h: 8, v: 4),
+                                              decoration: BoxDecoration(
+                                                color: context.appColors.primary.withValues(alpha: 0.2),
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  context.radius(24),
                                                 ),
+                                              ),
+                                              child: Text(
+                                                row.status,
+                                                style: context.appText.text12W600
+                                                    .copyWith(
+                                                  color: context.appColors.primary,
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        PopupMenuButton<String>(
-                                          tooltip: 'Actions',
-                                          itemBuilder: (_) => [
-                                            if (row.onView != null)
-                                              const PopupMenuItem(
-                                                value: 'view',
-                                                child: Text('View Match'),
-                                              ),
-                                            if (row.onEdit != null)
-                                              const PopupMenuItem(
-                                                value: 'edit',
-                                                child: Text('Edit Match'),
-                                              ),
-                                            if (row.onDelete != null)
-                                              const PopupMenuItem(
-                                                value: 'delete',
-                                                child: Text('Delete Match'),
-                                              ),
-                                          ],
-                                          onSelected: (value) {
-                                            switch (value) {
-                                              case 'view':
-                                                row.onView?.call();
-                                                break;
-                                              case 'edit':
-                                                row.onEdit?.call();
-                                                break;
-                                              case 'delete':
-                                                row.onDelete?.call();
-                                                break;
-                                            }
-                                          },
-                                          child: const Icon(
-                                            Icons.more_horiz_rounded,
+                                          DataCell(
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: _ActionsMenuButton(row: row),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
+                ),
               ),
             ),
           ],
@@ -269,50 +370,103 @@ class WebMatchesManagementSection extends StatelessWidget {
   }
 }
 
-class _ToolbarFilterChip extends StatelessWidget {
-  const _ToolbarFilterChip({
-    required this.label,
-    this.isSelected = false,
-    this.onTap,
-  });
+class _ActionsMenuButton extends StatelessWidget {
+  const _ActionsMenuButton({required this.row});
 
-  final String label;
-  final bool isSelected;
-  final VoidCallback? onTap;
+  final WebMatchTableRowData row;
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected
-        ? context.appColors.primary
-        : context.appColors.primary;
-    final textColor = isSelected ? Colors.white : color;
-    return InkWell(
-      borderRadius: BorderRadius.circular(context.radius(10)),
-      onTap: onTap,
-      child: Container(
-        height: context.h(36),
-        padding: context.padSym(h: 14, v: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(context.radius(10)),
-          border: Border.all(color: color),
-        ),
+    final c = context.appColors;
+
+    PopupMenuItem<String> item({
+      required String value,
+      required IconData icon,
+      required String label,
+      Color? color,
+    }) {
+      final resolved = color ?? c.onSurface;
+      return PopupMenuItem<String>(
+        value: value,
+        height: 40,
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(icon, size: 18, color: resolved),
+            const SizedBox(width: 10),
             Text(
               label,
-              style: context.appText.text12W500.copyWith(color: textColor),
+              style: context.appText.text12W500.copyWith(color: resolved),
             ),
-            if (!isSelected) ...[
-              SizedBox(width: context.w(4)),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 16,
-                color: textColor,
-              ),
-            ],
           ],
+        ),
+      );
+    }
+
+    final hasItems =
+        row.onView != null || row.onEdit != null || row.onDelete != null;
+    if (!hasItems) return const SizedBox.shrink();
+
+    return PopupMenuButton<String>(
+      tooltip: 'Actions',
+      elevation: 14,
+      color: c.onPrimary,
+      shadowColor: c.blue20.withValues(alpha: 0.35),
+      surfaceTintColor: Colors.transparent,
+      offset: const Offset(0, 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: c.greylight.withValues(alpha: 0.18)),
+      ),
+      itemBuilder: (_) => [
+        if (row.onView != null)
+          item(
+            value: 'view',
+            icon: Icons.visibility_outlined,
+            label: 'View match',
+          ),
+        if (row.onEdit != null)
+          item(
+            value: 'edit',
+            icon: Icons.edit_outlined,
+            label: 'Edit match',
+          ),
+        if (row.onDelete != null)
+          item(
+            value: 'delete',
+            icon: Icons.delete_outline_rounded,
+            label: 'Delete match',
+            color: c.error,
+          ),
+      ],
+      onSelected: (value) {
+        switch (value) {
+          case 'view':
+            row.onView?.call();
+            break;
+          case 'edit':
+            row.onEdit?.call();
+            break;
+          case 'delete':
+            row.onDelete?.call();
+            break;
+        }
+      },
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          hoverColor: c.primary.withValues(alpha: 0.06),
+          splashColor: c.primary.withValues(alpha: 0.10),
+          highlightColor: c.primary.withValues(alpha: 0.05),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Icon(
+              Icons.more_horiz_rounded,
+              color: c.greyDark,
+              size: 20,
+            ),
+          ),
         ),
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
 
 // class TextFormFieldWidget extends StatelessWidget {
 //   final String? label;
@@ -70,6 +69,7 @@ class TextFormFieldWidget extends StatelessWidget {
   final Widget? customSuffix;
   final Color? fillColor;
   final int maxLines;
+  final double? controlHeight;
 
   const TextFormFieldWidget({
     super.key,
@@ -86,11 +86,14 @@ class TextFormFieldWidget extends StatelessWidget {
     this.preffixIcon,
     this.customSuffix,
     this.maxLines = 1,
+    this.controlHeight,
   });
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final resolvedControlHeight =
+        controlHeight ?? AppFormFieldLayout.controlHeight(context);
 
     return TextFormField(
       controller: controller,
@@ -111,14 +114,14 @@ class TextFormFieldWidget extends StatelessWidget {
           
         isDense: maxLines == 1,
         constraints: maxLines == 1
-            ? AppFormFieldLayout.singleLineConstraints(context)
+            ? BoxConstraints(minHeight: resolvedControlHeight)
             : null,
         
         errorStyle: AppFormFieldLayout.errorStyle(context),
         errorMaxLines: 2,
         prefixIconConstraints: BoxConstraints(
-          minWidth: context.w(54),
-          minHeight: context.h(54),
+          minWidth: resolvedControlHeight,
+          minHeight: resolvedControlHeight,
         ),
         label: label != null
             ? Text(

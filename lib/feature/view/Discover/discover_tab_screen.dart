@@ -19,23 +19,35 @@ import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/webwidget/web_matches_management_widgets.dart';
 
 class DiscoverTabScreen extends StatelessWidget {
-  const DiscoverTabScreen({super.key, this.embedInBottomBar = false});
+  const DiscoverTabScreen({
+    super.key,
+    this.embedInBottomBar = false,
+    this.forceMobileLayout = false,
+  });
 
   final bool embedInBottomBar;
+  final bool forceMobileLayout;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => DiscoveryTabViewModel(),
-      child: _DiscoverTabContent(embedInBottomBar: embedInBottomBar),
+      child: _DiscoverTabContent(
+        embedInBottomBar: embedInBottomBar,
+        forceMobileLayout: forceMobileLayout,
+      ),
     );
   }
 }
 
 class _DiscoverTabContent extends StatefulWidget {
-  const _DiscoverTabContent({required this.embedInBottomBar});
+  const _DiscoverTabContent({
+    required this.embedInBottomBar,
+    required this.forceMobileLayout,
+  });
 
   final bool embedInBottomBar;
+  final bool forceMobileLayout;
 
   @override
   State<_DiscoverTabContent> createState() => _DiscoverTabContentState();
@@ -108,7 +120,7 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
         }
 
         final notificationService = context.watch<NotificationService>();
-        if (kIsWeb) {
+        if (kIsWeb && !widget.forceMobileLayout) {
           final rows = model.filteredMatches
               .map(
                 (match) => WebMatchTableRowData(
@@ -127,6 +139,32 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
             onSearchChanged: (value) {
               model.searchController.text = value;
               model.onSearchChanged();
+            },
+            onFilterTap: () {
+              showDialog<void>(
+                context: context,
+                builder: (context) {
+                  return Dialog(
+                    insetPadding: const EdgeInsets.symmetric(
+                      horizontal: 48,
+                      vertical: 48,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 520,
+                        maxHeight: 640,
+                      ),
+                      child: FilterBottomSheet(
+                        onApply: model.applyFilters,
+                        asDialog: true,
+                      ),
+                    ),
+                  );
+                },
+              );
             },
             onSportsTap: () {
               showModalBottomSheet(

@@ -187,7 +187,9 @@ class FcmService {
       nav.pushNamed(RoutesName.notificationsScreen);
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Avoid post-frame callbacks here; on web hot restart the old view can be
+    // disposed while this callback still fires.
+    Future<void>.microtask(() {
       unawaited(run());
     });
   }

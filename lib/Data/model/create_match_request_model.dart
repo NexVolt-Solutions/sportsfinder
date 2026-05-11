@@ -68,7 +68,16 @@ class MatchModel {
     id: json['id'] ?? '',
     title: json['title'] ?? '',
     description: json['description'],
-    sport: json['sport'] ?? '',
+    // API may return sport as a string OR as an object {id,name,...}
+    sport: () {
+      final raw = json['sport'];
+      if (raw is String) return raw;
+      if (raw is Map) {
+        final m = Map<String, dynamic>.from(raw);
+        return m['name']?.toString() ?? m['id']?.toString() ?? '';
+      }
+      return raw?.toString() ?? '';
+    }(),
     skillLevel: json['skill_level'] ?? '',
     status: json['status'] ?? '',
     scheduledAt: json['scheduled_at'],
@@ -104,8 +113,7 @@ class MatchModel {
   };
 }
 
-/// Extension to convert MatchModel (from API) to DiscoveryMatch (for UI navigation)
-extension ToDiscoveryMatch on MatchModel {
+ extension ToDiscoveryMatch on MatchModel {
   DiscoveryMatch toDiscoveryMatch() {
     return DiscoveryMatch(
       id: id,

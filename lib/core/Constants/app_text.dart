@@ -118,10 +118,20 @@ class AppText {
   static const String allUpcomingMatches = 'All Upcoming Matches';
   static const String upcomingMatches = 'Upcoming Matches';
   static const String myMatches = 'My Matches';
-  static const String noHostedMatchesYet =
-      'No matches you host yet. Create a match from Home.';
-  static const String noMyMatchesYet =
-      'No matches yet. Join a game or create one from Home.';
+  static const String noHostedMatchesYet = 'No matches created yet';
+
+  /// Web “My Matches” empty panel — shown when the user truly has no hosted matches.
+  static const String myMatchesWebEmptySubtitle =
+      'Use Create Match to host your first game.';
+
+  /// Web table when search/filters hide all rows but data still exists.
+  static const String matchesTrySearchOrFilters =
+      'Try changing your search or filters.';
+
+  /// Web “All upcoming” when there are simply no upcoming rows to show.
+  static const String allUpcomingWebEmptySubtitle =
+      'No upcoming matches are available right now.';
+
   static const String noMatchesFound = 'No matches found';
   static const String youAreHosting = "You're hosting";
   static const String allInvitedPlayers = 'All Invited Players';
