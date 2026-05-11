@@ -90,6 +90,18 @@ class _WebChatContentState extends State<WebChatContent> {
   int _scrollJob = 0;
 
   @override
+  void reassemble() {
+    super.reassemble();
+    // Hot reload on web can reset scroll position; keep the chat pinned
+    // to the visual bottom (newest message) like mobile/WhatsApp.
+    final job = ++_scrollJob;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || job != _scrollJob) return;
+      _scrollToBottom(animated: false);
+    });
+  }
+
+  @override
   void dispose() {
     _scrollJob++;
     _messagesScrollController.dispose();
@@ -99,15 +111,16 @@ class _WebChatContentState extends State<WebChatContent> {
   void _scrollToBottom({bool animated = true}) {
     if (!mounted) return;
     if (!_messagesScrollController.hasClients) return;
-    final max = _messagesScrollController.position.maxScrollExtent;
+    // We render the chat with `reverse: true`, so offset 0 == visual bottom.
+    const targetOffset = 0.0;
     if (animated) {
       _messagesScrollController.animateTo(
-        max,
+        targetOffset,
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
       );
     } else {
-      _messagesScrollController.jumpTo(max);
+      _messagesScrollController.jumpTo(targetOffset);
     }
   }
 
@@ -659,11 +672,16 @@ class _WebChatContentState extends State<WebChatContent> {
                                                   ),
                                                   controller:
                                                       _messagesScrollController,
+                                                  reverse: true,
                                                   itemCount:
                                                       activeMessages.length,
                                                   itemBuilder: (context, i) {
                                                     final message =
-                                                        activeMessages[i];
+                                                        activeMessages[
+                                                            activeMessages
+                                                                    .length -
+                                                                1 -
+                                                                i];
                                                     return Align(
                                                       alignment: message.isMe
                                                           ? Alignment
