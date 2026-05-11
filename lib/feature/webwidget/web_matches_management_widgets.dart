@@ -36,70 +36,12 @@ class WebMatchesToolbar extends StatelessWidget {
             onFilterTap: onFilterTap,
           ),
         ),
-        SizedBox(width: context.w(12)),
-        _ToolbarFilterChip(label: 'All', isSelected: true),
-        SizedBox(width: context.w(8)),
-        _ToolbarFilterChip(label: 'Sports', onTap: onSportsTap),
-        SizedBox(width: context.w(8)),
-        _ToolbarFilterChip(label: 'Date', onTap: onDateTap),
-        SizedBox(width: context.w(8)),
-        _ToolbarFilterChip(label: 'Location', onTap: onLocationTap),
       ],
     );
   }
 }
 
-class _ToolbarFilterChip extends StatelessWidget {
-  const _ToolbarFilterChip({
-    required this.label,
-    this.isSelected = false,
-    this.onTap,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = const Color(0xFF6BB5FF);
-    final fillColor =
-        isSelected ? context.appColors.primary : Colors.transparent;
-    final textColor =
-        isSelected ? context.appColors.onPrimary : context.appColors.primary;
-    return InkWell(
-      borderRadius: BorderRadius.circular(context.radius(10)),
-      onTap: onTap,
-      child: Container(
-        height: context.h(36),
-        padding: context.padSym(h: 14, v: 8),
-        decoration: BoxDecoration(
-          color: fillColor,
-          borderRadius: BorderRadius.circular(context.radius(10)),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: context.appText.text12W500.copyWith(color: textColor),
-            ),
-            if (!isSelected) ...[
-              SizedBox(width: context.w(4)),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 16,
-                color: textColor,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
+ 
 class WebMatchTableRowData {
   const WebMatchTableRowData({
     required this.title,
@@ -203,6 +145,12 @@ class WebMatchesManagementSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final enableFilters = rows.isNotEmpty;
+    final effectiveOnFilterTap = enableFilters ? onFilterTap : null;
+    final effectiveOnSportsTap = enableFilters ? onSportsTap : null;
+    final effectiveOnDateTap = enableFilters ? onDateTap : null;
+    final effectiveOnLocationTap = enableFilters ? onLocationTap : null;
+
     return MainFrame(
       showDecorationLayer: false,
       child: Padding(
@@ -218,10 +166,10 @@ class WebMatchesManagementSection extends StatelessWidget {
             SizedBox(height: context.h(16)),
             WebMatchesToolbar(
               onSearchChanged: onSearchChanged,
-              onFilterTap: onFilterTap,
-              onSportsTap: onSportsTap,
-              onDateTap: onDateTap,
-              onLocationTap: onLocationTap,
+              onFilterTap: effectiveOnFilterTap,
+              onSportsTap: effectiveOnSportsTap,
+              onDateTap: effectiveOnDateTap,
+              onLocationTap: effectiveOnLocationTap,
             ),
             SizedBox(height: context.h(16)),
             Expanded(

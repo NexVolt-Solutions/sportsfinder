@@ -62,8 +62,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             preffixIcon: Icons.search_rounded,
             controlHeight: context.h(48),
           ),
-        ),   if (widget.isShow)
-        SizedBox(width: context.w(12)),
+        ),
+        if (widget.isShow) SizedBox(width: context.w(12)),
         if (widget.isShow)
           GestureDetector(
             onTap: widget.onFilterTap,

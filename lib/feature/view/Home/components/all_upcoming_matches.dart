@@ -107,6 +107,34 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
     }
   }
 
+  /// Same centered filter dialog as Discover web matches management.
+  void _showWebMatchesFilterDialog(
+    BuildContext context,
+    AllUpcommingMatchesViewModel model,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 520,
+              maxHeight: 640,
+            ),
+            child: FilterBottomSheet(
+              onApply: model.applyFilters,
+              asDialog: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AllUpcommingMatchesViewModel>(
@@ -182,6 +210,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
             title: widget.listTitle ?? 'Matches Management',
             subtitle: '${rows.length} total matches',
             onSearchChanged: model.searchMatches,
+            onFilterTap: () => _showWebMatchesFilterDialog(context, model),
             headerTrailing:
                 model.listScope == UpcomingMatchesScope.myMatches
                     ? FilledButton.icon(
@@ -192,48 +221,9 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         label: const Text('Create Match'),
                       )
                     : null,
-            onSportsTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return FilterBottomSheet(
-                    onApply: (filterData) {
-                      model.applyFilters(filterData);
-                    },
-                  );
-                },
-              );
-            },
-            onDateTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return FilterBottomSheet(
-                    onApply: (filterData) {
-                      model.applyFilters(filterData);
-                    },
-                  );
-                },
-              );
-            },
-            onLocationTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return FilterBottomSheet(
-                    onApply: (filterData) {
-                      model.applyFilters(filterData);
-                    },
-                  );
-                },
-              );
-            },
+            onSportsTap: () => _showWebMatchesFilterDialog(context, model),
+            onDateTap: () => _showWebMatchesFilterDialog(context, model),
+            onLocationTap: () => _showWebMatchesFilterDialog(context, model),
             rows: rows,
             emptyLabel: webEmptyLabel,
             emptyDescription: webEmptyDescription,

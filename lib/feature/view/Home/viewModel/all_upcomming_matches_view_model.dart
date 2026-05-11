@@ -12,29 +12,22 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   final MatchesRepo _repo = MatchesRepo();
   final DeleteMatchRepo _deleteRepo = DeleteMatchRepo();
 
-  // ================= DATA =================
   List<AllMatches> allMatches = [];
   List<AllMatches> matches = [];
 
-  // ================= STATE =================
   bool isLoading = false;
   String? error;
   bool hasFetchedOnce = false;
 
-  // ================= FILTERS =================
   int selectedIndex = 0;
   FilterData? currentFilters;
 
-  /// Last non-empty search query from [searchMatches]; cleared when query is empty.
   String _searchQuery = '';
 
-  /// Exposed for web empty-state copy (search vs “no matches yet”).
   String get lastSearchQuery => _searchQuery;
 
-  /// Matches visible for this tab before applying the search text filter.
   bool get hasAnyMatchesInCurrentScope => _scopedBaseMatches().isNotEmpty;
 
-  /// True when the list is empty because search/filters hid rows, not because there is no data.
   bool get showSearchOrFilterEmptyState {
     if (matches.isNotEmpty) return false;
     if (_searchQuery.isNotEmpty) return true;
@@ -46,12 +39,13 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   UpcomingMatchesScope get listScope => scope;
 
-  // ================= PAGINATION =================
   int page = 1;
   bool hasNext = true;
   bool _isDisposed = false;
 
-  AllUpcommingMatchesViewModel({this.scope = UpcomingMatchesScope.allUpcoming}) {
+  AllUpcommingMatchesViewModel({
+    this.scope = UpcomingMatchesScope.allUpcoming,
+  }) {
     DeletedMatchesService().addListener(_onDeletedMatchesChanged);
     ProfileService().addListener(_onProfileChanged);
   }
@@ -70,7 +64,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     });
   }
 
-  /// Seeds lists from Home (or another screen) so the initial GET is skipped.
   void applyPrefetchedMatches(List<AllMatches> items, {bool? hasNext}) {
     allMatches = List<AllMatches>.from(items);
     _rebuildVisibleMatches();
@@ -82,7 +75,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================= FETCH =================
   Future<void> fetchMatches({bool reset = false}) async {
     try {
       isLoading = true;
@@ -97,14 +89,8 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       }
 
       if (scope == UpcomingMatchesScope.allUpcoming) {
-        final allRes = await _repo.getAllMatches(
-          page: page,
-          type: 'all',
-        );
-        final myRes = await _repo.getAllMatches(
-          page: page,
-          type: 'my',
-        );
+        final allRes = await _repo.getAllMatches(page: page, type: 'all');
+        final myRes = await _repo.getAllMatches(page: page, type: 'my');
         final merged = <String, AllMatches>{};
         for (final m in allRes.items) {
           if (!DeletedMatchesService().isDeleted(m.id)) {
@@ -119,9 +105,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
         allMatches.addAll(merged.values);
         hasNext = allRes.hasNext || myRes.hasNext;
       } else {
-        // Fallback for backends that omit completed/cancelled hosted matches
-        // from `type=my`. We merge current page of `type=my` + `type=all`,
-        // then host-filter in `_scopedBaseMatches()`.
         final myRes = await _repo.getAllMatches(page: page, type: 'my');
         final allRes = await _repo.getAllMatches(page: page, type: 'all');
         final merged = <String, AllMatches>{};
@@ -149,7 +132,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     }
   }
 
-  // ================= SEARCH =================
   void searchMatches(String query) {
     _searchQuery = query.trim();
     if (_searchQuery.isEmpty) {
@@ -167,7 +149,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================= FILTER (SPORT CHIPS) =================
   List<AllMatches> _baseListForChips() {
     final scoped = _scopedBaseMatches();
     if (selectedIndex == 0) return List.from(scoped);
@@ -215,7 +196,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     }).toList();
   }
 
-  // ================= LOAD MORE =================
   Future<void> loadMore() async {
     if (!hasNext || isLoading) return;
 
