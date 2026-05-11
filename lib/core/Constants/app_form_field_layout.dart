@@ -10,26 +10,26 @@ class AppFormFieldLayout {
   static BoxConstraints singleLineConstraints(BuildContext context) =>
       BoxConstraints(minHeight: controlHeight(context));
 
-  static double controlRadius(BuildContext context) => context.radius(8);
+  static double controlRadius(BuildContext context) => context.radius(12);
 
   static BorderRadius borderRadius(BuildContext context) =>
       BorderRadius.circular(controlRadius(context));
 
   static EdgeInsets contentPadding(BuildContext context) {
     return EdgeInsets.fromLTRB(
-      context.w(12),
-      context.h(10),
-      context.w(12),
-      context.h(10),
+      context.w(20),
+      context.h(16),
+      context.w(20),
+      context.h(16),
     );
   }
 
   static EdgeInsets contentPaddingMultiline(BuildContext context) {
     return EdgeInsets.fromLTRB(
-      context.w(12),
-      context.h(14),
-      context.w(12),
-      context.h(14),
+   context.w(20),
+      context.h(16),
+      context.w(20),
+      context.h(16),
     );
   }
 

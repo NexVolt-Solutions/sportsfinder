@@ -100,26 +100,31 @@ class WebQuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: context.padSym(h: 18, v: 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F8FF),
+      child: Card(
+          shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(context.radius(16)),
-          border: Border.all(color: const Color(0xFFD7E7F7)),
+           
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            SizedBox(height: context.h(10)),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: context.appText.text14W500.copyWith(
-                color: context.appColors.onSurface,
+        child: Container(
+          padding: context.padSym(h: 16, v: 16),
+           decoration: BoxDecoration(
+            color: context.appColors.blue10,
+            borderRadius: BorderRadius.circular(context.radius(16)),
+           ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              SizedBox(height: context.h(10)),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: context.appText.text14W500.copyWith(
+                  color: context.appColors.onSurface,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

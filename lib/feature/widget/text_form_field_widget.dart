@@ -66,7 +66,7 @@ class TextFormFieldWidget extends StatelessWidget {
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;  
   final TextInputAction? textInputAction;
-  final IconData? suffixIcon;
+  final IconData? preffixIcon;
   final Widget? customSuffix;
   final Color? fillColor;
   final int maxLines;
@@ -83,7 +83,7 @@ class TextFormFieldWidget extends StatelessWidget {
     this.fillColor,
     this.readOnly = false,
     this.onTap,
-    this.suffixIcon,
+    this.preffixIcon,
     this.customSuffix,
     this.maxLines = 1,
   });
@@ -94,16 +94,20 @@ class TextFormFieldWidget extends StatelessWidget {
 
     return TextFormField(
       controller: controller,
+      
       validator: validator,
       keyboardType: keyboardType ?? TextInputType.text,
       textInputAction: textInputAction,
       readOnly: readOnly,
       onTap: onTap,
+      
       onChanged: onChanged,
       maxLines: maxLines,
       style: context.appText.text14W400.copyWith(color: c.greyDark),
       decoration: InputDecoration(
+        contentPadding: AppFormFieldLayout.contentPadding(context),
         alignLabelWithHint: true,
+        
           
         isDense: maxLines == 1,
         constraints: maxLines == 1
@@ -112,9 +116,9 @@ class TextFormFieldWidget extends StatelessWidget {
         
         errorStyle: AppFormFieldLayout.errorStyle(context),
         errorMaxLines: 2,
-        suffixIconConstraints: BoxConstraints(
-          minWidth: context.w(40),
-          minHeight: context.h(40),
+        prefixIconConstraints: BoxConstraints(
+          minWidth: context.w(54),
+          minHeight: context.h(54),
         ),
         label: label != null
             ? Text(
@@ -125,40 +129,43 @@ class TextFormFieldWidget extends StatelessWidget {
         hintText: hintText,
         hintStyle: context.appText.text14W400.copyWith(color: c.greylight),
         filled: true,
-        fillColor: fillColor ?? c.transparent,
-        suffixIcon:
+        fillColor: fillColor ?? c.blue10,
+    prefixIcon:
             customSuffix ??
-            (suffixIcon != null ? Icon(suffixIcon, color: c.greyDark) : null),
+            (preffixIcon != null ? Icon(preffixIcon, color: c.greyDark) : null),
+
+
+          
         border: OutlineInputBorder(
           borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1.5),
         ),
 
         // ✅ ENABLED
         enabledBorder: OutlineInputBorder(
           borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1.5),
         ),
 
         // ✅ FOCUSED (Primary Color)
         focusedBorder: OutlineInputBorder(
           borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.primary, width: 1),
+          borderSide: BorderSide(color: c.primary, width: 1.5),
         ),
 
         errorBorder: OutlineInputBorder(
           borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.error, width: 1),
+          borderSide: BorderSide(color: c.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.error, width: 1),
+          borderSide: BorderSide(color: c.error, width: 1.5),
         ),
 
         // (Optional) disable white hover issue
         disabledBorder: OutlineInputBorder(
           borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1),
+          borderSide: BorderSide(color: c.greylight, width: 1.5),
         ),
       ),
     );
