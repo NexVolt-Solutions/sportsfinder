@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -136,11 +140,11 @@ class BottomBarMobileNavItem extends StatelessWidget {
             colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
           ),
           SizedBox(height: BottomBarWebMetrics.navItemIconLabelGap),
-          Text(
-            label,
+          NormalText(
+            titleText: label,
+            titleStyle: context.appText.text12W500.copyWith(color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.appText.text12W500.copyWith(color: color),
           ),
         ],
       ),
@@ -169,13 +173,13 @@ class BottomBarWebNavItem extends StatelessWidget {
     final color = isSelected ? c.primary : c.greyDark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+      padding: context.padSym(h: 18, v: 4),
       child: Material(
         color: bg,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           hoverColor: c.primary.withValues(alpha: 0.08),
           splashColor: c.primary.withValues(alpha: 0.12),
           highlightColor: c.primary.withValues(alpha: 0.06),
@@ -392,77 +396,65 @@ class BottomBarWebTopBar extends StatelessWidget {
     final userName = viewModel.userName.trim().isNotEmpty
         ? viewModel.userName.trim()
         : 'User';
-    final email = viewModel.userEmail.trim().isNotEmpty
-        ? viewModel.userEmail.trim()
-        : 'user@sports.com';
     return Container(
       height: BottomBarWebMetrics.webHeaderHeight,
-      padding: const EdgeInsets.only(right: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: c.surface,
+        color: c.surface.withValues(alpha: 0.86),
         border: Border(
-          bottom: BorderSide(color: c.greylight.withValues(alpha: 0.18)),
+          bottom: BorderSide(color: c.greylight.withValues(alpha: 0.10)),
         ),
       ),
       child: Row(
         children: [
-          Container(
-            width: BottomBarWebMetrics.webSidebarWidth,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            decoration: BoxDecoration(
-              border: Border(
-                right: BorderSide(color: c.greylight.withValues(alpha: 0.16)),
+          Row(
+            children: [
+              Image.asset(
+                AppAssets.mainLogo,
+                width: 30,
+                height: 30,
+                fit: BoxFit.contain,
               ),
-            ),
-            child: Row(
-              children: [
-                Image.asset(
-                  AppAssets.mainLogo,
-                  width: 34,
-                  height: 34,
-                  fit: BoxFit.contain,
+              const SizedBox(width: 10),
+              Text(
+                AppText.sportFinding,
+                style: context.appText.text16W600.copyWith(
+                  color: c.onSurface,
+                  letterSpacing: 0.2,
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  AppText.sportFinding,
-                  style: context.appText.text18Bold.copyWith(
-                    color: c.onSurface,
-                    fontSize: 22,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: onNotificationTap,
-            child: Row(
-              children: [
-                AppAvatar(
-                  size: 42,
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onNotificationTap,
+              borderRadius: BorderRadius.circular(12),
+              hoverColor: c.primary.withValues(alpha: 0.06),
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: BottomBarNotificationBell(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+            child: InkWell(
+              onTap: () => viewModel.setSelectedIndex(4),
+              borderRadius: BorderRadius.circular(999),
+              hoverColor: c.primary.withValues(alpha: 0.06),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: AppAvatar(
+                  size: 36,
                   imageUrl: viewModel.userImage,
                   fallbackText: userName,
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userName,
-                      style: context.appText.text14W600.copyWith(
-                        color: c.onSurface,
-                      ),
-                    ),
-                    Text(
-                      email,
-                      style: context.appText.text12W400.copyWith(
-                        color: c.greyDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -484,17 +476,11 @@ class BottomBarWebSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final userName = viewModel.userName.trim().isNotEmpty
-        ? viewModel.userName.trim()
-        : 'User';
-    final email = viewModel.userEmail.trim().isNotEmpty
-        ? viewModel.userEmail.trim()
-        : 'user@sports.com';
-
     return Container(
       width: BottomBarWebMetrics.webSidebarWidth,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: context.padSym(v: 18),
       decoration: BoxDecoration(
+        // borderRadius: BorderRadius.circular(10),
         color: c.surface,
         border: Border(
           right: BorderSide(color: c.greylight.withValues(alpha: 0.16)),
@@ -503,80 +489,8 @@ class BottomBarWebSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFEAF6FF),
-                  c.surface,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFD7E7F7)),
-            ),
-            child: Row(
-              children: [
-                AppAvatar(
-                  size: 42,
-                  imageUrl: viewModel.userImage,
-                  fallbackText: userName,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.appText.text14W600.copyWith(
-                          color: c.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.appText.text12W400.copyWith(
-                          color: c.greyDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Text(
-              'Menu',
-              style: context.appText.text12W600.copyWith(
-                color: c.greyDark,
-                letterSpacing: 0.6,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: c.greylight.withValues(alpha: 0.18)),
-              boxShadow: [
-                BoxShadow(
-                  color: c.blue20.withValues(alpha: 0.35),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
+           ClipRRect(
+            borderRadius: BorderRadius.circular(10),
             child: Column(
               children: [
                 const SizedBox(height: 8),

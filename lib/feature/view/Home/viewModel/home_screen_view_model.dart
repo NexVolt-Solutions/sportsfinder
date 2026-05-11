@@ -25,6 +25,12 @@ class HomeScreenViewModel extends ChangeNotifier {
   }
 
   final MatchesRepo _matchesRepo = MatchesRepo();
+  bool _disposed = false;
+
+  void _safeNotify() {
+    if (_disposed) return;
+    notifyListeners();
+  }
 
   /// Matches from GET /api/v1/matches with [scheduled_at] strictly after now (UTC).
   List<AllMatches> matches = [];
@@ -45,16 +51,17 @@ class HomeScreenViewModel extends ChangeNotifier {
 
   void _onProfileServiceChanged() {
     _resortMatches();
-    notifyListeners();
+    _safeNotify();
   }
 
   void _onDeletedMatchesChanged() {
     matches.removeWhere((m) => DeletedMatchesService().isDeleted(m.id));
-    notifyListeners();
+    _safeNotify();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     ProfileService().removeListener(_onProfileServiceChanged);
     DeletedMatchesService().removeListener(_onDeletedMatchesChanged);
     super.dispose();
@@ -87,14 +94,14 @@ class HomeScreenViewModel extends ChangeNotifier {
       sportsError = e.toString();
       sports = [];
     } finally {
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   Future<void> _loadUpcomingMatches() async {
     matchesLoading = true;
     matchesError = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final allRes = await _matchesRepo.getAllMatches(
@@ -131,7 +138,7 @@ class HomeScreenViewModel extends ChangeNotifier {
       hasMoreUpcoming = false;
     } finally {
       matchesLoading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -161,7 +168,7 @@ class HomeScreenViewModel extends ChangeNotifier {
 
     matches.removeWhere((m) => m.id == trimmedId);
     DeletedMatchesService().markDeleted(trimmedId);
-    notifyListeners();
+    _safeNotify();
   }
 
   ProfileService get profileService => ProfileService();
