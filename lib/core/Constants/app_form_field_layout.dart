@@ -18,18 +18,18 @@ class AppFormFieldLayout {
   static EdgeInsets contentPadding(BuildContext context) {
     return EdgeInsets.fromLTRB(
       context.w(20),
-      context.h(16),
+      context.h(12),
       context.w(20),
-      context.h(16),
+      context.h(12),
     );
   }
 
   static EdgeInsets contentPaddingMultiline(BuildContext context) {
     return EdgeInsets.fromLTRB(
-   context.w(20),
-      context.h(16),
+       context.w(20),
+      context.h(12),
       context.w(20),
-      context.h(16),
+      context.h(12),
     );
   }
 

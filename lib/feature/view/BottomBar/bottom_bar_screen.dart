@@ -104,6 +104,7 @@ class _BottomBarContent extends StatefulWidget {
 
 class _BottomBarContentState extends State<_BottomBarContent> {
   static const int _chatTabIndex = 3;
+  static const double _webToMobileBreakpoint = 980;
   bool _appliedRouteTab = false;
   bool _requestedInitialNotifications = false;
   bool _requestedInitialProfile = false;
@@ -201,29 +202,37 @@ class _BottomBarContentState extends State<_BottomBarContent> {
       body: Consumer<BottomBarScreenViewModel>(
         builder: (context, vm, _) => MainFrame(
           showDecorationLayer: !kIsWeb,
-          child: kIsWeb
-              ? BottomBarWebLayout(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final useMobileChrome = width < _webToMobileBreakpoint;
+
+              final tabStack = BottomBarTabStack(
+                selectedIndex: vm.selectedIndex,
+                children: _tabChildren,
+              );
+
+              if (kIsWeb && !useMobileChrome) {
+                return BottomBarWebLayout(
                   viewModel: vm,
-                  tabStack: BottomBarTabStack(
-                    selectedIndex: vm.selectedIndex,
-                    children: _tabChildren,
-                  ),
+                  tabStack: tabStack,
                   onNotificationTap: () => _handleNotificationTap(context),
                   onLogout: () => logoutFromBottomBar(context),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    BottomBarTopBar(
-                      onNotificationTap: () => _handleNotificationTap(context),
-                    ),
-                    BottomBarTabStack(
-                      selectedIndex: vm.selectedIndex,
-                      children: _tabChildren,
-                    ),
-                    BottomBarBottomNav(viewModel: vm),
-                  ],
-                ),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BottomBarTopBar(
+                    onNotificationTap: () => _handleNotificationTap(context),
+                  ),
+                  tabStack,
+                  BottomBarBottomNav(viewModel: vm),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

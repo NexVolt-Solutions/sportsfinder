@@ -31,8 +31,74 @@ class _WebHomeContentState extends State<WebHomeContent> {
   static const int _previewLimit = 8;
 
   String? _selectedCategory;
+  String _matchQuery = '';
+  late final TextEditingController _searchController = TextEditingController();
+
+  BottomBarScreenViewModel? _bottomBarVm;
 
   HomeScreenViewModel get model => widget.model;
+
+  List<AllMatches> get _filteredMatches {
+    final q = _matchQuery.trim().toLowerCase();
+    if (q.isEmpty) return model.matches;
+    return model.matches.where((m) {
+      return m.title.toLowerCase().contains(q) ||
+          m.sport.toLowerCase().contains(q) ||
+          m.locationName.toLowerCase().contains(q) ||
+          m.location.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  Widget _emptyState({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    final c = context.appColors;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxH = constraints.maxHeight.isFinite ? constraints.maxHeight : 200;
+        final compact = maxH < 140;
+        final iconSize = compact ? 32.0 : 44.0;
+        final gap1 = compact ? 6.0 : 10.0;
+        final gap2 = compact ? 4.0 : 6.0;
+        final titleStyle = (compact
+                ? context.appText.text14W600
+                : context.appText.text16W600)
+            .copyWith(color: c.onSurface);
+        final descStyle =
+            context.appText.text12W400.copyWith(color: c.greyDark, height: 1.25);
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: iconSize, color: c.greylight),
+                SizedBox(height: context.h(gap1)),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: titleStyle,
+                ),
+                SizedBox(height: context.h(gap2)),
+                Text(
+                  description,
+                  maxLines: compact ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: descStyle,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   List<Sport> get _filteredSportsForCatalog {
     if (_selectedCategory == null) return model.sports;
@@ -41,8 +107,20 @@ class _WebHomeContentState extends State<WebHomeContent> {
     }).toList();
   }
 
+  List<Sport> get _searchFilteredSportsForCatalog {
+    final q = _matchQuery.trim().toLowerCase();
+    final base = _filteredSportsForCatalog;
+    if (q.isEmpty) return base;
+    return base.where((sport) {
+      final title = sport.title.toLowerCase();
+      final id = (sport.id ?? '').toLowerCase();
+      final category = (sport.category ?? '').toLowerCase();
+      return title.contains(q) || id.contains(q) || category.contains(q);
+    }).toList();
+  }
+
   List<Sport> get _previewSourceSports {
-    final filtered = _filteredSportsForCatalog;
+    final filtered = _searchFilteredSportsForCatalog;
     filtered.sort((a, b) {
       final ap = a.isPopular == true;
       final bp = b.isPopular == true;
@@ -88,9 +166,43 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
+  void _clearSearch() {
+    if (_matchQuery.isEmpty && _searchController.text.isEmpty) return;
+    setState(() {
+      _matchQuery = '';
+      _searchController.clear();
+    });
+  }
+
+  void _onBottomBarChanged() {
+    final vm = _bottomBarVm;
+    if (vm == null) return;
+    if (!vm.isHomeSelected) {
+      _clearSearch();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final vm = context.read<BottomBarScreenViewModel>();
+    if (!identical(_bottomBarVm, vm)) {
+      _bottomBarVm?.removeListener(_onBottomBarChanged);
+      _bottomBarVm = vm..addListener(_onBottomBarChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _bottomBarVm?.removeListener(_onBottomBarChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final visibleSports = _visibleSports;
+    final visibleMatches = _filteredMatches;
 
     return ListView(
       padding: context.padSym(h: 35, v: 24),
@@ -109,8 +221,12 @@ class _WebHomeContentState extends State<WebHomeContent> {
             ),
           ],
         ),
-        SizedBox(height: context.h(57)),
-        SearchBarWidget(),
+        SizedBox(height: context.h(16)),
+        SearchBarWidget(
+          controller: _searchController,
+          hintText: 'Search matches by title, sport or location...',
+          onChanged: (value) => setState(() => _matchQuery = value),
+        ),
         SizedBox(height: context.h(36)),
         SizedBox(
           height: 106,
@@ -124,6 +240,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   ),
                   title: 'Create Matches',
                   onTap: () {
+                    _clearSearch();
                     Navigator.pushNamed(context, RoutesName.createMatchScreen);
                   },
                 ),
@@ -137,6 +254,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   ),
                   title: 'Find Matches',
                   onTap: () {
+                    _clearSearch();
                     context.read<BottomBarScreenViewModel>().setSelectedIndex(
                       1,
                     );
@@ -156,7 +274,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 RoutesName.allUpComingMatchesScreen,
                 arguments: AllUpcomingMatchesRouteArgs(
                   scope: UpcomingMatchesScope.allUpcoming,
-                  prefetchedMatches: List<AllMatches>.from(model.matches),
+                  prefetchedMatches: List<AllMatches>.from(visibleMatches),
                   hasNext: model.hasMoreUpcoming,
                 ),
               );
@@ -197,13 +315,22 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   },
                   separatorBuilder: (_, _) => SizedBox(width: context.w(12)),
                 )
-              : ListView.separated(
+              : visibleMatches.isEmpty
+                  ? WebDashboardPanel(
+                      child: _emptyState(
+                        icon: Icons.search_off_rounded,
+                        title: 'No matches found',
+                        description:
+                            'Try a different keyword or clear your search to see all upcoming matches.',
+                      ),
+                    )
+                  : ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: model.matches.length > 4
+                  itemCount: visibleMatches.length > 4
                       ? 4
-                      : model.matches.length,
+                      : visibleMatches.length,
                   itemBuilder: (context, index) {
-                    final match = model.matches[index];
+                    final match = visibleMatches[index];
                     return SizedBox(
                       width: context.w(229),
                       child: _WebHomeMatchCard(
@@ -217,7 +344,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                     );
                   },
                   separatorBuilder: (_, _) => SizedBox(width: context.w(12)),
-                ),
+                    ),
         ),
         SizedBox(height: context.h(64)),
         WebDashboardTitle(
@@ -261,48 +388,61 @@ class _WebHomeContentState extends State<WebHomeContent> {
           ),
           SizedBox(height: context.h(14)),
         ],
-        Wrap(
-          spacing: context.w(14),
-          runSpacing: context.h(14),
-          children: [
-            ...visibleSports.map((sport) {
-              return SizedBox(
-                width: context.w(108),
-                height: 108,
-                child: WebDashboardPanel(
-                  padding: context.padSym(h: 12, v: 12),
-                  backgroundColor: const Color(0xFFEAF6FF),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CardIconWidget(
-                        imageAsset: sport.imagePath,
-                        padding: 8,
-                        iconSize: context.w(18),
-                        borderRadius: context.radius(12),
-                      ),
-                      SizedBox(height: context.h(6)),
-                      Text(
-                        sport.title,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.appText.text12W600.copyWith(
-                          color: context.appColors.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            if (_hiddenSportsCount > 0)
-              _ViewMoreSportsCard(
-                count: _hiddenSportsCount,
-                onTap: _openSportsCatalog,
+        if (visibleSports.isEmpty)
+          SizedBox(
+            height: context.h(160),
+            child: WebDashboardPanel(
+              child: _emptyState(
+                icon: Icons.sports_outlined,
+                title: 'No sports found',
+                description:
+                    'Try a different keyword or choose another category to see sports.',
               ),
-          ],
-        ),
+            ),
+          )
+        else
+          Wrap(
+            spacing: context.w(14),
+            runSpacing: context.h(14),
+            children: [
+              ...visibleSports.map((sport) {
+                return SizedBox(
+                  width: context.w(108),
+                  height: 108,
+                  child: WebDashboardPanel(
+                    padding: context.padSym(h: 12, v: 12),
+                    backgroundColor: const Color(0xFFEAF6FF),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CardIconWidget(
+                          imageAsset: sport.imagePath,
+                          padding: 8,
+                          iconSize: context.w(18),
+                          borderRadius: context.radius(12),
+                        ),
+                        SizedBox(height: context.h(6)),
+                        Text(
+                          sport.title,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.appText.text12W600.copyWith(
+                            color: context.appColors.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              if (_hiddenSportsCount > 0)
+                _ViewMoreSportsCard(
+                  count: _hiddenSportsCount,
+                  onTap: _openSportsCatalog,
+                ),
+            ],
+          ),
       ],
     );
   }

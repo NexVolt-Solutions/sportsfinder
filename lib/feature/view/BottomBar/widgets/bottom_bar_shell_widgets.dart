@@ -165,36 +165,56 @@ class BottomBarWebNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final bg = isSelected ? c.primary : Colors.transparent;
-    final color = isSelected ? c.onPrimary : c.greyDark;
+    final bg = isSelected ? c.primary.withValues(alpha: 0.12) : Colors.transparent;
+    final color = isSelected ? c.primary : c.greyDark;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        decoration: BoxDecoration(color: bg),
-        child: Row(
-          children: [
-            SvgPicture.asset(
-              iconPath,
-              width: BottomBarWebMetrics.navIconSize,
-              height: BottomBarWebMetrics.navIconSize,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          hoverColor: c.primary.withValues(alpha: 0.08),
+          splashColor: c.primary.withValues(alpha: 0.12),
+          highlightColor: c.primary.withValues(alpha: 0.06),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  width: 4,
+                  height: isSelected ? 24 : 0,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected ? c.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                SvgPicture.asset(
+                  iconPath,
+                  width: BottomBarWebMetrics.navIconSize,
+                  height: BottomBarWebMetrics.navIconSize,
+                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.appText.text14W600.copyWith(color: color),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.appText.text14W500.copyWith(color: color),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -464,10 +484,16 @@ class BottomBarWebSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final userName = viewModel.userName.trim().isNotEmpty
+        ? viewModel.userName.trim()
+        : 'User';
+    final email = viewModel.userEmail.trim().isNotEmpty
+        ? viewModel.userEmail.trim()
+        : 'user@sports.com';
 
     return Container(
       width: BottomBarWebMetrics.webSidebarWidth,
-      padding: const EdgeInsets.only(top: 44, bottom: 26),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
         color: c.surface,
         border: Border(
@@ -477,56 +503,148 @@ class BottomBarWebSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BottomBarWebNavItem(
-            iconPath: AppAssets.webHomeIcon,
-            label: 'Home',
-            isSelected:
-                viewModel.selectedIndex == BottomBarScreenViewModel.homeIndex,
-            onTap: () =>
-                viewModel.setSelectedIndex(BottomBarScreenViewModel.homeIndex),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFEAF6FF),
+                  c.surface,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFD7E7F7)),
+            ),
+            child: Row(
+              children: [
+                AppAvatar(
+                  size: 42,
+                  imageUrl: viewModel.userImage,
+                  fallbackText: userName,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.appText.text14W600.copyWith(
+                          color: c.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.appText.text12W400.copyWith(
+                          color: c.greyDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 2),
-          BottomBarWebNavItem(
-            iconPath: AppAssets.searchBarIcon,
-            label: 'Discover Matches',
-            isSelected: viewModel.selectedIndex == 1,
-            onTap: () => viewModel.setSelectedIndex(1),
+          const SizedBox(height: 18),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Text(
+              'Menu',
+              style: context.appText.text12W600.copyWith(
+                color: c.greyDark,
+                letterSpacing: 0.6,
+              ),
+            ),
           ),
-          const SizedBox(height: 2),
-          BottomBarWebNavItem(
-            iconPath: AppAssets.matchesIcon,
-            label: 'My Matches',
-            isSelected: viewModel.selectedIndex == 0,
-            onTap: () => viewModel.setSelectedIndex(0),
-          ),
-          const SizedBox(height: 2),
-          BottomBarWebNavItem(
-            iconPath: AppAssets.chatIcon,
-            label: 'Chat',
-            isSelected: viewModel.selectedIndex == 3,
-            onTap: () => viewModel.setSelectedIndex(3),
-          ),
-          const SizedBox(height: 2),
-          BottomBarWebNavItem(
-            iconPath: AppAssets.profileIcon,
-            label: 'Profile',
-            isSelected: viewModel.selectedIndex == 4,
-            onTap: () => viewModel.setSelectedIndex(4),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: c.greylight.withValues(alpha: 0.18)),
+              boxShadow: [
+                BoxShadow(
+                  color: c.blue20.withValues(alpha: 0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                BottomBarWebNavItem(
+                  iconPath: AppAssets.webHomeIcon,
+                  label: 'Home',
+                  isSelected: viewModel.selectedIndex ==
+                      BottomBarScreenViewModel.homeIndex,
+                  onTap: () => viewModel.setSelectedIndex(
+                    BottomBarScreenViewModel.homeIndex,
+                  ),
+                ),
+                BottomBarWebNavItem(
+                  iconPath: AppAssets.searchBarIcon,
+                  label: 'Discover Matches',
+                  isSelected: viewModel.selectedIndex == 1,
+                  onTap: () => viewModel.setSelectedIndex(1),
+                ),
+                BottomBarWebNavItem(
+                  iconPath: AppAssets.matchesIcon,
+                  label: 'My Matches',
+                  isSelected: viewModel.selectedIndex == 0,
+                  onTap: () => viewModel.setSelectedIndex(0),
+                ),
+                BottomBarWebNavItem(
+                  iconPath: AppAssets.chatIcon,
+                  label: 'Chat',
+                  isSelected: viewModel.selectedIndex == 3,
+                  onTap: () => viewModel.setSelectedIndex(3),
+                ),
+                BottomBarWebNavItem(
+                  iconPath: AppAssets.profileIcon,
+                  label: 'Profile',
+                  isSelected: viewModel.selectedIndex == 4,
+                  onTap: () => viewModel.setSelectedIndex(4),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: onLogout,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
-              child: Row(
-                children: [
-                  Icon(Icons.logout_rounded, size: 20, color: c.error),
-                  const SizedBox(width: 12),
-                  Text(
-                    AppText.logout,
-                    style: context.appText.text16W600.copyWith(color: c.error),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: onLogout,
+                borderRadius: BorderRadius.circular(16),
+                hoverColor: c.error.withValues(alpha: 0.06),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout_rounded, size: 20, color: c.error),
+                      const SizedBox(width: 12),
+                      Text(
+                        AppText.logout,
+                        style: context.appText.text14W600.copyWith(
+                          color: c.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
