@@ -1,3 +1,5 @@
+// ignore_for_file: use_null_aware_elements
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -76,7 +78,9 @@ class RealtimeChatMessage {
       thumbnailUrl: (json['thumbnail_url'] ?? json['thumb_url'])?.toString(),
       mimeType: (json['mime_type'] ?? json['mime'])?.toString(),
       fileName: (json['file_name'] ?? json['filename'])?.toString(),
-      sizeBytes: json['size_bytes'] is num ? (json['size_bytes'] as num).toInt() : null,
+      sizeBytes: json['size_bytes'] is num
+          ? (json['size_bytes'] as num).toInt()
+          : null,
       isDeleted: isDeleted,
       deletedAt: DateTime.tryParse('${json['deleted_at'] ?? ''}'),
       deletedScope: (json['deleted_scope'] ?? json['scope'])?.toString(),
@@ -209,10 +213,9 @@ class MatchChatService {
     );
 
     debugPrint('[MatchChatService] [WS] connecting path=$_chatPath');
-    _channel = _wsConnector(
-      uri,
-      <String, dynamic>{HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
-    );
+    _channel = _wsConnector(uri, <String, dynamic>{
+      HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+    });
     _channelSub = _channel!.stream.listen(
       (dynamic data) {
         if (data is! String) return;

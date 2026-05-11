@@ -139,7 +139,6 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    final t = context.appText;
     final hasQuery = _searchController.text.trim().isNotEmpty;
     final query = _searchController.text;
 

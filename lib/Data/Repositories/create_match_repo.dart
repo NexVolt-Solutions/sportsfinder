@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:sport_finding/Data/model/create_match_request_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 

@@ -45,7 +45,7 @@ class WebHomeContent extends StatelessWidget {
           ],
         ),
         SizedBox(height: context.h(30)),
-        SearchBarWidget(isShow: false),
+        SearchBarWidget(),
         SizedBox(height: context.h(28)),
         SizedBox(
           height: 106,

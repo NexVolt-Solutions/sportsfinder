@@ -16,7 +16,6 @@ import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/drop_down_from_field_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/match_duration_picker_sheet.dart';
 import 'package:sport_finding/feature/widget/max_players_stepper_field.dart';
@@ -362,15 +361,14 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           title: AppText.createMatch,
                         ),
                         SizedBox(height: context.h(8)),
-                         WebDashboardTitle(
-                                title: isEditMode
-                                    ? AppText.editMatch
-                                    : AppText.createMatch,
-                                subtitle: isEditMode
-                                    ? 'Update match details'
-                                    : 'Add new match details',
-                              )
-                           
+                        WebDashboardTitle(
+                          title: isEditMode
+                              ? AppText.editMatch
+                              : AppText.createMatch,
+                          subtitle: isEditMode
+                              ? 'Update match details'
+                              : 'Add new match details',
+                        ),
                       ],
                     );
                   },
@@ -439,7 +437,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                 Selector<CreateMatchViewModel, (bool, String?)>(
+                                Selector<CreateMatchViewModel, (bool, String?)>(
                                   selector: (_, m) =>
                                       (m.optionsLoading, m.optionsError),
                                   builder: (context, state, _) {
@@ -488,8 +486,10 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                                         .addPostFrameCallback((
                                                           _,
                                                         ) {
-                                                          if (!context.mounted)
+                                                          if (!context
+                                                              .mounted) {
                                                             return;
+                                                          }
                                                           _applyRouteAfterOptions(
                                                             m,
                                                           );
@@ -767,7 +767,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                             .read<CreateMatchViewModel>();
                                         if (vm.isLoading) return;
                                         final success = await vm.submitMatch();
-                                            
+
                                         if (!context.mounted) return;
                                         if (success) {
                                           if (vm.isEditMode) {

@@ -40,9 +40,7 @@
 //     );
 //   }
 // }
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
@@ -72,7 +70,6 @@ class CardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
- 
     return GestureDetector(
       onTap: onTap,
       behavior: onTap != null
@@ -80,16 +77,15 @@ class CardWidget extends StatelessWidget {
           : HitTestBehavior.deferToChild,
       child: Card(
         child: Container(
-          padding:
-              padding ?? context.padSym(h: 16, v: 16),
+          padding: padding ?? context.padSym(h: 16, v: 16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [context.appColors.blue10, context.appColors.blue20],
             ),
-            borderRadius: BorderRadius.circular(context.radius( 12)),
-           ),
+            borderRadius: BorderRadius.circular(context.radius(12)),
+          ),
           child: child ?? const SizedBox(),
         ),
       ),

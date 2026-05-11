@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+
 import 'dart:async';
 import 'dart:html' as html;
 import 'dart:js';
@@ -108,7 +110,11 @@ class GooglePlacesWebBridge {
   ) async {
     final completer = Completer<PlacesSearchResult>();
     final request = JsObject.jsify(<String, Object>{'input': query});
-    final callback = JsFunction.withThis((_, dynamic predictions, dynamic status) {
+    final callback = JsFunction.withThis((
+      _,
+      dynamic predictions,
+      dynamic status,
+    ) {
       final statusText = (status ?? '').toString();
       if (statusText == 'OK') {
         final items = <String>[];

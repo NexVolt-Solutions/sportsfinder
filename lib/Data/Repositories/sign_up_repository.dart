@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
