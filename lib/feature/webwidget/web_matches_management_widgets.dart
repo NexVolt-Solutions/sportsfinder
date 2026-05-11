@@ -145,11 +145,12 @@ class WebMatchesManagementSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enableFilters = rows.isNotEmpty;
-    final effectiveOnFilterTap = enableFilters ? onFilterTap : null;
-    final effectiveOnSportsTap = enableFilters ? onSportsTap : null;
-    final effectiveOnDateTap = enableFilters ? onDateTap : null;
-    final effectiveOnLocationTap = enableFilters ? onLocationTap : null;
+    // Keep filter access even when the current list is empty after filtering.
+    // Parent screens can still disable by passing null callbacks.
+    final effectiveOnFilterTap = onFilterTap;
+    final effectiveOnSportsTap = onSportsTap;
+    final effectiveOnDateTap = onDateTap;
+    final effectiveOnLocationTap = onLocationTap;
 
     return MainFrame(
       showDecorationLayer: false,

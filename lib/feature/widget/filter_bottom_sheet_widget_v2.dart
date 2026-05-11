@@ -19,15 +19,17 @@ class FilterBottomSheet extends StatelessWidget {
     super.key,
     required this.onApply,
     this.asDialog = false,
+    this.initial,
   });
 
   final Function(FilterData) onApply;
   final bool asDialog;
+  final FilterData? initial;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => FilterBottomSheetViewModel(),
+      create: (_) => FilterBottomSheetViewModel(initial: initial),
       child: _FilterBottomSheetBody(onApply: onApply, asDialog: asDialog),
     );
   }
@@ -427,6 +429,9 @@ class _FilterBottomSheetBodyState extends State<_FilterBottomSheetBody> {
                                 ),
                               ),
                               onPressed: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Reset pressed → ${vm.buildFilterData()}',
+                                );
                                 vm.reset();
                                 onApply(vm.buildFilterData());
                                 Navigator.pop(context);
@@ -447,6 +452,9 @@ class _FilterBottomSheetBodyState extends State<_FilterBottomSheetBody> {
                               color: context.appColors.primary,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               onTap: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Apply tapped → ${vm.buildFilterData()}',
+                                );
                                 onApply(vm.buildFilterData());
                                 Navigator.pop(context);
                               },
@@ -459,6 +467,9 @@ class _FilterBottomSheetBodyState extends State<_FilterBottomSheetBody> {
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Reset tapped → ${vm.buildFilterData()}',
+                                );
                                 vm.reset();
                                 onApply(vm.buildFilterData());
                                 Navigator.pop(context);
@@ -495,6 +506,9 @@ class _FilterBottomSheetBodyState extends State<_FilterBottomSheetBody> {
                               color: context.appColors.primary,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               onTap: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Apply tapped → ${vm.buildFilterData()}',
+                                );
                                 onApply(vm.buildFilterData());
                                 Navigator.pop(context);
                               },

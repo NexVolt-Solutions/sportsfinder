@@ -149,6 +149,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         hostMatchesPlayed: match.hostMatchesPlayed,
         latitude: result.latitude ?? match.latitude,
         longitude: result.longitude ?? match.longitude,
+        durationMinutes: result.durationMinutes ?? match.durationMinutes,
       );
 
       debugPrint(

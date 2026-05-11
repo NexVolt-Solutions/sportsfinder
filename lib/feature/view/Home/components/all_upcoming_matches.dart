@@ -128,6 +128,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
             child: FilterBottomSheet(
               onApply: model.applyFilters,
               asDialog: true,
+              initial: model.currentFilters,
             ),
           ),
         );
@@ -259,6 +260,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         onApply: (filterData) {
                           model.applyFilters(filterData);
                         },
+                        initial: model.currentFilters,
                       );
                     },
                   );

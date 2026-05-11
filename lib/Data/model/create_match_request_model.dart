@@ -140,6 +140,7 @@ class MatchModel {
       hostMatchesPlayed: 0, // Will be resolved dynamically
       latitude: latitude,
       longitude: longitude,
+      durationMinutes: durationMinutes ?? 60,
     );
   }
 }

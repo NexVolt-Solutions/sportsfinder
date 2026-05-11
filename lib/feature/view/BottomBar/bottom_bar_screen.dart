@@ -193,22 +193,8 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: Consumer<BottomBarScreenViewModel>(
-        builder: (context, vm, _) {
-          if (vm.selectedIndex != _chatTabIndex) return const SizedBox.shrink();
-          return Padding(
-            padding: context.paddingOnly(bottom: 65),
-            child: FloatingActionButton(
-              elevation: 2,
-              onPressed: () => _pickAndOpenUserForChat(context),
-              backgroundColor: Theme.of(context).primaryColor,
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          );
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: Consumer<BottomBarScreenViewModel>(
+     
+       body: Consumer<BottomBarScreenViewModel>(
         builder: (context, vm, _) => MainFrame(
           showDecorationLayer: !kIsWeb,
           child: LayoutBuilder(

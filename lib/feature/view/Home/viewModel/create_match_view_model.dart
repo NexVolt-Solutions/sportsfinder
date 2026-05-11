@@ -196,6 +196,7 @@ class CreateMatchViewModel extends ChangeNotifier {
         skillValueForMatchDropdown(match.skillLevel, skillLevels);
     selectedSportType = fromMatchSport;
     selectedSkillLevel = fromMatchSkill;
+    duration = match.durationMinutes > 0 ? match.durationMinutes : 60;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     final dt = match.matchScheduledStart;

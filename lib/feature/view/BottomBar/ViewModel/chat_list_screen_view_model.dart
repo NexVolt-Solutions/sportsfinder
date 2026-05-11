@@ -160,7 +160,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
     String? avatarUrl,
     String? lastMessage,
     DateTime? lastAt,
-    int unreadCount = 0,
+    int? unreadCount,
     bool isOnline = true,
   }) {
     final trimmedName = userName.trim();
@@ -178,6 +178,9 @@ class ChatListScreenViewModel extends ChangeNotifier {
       }
       return t.userName.toLowerCase() == trimmedName.toLowerCase();
     });
+    final existingUnread = idx < 0 ? 0 : _globalThreads[idx].unreadCount;
+    final resolvedUnread = unreadCount ?? existingUnread;
+
     if (idx < 0) {
       _globalThreads.insert(
         0,
@@ -188,7 +191,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
           lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
           lastTime: formattedTime,
           lastAtIso: lastAtIso,
-          unreadCount: unreadCount,
+          unreadCount: resolvedUnread,
           isOnline: isOnline,
         ),
       );
@@ -200,7 +203,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
         lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
         lastTime: formattedTime,
         lastAtIso: lastAtIso,
-        unreadCount: unreadCount,
+        unreadCount: resolvedUnread,
         isOnline: isOnline,
       );
       _globalThreads
@@ -210,6 +213,52 @@ class ChatListScreenViewModel extends ChangeNotifier {
     debugPrint(
       '[ChatListVM] upsertThread user=$trimmedName targetUserId=$trimmedTargetUserId total=${_globalThreads.length}',
     );
+    _persistThreads();
+    _notifyAllListeners();
+  }
+
+  static void incrementUnread({
+    required String userName,
+    String? targetUserId,
+    String? avatarUrl,
+    String? lastMessage,
+    DateTime? lastAt,
+  }) {
+    final trimmedTargetUserId = (targetUserId ?? '').trim();
+    final idx = _globalThreads.indexWhere((t) {
+      if (trimmedTargetUserId.isNotEmpty) {
+        return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
+      }
+      return t.userName.trim().toLowerCase() == userName.trim().toLowerCase();
+    });
+    final next = (idx >= 0 ? _globalThreads[idx].unreadCount : 0) + 1;
+    upsertThread(
+      userName: userName,
+      targetUserId: targetUserId,
+      avatarUrl: avatarUrl,
+      lastMessage: lastMessage,
+      lastAt: lastAt,
+      unreadCount: next,
+    );
+  }
+
+  static void markRead({
+    required String userName,
+    String? targetUserId,
+  }) {
+    final trimmedTargetUserId = (targetUserId ?? '').trim();
+    final idx = _globalThreads.indexWhere((t) {
+      if (trimmedTargetUserId.isNotEmpty) {
+        return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
+      }
+      return t.userName.trim().toLowerCase() == userName.trim().toLowerCase();
+    });
+    if (idx < 0) return;
+    if (_globalThreads[idx].unreadCount == 0) return;
+    final updated = _globalThreads[idx].copyWith(unreadCount: 0);
+    _globalThreads
+      ..removeAt(idx)
+      ..insert(idx, updated);
     _persistThreads();
     _notifyAllListeners();
   }

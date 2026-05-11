@@ -160,6 +160,7 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
                       child: FilterBottomSheet(
                         onApply: model.applyFilters,
                         asDialog: true,
+                        initial: model.currentFilters,
                       ),
                     ),
                   );
@@ -172,7 +173,10 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (context) {
-                  return FilterBottomSheet(onApply: model.applyFilters);
+                  return FilterBottomSheet(
+                    onApply: model.applyFilters,
+                    initial: model.currentFilters,
+                  );
                 },
               );
             },
@@ -182,7 +186,10 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (context) {
-                  return FilterBottomSheet(onApply: model.applyFilters);
+                  return FilterBottomSheet(
+                    onApply: model.applyFilters,
+                    initial: model.currentFilters,
+                  );
                 },
               );
             },
@@ -192,7 +199,10 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (context) {
-                  return FilterBottomSheet(onApply: model.applyFilters);
+                  return FilterBottomSheet(
+                    onApply: model.applyFilters,
+                    initial: model.currentFilters,
+                  );
                 },
               );
             },
@@ -237,7 +247,10 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (context) {
-                      return FilterBottomSheet(onApply: model.applyFilters);
+                      return FilterBottomSheet(
+                        onApply: model.applyFilters,
+                        initial: model.currentFilters,
+                      );
                     },
                   );
                 },

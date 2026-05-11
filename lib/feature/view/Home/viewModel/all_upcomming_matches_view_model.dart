@@ -5,7 +5,9 @@ import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
 import 'package:sport_finding/core/Network/deleted_matches_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
+import 'package:sport_finding/core/utils/geo_distance.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
@@ -31,7 +33,11 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   bool get showSearchOrFilterEmptyState {
     if (matches.isNotEmpty) return false;
     if (_searchQuery.isNotEmpty) return true;
-    if (hasAnyMatchesInCurrentScope && currentFilters != null) return true;
+    if (hasAnyMatchesInCurrentScope &&
+        currentFilters != null &&
+        !currentFilters!.isEffectivelyEmpty) {
+      return true;
+    }
     return false;
   }
 
@@ -42,6 +48,16 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   int page = 1;
   bool hasNext = true;
   bool _isDisposed = false;
+
+  double? _viewerLat;
+  double? _viewerLng;
+
+  Future<void> _refreshViewerLocation() async {
+    final loc = await AppPreferences.getCurrentLocation();
+    if (_isDisposed) return;
+    _viewerLat = loc?.$1;
+    _viewerLng = loc?.$2;
+  }
 
   AllUpcommingMatchesViewModel({
     this.scope = UpcomingMatchesScope.allUpcoming,
@@ -66,12 +82,20 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void applyPrefetchedMatches(List<AllMatches> items, {bool? hasNext}) {
     allMatches = List<AllMatches>.from(items);
-    _rebuildVisibleMatches();
     page = 1;
     this.hasNext = hasNext ?? items.length >= 20;
     isLoading = false;
     hasFetchedOnce = true;
     error = null;
+    _rebuildVisibleMatches();
+    notifyListeners();
+    _prefetchViewerLocationAndRebuild();
+  }
+
+  Future<void> _prefetchViewerLocationAndRebuild() async {
+    await _refreshViewerLocation();
+    if (_isDisposed) return;
+    _rebuildVisibleMatches();
     notifyListeners();
   }
 
@@ -80,6 +104,8 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       isLoading = true;
       error = null;
       notifyListeners();
+
+      await _refreshViewerLocation();
 
       if (reset) {
         page = 1;
@@ -134,18 +160,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void searchMatches(String query) {
     _searchQuery = query.trim();
-    if (_searchQuery.isEmpty) {
-      _rebuildVisibleMatches();
-    } else {
-      final q = _searchQuery.toLowerCase();
-
-      matches = _scopedBaseMatches().where((m) {
-        return m.title.toLowerCase().contains(q) ||
-            m.sport.toLowerCase().contains(q) ||
-            m.locationName.toLowerCase().contains(q);
-      }).toList();
-    }
-
+    _rebuildVisibleMatches();
     notifyListeners();
   }
 
@@ -166,33 +181,99 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void filterMatches(int index) {
     selectedIndex = index;
-
-    final base = _baseListForChips();
-
-    matches = currentFilters != null ? _applyFilters(base) : List.from(base);
-
+    _rebuildVisibleMatches();
     notifyListeners();
   }
 
   // ================= APPLY FILTER SHEET =================
   void applyFilters(FilterData filterData) {
-    currentFilters = filterData;
+    final before = matches.length;
+    final scoped = _scopedBaseMatches().length;
+    debugPrint(
+      '🎛️ [AllUpcomingVM] applyFilters called (scoped=$scoped, visibleBefore=$before) '
+      'filters={sport:${filterData.sportName}, skill:${filterData.skillLevel}, '
+      'date:${filterData.date}, time:${filterData.time}, distance:${filterData.distance}} '
+      'viewer=(${_viewerLat?.toStringAsFixed(5)},${_viewerLng?.toStringAsFixed(5)})',
+    );
 
-    final base = _baseListForChips();
-
-    matches = _applyFilters(base);
-
+    currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
+    _rebuildVisibleMatches();
+    debugPrint(
+      '🎛️ [AllUpcomingVM] applyFilters done (visibleAfter=${matches.length}, currentFiltersNull=${currentFilters == null})',
+    );
     notifyListeners();
   }
 
-  List<AllMatches> _applyFilters(List<AllMatches> input) {
+  List<AllMatches> _applySearchTo(List<AllMatches> input) {
+    if (_searchQuery.isEmpty) return List<AllMatches>.from(input);
+    final q = _searchQuery.toLowerCase();
     return input.where((m) {
-      final matchSkill = m.skillLevel.toLowerCase();
-      final filterSkill = currentFilters?.skillLevel?.toLowerCase();
+      return m.title.toLowerCase().contains(q) ||
+          m.sport.toLowerCase().contains(q) ||
+          m.locationName.toLowerCase().contains(q) ||
+          m.location.toLowerCase().contains(q);
+    }).toList();
+  }
 
-      final skillOk = filterSkill == null || matchSkill == filterSkill;
+  /// Same criteria as [applyFilterDataToMatches] for [DiscoveryMatch], but for [AllMatches].
+  List<AllMatches> _applyFilters(List<AllMatches> input) {
+    final f = currentFilters;
+    if (f == null || f.isEffectivelyEmpty) {
+      return List<AllMatches>.from(input);
+    }
 
-      return skillOk;
+    return input.where((m) {
+      final sport = f.sportName?.trim();
+      if (sport != null && sport.isNotEmpty) {
+        if (m.sport.trim().toLowerCase() != sport.toLowerCase()) return false;
+      }
+
+      final skill = f.skillLevel?.trim();
+      if (skill != null && skill.isNotEmpty) {
+        if (m.skillLevel.trim().toLowerCase() != skill.toLowerCase()) {
+          return false;
+        }
+      }
+
+      if (f.distance < kMaxFilterDistanceKm - 0.5) {
+        final dk = m.distanceKm;
+        double? effectiveKm = dk;
+        if (effectiveKm == null &&
+            _viewerLat != null &&
+            _viewerLng != null &&
+            m.latitude != null &&
+            m.longitude != null) {
+          effectiveKm = haversineDistanceKm(
+            _viewerLat!,
+            _viewerLng!,
+            m.latitude!,
+            m.longitude!,
+          );
+        }
+        if (effectiveKm != null && effectiveKm > f.distance) return false;
+      }
+
+      if (f.date != null) {
+        final d = f.date!;
+        final start = m.scheduledStartUtc?.toLocal();
+        if (start != null) {
+          if (start.year != d.year ||
+              start.month != d.month ||
+              start.day != d.day) {
+            return false;
+          }
+        }
+      }
+
+      if (f.time != null) {
+        final t = f.time!;
+        final start = m.scheduledStartUtc?.toLocal();
+        if (start != null) {
+          if (start.hour != t.hour || start.minute != t.minute) return false;
+        }
+      }
+
+      return true;
     }).toList();
   }
 
@@ -202,6 +283,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     try {
       isLoading = true;
       notifyListeners();
+      await _refreshViewerLocation();
       page++;
 
       if (scope == UpcomingMatchesScope.allUpcoming) {
@@ -303,7 +385,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void _rebuildVisibleMatches() {
     final base = _baseListForChips();
-    matches = currentFilters != null ? _applyFilters(base) : List.from(base);
+    matches = _applySearchTo(_applyFilters(base));
   }
 
   void _dedupeAllMatchesById() {

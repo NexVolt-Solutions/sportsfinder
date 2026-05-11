@@ -146,6 +146,7 @@ class EditMatchViewModel extends ChangeNotifier {
     );
     selectedSportType = fromMatchSport ?? profileDefaults?.sport;
     selectedSkillLevel = fromMatchSkill ?? profileDefaults?.skill;
+    duration = match.durationMinutes > 0 ? match.durationMinutes : 60;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     debugPrint('📋 [EditMatchViewModel] Populated from DiscoveryMatch:');

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
+import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
+import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
 class WebChatMessageItem {
   const WebChatMessageItem({
@@ -45,7 +45,7 @@ class WebChatMessageItem {
   }
 }
 
-class WebChatContent extends StatelessWidget {
+class WebChatContent extends StatefulWidget {
   const WebChatContent({
     super.key,
     required this.model,
@@ -58,6 +58,8 @@ class WebChatContent extends StatelessWidget {
     required this.onClearChat,
     required this.onDeleteChat,
     required this.activeMessages,
+    required this.showUnreadOnly,
+    required this.onUnreadToggle,
     this.searchController,
     this.onSearchChanged,
     this.searchQuery = '',
@@ -73,12 +75,70 @@ class WebChatContent extends StatelessWidget {
   final VoidCallback onClearChat;
   final VoidCallback onDeleteChat;
   final List<WebChatMessageItem> activeMessages;
+  final bool showUnreadOnly;
+  final ValueChanged<bool> onUnreadToggle;
   final TextEditingController? searchController;
   final ValueChanged<String>? onSearchChanged;
   final String searchQuery;
 
   @override
+  State<WebChatContent> createState() => _WebChatContentState();
+}
+
+class _WebChatContentState extends State<WebChatContent> {
+  final ScrollController _messagesScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _messagesScrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom({bool animated = true}) {
+    if (!_messagesScrollController.hasClients) return;
+    final max = _messagesScrollController.position.maxScrollExtent;
+    if (animated) {
+      _messagesScrollController.animateTo(
+        max,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _messagesScrollController.jumpTo(max);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant WebChatContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final threadChanged = oldWidget.selectedThreadIndex != widget.selectedThreadIndex;
+    final messagesChanged = oldWidget.activeMessages.length != widget.activeMessages.length;
+
+    if (threadChanged || messagesChanged) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom(animated: false);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final model = widget.model;
+    final threads = widget.threads;
+    final selectedThreadIndex = widget.selectedThreadIndex;
+    final messageController = widget.messageController;
+    final onThreadSelected = widget.onThreadSelected;
+    final onPickUser = widget.onPickUser;
+    final onClearChat = widget.onClearChat;
+    final onDeleteChat = widget.onDeleteChat;
+    final activeMessages = widget.activeMessages;
+    final showUnreadOnly = widget.showUnreadOnly;
+    final onUnreadToggle = widget.onUnreadToggle;
+    final searchController = widget.searchController;
+    final onSearchChanged = widget.onSearchChanged;
+    final searchQuery = widget.searchQuery;
+
     final hasThreads = threads.isNotEmpty;
     final normalizedQuery = searchQuery.trim();
     final isFiltering = normalizedQuery.isNotEmpty;
@@ -87,8 +147,8 @@ class WebChatContent extends StatelessWidget {
     final safeSelected =
         hasThreads &&
             selectedThreadIndex != null &&
-            selectedThreadIndex! >= 0 &&
-            selectedThreadIndex! < threads.length
+            selectedThreadIndex >= 0 &&
+            selectedThreadIndex < threads.length
         ? selectedThreadIndex
         : null;
     final activeThread = safeSelected == null
@@ -97,20 +157,25 @@ class WebChatContent extends StatelessWidget {
 
     return MainFrame(
       showDecorationLayer: false,
-      child: Padding(
-        padding: context.padSym(h: 20, v: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const WebDashboardTitle(
-              title: 'Chat',
-              subtitle: 'Start messaging now',
-            ),
-            SizedBox(height: context.h(16)),
-            Expanded(
-              child: (hasThreads || showNoMatches)
-                  ? Row(
-                      children: [
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final messageMaxWidth =
+              (constraints.maxWidth * 0.52).clamp(280.0, 520.0);
+          return Padding(
+            padding: context.padSym(h: 20, v: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const WebDashboardTitle(
+                  title: 'Chat',
+                  subtitle: 'Start messaging now',
+                ),
+                SizedBox(height: context.h(16)),
+                Expanded(
+                  // Always keep the two-pane layout, even when empty,
+                  // so the UI stays consistent with the web design.
+                  child: Row(
+                    children: [
                         Expanded(
                           flex: 10,
                           child: Column(
@@ -120,7 +185,8 @@ class WebChatContent extends StatelessWidget {
                                   SearchBarWidget(
                                     isShow: false,
                                     controller: searchController,
-                                    hintText: 'Search chats...',
+                                    // Search only filters the user list (threads).
+                                    hintText: 'Start a new chat now...',
                                     onChanged: onSearchChanged,
                                   ),
                                   SizedBox(height: context.h(10)),
@@ -128,12 +194,17 @@ class WebChatContent extends StatelessWidget {
                                   if (!showNoMatches)
                                     Row(
                                       children: [
-                                        const WebFilterChip(
+                                        WebFilterChip(
                                           label: 'All',
-                                          selected: true,
+                                          selected: !showUnreadOnly,
+                                          onTap: () => onUnreadToggle(false),
                                         ),
                                         SizedBox(width: context.w(6)),
-                                        const WebFilterChip(label: 'Unread'),
+                                        WebFilterChip(
+                                          label: 'Unread',
+                                          selected: showUnreadOnly,
+                                          onTap: () => onUnreadToggle(true),
+                                        ),
                                         SizedBox(width: context.w(6)),
                                       ],
                                     ),
@@ -141,133 +212,259 @@ class WebChatContent extends StatelessWidget {
                               ),
                               SizedBox(height: context.h(10)),
                               Expanded(
-                                child: Container(
-                                  padding: context.padSym(h: 12, v: 12),
-                                  decoration: BoxDecoration(
-                                    color: context.appColors.blue10,
-                                    borderRadius: BorderRadius.circular(
-                                      context.radius(12),
-                                    ),
-                                    border: Border.all(
-                                      color: context.appColors.primary,
-
-                                      width: 0.1,
-                                    ),
-                                  ),
-                                  child: showNoMatches
-                                      ? Center(
-                                          child: Text(
-                                            'No data found',
-                                            style: context.appText.text14W400
-                                                .copyWith(
-                                              color: context.appColors.greylight,
-                                            ),
-                                          ),
-                                        )
-                                      : ListView.separated(
-                                          itemCount: threads.length,
-                                          separatorBuilder: (_, _) =>
-                                              SizedBox(height: context.h(8)),
-                                          itemBuilder: (context, index) {
-                                            final thread = threads[index];
-                                            final isSelected =
-                                                index == safeSelected;
-                                            return InkWell(
-                                              onTap: () =>
-                                                  onThreadSelected(index),
-                                              child: Container(
-                                                padding: context.padSym(
-                                                  h: 10,
-                                                  v: 10,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: isSelected
-                                                      ? context.appColors.white
-                                                      : Colors.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                    context.radius(12),
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    AppAvatar(
-                                                      size: context.w(34),
-                                                      fallbackText:
-                                                          thread.userName,
-                                                      imageUrl: (thread.avatarUrl ??
-                                                                  '')
-                                                              .trim()
-                                                              .isEmpty
-                                                          ? null
-                                                          : thread.avatarUrl!
-                                                              .trim(),
-                                                      backgroundColor: context
-                                                          .appColors.white,
-                                                      iconColor: context
-                                                          .appColors.primary,
-                                                    ),
-                                                    SizedBox(
-                                                      width: context.w(10),
-                                                    ),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            thread.userName,
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: context
-                                                                .appText
-                                                                .text14W500,
-                                                          ),
-                                                          SizedBox(
-                                                            height:
-                                                                context.h(2),
-                                                          ),
-                                                          Text(
-                                                            thread.lastMessage,
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: context
-                                                                .appText
-                                                                .text12W400
-                                                                .copyWith(
-                                                                  color: context
-                                                                      .appColors
-                                                                      .greyDark,
-                                                                ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      width: context.w(6),
-                                                    ),
-                                                    Text(
-                                                      thread.lastTime,
-                                                      style: context
-                                                          .appText
-                                                          .text12W400
-                                                          .copyWith(
-                                                            color: context
-                                                                .appColors
-                                                                .greylight,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
-                                          },
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      padding: context.padSym(h: 12, v: 12),
+                                      decoration: BoxDecoration(
+                                        color: context.appColors.blue10,
+                                        borderRadius: BorderRadius.circular(
+                                          context.radius(12),
                                         ),
+                                        border: Border.all(
+                                          color: context.appColors.greylight
+                                              .withValues(alpha: 0.45),
+                                          width: 1,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: context.appColors.greyDark
+                                                .withValues(alpha: 0.06),
+                                            blurRadius: 18,
+                                            offset: const Offset(0, 10),
+                                          ),
+                                        ],
+                                      ),
+                                      child: showNoMatches
+                                          ? Center(
+                                              child: Text(
+                                                'No data found',
+                                                style: context
+                                                    .appText
+                                                    .text14W400
+                                                    .copyWith(
+                                                      color: context
+                                                          .appColors.greylight,
+                                                    ),
+                                              ),
+                                            )
+                                          : (threads.isEmpty
+                                              ? Center(
+                                                  child: Text(
+                                                    'No chats yet',
+                                                    style: context
+                                                        .appText
+                                                        .text14W400
+                                                        .copyWith(
+                                                          color: context
+                                                              .appColors
+                                                              .greylight,
+                                                        ),
+                                                  ),
+                                                )
+                                              : ListView.separated(
+                                                  itemCount: threads.length,
+                                                  separatorBuilder: (_, _) =>
+                                                      SizedBox(
+                                                    height: context.h(8),
+                                                  ),
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final thread =
+                                                        threads[index];
+                                                    final isSelected =
+                                                        index == safeSelected;
+                                                    return InkWell(
+                                                      onTap: () =>
+                                                          onThreadSelected(
+                                                        index,
+                                                      ),
+                                                      child: Container(
+                                                        padding:
+                                                            context.padSym(
+                                                          h: 10,
+                                                          v: 10,
+                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: isSelected
+                                                              ? context
+                                                                  .appColors
+                                                                  .white
+                                                              : Colors
+                                                                  .transparent,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                            context.radius(
+                                                              12,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            AppAvatar(
+                                                              size:
+                                                                  context.w(34),
+                                                              fallbackText:
+                                                                  thread
+                                                                      .userName,
+                                                              imageUrl: (thread
+                                                                              .avatarUrl ??
+                                                                          '')
+                                                                      .trim()
+                                                                      .isEmpty
+                                                                  ? null
+                                                                  : thread
+                                                                      .avatarUrl!
+                                                                      .trim(),
+                                                              backgroundColor:
+                                                                  context
+                                                                      .appColors
+                                                                      .white,
+                                                              iconColor: context
+                                                                  .appColors
+                                                                  .primary,
+                                                            ),
+                                                            SizedBox(
+                                                              width:
+                                                                  context.w(10),
+                                                            ),
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    thread
+                                                                        .userName,
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: context
+                                                                        .appText
+                                                                        .text14W500,
+                                                                  ),
+                                                                  SizedBox(
+                                                                    height: context
+                                                                        .h(2),
+                                                                  ),
+                                                                  Text(
+                                                                    thread
+                                                                        .lastMessage,
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: context
+                                                                        .appText
+                                                                        .text12W400
+                                                                        .copyWith(
+                                                                          color: context
+                                                                              .appColors
+                                                                              .greyDark,
+                                                                        ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              width:
+                                                                  context.w(6),
+                                                            ),
+                                                            Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .end,
+                                                              children: [
+                                                                Text(
+                                                                  thread.lastTime,
+                                                                  style: context
+                                                                      .appText
+                                                                      .text12W400
+                                                                      .copyWith(
+                                                                        color: context
+                                                                            .appColors
+                                                                            .greylight,
+                                                                      ),
+                                                                ),
+                                                                SizedBox(
+                                                                  height:
+                                                                      context.h(6),
+                                                                ),
+                                                                if (thread
+                                                                        .unreadCount >
+                                                                    0)
+                                                                  Container(
+                                                                    padding: context
+                                                                        .padSym(
+                                                                      h: 8,
+                                                                      v: 3,
+                                                                    ),
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: context
+                                                                          .appColors
+                                                                          .primary,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                        999,
+                                                                      ),
+                                                                    ),
+                                                                    child: Text(
+                                                                      '${thread.unreadCount}',
+                                                                      style: context
+                                                                          .appText
+                                                                          .text12W500
+                                                                          .copyWith(
+                                                                            color: context
+                                                                                .appColors
+                                                                                .onPrimary,
+                                                                          ),
+                                                                    ),
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                )),
+                                    ),
+                                    Positioned(
+                                      right: context.w(40),
+                                      bottom: context.h(40),
+                                      child: InkWell(
+                                        onTap: onPickUser,
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                        child: Container(
+                                          width: context.w(54),
+                                          height: context.w(54),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(context.radius(12)),
+                                            color: context.appColors.primary,
+                                             boxShadow: [
+                                              BoxShadow(
+                                                color: context.appColors.primary
+                                                    .withValues(alpha: 0.22),
+                                                blurRadius: 18,
+                                                offset: const Offset(0, 10),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Icon(
+                                            Icons.add_rounded,
+                                            color:
+                                                context.appColors.onPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -400,39 +597,39 @@ class WebChatContent extends StatelessWidget {
                                                         ),
                                                   ),
                                                 )
-                                              : ListView(
-                                                  children: activeMessages
-                                                      .map(
-                                                        (message) => Align(
-                                                          alignment: message.isMe
-                                                              ? Alignment
-                                                                    .centerRight
-                                                              : Alignment
-                                                                    .centerLeft,
-                                                          child: Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                  bottom:
-                                                                      context.h(
-                                                                        8,
-                                                                      ),
-                                                                ),
-                                                            child: WebBubble(
-                                                              text:
-                                                                  message.text,
-                                                              time:
-                                                                  message.time,
-                                                              isMe:
-                                                                  message.isMe,
-                                                              isPending: message
-                                                                  .isPending,
-                                                              isFailed:
-                                                                  message.isFailed,
-                                                            ),
-                                                          ),
+                                              : ListView.builder(
+                                                  controller:
+                                                      _messagesScrollController,
+                                                  itemCount:
+                                                      activeMessages.length,
+                                                  itemBuilder: (context, i) {
+                                                    final message =
+                                                        activeMessages[i];
+                                                    return Align(
+                                                      alignment: message.isMe
+                                                          ? Alignment
+                                                              .centerRight
+                                                          : Alignment
+                                                              .centerLeft,
+                                                      child: Padding(
+                                                        padding:
+                                                            EdgeInsets.only(
+                                                          bottom: context.h(8),
                                                         ),
-                                                      )
-                                                      .toList(),
+                                                        child: WebBubble(
+                                                          text: message.text,
+                                                          time: message.time,
+                                                          isMe: message.isMe,
+                                                          isPending: message
+                                                              .isPending,
+                                                          isFailed:
+                                                              message.isFailed,
+                                                          maxWidth:
+                                                              messageMaxWidth,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                         ),
 
@@ -444,61 +641,71 @@ class WebChatContent extends StatelessWidget {
                                           child: Row(
                                             children: [
                                               Expanded(
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        context.appColors.white,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          context.radius(12),
-                                                        ),
-                                                    border: Border.all(
-                                                      color: context
-                                                          .appColors
-                                                          .primary,
-                                                    ),
-                                                  ),
-                                                  child: TextField(
-                                                    controller:
-                                                        messageController,
-                                                    enabled:
-                                                        activeThread != null,
-                                                    decoration: InputDecoration(
-                                                      hintText:
-                                                          'Type your message...',
-                                                      border: InputBorder.none,
-                                                      contentPadding: context
-                                                          .padSym(h: 12, v: 12),
-
-                                                      suffixIcon:
-                                                          activeThread == null
-                                                          ? null
-                                                          : GestureDetector(
-                                                              onTap:
-                                                                  onSendMessage,
-                                                              child: Container(
-                                                                padding: context
-                                                                    .padSym(
-                                                                      h: 8,
-                                                                      v: 8,
-                                                                    ),
-                                                                child: SvgPicture.asset(
-                                                                  AppAssets
-                                                                      .chatSendIcon,
-                                                                  colorFilter: ColorFilter.mode(
-                                                                    context
-                                                                        .appColors
-                                                                        .primary,
-                                                                    BlendMode
-                                                                        .srcIn,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                    ),
-                                                  ),
+                                                child: TextFormFieldWidget(
+                                                  controller: messageController,
+                                                  hintText: 'Type your message...',
+                                                  textInputAction:
+                                                      TextInputAction.send,
+                                                  onFieldSubmitted: (_) {
+                                                    if (activeThread == null) {
+                                                      return;
+                                                    }
+                                                    if (messageController.text
+                                                        .trim()
+                                                        .isEmpty) {
+                                                      return;
+                                                    }
+                                                    widget.onSendMessage();
+                                                    WidgetsBinding.instance
+                                                        .addPostFrameCallback(
+                                                      (_) => _scrollToBottom(
+                                                        animated: true,
+                                                      ),
+                                                    );
+                                                  },
+                                                  onChanged: (_) {
+                                                    WidgetsBinding.instance
+                                                        .addPostFrameCallback(
+                                                      (_) => _scrollToBottom(
+                                                        animated: false,
+                                                      ),
+                                                    );
+                                                  },
+                                                  onTap: () {
+                                                    WidgetsBinding.instance
+                                                        .addPostFrameCallback(
+                                                      (_) => _scrollToBottom(
+                                                        animated: false,
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
-                                              ),
+                                                ),
+                                             SizedBox(width: context.w(12)),
+                                             IconButton(
+                                               onPressed: activeThread == null
+                                                   ? null
+                                                   : () {
+                                                       widget.onSendMessage();
+                                                       WidgetsBinding.instance
+                                                           .addPostFrameCallback(
+                                                         (_) => _scrollToBottom(
+                                                           animated: true,
+                                                         ),
+                                                       );
+                                                     },
+                                               icon: Icon(
+                                                 Icons.send_rounded,
+                                                 size: context.w(24),
+                                                 color: activeThread == null
+                                                     ? context
+                                                         .appColors
+                                                         .greylight
+                                                     : context
+                                                         .appColors
+                                                         .primary,
+                                               ),
+                                             ),
                                             ],
                                           ),
                                         ),
@@ -511,96 +718,49 @@ class WebChatContent extends StatelessWidget {
                           ),
                         ),
                       ],
-                    )
-                  : Center(
-                      child: SizedBox(
-                        width: context.w(420),
-                        child: WebDashboardPanel(
-                          padding: context.padAll(32),
-                          backgroundColor: context.appColors.blue10,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                size: context.w(52),
-                                color: context.appColors.primary,
-                              ),
-                              SizedBox(height: context.h(16)),
-                              Text(
-                                'No chats yet',
-                                style: context.appText.text18W400.copyWith(
-                                  color: context.appColors.onSurface,
-                                ),
-                              ),
-                              SizedBox(height: context.h(8)),
-                              Text(
-                                'Start a new conversation to see your chat screen here.',
-                                textAlign: TextAlign.center,
-                                style: context.appText.text14W400.copyWith(
-                                  color: context.appColors.greylight,
-                                ),
-                              ),
-                              SizedBox(height: context.h(20)),
-                              _NewChatButton(onTap: onPickUser),
-                            ],
-                          ),
-                        ),
-                      ),
                     ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NewChatButton extends StatelessWidget {
-  const _NewChatButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(context.radius(12)),
-      child: Container(
-        width: context.w(44),
-        height: context.w(44),
-        decoration: BoxDecoration(
-          color: context.appColors.primary,
-          borderRadius: BorderRadius.circular(context.radius(12)),
-        ),
-        child: Icon(Icons.add, color: context.appColors.onPrimary),
+      );
+        },
       ),
     );
   }
 }
 
 class WebFilterChip extends StatelessWidget {
-  const WebFilterChip({super.key, required this.label, this.selected = false});
+  const WebFilterChip({
+    super.key,
+    required this.label,
+    this.selected = false,
+    this.onTap,
+  });
 
   final String label;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return Container(
-      padding: context.padSym(h: 21, v: 4),
-      decoration: BoxDecoration(
-        color: selected ? c.primary : c.white,
-        borderRadius: BorderRadius.circular(context.radius(12)),
-        border: Border.all(
-          color: selected ? c.primary : c.greylight.withValues(alpha: 0.1),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(context.radius(12)),
+      child: Container(
+        padding: context.padSym(h: 21, v: 4),
+        decoration: BoxDecoration(
+          color: selected ? c.primary : c.white,
+          borderRadius: BorderRadius.circular(context.radius(12)),
+          border: Border.all(
+            color: selected ? c.primary : c.greylight.withValues(alpha: 0.1),
+          ),
         ),
-      ),
-      child: Text(
-        label,
-        style: context.appText.text12W400.copyWith(
-          color: selected ? c.onPrimary : c.greyDark,
+        child: Text(
+          label,
+          style: context.appText.text12W400.copyWith(
+            color: selected ? c.onPrimary : c.greyDark,
+          ),
         ),
       ),
     );
@@ -615,6 +775,7 @@ class WebBubble extends StatelessWidget {
     required this.isMe,
     this.isPending = false,
     this.isFailed = false,
+    this.maxWidth,
   });
 
   final String text;
@@ -622,39 +783,69 @@ class WebBubble extends StatelessWidget {
   final bool isMe;
   final bool isPending;
   final bool isFailed;
+  final double? maxWidth;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return Container(
-      constraints: BoxConstraints(maxWidth: context.w(320)),
-      padding: context.padSym(h: 16, v: 12),
-      decoration: BoxDecoration(
-        color: isMe ? c.primary : c.white,
-        borderRadius: BorderRadius.circular(context.radius(14)),
+    final bubbleBorderRadius = BorderRadius.only(
+      topLeft: Radius.circular(context.radius(12)),
+      topRight: Radius.circular(context.radius(12)),
+      bottomLeft: Radius.circular(context.radius(isMe ? 12 : 0)),
+      bottomRight: Radius.circular(context.radius(isMe ? 0 : 12)),
+    );
+
+    return Card(
+      color: isMe ? context.appColors.primary : context.appColors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: bubbleBorderRadius,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            text,
-            style: context.appText.text14W400.copyWith(
-              color: isMe ? c.onPrimary : c.greyDark,
-            ),
-          ),
-          SizedBox(height: context.h(6)),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              isFailed ? 'Failed' : (isPending ? 'Sending...' : time),
-              style: context.appText.text12W400.copyWith(
-                color: isFailed
-                    ? c.error
-                    : (isMe ? c.onPrimary.withValues(alpha: 0.85) : c.greylight),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: maxWidth ?? context.w(320)),
+        padding: context.padSym(h: 14, v: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isMe)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(top: context.h(2)),
+                    child: Icon(
+                      Icons.done_all_rounded,
+                      size: context.w(14),
+                      color: c.onPrimary.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  SizedBox(width: context.w(8)),
+                  Expanded(
+                    child: NormalText(titleText: text,
+                      titleStyle: context.appText.text14W400.copyWith(
+                        color: c.onPrimary,
+                      ),
+                    ), 
+                  ),
+                ],
+              )
+            else
+                NormalText  (
+                titleText: text,
+                titleStyle: context.appText.text14W400.copyWith(
+                  color: c.greyDark,
+                ),
+              ),
+            SizedBox(height: context.h(6)),
+            Align(
+              alignment: Alignment.centerRight,
+              child: NormalText(titleText: isFailed ? 'Failed' : (isPending ? 'Sending...' : time),
+                titleStyle: context.appText.text12W400.copyWith(
+                  color: isFailed ? c.error : (isMe ? c.onPrimary.withValues(alpha: 0.85) : c.greylight.withValues(alpha: 0.9)),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

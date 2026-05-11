@@ -33,12 +33,14 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   static const int _chatTabIndex = 3;
+  static const double _webCompactBreakpoint = 980;
 
   ChatListScreenViewModel? _vm;
   ChatListScreenViewModel get _safeVm => _vm ??= ChatListScreenViewModel();
   final TextEditingController _webMessageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   int? _selectedWebThreadIndex;
+  bool _webUnreadOnly = false;
   final Map<String, List<WebChatMessageItem>> _webThreadMessages =
       <String, List<WebChatMessageItem>>{};
   final Map<String, MatchChatService> _webThreadServices =
@@ -169,12 +171,25 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
         );
       }
-      ChatListScreenViewModel.upsertThread(
-        userName: thread.userName,
-        targetUserId: thread.targetUserId,
-        lastMessage: msg.content,
-        lastAt: msg.sentAt,
-      );
+      if (!isMine && _activeWebThreadKey != key) {
+        ChatListScreenViewModel.incrementUnread(
+          userName: thread.userName,
+          targetUserId: thread.targetUserId,
+          avatarUrl: thread.avatarUrl,
+          lastMessage: msg.content,
+          lastAt: msg.sentAt,
+        );
+      } else {
+        ChatListScreenViewModel.upsertThread(
+          userName: thread.userName,
+          targetUserId: thread.targetUserId,
+          avatarUrl: thread.avatarUrl,
+          lastMessage: msg.content,
+          lastAt: msg.sentAt,
+          // keep unread as-is (or 0 for active thread)
+          unreadCount: _activeWebThreadKey == key ? 0 : null,
+        );
+      }
       if (mounted && _activeWebThreadKey == key) {
         setState(() {});
       }
@@ -211,6 +226,217 @@ class _ChatListScreenState extends State<ChatListScreen> {
       service.dispose();
     }
     super.dispose();
+  }
+
+  Widget _buildMobileContent({
+    required BuildContext context,
+    required ChatListScreenViewModel model,
+    required List<ChatThreadPreview> filteredThreads,
+  }) {
+    return MainFrame(
+      showDecorationLayer: !widget.embedInBottomBar,
+      child: Column(
+        children: [
+          if (!widget.embedInBottomBar)
+            Padding(
+              padding: context.padSym(h: 20),
+              child: AppBarWidget(
+                onTapFirst: () => Navigator.pop(context),
+                title: AppText.sportFinding,
+              ),
+            ),
+          Expanded(
+            child:
+                (model.hasThreads || _searchController.text.trim().isNotEmpty)
+                    ? Column(
+                        children: [
+                          Padding(
+                            padding: context.padSym(h: 20, v: 8),
+                            child: SearchBarWidget(
+                              isShow: false,
+                              controller: _searchController,
+                              hintText: 'Search chats...',
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                          Expanded(
+                            child: filteredThreads.isNotEmpty
+                                ? ListView.separated(
+                                    padding: context.padSym(h: 20, v: 8),
+                                    itemCount: filteredThreads.length,
+                                    separatorBuilder: (_, _) =>
+                                        SizedBox(height: context.h(10)),
+                                    itemBuilder: (context, index) {
+                                      final t = filteredThreads[index];
+                                      final targetUserId =
+                                          (t.targetUserId ?? '').trim();
+                                      final canDelete = targetUserId.isNotEmpty;
+
+                                      Widget row = GestureDetector(
+                                        onTap: () async {
+                                          Navigator.pushNamed(
+                                            context,
+                                            RoutesName.chatScreen,
+                                            arguments: ChatRouteArgs(
+                                              contactName: t.userName,
+                                              targetUserId: t.targetUserId,
+                                              isOnline: t.isOnline,
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: context.padSym(
+                                            h: 12,
+                                            v: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: context.appColors.blue10,
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                              context.radius(12),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: context.radius(22),
+                                                backgroundColor:
+                                                    context.appColors.greylight,
+                                                child: (t.avatarUrl ?? '')
+                                                        .trim()
+                                                        .isNotEmpty
+                                                    ? ClipOval(
+                                                        child: Image.network(
+                                                          t.avatarUrl!.trim(),
+                                                          width: context.w(44),
+                                                          height: context.w(44),
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) {
+                                                            return Center(
+                                                              child: Text(
+                                                                t.userName
+                                                                        .isNotEmpty
+                                                                    ? t.userName[
+                                                                            0]
+                                                                        .toUpperCase()
+                                                                    : 'U',
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      )
+                                                    : Text(
+                                                        t.userName.isNotEmpty
+                                                            ? t.userName[0]
+                                                                .toUpperCase()
+                                                            : 'U',
+                                                      ),
+                                              ),
+                                              SizedBox(width: context.w(12)),
+                                              Expanded(
+                                                child: NormalText(
+                                                  titleText: t.userName,
+                                                  subText: t.lastMessage,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              SizedBox(width: context.w(8)),
+                                              Text(
+                                                t.lastTime,
+                                                style: context.appText.text12W500
+                                                    .copyWith(
+                                                  color: context
+                                                      .appColors.greylight,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                      if (!canDelete) return row;
+                                      return Dismissible(
+                                        key: ValueKey(
+                                          'chat_thread_${t.targetUserId}_${t.userName}',
+                                        ),
+                                        direction: DismissDirection.endToStart,
+                                        confirmDismiss: (_) async {
+                                          final confirmed =
+                                              await showAppDialog<bool>(
+                                            context,
+                                            title: 'Delete chat?',
+                                            message:
+                                                'This will remove the chat thread locally.',
+                                            actions: [
+                                              AppDialogAction(
+                                                label: 'Cancel',
+                                                onPressed: (ctx) =>
+                                                    Navigator.of(ctx).pop(false),
+                                              ),
+                                              AppDialogAction(
+                                                label: 'Delete',
+                                                isDestructive: true,
+                                                onPressed: (ctx) =>
+                                                    Navigator.of(ctx).pop(true),
+                                              ),
+                                            ],
+                                          );
+                                          return confirmed == true;
+                                        },
+                                        onDismissed: (_) {
+                                          ChatListScreenViewModel.removeThread(
+                                            targetUserId: t.targetUserId,
+                                            userName: t.userName,
+                                          );
+                                          setState(() {});
+                                        },
+                                        background: Container(
+                                          alignment: Alignment.centerRight,
+                                          padding: context.padSym(h: 16),
+                                          decoration: BoxDecoration(
+                                            color: context.appColors.error,
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                              context.radius(12),
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.delete_outline_rounded,
+                                            color: context.appColors.onPrimary,
+                                          ),
+                                        ),
+                                        child: row,
+                                      );
+                                    },
+                                  )
+                                : Center(
+                                    child: Text(
+                                      'No chats found.',
+                                      style: context.appText.text14W400.copyWith(
+                                        color: context.appColors.greylight,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      )
+                    : Center(
+                        child: Text(
+                          'No chats yet.',
+                          style: context.appText.text14W400.copyWith(
+                            color: context.appColors.greylight,
+                          ),
+                        ),
+                      ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -250,6 +476,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           final List<ChatThreadPreview> filteredThreads = <ChatThreadPreview>[];
           for (var i = 0; i < allThreads.length; i++) {
             final t = allThreads[i];
+            if (_webUnreadOnly && t.unreadCount <= 0) continue;
             if (query.isEmpty) {
               indexMap.add(i);
               filteredThreads.add(t);
@@ -268,7 +495,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
               : indexMap.indexOf(_selectedWebThreadIndex!);
 
           final Widget content = (kIsWeb && widget.embedInBottomBar)
-              ? WebChatContent(
+              ? LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < _webCompactBreakpoint) {
+                      return _buildMobileContent(
+                        context: context,
+                        model: model,
+                        filteredThreads: filteredThreads,
+                      );
+                    }
+                    return WebChatContent(
                   model: model,
                   threads: filteredThreads,
                   selectedThreadIndex:
@@ -290,12 +526,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   searchController: _searchController,
                   onSearchChanged: (_) => setState(() {}),
                   searchQuery: _searchController.text,
+                  showUnreadOnly: _webUnreadOnly,
+                  onUnreadToggle: (v) => setState(() => _webUnreadOnly = v),
                   onThreadSelected: (index) {
                     final mapped =
                         (index != null && index >= 0 && index < indexMap.length)
                             ? indexMap[index]
                             : null;
                     setState(() => _selectedWebThreadIndex = mapped);
+                    if (mapped != null) {
+                      final t = model.threads[mapped];
+                      ChatListScreenViewModel.markRead(
+                        userName: t.userName,
+                        targetUserId: t.targetUserId,
+                      );
+                    }
                     _bindSelectedWebThread();
                   },
                   onPickUser: _pickAndOpenUser,
@@ -373,6 +618,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     );
                     _webMessageController.clear();
                     setState(() {});
+                  },
+                );
                   },
                 )
               : MainFrame(

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:sport_finding/Data/model/Option/options_model.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
@@ -15,6 +16,7 @@ import 'package:sport_finding/feature/view/Home/viewModel/create_match_view_mode
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/drop_down_from_field_widget.dart';
+import 'package:sport_finding/feature/widget/grouped_sport_picker_field.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/section_header_widget.dart';
 import 'package:sport_finding/feature/widget/match_duration_picker_sheet.dart';
@@ -271,14 +273,41 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
           onTap: () => _showDurationPicker(context, model),
         ),
         SizedBox(height: context.h(10)),
-        Selector<CreateMatchViewModel, (String?, List<String>, bool)>(
-          selector: (_, m) =>
-              (m.selectedSportType, m.sportTypes, m.optionsLoading),
+        Selector<
+          CreateMatchViewModel,
+          (String?, List<SportOptionModel>, List<String>, bool)
+        >(
+          selector: (_, m) => (
+            m.selectedSportType,
+            m.sportOptions,
+            m.sportTypes,
+            m.optionsLoading,
+          ),
           builder: (context, state, _) {
             final selectedSport = state.$1;
-            final sportTypes = state.$2;
-            final optionsLoading = state.$3;
+            final sportOptions = state.$2;
+            final sportTypes = state.$3;
+            final optionsLoading = state.$4;
             final vm = context.read<CreateMatchViewModel>();
+            if (sportOptions.isNotEmpty) {
+              return GroupedSportPickerField(
+                label: AppText.sportType,
+                hintText: optionsLoading
+                    ? 'Loading sports...'
+                    : AppText.selectSportType,
+                sportOptions: sportOptions,
+                optionsLoading: optionsLoading,
+                value: selectedSport,
+                onChanged: vm.setSportType,
+                pickerTitle: AppText.sportType,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return AppText.sportTypeValidation;
+                  }
+                  return null;
+                },
+              );
+            }
             final hasSportOptions = sportTypes.isNotEmpty;
             return DropdownFormFieldWidget(
               label: AppText.sportType,
@@ -530,19 +559,47 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                                 SizedBox(height: context.h(10)),
                                 Selector<
                                   CreateMatchViewModel,
-                                  (String?, List<String>, bool)
+                                  (
+                                    String?,
+                                    List<SportOptionModel>,
+                                    List<String>,
+                                    bool,
+                                  )
                                 >(
                                   selector: (_, m) => (
                                     m.selectedSportType,
+                                    m.sportOptions,
                                     m.sportTypes,
                                     m.optionsLoading,
                                   ),
                                   builder: (context, state, _) {
                                     final selectedSport = state.$1;
-                                    final sportTypes = state.$2;
-                                    final optionsLoading = state.$3;
+                                    final sportOptions = state.$2;
+                                    final sportTypes = state.$3;
+                                    final optionsLoading = state.$4;
                                     final vm = context
                                         .read<CreateMatchViewModel>();
+                                    if (sportOptions.isNotEmpty) {
+                                      return GroupedSportPickerField(
+                                        label: AppText.sportType,
+                                        hintText: optionsLoading
+                                            ? 'Loading sports...'
+                                            : AppText.selectSportType,
+                                        sportOptions: sportOptions,
+                                        optionsLoading: optionsLoading,
+                                        value: selectedSport,
+                                        onChanged: vm.setSportType,
+                                        pickerTitle: AppText.sportType,
+                                        validator: (value) {
+                                          if (value == null ||
+                                              value.isEmpty) {
+                                            return AppText
+                                                .sportTypeValidation;
+                                          }
+                                          return null;
+                                        },
+                                      );
+                                    }
                                     final hasSportOptions =
                                         sportTypes.isNotEmpty;
                                     return DropdownFormFieldWidget(

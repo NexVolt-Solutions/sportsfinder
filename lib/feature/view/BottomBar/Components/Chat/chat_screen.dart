@@ -14,6 +14,7 @@ import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
 import 'package:sport_finding/feature/widget/app_dialog.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.targetUserId});
@@ -58,6 +59,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       final vm = context.read<ChatScreenViewModel>();
       vm.bindDirectChat(targetUserId);
+      // Opening a chat marks it as read in the thread list.
+      ChatListScreenViewModel.markRead(userName: '', targetUserId: targetUserId);
     });
   }
 
