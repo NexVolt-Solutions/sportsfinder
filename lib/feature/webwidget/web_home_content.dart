@@ -34,6 +34,24 @@ class _WebHomeContentState extends State<WebHomeContent> {
 
   HomeScreenViewModel get model => widget.model;
 
+  List<Sport> get _filteredSportsForCatalog {
+    if (_selectedCategory == null) return model.sports;
+    return model.sports.where((sport) {
+      return (sport.category?.trim() ?? '') == _selectedCategory;
+    }).toList();
+  }
+
+  List<Sport> get _previewSourceSports {
+    final filtered = _filteredSportsForCatalog;
+    filtered.sort((a, b) {
+      final ap = a.isPopular == true;
+      final bp = b.isPopular == true;
+      if (ap != bp) return ap ? -1 : 1;
+      return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    });
+    return filtered;
+  }
+
   List<String> get _categories {
     final categories =
         model.sports
@@ -46,21 +64,11 @@ class _WebHomeContentState extends State<WebHomeContent> {
   }
 
   List<Sport> get _visibleSports {
-    final sports = _selectedCategory == null
-        ? model.sports.where((sport) => sport.isPopular).toList()
-        : model.sports.where((sport) {
-            return (sport.category?.trim() ?? '') == _selectedCategory;
-          }).toList();
-    final source = sports.isNotEmpty ? sports : model.sports;
-    return source.take(_previewLimit).toList();
+    return _previewSourceSports.take(_previewLimit).toList();
   }
 
   int get _hiddenSportsCount {
-    final total = _selectedCategory == null
-        ? model.sports.where((sport) => sport.isPopular).length
-        : model.sports.where((sport) {
-            return (sport.category?.trim() ?? '') == _selectedCategory;
-          }).length;
+    final total = _previewSourceSports.length;
     return total > _previewLimit ? total - _previewLimit : 0;
   }
 
@@ -215,7 +223,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
         WebDashboardTitle(
           title: 'Sports Categories',
           subtitle: _selectedCategory == null
-              ? 'Popular sports'
+              ? 'All sports'
               : _formatCategoryLabel(_selectedCategory!),
           trailing: _hiddenSportsCount > 0
               ? GestureDetector(
@@ -267,14 +275,19 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CardIconWidget(imageAsset: sport.imagePath),
-                      SizedBox(height: context.h(8)),
+                      CardIconWidget(
+                        imageAsset: sport.imagePath,
+                        padding: 8,
+                        iconSize: context.w(18),
+                        borderRadius: context.radius(12),
+                      ),
+                      SizedBox(height: context.h(6)),
                       Text(
                         sport.title,
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.appText.text14W500.copyWith(
+                        style: context.appText.text12W600.copyWith(
                           color: context.appColors.onSurface,
                         ),
                       ),
@@ -356,11 +369,12 @@ class _ViewMoreSportsCard extends StatelessWidget {
                 color: context.appColors.primary,
                 size: 28,
               ),
-              SizedBox(height: context.h(8)),
+              SizedBox(height: context.h(6)),
               Text(
                 '+$count more',
                 textAlign: TextAlign.center,
-                style: context.appText.text14W600.copyWith(
+                style: context.appText.text12W600.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: context.appColors.primary,
                 ),
               ),
@@ -517,14 +531,19 @@ class _SportsCatalogDialogState extends State<_SportsCatalogDialog> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                CardIconWidget(imageAsset: sport.imagePath),
-                                const SizedBox(height: 8),
+                                CardIconWidget(
+                                  imageAsset: sport.imagePath,
+                                  padding: 8,
+                                  iconSize: context.w(18),
+                                  borderRadius: context.radius(12),
+                                ),
+                                const SizedBox(height: 6),
                                 Text(
                                   sport.title,
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: context.appText.text14W500.copyWith(
+                                  style: context.appText.text12W600.copyWith(
                                     color: c.onSurface,
                                   ),
                                 ),
