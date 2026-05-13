@@ -605,6 +605,7 @@ class EditProfileScreen extends StatefulWidget {
     this.initialAvatarUrl,
     this.initialSport,
     this.initialSkill,
+    this.onEmbeddedClose,
   });
 
   final String? initialName;
@@ -612,6 +613,9 @@ class EditProfileScreen extends StatefulWidget {
   final String? initialAvatarUrl;
   final String? initialSport;
   final String? initialSkill;
+
+  /// Web profile split: pane uses transparent scaffold over the shell.
+  final VoidCallback? onEmbeddedClose;
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -708,30 +712,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   String? _normalizedAvatarUrl(String? url) => normalizeImageUrl(url);
 
-  InputDecoration _dropdownDecoration(BuildContext context, String label) {
-    final c = context.appColors;
-    final t = context.appText;
-    final radius = BorderRadius.circular(context.radius(12));
-    final side = BorderSide(color: c.greylight, width: 1);
-    return InputDecoration(
-      floatingLabelBehavior: FloatingLabelBehavior.auto,
-      isDense: true,
-      constraints: AppFormFieldLayout.singleLineConstraints(context),
-      labelText: label,
-      labelStyle: t.text16W400.copyWith(color: c.onSurface),
-      floatingLabelStyle: t.text12W400.copyWith(color: c.greylight),
-      filled: true,
-      fillColor: Colors.transparent,
-      contentPadding: context.padSym(h: 16, v: 12),
-      border: OutlineInputBorder(borderRadius: radius, borderSide: side),
-      enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: side),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(color: c.primary, width: 1.5),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
@@ -740,7 +720,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final avatarUrl = _normalizedAvatarUrl(widget.initialAvatarUrl);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: widget.onEmbeddedClose != null
+          ? Colors.transparent
+          : Theme.of(context).scaffoldBackgroundColor,
       body: MainFrame(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -749,7 +731,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               padding: context.padSym(h: 20),
               child: AppBarWidget(
                 title: AppText.editProfile,
-                onLeadingTap: () => Navigator.pop(context),
+                onLeadingTap:
+                    widget.onEmbeddedClose ?? () => Navigator.pop(context),
               ),
             ),
             Expanded(
@@ -914,9 +897,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         size: context.w(22),
                       ),
                       style: t.text14W400.copyWith(color: c.greyDark),
-                      decoration: _dropdownDecoration(
+                      decoration:
+                          AppFormFieldLayout.standardOutlineInputDecoration(
                         context,
-                        AppText.sportType,
+                        labelText: AppText.sportType,
+                        labelStyle: t.text16W400.copyWith(color: c.onSurface),
+                        floatingLabelStyle:
+                            t.text12W400.copyWith(color: c.greylight),
+                        floatingLabelBehavior: FloatingLabelBehavior.auto,
+                        constraints:
+                            AppFormFieldLayout.singleLineConstraints(context),
+                        isDense: true,
                       ),
                       items: _sportOptions
                           .map(
@@ -943,9 +934,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         size: context.w(22),
                       ),
                       style: t.text14W400.copyWith(color: c.greyDark),
-                      decoration: _dropdownDecoration(
+                      decoration:
+                          AppFormFieldLayout.standardOutlineInputDecoration(
                         context,
-                        AppText.skillLevel,
+                        labelText: AppText.skillLevel,
+                        labelStyle: t.text16W400.copyWith(color: c.onSurface),
+                        floatingLabelStyle:
+                            t.text12W400.copyWith(color: c.greylight),
+                        floatingLabelBehavior: FloatingLabelBehavior.auto,
+                        constraints:
+                            AppFormFieldLayout.singleLineConstraints(context),
+                        isDense: true,
                       ),
                       items: _skillOptions
                           .map(

@@ -16,11 +16,7 @@ import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.
 import 'package:sport_finding/Data/Repositories/Chat/chat_upload_repository.dart';
 import 'dart:async';
 
-enum ChatMessageType {
-  text,
-  image,
-  file,
-}
+enum ChatMessageType { text, image, file }
 
 ChatMessageType _parseChatMessageType(String? raw) {
   final v = (raw ?? '').trim().toLowerCase();
@@ -51,8 +47,10 @@ class ChatMessage {
   final String? mimeType;
   final String? fileName;
   final int? sizeBytes;
+
   /// Server read receipt time (UTC), when the peer has read this outgoing message.
   final DateTime? readAt;
+
   /// Server delivery receipt (UTC), when the message reached the peer's device/server.
   final DateTime? deliveredAt;
 
@@ -192,14 +190,16 @@ class ChatScreenViewModel extends ChangeNotifier {
          return t.isEmpty ? null : t;
        })(),
        _peerOnline = isOnline,
-       _chatServiceFactory = chatServiceFactory ??
+       _chatServiceFactory =
+           chatServiceFactory ??
            ((accessToken, targetUserId) => MatchChatService(
-                 accessToken: accessToken,
-                 targetUserId: targetUserId,
-               )),
+             accessToken: accessToken,
+             targetUserId: targetUserId,
+           )),
        _accessTokenProvider =
            accessTokenProvider ?? AppPreferences.getAccessToken,
-       _currentUserIdProvider = currentUserIdProvider ??
+       _currentUserIdProvider =
+           currentUserIdProvider ??
            (() => ProfileService().profile?.id.trim() ?? '');
 
   final String contactName;
@@ -223,18 +223,27 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool _isConnected = false;
   String? _errorMessage;
   bool _isBindingRealtime = false;
+
   /// Invalidates in-flight [bindDirectChat] after [dispose] or a new bind cycle.
   Object? _bindLease;
   bool _vmDisposed = false;
   String _boundTargetUserId = '';
+
   /// Dedup WS `message_read` frames for peer messages (per thread bind).
   final Set<String> _readReceiptSentForMessageIds = <String>{};
   int _localMessageCounter = 0;
   final Map<String, Timer> _pendingFailTimers = <String, Timer>{};
   static const Duration _pendingFailureTimeout = Duration(seconds: 12);
-  static const Duration _peerOfflinePresenceDebounce = Duration(milliseconds: 1600);
-  static const Duration _peerOfflineSnapshotDebounce = Duration(milliseconds: 4500);
-  static const Duration _suppressSnapshotOfflineAfterConnect = Duration(seconds: 4);
+  static const Duration _peerOfflinePresenceDebounce = Duration(
+    milliseconds: 1600,
+  );
+  static const Duration _peerOfflineSnapshotDebounce = Duration(
+    milliseconds: 4500,
+  );
+  static const Duration _suppressSnapshotOfflineAfterConnect = Duration(
+    seconds: 4,
+  );
+
   /// REST gap-fill while the socket is up; avoids a history fetch on every reconnect.
   static const Duration _historyGapFillInterval = Duration(seconds: 12);
   Timer? _peerOfflineDebounce;
@@ -250,6 +259,10 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool get isConnected => _isConnected;
   String? get errorMessage => _errorMessage;
   bool get isRealtimeChatBound => _matchChatService != null;
+
+  /// Set after [bindDirectChat] for the direct-message peer.
+  String get peerTargetUserId => _boundTargetUserId.trim();
+
   /// WebSocket / presence: peer has connectivity (affects sent-message ticks).
   bool get peerOnline => _peerOnline;
 
@@ -341,8 +354,7 @@ class ChatScreenViewModel extends ChangeNotifier {
       'sendMessage called (bound=${_matchChatService != null}, connected=$_isConnected, len=${text.trim().length})',
     );
     if (_matchChatService == null) {
-      _errorMessage =
-          'This chat is not connected to the backend yet.';
+      _errorMessage = 'This chat is not connected to the backend yet.';
       _log('send blocked: service not bound');
       notifyListeners();
       return;
@@ -372,8 +384,9 @@ class ChatScreenViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final fileName =
-        (xFile.name).trim().isNotEmpty ? xFile.name.trim() : 'image';
+    final fileName = (xFile.name).trim().isNotEmpty
+        ? xFile.name.trim()
+        : 'image';
 
     try {
       final targetUserId = _boundTargetUserId.trim();
@@ -587,9 +600,7 @@ class ChatScreenViewModel extends ChangeNotifier {
         ..addAll(cached.messageIds);
       _localMessageCounter = cached.localMessageCounter;
       _reschedulePendingTimersForCurrentMessages();
-      _log(
-        'bindDirectChat seeded from cache count=${_messages.length}',
-      );
+      _log('bindDirectChat seeded from cache count=${_messages.length}');
       notifyListeners();
     }
 
@@ -646,11 +657,11 @@ class ChatScreenViewModel extends ChangeNotifier {
                 (m.type == ChatMessageType.text
                     ? x.text.trim() == m.text.trim()
                     : ((x.fileName ?? '').trim().isNotEmpty &&
-                            (x.fileName ?? '').trim() ==
-                                (m.fileName ?? '').trim()) ||
-                        ((x.mediaUrl ?? '').trim().isNotEmpty &&
-                            (x.mediaUrl ?? '').trim() ==
-                                (m.mediaUrl ?? '').trim())),
+                              (x.fileName ?? '').trim() ==
+                                  (m.fileName ?? '').trim()) ||
+                          ((x.mediaUrl ?? '').trim().isNotEmpty &&
+                              (x.mediaUrl ?? '').trim() ==
+                                  (m.mediaUrl ?? '').trim())),
           );
           if (!echoed) {
             _messages.add(m);
@@ -739,8 +750,7 @@ class ChatScreenViewModel extends ChangeNotifier {
       if (myId.isNotEmpty && subject == myId) return;
       if (subject != peerId) return;
       final st = e.status.trim().toLowerCase();
-      final nowOnline =
-          st == 'online' || st == 'active' || st == 'available';
+      final nowOnline = st == 'online' || st == 'active' || st == 'available';
 
       if (nowOnline) {
         _peerOfflineDebounce?.cancel();
@@ -762,9 +772,7 @@ class ChatScreenViewModel extends ChangeNotifier {
       // Stale `presence_snapshot` often arrives milliseconds after connect while
       // the peer is actively on another device; ignore offline snapshots briefly.
       final until = _suppressPeerOfflineSnapshotUntil;
-      if (e.fromSnapshot &&
-          until != null &&
-          DateTime.now().isBefore(until)) {
+      if (e.fromSnapshot && until != null && DateTime.now().isBefore(until)) {
         return;
       }
 
@@ -794,7 +802,9 @@ class ChatScreenViewModel extends ChangeNotifier {
     _receiptSub = service.onReceipt.listen((ChatReceiptEvent r) {
       final mid = r.messageId.trim();
       if (mid.isEmpty) return;
-      final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == mid);
+      final idx = _messages.indexWhere(
+        (m) => (m.messageId ?? '').trim() == mid,
+      );
       if (idx < 0) return;
       final at = r.at ?? DateTime.now().toUtc();
       final row = _messages[idx];
@@ -932,7 +942,9 @@ class ChatScreenViewModel extends ChangeNotifier {
     if (id.isNotEmpty && !_messageIds.add(id)) {
       // Forward-compat: backend may send deletion/read events for an existing message.
       if (message.isDeleted) {
-        final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == id);
+        final idx = _messages.indexWhere(
+          (m) => (m.messageId ?? '').trim() == id,
+        );
         if (idx >= 0) {
           _messages[idx] = _messages[idx].copyWith(
             text: '',
@@ -942,7 +954,9 @@ class ChatScreenViewModel extends ChangeNotifier {
           );
         }
       } else if (message.readAt != null || message.deliveredAt != null) {
-        final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == id);
+        final idx = _messages.indexWhere(
+          (m) => (m.messageId ?? '').trim() == id,
+        );
         if (idx >= 0) {
           _messages[idx] = _messages[idx].copyWith(
             readAt: message.readAt ?? _messages[idx].readAt,
@@ -1111,7 +1125,9 @@ class ChatScreenViewModel extends ChangeNotifier {
       isFailed: false,
       time: DateTimeFormatters.chatTime(sentAtLocal),
       date: DateTimeFormatters.chatDate(sentAtLocal),
-      messageId: message.messageId.trim().isEmpty ? null : message.messageId.trim(),
+      messageId: message.messageId.trim().isEmpty
+          ? null
+          : message.messageId.trim(),
       type: parsedType,
       mediaUrl: message.mediaUrl,
       thumbnailUrl: message.thumbnailUrl,

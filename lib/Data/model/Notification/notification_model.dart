@@ -1,3 +1,30 @@
+import 'dart:convert';
+
+/// Normalizes JSON-like values (including JS interop maps on web) into a plain
+/// [Map<String, dynamic>] so `[]` and iteration behave like a Dart map.
+Map<String, dynamic> coerceToDartJsonMap(dynamic value) {
+  if (value == null) return <String, dynamic>{};
+  try {
+    final encoded = jsonEncode(value);
+    final decoded = jsonDecode(encoded);
+    if (decoded is Map) {
+      return Map<String, dynamic>.from(
+        decoded.map((dynamic k, dynamic v) => MapEntry(k.toString(), v)),
+      );
+    }
+  } catch (_) {
+    // Non-JSON-serializable or interop edge: fall through.
+  }
+  if (value is Map) {
+    try {
+      return Map<String, dynamic>.from(
+        value.map((dynamic k, dynamic v) => MapEntry(k.toString(), v)),
+      );
+    } catch (_) {}
+  }
+  return <String, dynamic>{};
+}
+
 class NotificationModel {
   final String id;
   final String type;
@@ -28,21 +55,18 @@ class NotificationModel {
     return r == u;
   }
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+  factory NotificationModel.fromJson(dynamic jsonRaw) {
+    final json = coerceToDartJsonMap(jsonRaw);
     final rawPayload = json['payload'];
-    final payloadMap = rawPayload is Map
-        ? Map<String, dynamic>.from(rawPayload)
-        : <String, dynamic>{};
+    final payloadMap = coerceToDartJsonMap(rawPayload);
     final rawData = json['data'];
-    final dataMap = rawData is Map
-        ? Map<String, dynamic>.from(rawData)
-        : <String, dynamic>{};
+    final dataMap = coerceToDartJsonMap(rawData);
     final mergedPayload = <String, dynamic>{
       ...dataMap,
       ...payloadMap,
-      if (json['sender'] is Map) 'sender': json['sender'],
-      if (json['user'] is Map) 'user': json['user'],
-      if (json['inviter'] is Map) 'inviter': json['inviter'],
+      if (json['sender'] is Map) 'sender': coerceToDartJsonMap(json['sender']),
+      if (json['user'] is Map) 'user': coerceToDartJsonMap(json['user']),
+      if (json['inviter'] is Map) 'inviter': coerceToDartJsonMap(json['inviter']),
       if (json['full_name'] != null) 'full_name': json['full_name'],
       if (json['name'] != null) 'name': json['name'],
       if (json['sender_name'] != null) 'sender_name': json['sender_name'],

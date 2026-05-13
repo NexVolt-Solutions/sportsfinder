@@ -115,7 +115,7 @@ class _MatchInvitePlayersScreenState extends State<MatchInvitePlayersScreen> {
                       widget.match.facilityAddress ??
                       AppText.location),
             isShow: true,
-            isInvited: model.isUserAlreadyInvited(userId),
+            isInvited: model.isInviteDisabledAsInvited(userId),
             isLoading: model.isInvitingUser(userId),
             ontap: () async {
               if (userId.isEmpty) {

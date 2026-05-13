@@ -7,6 +7,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
+import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
@@ -40,6 +42,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   String? _sessionTargetUserId;
   int _lastRenderedMessageCount = 0;
   final Set<String> _selectedMessageLocalIds = <String>{};
+
   /// Web: avoid scheduling multiple pops onto the embedded split inbox.
   bool _webEmbedHandoffIssued = false;
 
@@ -111,7 +114,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final vm = context.read<ChatScreenViewModel>();
       vm.bindDirectChat(targetUserId);
       // Opening a chat marks it as read in the thread list.
-      ChatListScreenViewModel.markRead(userName: '', targetUserId: targetUserId);
+      ChatListScreenViewModel.markRead(
+        userName: '',
+        targetUserId: targetUserId,
+      );
     });
   }
 
@@ -139,6 +145,25 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _openPeerPublicProfile(BuildContext context, ChatScreenViewModel model) {
+    if (_isSelectionMode) return;
+    final fromVm = model.peerTargetUserId.trim();
+    final fromRoute = (_effectiveChatRouteArgs()?.targetUserId ?? '').trim();
+    final userId = fromVm.isNotEmpty ? fromVm : fromRoute;
+    if (userId.isEmpty) return;
+    final rawName = model.contactName.trim();
+    final displayName = rawName.isNotEmpty ? rawName : 'User';
+    Navigator.pushNamed(
+      context,
+      RoutesName.publicProfileScreen,
+      arguments: PublicProfileArgs(
+        userId: userId,
+        displayName: displayName,
+        canRateForMatch: false,
+      ),
+    );
   }
 
   void _exitSelectionMode() {
@@ -193,7 +218,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             child: Padding(
               padding: EdgeInsets.only(
                 top: context.h(10),
-                  right: context.w(14),
+                right: context.w(14),
               ),
               child: Row(
                 children: [
@@ -201,7 +226,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     onTap: () async {
                       if (_isSelectionMode) return;
                       await showModalBottomSheet<void>(
-                        
                         context: context,
                         isScrollControlled: false,
                         backgroundColor: Colors.transparent,
@@ -225,8 +249,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               child: Material(
                                 color: Colors.white,
                                 elevation: 3,
-                                shadowColor:
-                                    c.greyDark.withValues(alpha: 0.18),
+                                shadowColor: c.greyDark.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(
                                   context.radius(16),
                                 ),
@@ -287,13 +310,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             child: Padding(
                               padding: EdgeInsets.zero,
                               child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.vertical(top: radius),
+                                borderRadius: BorderRadius.vertical(
+                                  top: radius,
+                                ),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius:
-                                        BorderRadius.vertical(top: radius),
+                                    borderRadius: BorderRadius.vertical(
+                                      top: radius,
+                                    ),
                                   ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -325,8 +350,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                     'Send attachment',
                                                     style: t.text16W600
                                                         .copyWith(
-                                                      color: c.greyDark,
-                                                    ),
+                                                          color: c.greyDark,
+                                                        ),
                                                   ),
                                                   SizedBox(
                                                     height: context.h(4),
@@ -335,8 +360,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                     'Choose what you want to share',
                                                     style: t.text12W400
                                                         .copyWith(
-                                                      color: c.greylight,
-                                                    ),
+                                                          color: c.greylight,
+                                                        ),
                                                   ),
                                                 ],
                                               ),
@@ -377,14 +402,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                 final xFile =
                                                     await ImagePicker()
                                                         .pickImage(
-                                                  source: ImageSource.gallery,
-                                                  imageQuality: 85,
-                                                );
+                                                          source: ImageSource
+                                                              .gallery,
+                                                          imageQuality: 85,
+                                                        );
                                                 if (!mounted || xFile == null) {
                                                   return;
                                                 }
-                                                await model
-                                                    .sendImageAttachment(xFile);
+                                                await model.sendImageAttachment(
+                                                  xFile,
+                                                );
                                               },
                                             ),
                                             SizedBox(width: context.w(12)),
@@ -398,19 +425,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                 Navigator.pop(sheetContext);
                                                 final res =
                                                     await FilePicker.pickFiles(
-                                                  allowMultiple: false,
-                                                  withData: kIsWeb,
-                                                );
+                                                      allowMultiple: false,
+                                                      withData: kIsWeb,
+                                                    );
                                                 final file =
                                                     res?.files.isNotEmpty ==
-                                                            true
-                                                        ? res!.files.first
-                                                        : null;
+                                                        true
+                                                    ? res!.files.first
+                                                    : null;
                                                 if (!mounted || file == null) {
                                                   return;
                                                 }
-                                                await model
-                                                    .sendFileAttachment(file);
+                                                await model.sendFileAttachment(
+                                                  file,
+                                                );
                                               },
                                             ),
                                           ],
@@ -493,40 +521,62 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              if (_isSelectionMode) {
-                                _exitSelectionMode();
-                                return;
-                              }
-                              Navigator.pop(context);
-                            },
-                            child: SvgPicture.asset(AppAssets.backIcon),
-                          ),
-                          SizedBox(width: context.w(12)),
-                          AppAvatar(
-                            size: context.radius(21) * 2,
-                            imageUrl: model.contactDisplayAvatarUrl,
-                            fallbackText: model.contactName,
-                            backgroundColor: context.appColors.blue10,
-                            iconColor: context.appColors.primary,
-                          ),
-                          SizedBox(width: context.w(12)),
-                          _isSelectionMode
-                              ? NormalText(
-                                  titleText:
-                                      '${_selectedMessageLocalIds.length} selected',
-                                  subText: 'Tap messages to select more',
-                                  subColor: context.appColors.greylight,
-                                )
-                              : NormalText(
-                                  titleText: model.contactName,
-                                  subText: subtitle,
-                                  subColor: context.appColors.greylight,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (_isSelectionMode) {
+                                  _exitSelectionMode();
+                                  return;
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: SvgPicture.asset(AppAssets.backIcon),
+                            ),
+                            SizedBox(width: context.w(12)),
+                            Expanded(
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _isSelectionMode
+                                    ? null
+                                    : () => _openPeerPublicProfile(
+                                          context,
+                                          model,
+                                        ),
+                                child: Row(
+                                  children: [
+                                    AppAvatar(
+                                      size: context.radius(21) * 2,
+                                      imageUrl: model.contactDisplayAvatarUrl,
+                                      fallbackText: model.contactName,
+                                      backgroundColor: context.appColors.blue10,
+                                      iconColor: context.appColors.primary,
+                                    ),
+                                    SizedBox(width: context.w(12)),
+                                    Expanded(
+                                      child: _isSelectionMode
+                                          ? NormalText(
+                                              titleText:
+                                                  '${_selectedMessageLocalIds.length} selected',
+                                              subText:
+                                                  'Tap messages to select more',
+                                              subColor:
+                                                  context.appColors.greylight,
+                                            )
+                                          : NormalText(
+                                              titleText: model.contactName,
+                                              subText: subtitle,
+                                              subColor:
+                                                  context.appColors.greylight,
+                                            ),
+                                    ),
+                                  ],
                                 ),
-                        ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       GestureDetector(
                         onTap: () async {
@@ -573,21 +623,25 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   _buildMessageBubble(
                                     context,
                                     msg,
-                                    peerOnline: model.peerOnline,
                                     isSelected: _selectedMessageLocalIds
                                         .contains(msg.localId),
                                     isSelectionMode: _isSelectionMode,
-                                    onToggleSelected: () => _toggleSelected(msg),
+                                    onToggleSelected: () =>
+                                        _toggleSelected(msg),
                                     onEnterSelection: () {
                                       final id = msg.localId.trim();
                                       if (id.isEmpty) return;
-                                      if (_selectedMessageLocalIds.contains(id)) {
+                                      if (_selectedMessageLocalIds.contains(
+                                        id,
+                                      )) {
                                         return;
                                       }
                                       debugPrint(
                                         '[ChatScreen] enterSelectionMode localId=$id messageId=${msg.messageId} isMe=${msg.isMe}',
                                       );
-                                      setState(() => _selectedMessageLocalIds.add(id));
+                                      setState(
+                                        () => _selectedMessageLocalIds.add(id),
+                                      );
                                       debugPrint(
                                         '[ChatScreen] selectionCountAfterEnter=${_selectedMessageLocalIds.length}',
                                       );
@@ -664,17 +718,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Widget _buildMessageBubble(
     BuildContext context,
     ChatMessage msg, {
-    required bool peerOnline,
     required bool isSelected,
     required bool isSelectionMode,
     required VoidCallback onToggleSelected,
     required VoidCallback onEnterSelection,
     VoidCallback? onRetry,
   }) {
-    final model = DirectChatBubbleModel.fromChatMessage(
-      msg,
-      peerOnline: peerOnline,
-    );
+    if (msg.isDeleted && msg.isMe) {
+      return const SizedBox.shrink();
+    }
+    final model = DirectChatBubbleModel.fromChatMessage(msg);
     return Padding(
       padding: EdgeInsets.only(bottom: context.h(10)),
       child: Align(
@@ -782,9 +835,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     ChatScreenViewModel model,
     List<ChatMessage> selected,
   ) async {
-    final canDeleteForEveryone = selected.isNotEmpty &&
-        selected.every((m) =>
-            m.isMe && (m.messageId ?? '').trim().isNotEmpty && !m.isPending);
+    final canDeleteForEveryone =
+        selected.isNotEmpty &&
+        selected.every(
+          (m) =>
+              m.isMe && (m.messageId ?? '').trim().isNotEmpty && !m.isPending,
+        );
 
     final count = selected.length;
 

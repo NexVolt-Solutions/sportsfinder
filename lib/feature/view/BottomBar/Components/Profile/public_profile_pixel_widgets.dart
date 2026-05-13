@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 
 /// Design reference: public profile mock — light grey page, white / blue-10 cards,
 /// primary CTA + square follow, stats without icons, About card, sports rows, reviews.
@@ -118,54 +119,54 @@ class PublicProfileHeroCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: context.h(20)),
-          
-            Row(
-              children: [
-                Expanded(
-                  child: CustomButton(
-                    text: AppText.message,
-                    onTap: onMessage,
-                    color: c.primary,
-                    colorText: c.onPrimary,
-                    radius: BorderRadius.circular(12),
-                    padding: context.padSym(h: 16, v: 14),
-                  ),
+
+          Row(
+            children: [
+              Expanded(
+                child: CustomButton(
+                  text: AppText.message,
+                  onTap: onMessage,
+                  color: c.primary,
+                  colorText: c.onPrimary,
+                  radius: BorderRadius.circular(12),
+                  padding: context.padSym(h: 16, v: 14),
                 ),
-                SizedBox(width: context.w(10)),
-                Material(
-                  color: c.blue10,
+              ),
+              SizedBox(width: context.w(10)),
+              Material(
+                color: c.blue10,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: isFollowLoading || onFollow == null
+                      ? null
+                      : () => onFollow!(),
                   borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: isFollowLoading || onFollow == null
-                        ? null
-                        : () => onFollow!(),
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: context.w(52),
-                      height: context.w(52),
-                      child: Center(
-                        child: isFollowLoading
-                            ? SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: c.primary,
-                                ),
-                              )
-                            : Icon(
-                                isFollowing
-                                    ? Icons.person_remove_alt_1_outlined
-                                    : Icons.person_add_alt_1_rounded,
+                  child: SizedBox(
+                    width: context.w(52),
+                    height: context.w(52),
+                    child: Center(
+                      child: isFollowLoading
+                          ? SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
                                 color: c.primary,
-                                size: 24,
                               ),
-                      ),
+                            )
+                          : Icon(
+                              isFollowing
+                                  ? Icons.person_remove_alt_1_outlined
+                                  : Icons.person_add_alt_1_rounded,
+                              color: c.primary,
+                              size: 24,
+                            ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -393,15 +394,19 @@ class PublicProfileSportRowPixel extends StatelessWidget {
     super.key,
     required this.sportName,
     required this.skillLabel,
+    this.categoryLabel = '',
   });
 
   final String sportName;
   final String skillLabel;
+  final String categoryLabel;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
     final t = context.appText;
+    final cat = categoryLabel.trim();
+
     return Padding(
       padding: EdgeInsets.only(bottom: context.h(10)),
       child: Container(
@@ -414,13 +419,36 @@ class PublicProfileSportRowPixel extends StatelessWidget {
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: Text(
-                sportName,
-                style: t.text16W500.copyWith(fontSize: 15, color: c.greyDark),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    sportName,
+                    style: t.text16W500.copyWith(
+                      fontSize: 15,
+                      color: c.greyDark,
+                    ),
+                  ),
+                  if (cat.isNotEmpty) ...[
+                    SizedBox(height: context.h(4)),
+                    Text(
+                      cat,
+                      style: t.text12W400.copyWith(
+                        color: c.greylight,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
             ),
+            SizedBox(width: context.w(8)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
@@ -446,28 +474,33 @@ class PublicProfileReviewCardPixel extends StatelessWidget {
     required this.dateLabel,
     required this.body,
     required this.initial,
+    this.ratingStars = 0,
   });
 
   final String author;
   final String dateLabel;
   final String body;
   final String initial;
+  final int ratingStars;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
     final t = context.appText;
-    final starColor = const Color(0xFF6B7280);
+    final stars = ratingStars.clamp(0, 5);
+
     return Padding(
       padding: EdgeInsets.only(bottom: context.h(12)),
       child: Container(
         width: double.infinity,
         padding: context.padSym(h: 16, v: 14),
         decoration: BoxDecoration(
-          color: c.blue10,
+          color: c.surface,
           borderRadius: BorderRadius.circular(
             PublicProfilePixelTheme.cardRadius,
           ),
+          border: Border.all(color: c.greylight.withValues(alpha: 0.35)),
+          boxShadow: PublicProfilePixelTheme.cardShadow(context),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,7 +510,7 @@ class PublicProfileReviewCardPixel extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: c.surface,
+                  backgroundColor: c.blue10,
                   child: Text(
                     initial.isNotEmpty ? initial[0].toUpperCase() : '?',
                     style: t.text16Bold.copyWith(color: c.primary),
@@ -498,19 +531,14 @@ class PublicProfileReviewCardPixel extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: context.h(4)),
+                      SizedBox(height: context.h(6)),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          ...List.generate(
-                            5,
-                            (i) => Padding(
-                              padding: const EdgeInsets.only(right: 2),
-                              child: Icon(
-                                Icons.star_rounded,
-                                size: 16,
-                                color: starColor,
-                              ),
-                            ),
+                          ProfileStarRatingRow(
+                            filledCount: stars,
+                            starSize: 18,
+                            spacing: 2,
                           ),
                           const Spacer(),
                           Text(
@@ -519,7 +547,7 @@ class PublicProfileReviewCardPixel extends StatelessWidget {
                           ),
                         ],
                       ),
-                      SizedBox(height: context.h(8)),
+                      SizedBox(height: context.h(10)),
                       Text(
                         body,
                         style: t.text14W400.copyWith(
@@ -599,8 +627,10 @@ class PublicProfilePixelScaffold extends StatelessWidget {
   final String following;
   final String rating;
   final String matches;
-  final List<({String name, String skill})> sports;
-  final List<({String author, String date, String body, String initial})>
+  final List<({String name, String skill, String category})> sports;
+  final List<
+    ({String author, String date, String body, String initial, int ratingStars})
+  >
   reviews;
   final bool isOwnProfile;
   final VoidCallback? onMessage;
@@ -660,6 +690,7 @@ class PublicProfilePixelScaffold extends StatelessWidget {
                   (s) => PublicProfileSportRowPixel(
                     sportName: s.name,
                     skillLabel: s.skill,
+                    categoryLabel: s.category,
                   ),
                 ),
               ],
@@ -687,6 +718,7 @@ class PublicProfilePixelScaffold extends StatelessWidget {
                           dateLabel: r.date,
                           body: r.body,
                           initial: r.initial,
+                          ratingStars: r.ratingStars,
                         ),
                       ),
                     ],

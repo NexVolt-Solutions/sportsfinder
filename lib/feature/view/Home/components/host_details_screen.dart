@@ -744,7 +744,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     ? user.location
                                     : '${match.distanceKm.toStringAsFixed(1)} km',
                                 isShow: true,
-                                isInvited: model.isUserAlreadyInvited(
+                                isInvited: model.isInviteDisabledAsInvited(
                                   user.id?.trim() ?? '',
                                 ),
                                 isLoading:

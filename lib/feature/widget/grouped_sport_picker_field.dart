@@ -209,41 +209,16 @@ class GroupedSportPickerField extends StatelessWidget {
         final canOpen = !optionsLoading && sportOptions.isNotEmpty;
 
         return InputDecorator(
-          decoration: InputDecoration(
-            alignLabelWithHint: true,
-            isDense: true,
-            constraints: AppFormFieldLayout.singleLineConstraints(context),
+          decoration: AppFormFieldLayout.standardOutlineInputDecoration(
+            context,
             label: Text(
               label,
               style: context.appText.text16W400.copyWith(color: c.onSurface),
             ),
             hintText: hintText,
-            hintStyle: context.appText.text14W400.copyWith(color: c.greylight),
-            filled: true,
-            fillColor: c.transparent,
+            constraints: AppFormFieldLayout.singleLineConstraints(context),
+            isDense: true,
             errorText: state.errorText,
-            errorStyle: AppFormFieldLayout.errorStyle(context),
-            errorMaxLines: 2,
-            border: OutlineInputBorder(
-              borderRadius: AppFormFieldLayout.borderRadius(context),
-              borderSide: BorderSide(color: c.greylight, width: 1),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppFormFieldLayout.borderRadius(context),
-              borderSide: BorderSide(color: c.greylight, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppFormFieldLayout.borderRadius(context),
-              borderSide: BorderSide(color: c.primary, width: 1),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: AppFormFieldLayout.borderRadius(context),
-              borderSide: BorderSide(color: c.error, width: 1),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: AppFormFieldLayout.borderRadius(context),
-              borderSide: BorderSide(color: c.error, width: 1),
-            ),
           ),
           child: InkWell(
             onTap: !canOpen

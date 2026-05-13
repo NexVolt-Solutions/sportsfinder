@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
@@ -29,8 +29,7 @@ class BottomBarScreen extends StatelessWidget {
   }
 }
 
-// (moved into _BottomBarContentState to support responsive layouts)
-
+ 
 class _MyMatchesTabSlot extends StatelessWidget {
   const _MyMatchesTabSlot({required this.forceMobileLayout});
 
@@ -102,6 +101,17 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   bool _requestedInitialProfile = false;
   bool _scheduledWebChatTabFromCoordinator = false;
 
+  @override
+  void reassemble() {
+    super.reassemble();
+    // Hot reload (incl. Flutter web) keeps static chat-thread state; debounced
+    // merge realigns sidebar + bottom-nav badges with GET /chats even if a child
+    // State does not receive reassemble in the same order.
+    if (kDebugMode) {
+      ChatListScreenViewModel.scheduleMergeDirectChatsFromBackend();
+    }
+  }
+
   List<Widget> _tabChildren({required bool forceMobileLayout}) => <Widget>[
         _MyMatchesTabSlot(forceMobileLayout: forceMobileLayout),
         DiscoverTabScreen(
@@ -117,7 +127,10 @@ class _BottomBarContentState extends State<_BottomBarContent> {
               : const HomeScreen(),
         ),
         const ChatListScreen(embedInBottomBar: true),
-        const ProfileScreen(embedInBottomBar: true),
+        ProfileScreen(
+          embedInBottomBar: true,
+          forceMobileLayout: forceMobileLayout,
+        ),
       ];
 
   @override

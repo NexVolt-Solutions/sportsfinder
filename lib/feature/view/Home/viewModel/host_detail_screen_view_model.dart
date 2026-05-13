@@ -163,6 +163,22 @@ class HostDetailScreenViewModel extends ChangeNotifier {
   bool isInvitingUser(String userId) => _safeInvitingUserIds.contains(userId);
   bool isUserAlreadyInvited(String userId) =>
       _safeInvitedUserIds.contains(userId);
+
+  /// True when the Invite chip should read **Invited** and stay disabled:
+  /// pending invite, joined roster, match host, or locally sealed after API
+  /// "already in this match" / similar.
+  bool isInviteDisabledAsInvited(String userId) {
+    final id = userId.trim();
+    if (id.isEmpty) return false;
+    if (_safeInvitedUserIds.contains(id)) return true;
+    final hostId = _currentMatch?.hostUserId.trim() ?? '';
+    if (hostId.isNotEmpty && hostId == id) return true;
+    for (final rid in _rosterUserIds) {
+      if (rid.trim() == id && id.isNotEmpty) return true;
+    }
+    return false;
+  }
+
   String? get inviteErrorMessage => _inviteErrorMessage;
 
   bool _isDeletingMatch = false;
@@ -262,12 +278,12 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       );
       return null;
     }
-    if (invitedIds.contains(trimmedUserId)) {
+    if (isInviteDisabledAsInvited(trimmedUserId)) {
       AppLogger.warning(
-        'Invite skipped because this user was already invited',
+        'Invite skipped — user on roster, host, or already invited/sealed',
         tag: 'HostDetailVM',
       );
-      return 'Invitation already sent';
+      return AppText.invitationAlreadySent;
     }
 
     invitingIds.add(trimmedUserId);
@@ -293,6 +309,13 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     } catch (e) {
       _inviteErrorMessage = messageFromApiException(e);
       AppLogger.error('Invite API call failed', tag: 'HostDetailVM', error: e);
+      final errLower = (_inviteErrorMessage ?? '').toLowerCase();
+      if (errLower.contains('already in this match') ||
+          errLower.contains('already invited') ||
+          errLower.contains('invitation already')) {
+        invitedIds.add(trimmedUserId);
+        _cacheInvitedUserIdsForMatch(trimmedMatchId);
+      }
       return _inviteErrorMessage;
     } finally {
       invitingIds.remove(trimmedUserId);
@@ -693,9 +716,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _rosterUserIds = userIds;
     _rosterAvatarUrls = avatarUrls;
     if (invitedUserIdsFromDetail.isNotEmpty) {
-      _safeInvitedUserIds
-        ..clear()
-        ..addAll(invitedUserIdsFromDetail);
+      _safeInvitedUserIds.addAll(invitedUserIdsFromDetail);
       _cacheInvitedUserIdsForMatch(detail.id);
     }
     final resolvedStatus = _normalizeMatchStatus(detail.status);
@@ -711,9 +732,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
     _mergeMatchMetadataFromDetail(detail);
     _syncCurrentMatchRoster();
   }
-
-  /// Fills title, schedule, host, location, etc. from [GET /api/v1/matches/{id}]
-  /// so push-opened stubs and partial route args match the API.
+ 
   void _mergeMatchMetadataFromDetail(MatchDetailResponse detail) {
     final m = _currentMatch;
     if (m == null) return;

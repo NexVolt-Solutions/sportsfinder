@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_form_field_layout.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
-
 
 class TextFormFieldWidget extends StatelessWidget {
   final String? label;
@@ -59,21 +57,8 @@ class TextFormFieldWidget extends StatelessWidget {
       maxLines: maxLines,
       textAlignVertical: isSingleLine ? TextAlignVertical.center : null,
       style: context.appText.text14W400.copyWith(color: c.greyDark),
-      decoration: InputDecoration(
-        contentPadding: isSingleLine
-            ? EdgeInsets.symmetric(
-                horizontal: context.w(20),
-                vertical: context.h(14),
-              )
-            : AppFormFieldLayout.contentPaddingMultiline(context),
-        alignLabelWithHint: true,
-        isDense: false,
-        errorStyle: AppFormFieldLayout.errorStyle(context),
-        errorMaxLines: 2,
-        prefixIconConstraints: BoxConstraints(
-          minWidth: resolvedControlHeight,
-          minHeight: resolvedControlHeight,
-        ),
+      decoration: AppFormFieldLayout.standardOutlineInputDecoration(
+        context,
         label: label != null
             ? Text(
                 label!,
@@ -81,39 +66,28 @@ class TextFormFieldWidget extends StatelessWidget {
               )
             : null,
         hintText: hintText,
-        hintStyle: context.appText.text14W400.copyWith(color: c.greylight),
-        filled: true,
         fillColor: fillColor ?? c.blue10,
+        contentPadding: isSingleLine
+            ? AppFormFieldLayout.singleLineFieldPadding(context)
+            : AppFormFieldLayout.contentPaddingMultiline(context),
+        isDense: false,
+        constraints: isSingleLine
+            ? (controlHeight != null
+                ? BoxConstraints(minHeight: resolvedControlHeight)
+                : AppFormFieldLayout.singleLineConstraints(context))
+            : null,
         prefixIcon: customSuffix ??
             (preffixIcon != null ? Icon(preffixIcon, color: c.greyDark) : null),
-        border: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.primary, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.error, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.error, width: 1.5),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1.5),
+        prefixIconConstraints: BoxConstraints(
+          minWidth: resolvedControlHeight,
+          minHeight: resolvedControlHeight,
         ),
       ),
     );
 
-    if (!isSingleLine) return field;
-    return SizedBox(height: resolvedControlHeight, child: field);
+    // Do not wrap single-line fields in a fixed-height [SizedBox]: validation
+    // error text lives below the input and needs vertical space; capping height
+    // clips or crushes errors against the next field (e.g. Create Match date/time).
+    return field;
   }
 }

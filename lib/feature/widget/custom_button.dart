@@ -81,7 +81,7 @@ class CustomButton extends StatelessWidget {
       onTap: isLoading ? null : onTap,
       child: Container(
         width: double.infinity,
-        padding: padding ?? context.padAll(12),
+        padding: padding ?? context.padAll(10),
         decoration: BoxDecoration(
           color: backgroundColor,
           // Keep default radius fixed across platforms (mobile + web).

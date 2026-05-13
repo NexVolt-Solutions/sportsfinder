@@ -52,7 +52,7 @@ class BottomBarNotificationBell extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
     final unreadCount = context.select<NotificationService, int>(
-      (service) => service.unreadNonDirectMessageCount,
+      (service) => service.unreadCount,
     );
 
     return Stack(
@@ -417,18 +417,12 @@ class BottomBarBottomNav extends StatelessWidget {
                         builder: (context, _, _) {
                           final threadUnread =
                               ChatListScreenViewModel.totalDirectChatUnread;
-                          return Selector<NotificationService, int>(
-                            selector: (_, s) => s.unreadDirectMessageCount,
-                            builder: (context, dmNotifUnread, _) {
-                              final badge = threadUnread + dmNotifUnread;
-                              return BottomBarMobileNavItem(
-                                iconPath: AppAssets.chatIcon,
-                                label: AppText.chat,
-                                isSelected: viewModel.selectedIndex == 3,
-                                badgeCount: badge,
-                                onTap: () => viewModel.setSelectedIndex(3),
-                              );
-                            },
+                          return BottomBarMobileNavItem(
+                            iconPath: AppAssets.chatIcon,
+                            label: AppText.chat,
+                            isSelected: viewModel.selectedIndex == 3,
+                            badgeCount: threadUnread,
+                            onTap: () => viewModel.setSelectedIndex(3),
                           );
                         },
                       ),
@@ -604,18 +598,12 @@ class BottomBarWebSidebar extends StatelessWidget {
                   builder: (context, _, _) {
                     final threadUnread =
                         ChatListScreenViewModel.totalDirectChatUnread;
-                    return Selector<NotificationService, int>(
-                      selector: (_, s) => s.unreadDirectMessageCount,
-                      builder: (context, dmNotifUnread, _) {
-                        final badge = threadUnread + dmNotifUnread;
-                        return BottomBarWebNavItem(
-                          iconPath: AppAssets.chatIcon,
-                          label: 'Chat',
-                          isSelected: viewModel.selectedIndex == 3,
-                          badgeCount: badge,
-                          onTap: () => viewModel.setSelectedIndex(3),
-                        );
-                      },
+                    return BottomBarWebNavItem(
+                      iconPath: AppAssets.chatIcon,
+                      label: 'Chat',
+                      isSelected: viewModel.selectedIndex == 3,
+                      badgeCount: threadUnread,
+                      onTap: () => viewModel.setSelectedIndex(3),
                     );
                   },
                 ),
