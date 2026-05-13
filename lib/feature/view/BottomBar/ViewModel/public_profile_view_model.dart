@@ -5,6 +5,7 @@ import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/Review/create_review_model.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
+import 'package:sport_finding/Data/Repositories/UnFollowUser/unfollow_user_repo.dart';
 import 'package:sport_finding/Data/Repositories/Review/review_repository.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/my_profile_model.dart';
@@ -19,6 +20,31 @@ import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/web_embedded_chat_open_coordinator.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
+
+String _humanizeSportCategoryLabel(String raw) {
+  final t = raw.trim();
+  if (t.isEmpty) return '';
+  return t
+      .split('_')
+      .where((w) => w.isNotEmpty)
+      .map(
+        (w) =>
+            '${w[0].toUpperCase()}${w.length > 1 ? w.substring(1).toLowerCase() : ''}',
+      )
+      .join(' ');
+}
+
+int _reviewStarRatingFromMap(Map<String, dynamic> m) {
+  const keys = ['rating', 'stars', 'star_rating', 'score'];
+  for (final k in keys) {
+    final v = m[k];
+    if (v == null) continue;
+    if (v is num) return v.round().clamp(0, 5);
+    final d = double.tryParse(v.toString());
+    if (d != null) return d.round().clamp(0, 5);
+  }
+  return 0;
+}
 
 class PublicProfileViewModel extends ChangeNotifier {
   PublicProfileViewModel({PublicProfileArgs? args}) : _args = args {
@@ -42,6 +68,7 @@ class PublicProfileViewModel extends ChangeNotifier {
   );
   final ReviewRepository _reviewRepository = ReviewRepository();
   final FollowUserRepo _followUserRepo = FollowUserRepo();
+  final UnfollowUserRepo _unfollowUserRepo = UnfollowUserRepo();
 
   late final VoidCallback _listener;
 
@@ -60,8 +87,8 @@ class PublicProfileViewModel extends ChangeNotifier {
     if (_args == null) return true;
     final uid = _args.userId.trim();
     if (uid.isEmpty) return true;
-    final myId = ProfileService().profile?.id;
-    if (myId == null || myId.isEmpty) return false;
+    final myId = ProfileService().profile?.id.trim() ?? '';
+    if (myId.isEmpty) return false;
     return uid == myId;
   }
 
@@ -101,8 +128,17 @@ class PublicProfileViewModel extends ChangeNotifier {
   String? get followError => _followError;
   String get selectedUserId => _args?.userId.trim() ?? '';
 
-   bool get isOwnProfile =>
-      _viewingSelf || (_active?.actions.isOwnProfile ?? false);
+  bool get isOwnProfile {
+    if (_args == null) return true;
+    final uid = _args.userId.trim();
+    if (uid.isEmpty) return true;
+    final myId = ProfileService().profile?.id.trim() ?? '';
+    if (myId.isNotEmpty) {
+      return uid == myId;
+    }
+    return _active?.actions.isOwnProfile ?? false;
+  }
+
   bool get canRateProfile =>
       !isOwnProfile && (_canRateOverride ?? (_active?.actions.canRate ?? true));
 
@@ -197,10 +233,33 @@ class PublicProfileViewModel extends ChangeNotifier {
     for (final e in raw) {
       if (e is Map) {
         final m = Map<String, dynamic>.from(e);
-        final name = '${m['name'] ?? m['sport'] ?? ''}'.trim();
+        String name = '';
+        String category = '';
+        final sportField = m['sport'];
+
+        if (sportField is Map) {
+          final sm = Map<String, dynamic>.from(sportField);
+          name = '${sm['name'] ?? sm['title'] ?? sm['id'] ?? ''}'.trim();
+          final catRaw = '${sm['category'] ?? ''}'.trim();
+          category = catRaw.isEmpty ? '' : _humanizeSportCategoryLabel(catRaw);
+        } else {
+          name = '${m['name'] ?? ''}'.trim();
+          if (name.isEmpty && sportField != null) {
+            name = sportField.toString().trim();
+          }
+          final catRaw = '${m['category'] ?? ''}'.trim();
+          category = catRaw.isEmpty ? '' : _humanizeSportCategoryLabel(catRaw);
+        }
+
         if (name.isEmpty) continue;
         final skill = '${m['skill'] ?? m['skill_level'] ?? ''}'.trim();
-        out.add(MySport(name: name, skill: skill.isEmpty ? '—' : skill));
+        out.add(
+          MySport(
+            name: name,
+            skill: skill.isEmpty ? '—' : skill,
+            category: category,
+          ),
+        );
       }
     }
     return out;
@@ -210,7 +269,9 @@ class PublicProfileViewModel extends ChangeNotifier {
   List<MySport> get publicSportsForDisplay {
     if (showSpinner || showError) return publicSports;
     if (publicSports.isNotEmpty) return publicSports;
-    return [MySport(name: AppText.profilePlaceholderSport, skill: '')];
+    return [
+      MySport(name: AppText.profilePlaceholderSport, skill: '', category: ''),
+    ];
   }
 
   Map<String, dynamic>? get _firstReviewMap {
@@ -250,11 +311,13 @@ class PublicProfileViewModel extends ChangeNotifier {
       }
 
       if (author.isEmpty && body.isEmpty) continue;
+      final stars = _reviewStarRatingFromMap(m);
       out.add(<String, String>{
         'author': author.isEmpty ? '—' : author,
         'body': body.isEmpty ? AppText.profilePlaceholderReview : body,
         'date': date,
         'initial': author.isEmpty ? '?' : author[0].toUpperCase(),
+        'rating': '$stars',
       });
     }
 
@@ -386,17 +449,13 @@ class PublicProfileViewModel extends ChangeNotifier {
         unreadCount: 0,
       );
       WebEmbeddedChatOpenCoordinator.requestOpen(chatArgs);
-      Navigator.of(context).popUntil(
-        (route) => route.settings.name == RoutesName.bottomBarScreen,
-      );
+      Navigator.of(
+        context,
+      ).popUntil((route) => route.settings.name == RoutesName.bottomBarScreen);
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      RoutesName.chatScreen,
-      arguments: chatArgs,
-    );
+    Navigator.pushNamed(context, RoutesName.chatScreen, arguments: chatArgs);
   }
 
   Future<void> onFollowTap(BuildContext context) async {
@@ -408,11 +467,9 @@ class PublicProfileViewModel extends ChangeNotifier {
       );
       return;
     }
+
     if (isFollowing) {
-      // Privacy/UX: don't navigate away after tapping follow.
-      if (context.mounted) {
-        AppSnackBar.show('You are already following this user');
-      }
+      await _unfollowUser(context);
       return;
     }
 
@@ -427,6 +484,7 @@ class PublicProfileViewModel extends ChangeNotifier {
       log('✅ [PublicProfileVM] Follow API success for userId: $selectedUserId');
       _isFollowingOverride = true;
       _followersCountOverride = followersCount + 1;
+      ProfileService().adjustSocialStats(followingDelta: 1);
       _followError = null;
       _safeNotifyListeners();
 
@@ -441,6 +499,48 @@ class PublicProfileViewModel extends ChangeNotifier {
 
       if (!context.mounted) return;
       AppSnackBar.show(_followError ?? 'Failed to follow user');
+    } finally {
+      if (!_disposed) {
+        _followLoading = false;
+        _safeNotifyListeners();
+      }
+    }
+  }
+
+  Future<void> _unfollowUser(BuildContext context) async {
+    _followLoading = true;
+    _followError = null;
+    _safeNotifyListeners();
+
+    try {
+      log('🚀 [PublicProfileVM] Unfollow API hit for userId: $selectedUserId');
+      await _unfollowUserRepo.unfollowUser(userId: selectedUserId);
+      if (_disposed) return;
+      log(
+        '✅ [PublicProfileVM] Unfollow API success for userId: $selectedUserId',
+      );
+
+      final fc = followersCount;
+      _isFollowingOverride = false;
+      _followersCountOverride = fc > 0 ? fc - 1 : 0;
+      ProfileService().adjustSocialStats(followingDelta: -1);
+      _followError = null;
+      _safeNotifyListeners();
+
+      if (!context.mounted) return;
+      AppSnackBar.show(AppText.unfollowedUserSuccess);
+    } catch (e) {
+      if (_disposed) return;
+      log(
+        '❌ [PublicProfileVM] Unfollow API failed for userId: $selectedUserId',
+      );
+      log('📍 [PublicProfileVM] Unfollow error: $e');
+      _followError = e.toString();
+      _safeNotifyListeners();
+
+      if (!context.mounted) return;
+      final msg = messageFromApiException(e);
+      AppSnackBar.show(msg.trim().isEmpty ? 'Failed to unfollow user' : msg);
     } finally {
       if (!_disposed) {
         _followLoading = false;
@@ -466,7 +566,8 @@ class PublicProfileViewModel extends ChangeNotifier {
       return false;
     }
     if (!canRateProfile) {
-      _submitReviewError = 'You have already submitted a profile review for this user.';
+      _submitReviewError =
+          'You have already submitted a profile review for this user.';
       _safeNotifyListeners();
       return false;
     }
@@ -488,9 +589,7 @@ class PublicProfileViewModel extends ChangeNotifier {
         ),
       );
       if (_disposed) return false;
-      log(
-        '[PublicProfileVM] submitReview success for userId=$selectedUserId',
-      );
+      log('[PublicProfileVM] submitReview success for userId=$selectedUserId');
 
       final raw = await _repo.getUserById(selectedUserId);
       if (_disposed) return false;

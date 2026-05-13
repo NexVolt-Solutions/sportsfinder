@@ -32,7 +32,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final bulletStyle = t.text14W400.copyWith(color: c.greyDark, height: 1.48);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: onEmbeddedClose != null
+          ? Colors.transparent
+          : Theme.of(context).scaffoldBackgroundColor,
       body: MainFrame(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

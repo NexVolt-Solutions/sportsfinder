@@ -17,6 +17,7 @@ import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/core/utils/network_errors.dart';
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -55,12 +56,14 @@ class NotificationService extends ChangeNotifier {
 
   int get unreadCount => notifications.where((item) => !item.isRead).length;
 
-  /// Unread rows that represent DM/chat alerts (show on Chat tab, not the bell).
+  /// Unread notification rows for `direct_message` (separate from chat-thread
+  /// unread from `/chats`). Chat tab badge uses thread unread only; the bell
+  /// uses [unreadCount] so DM alerts are not double-counted on Chat.
   int get unreadDirectMessageCount => notifications
       .where((item) => !item.isRead && item.isDirectMessageNotification)
       .length;
 
-  /// Bell / profile dots: everything except DM notification rows.
+  /// Discover / profile dots: non-DM notifications only.
   int get unreadNonDirectMessageCount => notifications
       .where((item) => !item.isRead && !item.isDirectMessageNotification)
       .length;
@@ -161,7 +164,9 @@ class NotificationService extends ChangeNotifier {
         (dynamic data) {
           if (_isDisposed) return;
           if (data is! String) return;
-          _handleRealtimeEvent(jsonDecode(data) as Map<String, dynamic>);
+          _handleRealtimeEvent(
+            coerceToDartJsonMap(jsonDecode(data)),
+          );
         },
         onError: (Object error) {
           if (_isDisposed) return;
@@ -296,13 +301,9 @@ class NotificationService extends ChangeNotifier {
   }
 
   NotificationModel _notificationFromRealtimeEvent(Map<String, dynamic> event) {
-    final payload = event['payload'];
-    final notificationType = '${event['notification_type'] ?? ''}'.trim();
-    final payloadMap = payload is Map<String, dynamic>
-        ? payload
-        : (payload is Map
-              ? Map<String, dynamic>.from(payload)
-              : <String, dynamic>{});
+    final payloadMap = coerceToDartJsonMap(event['payload']);
+    final notificationType =
+        '${event['notification_type'] ?? ''}'.trim();
     final notificationMap = <String, dynamic>{
       ...payloadMap,
       if (event['recipient_id'] != null) 'recipient_id': event['recipient_id'],
@@ -321,7 +322,7 @@ class NotificationService extends ChangeNotifier {
       if (payloadMap['created_at'] == null)
         'created_at': DateTime.now().toUtc().toIso8601String(),
     };
-    return NotificationModel.fromJson(notificationMap);
+    return NotificationModel.fromJson(coerceToDartJsonMap(notificationMap));
   }
 
   void _upsertNotification(NotificationModel incoming) {
@@ -340,6 +341,9 @@ class NotificationService extends ChangeNotifier {
       notifications = <NotificationModel>[incoming, ...notifications];
     }
     _sortNotificationsNewestFirst();
+    if (incoming.isDirectMessageNotification) {
+      ChatListScreenViewModel.scheduleMergeDirectChatsFromBackend();
+    }
   }
 
   /// Newest first so Today/Yesterday/Earlier sections show latest at the top.
@@ -411,6 +415,7 @@ class NotificationService extends ChangeNotifier {
     if (_isDisposed) return;
     isLoading = false;
     notifyListeners();
+    ChatListScreenViewModel.scheduleMergeDirectChatsFromBackend();
   }
 
   Future<String?> markAsRead(String notificationId) async {

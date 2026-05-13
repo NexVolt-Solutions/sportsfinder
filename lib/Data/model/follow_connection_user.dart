@@ -4,10 +4,15 @@ class FollowConnectionUser {
     required this.id,
     required this.displayName,
     this.isFollowing = false,
+    this.subtitle,
   });
 
   final String id;
   final String displayName;
+
+  /// Secondary line under the name (e.g. location · rating · sport).
+  final String? subtitle;
+
   final bool isFollowing;
 
   String get initial {
@@ -34,5 +39,6 @@ final List<FollowConnectionUser> kDefaultFollowConnectionUsers =
         id: 'u$i',
         displayName: kFollowConnectionSeedNames[i],
         isFollowing: false,
+        subtitle: 'Los Angeles, CA · 4.5 ★',
       ),
     );

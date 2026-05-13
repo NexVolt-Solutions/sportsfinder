@@ -102,8 +102,17 @@ class ChatListScreenViewModel extends ChangeNotifier {
   static bool _hydrationStarted = false;
   static bool _hydratedOnce = false;
   static Timer? _webNotifyCoalesceTimer;
+  static Timer? _backendChatMergeDebounce;
+  static const Duration _backendChatMergeDebounceDuration =
+      Duration(milliseconds: 500);
+  static final DirectChatsRepository _backendChatMergeRepo =
+      DirectChatsRepository();
+  static bool _backendChatMergeInFlight = false;
   static final Map<String, Timer> _presenceOfflineDebounceTimers = {};
   static const Duration _presenceOfflineDebounce = Duration(milliseconds: 1500);
+  /// Dedupe client-side unread bumps (same message id redelivered across sockets).
+  static final Set<String> _unreadBumpKeys = <String>{};
+  static const int _maxUnreadBumpKeys = 4000;
   /// Web: batch WS bursts; post-frame delivery avoids scheduling paints while
   /// the CanvasKit view is mid-dispose (hot restart / route swap).
   static const Duration _webNotifyCoalesce = Duration(milliseconds: 80);
@@ -183,6 +192,96 @@ class ChatListScreenViewModel extends ChangeNotifier {
     final next = totalDirectChatUnread;
     if (directChatUnreadListenable.value != next) {
       directChatUnreadListenable.value = next;
+    }
+  }
+
+  /// Merges `/api/v1/chats` into the in-memory thread list so another device
+  /// (e.g. web send) or a push notification is reflected without opening the thread.
+  /// Primary: [ChatThreadPreview.lastAtIso] (newest first). Tie-break: [ChatThreadPreview.targetUserId].
+  static int compareThreadsByRecency(ChatThreadPreview a, ChatThreadPreview b) {
+    final ai = DateTime.tryParse((a.lastAtIso ?? '').trim());
+    final bi = DateTime.tryParse((b.lastAtIso ?? '').trim());
+    final aid = (a.targetUserId ?? '').trim();
+    final bid = (b.targetUserId ?? '').trim();
+    if (ai != null && bi != null) {
+      final c = bi.compareTo(ai);
+      if (c != 0) return c;
+      return aid.compareTo(bid);
+    }
+    if (ai != null) return -1;
+    if (bi != null) return 1;
+    return aid.compareTo(bid);
+  }
+
+  static void scheduleMergeDirectChatsFromBackend() {
+    _backendChatMergeDebounce?.cancel();
+    _backendChatMergeDebounce = Timer(_backendChatMergeDebounceDuration, () {
+      _backendChatMergeDebounce = null;
+      unawaited(mergeDirectChatsFromBackendNow());
+    });
+  }
+
+  static Future<void> mergeDirectChatsFromBackendNow() async {
+    if (_backendChatMergeInFlight) return;
+    _backendChatMergeInFlight = true;
+    try {
+      final res = await _backendChatMergeRepo.getDirectChats(
+        page: 1,
+        limit: 100,
+      );
+      final byId = <String, ChatThreadPreview>{};
+      for (final t in _globalThreads) {
+        final id = (t.targetUserId ?? '').trim();
+        if (id.isNotEmpty) byId[id] = t;
+      }
+      for (final c in res.items) {
+        final p = _conversationToPreview(c);
+        if (p == null) continue;
+        final id = (p.targetUserId ?? '').trim();
+        if (id.isEmpty) continue;
+        final prev = byId[id];
+        final int apiUnread = c.unreadFromApi ?? 0;
+        if (prev != null) {
+          final apiAt = DateTime.tryParse((p.lastAtIso ?? '').trim());
+          final localAt = DateTime.tryParse((prev.lastAtIso ?? '').trim());
+          final preferLocal =
+              localAt != null && (apiAt == null || !localAt.isBefore(apiAt));
+          if (preferLocal) {
+            final mergedUnread =
+                apiUnread > prev.unreadCount ? apiUnread : prev.unreadCount;
+            final pAvatar = (p.avatarUrl ?? '').trim();
+            byId[id] = prev.copyWith(
+              unreadCount: mergedUnread,
+              isOnline: prev.isOnline || p.isOnline,
+              lastSeenIso: prev.lastSeenIso ?? p.lastSeenIso,
+              avatarUrl: pAvatar.isNotEmpty ? p.avatarUrl : prev.avatarUrl,
+              userName:
+                  prev.userName.trim().isNotEmpty ? prev.userName : p.userName,
+              targetUserId: id,
+            );
+            continue;
+          }
+        }
+        byId[id] = p.copyWith(
+          unreadCount: apiUnread,
+          isOnline: prev?.isOnline ?? p.isOnline,
+          lastSeenIso: prev?.lastSeenIso ?? p.lastSeenIso,
+        );
+      }
+      final ordered = byId.values.toList()
+        ..sort(compareThreadsByRecency);
+      _globalThreads
+        ..clear()
+        ..addAll(ordered);
+      _persistThreads();
+      _notifyAllListeners();
+      debugPrint(
+        '[ChatListVM] mergeDirectChatsFromBackend rows=${_globalThreads.length}',
+      );
+    } catch (e) {
+      debugPrint('[ChatListVM] mergeDirectChatsFromBackend failed: $e');
+    } finally {
+      _backendChatMergeInFlight = false;
     }
   }
 
@@ -363,10 +462,36 @@ class ChatListScreenViewModel extends ChangeNotifier {
       isOnline: isOnline,
       lastSeenIso: isOnline ? null : mergedLastSeen,
     );
-    _globalThreads
-      ..removeAt(idx)
-      ..insert(0, updated);
+    final sameOnline = updated.isOnline == existing.isOnline;
+    final sameLastSeen =
+        (updated.lastSeenIso ?? '') == (existing.lastSeenIso ?? '');
+    if (sameOnline && sameLastSeen) return;
+
+    _globalThreads[idx] = updated;
     _persistThreads();
+    _notifyAllListeners();
+  }
+
+  static bool _tryConsumeUnreadBumpKey(String key) {
+    if (key.isEmpty) return true;
+    if (_unreadBumpKeys.contains(key)) return false;
+    if (_unreadBumpKeys.length >= _maxUnreadBumpKeys) {
+      _unreadBumpKeys.clear();
+    }
+    _unreadBumpKeys.add(key);
+    return true;
+  }
+
+  /// Clears in-memory threads, unread dedupe, and tab badge. Prefs are cleared
+  /// by [AppPreferences.clearAuthSession]; call this so static state matches.
+  static void clearSessionState() {
+    _globalThreads.clear();
+    _unreadBumpKeys.clear();
+    _hydratedOnce = false;
+    _hydrationStarted = false;
+    _backendChatMergeDebounce?.cancel();
+    _backendChatMergeDebounce = null;
+    _syncDirectChatUnreadSignal();
     _notifyAllListeners();
   }
 
@@ -376,8 +501,17 @@ class ChatListScreenViewModel extends ChangeNotifier {
     String? avatarUrl,
     String? lastMessage,
     DateTime? lastAt,
+    String? messageId,
   }) {
     final trimmedTargetUserId = (targetUserId ?? '').trim();
+    final mid = (messageId ?? '').trim();
+    if (mid.isEmpty) {
+      scheduleMergeDirectChatsFromBackend();
+      return;
+    }
+    final dedupeKey = '$trimmedTargetUserId|$mid';
+    if (!_tryConsumeUnreadBumpKey(dedupeKey)) return;
+
     final idx = _globalThreads.indexWhere((t) {
       if (trimmedTargetUserId.isNotEmpty) {
         return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
@@ -469,6 +603,33 @@ class ChatListScreenViewModel extends ChangeNotifier {
     _notifyAllListeners();
   }
 
+  /// Removes several threads in one persist/notify cycle (local list only).
+  static void removeThreadsBatch(Iterable<ChatThreadPreview> threads) {
+    final targetIds = <String>{};
+    final nameKeys = <String>{};
+    for (final t in threads) {
+      final tid = (t.targetUserId ?? '').trim();
+      if (tid.isNotEmpty) {
+        targetIds.add(tid);
+      } else {
+        final n = t.userName.trim().toLowerCase();
+        if (n.isNotEmpty) nameKeys.add(n);
+      }
+    }
+    if (targetIds.isEmpty && nameKeys.isEmpty) return;
+
+    final before = _globalThreads.length;
+    _globalThreads.removeWhere((thread) {
+      final tt = (thread.targetUserId ?? '').trim();
+      if (tt.isNotEmpty) return targetIds.contains(tt);
+      return nameKeys.contains(thread.userName.trim().toLowerCase());
+    });
+    if (_globalThreads.length != before) {
+      _persistThreads();
+      _notifyAllListeners();
+    }
+  }
+
   void startOrOpenThread(
     String userName, {
     String? targetUserId,
@@ -543,22 +704,11 @@ class ChatListScreenViewModel extends ChangeNotifier {
       );
 
       if (replace) {
-        final prevUnreadByUserId = <String, int>{
-          for (final t in _globalThreads)
-            if ((t.targetUserId ?? '').trim().isNotEmpty)
-              (t.targetUserId ?? '').trim(): t.unreadCount,
-        };
         _globalThreads.clear();
         for (final c in res.items) {
           final p = _conversationToPreview(c);
           if (p == null) continue;
-          final id = (p.targetUserId ?? '').trim();
-          final int mergedUnread;
-          if (c.unreadFromApi != null) {
-            mergedUnread = c.unreadFromApi!;
-          } else {
-            mergedUnread = id.isEmpty ? 0 : (prevUnreadByUserId[id] ?? 0);
-          }
+          final mergedUnread = c.unreadFromApi ?? 0;
           _globalThreads.add(p.copyWith(unreadCount: mergedUnread));
         }
       } else {
@@ -577,6 +727,8 @@ class ChatListScreenViewModel extends ChangeNotifier {
           if (!exists) _globalThreads.add(t);
         }
       }
+
+      _globalThreads.sort(compareThreadsByRecency);
 
       _remotePage = res.page;
       _remoteHasNext = res.hasNext;

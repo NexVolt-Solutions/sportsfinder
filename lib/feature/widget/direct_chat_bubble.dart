@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
@@ -44,7 +45,6 @@ class DirectChatBubbleModel {
     required this.timeLabel,
     this.readAt,
     this.deliveredAt,
-    this.peerOnline = true,
     this.mediaUrl,
     this.thumbnailUrl,
     this.fileName,
@@ -59,16 +59,13 @@ class DirectChatBubbleModel {
   final String timeLabel;
   final DateTime? readAt;
   final DateTime? deliveredAt;
-  /// When false, outgoing ticks stay single (peer offline / no data); double-grey needs online + delivered.
-  final bool peerOnline;
   final String? mediaUrl;
   final String? thumbnailUrl;
   final String? fileName;
 
   factory DirectChatBubbleModel.fromChatMessage(
-    ChatMessage msg, {
-    bool peerOnline = true,
-  }) {
+    ChatMessage msg,
+  ) {
     final hasMedia = (msg.mediaUrl ?? '').trim().isNotEmpty;
     final inferredType = hasMedia
         ? (_isProbablyImage(msg.mediaUrl ?? msg.thumbnailUrl, msg.mimeType)
@@ -79,7 +76,7 @@ class DirectChatBubbleModel {
         (msg.type == ChatMessageType.text && hasMedia) ? inferredType : msg.type;
 
     final titleText = msg.isDeleted
-        ? 'This message was deleted'
+        ? (msg.isMe ? '' : AppText.chatMessageWasDeleted)
         : (effectiveType == ChatMessageType.text
               ? msg.text
               : (effectiveType == ChatMessageType.image
@@ -98,7 +95,6 @@ class DirectChatBubbleModel {
       timeLabel: msg.time,
       readAt: msg.readAt,
       deliveredAt: msg.deliveredAt,
-      peerOnline: peerOnline,
       mediaUrl: msg.mediaUrl,
       thumbnailUrl: msg.thumbnailUrl,
       fileName: msg.fileName,
@@ -112,21 +108,20 @@ class DirectChatBubbleModel {
     required bool isMe,
     bool isPending = false,
     bool isFailed = false,
+    bool isDeleted = false,
     DateTime? readAt,
     DateTime? deliveredAt,
-    bool peerOnline = true,
   }) {
     return DirectChatBubbleModel(
       titleText: text,
       isMe: isMe,
-      isDeleted: false,
+      isDeleted: isDeleted,
       isPending: isPending,
       isFailed: isFailed,
       effectiveType: ChatMessageType.text,
       timeLabel: time,
       readAt: readAt,
       deliveredAt: deliveredAt,
-      peerOnline: peerOnline,
     );
   }
 }
@@ -172,6 +167,11 @@ class DirectChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Delete-for-everyone: only the **other** user sees the tombstone; sender sees nothing.
+    if (model.isDeleted && model.isMe) {
+      return const SizedBox.shrink();
+    }
+
     final isMe = model.isMe;
     final selectedBg = context.appColors.primary.withValues(alpha: 0.12);
     final subLine = _subtitleLine(context);
@@ -251,17 +251,20 @@ class DirectChatBubble extends StatelessWidget {
                         builder: (context) {
                           final read = model.readAt;
                           final del = model.deliveredAt;
-                          final online = model.peerOnline;
                           final isRead = read != null;
-                          final deliveredCounts =
-                              isRead || (online && del != null);
-                          final iconData = deliveredCounts
+                          // WhatsApp-style: double tick once the server accepted the message
+                          // ([deliveredAt], or [sentAt] via receipt merge) — not gated on peer
+                          // "online". Single tick only briefly before that ack (no delivery signal).
+                          // No network → row stays pending/failed ("Sending…" / retry), not this state.
+                          final hasDeliverySignal = del != null;
+                          final useDoubleTick = isRead || hasDeliverySignal;
+                          final iconData = useDoubleTick
                               ? Icons.done_all_rounded
                               : Icons.done_rounded;
                           final Color tickColor;
                           if (isRead) {
                             tickColor = Colors.white;
-                          } else if (online && del != null) {
+                          } else if (hasDeliverySignal) {
                             tickColor =
                                 Colors.white.withValues(alpha: 0.55);
                           } else {

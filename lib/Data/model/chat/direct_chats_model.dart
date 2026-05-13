@@ -49,8 +49,9 @@ class DirectChatConversation {
   final String? lastMessageSenderId;
   final DateTime? lastMessageSentAt;
 
-  /// When non-null, the API included an unread count for this peer (use as-is,
-  /// including `0` after read). When null, the client keeps prior local badge.
+  /// Parsed unread count from the chats payload. When the API omits a known
+  /// unread field, this is null and the client treats unread as **0** (no stale
+  /// local carry-over after refresh/merge).
   final int? unreadFromApi;
 
   factory DirectChatConversation.fromJson(Map<String, dynamic> json) {
@@ -75,6 +76,8 @@ int? _parseOptionalUnreadCount(Map<String, dynamic> json) {
     'unreadCount',
     'unread_messages',
     'unreadMessages',
+    'unread',
+    'direct_unread_count',
   ];
   for (final key in keys) {
     if (!json.containsKey(key)) continue;

@@ -1,14 +1,41 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/model/GetFollower/followers_model.dart';
 import 'package:sport_finding/Data/model/follow_connections_args.dart';
 import 'package:sport_finding/Data/model/follow_connection_user.dart';
 import 'package:sport_finding/Data/Repositories/GetFollower/followers_repo.dart';
 import 'package:sport_finding/Data/Repositories/GetFollowing/following_repo.dart';
 import 'package:sport_finding/Data/Repositories/FollowUser/follow_user_repo.dart';
 import 'package:sport_finding/Data/Repositories/UnFollowUser/unfollow_user_repo.dart';
+import 'package:sport_finding/Data/Repositories/RemoveFollower/remove_follower_repo.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
 
 enum FollowConnectionsMode { followers, following }
+
+String? _subtitleFromFollowerItem(FollowerItem f) {
+  final bio = f.bio?.trim() ?? '';
+  if (bio.isNotEmpty) {
+    return bio.length > 72 ? '${bio.substring(0, 69)}…' : bio;
+  }
+  final loc = f.location?.trim() ?? '';
+  final rating = f.avgRating > 0 ? '${f.avgRating.toStringAsFixed(1)} ★' : '';
+  var sportLine = '';
+  if (f.sports.isNotEmpty) {
+    final s0 = f.sports.first;
+    final name = s0.sport.trim();
+    final skill = s0.skillLevel.trim();
+    if (name.isNotEmpty) {
+      sportLine = skill.isNotEmpty ? '$name · $skill' : name;
+    }
+  }
+  final bits = <String>[];
+  if (loc.isNotEmpty) bits.add(loc);
+  if (rating.isNotEmpty) bits.add(rating);
+  if (sportLine.isNotEmpty) bits.add(sportLine);
+  if (bits.isEmpty) return null;
+  return bits.join(' · ');
+}
 
 class FollowConnectionsViewModel extends ChangeNotifier {
   FollowConnectionsViewModel(this.mode, {FollowConnectionsArgs? args})
@@ -32,7 +59,8 @@ class FollowConnectionsViewModel extends ChangeNotifier {
   /// Followers: ids where the user tapped "Follow Back".
   final Set<String> _followedBackIds = <String>{};
 
-  /// Following: ids still followed (unfollow removes).
+  /// Following list: ids you currently follow (unfollow clears; refollow adds).
+  /// Rows stay in [_allUsers]; this set only drives trailing Follow vs Unfollow.
   final Set<String> _activeFollowingIds = <String>{};
 
   /// Users currently being followed (loading state).
@@ -46,6 +74,11 @@ class FollowConnectionsViewModel extends ChangeNotifier {
 
   /// Error messages per user for failed unfollow attempts.
   final Map<String, String> _userUnfollowErrors = <String, String>{};
+
+  /// Followers: removing this user from your followers (API).
+  final Set<String> _removingFollowerIds = <String>{};
+
+  final Map<String, String> _userRemoveFollowerErrors = <String, String>{};
 
   List<FollowConnectionUser> _visible = [];
 
@@ -72,6 +105,12 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       _targetUserId.isNotEmpty &&
       _targetUserId == _currentUserId;
 
+  /// Only the account owner can remove people from **their** followers list.
+  bool get canRemoveFollowers =>
+      mode == FollowConnectionsMode.followers &&
+      _targetUserId.isNotEmpty &&
+      _targetUserId == _currentUserId;
+
   // ── Getters ────────────────────────────────────────────────────────────────
   List<FollowConnectionUser> get visibleUsers => List.unmodifiable(_visible);
 
@@ -88,6 +127,12 @@ class FollowConnectionsViewModel extends ChangeNotifier {
   bool isUnfollowingUser(String userId) => _unfollowingUserIds.contains(userId);
 
   String? getUnfollowUserError(String userId) => _userUnfollowErrors[userId];
+
+  bool isRemovingFollower(String userId) =>
+      _removingFollowerIds.contains(userId);
+
+  String? getRemoveFollowerError(String userId) =>
+      _userRemoveFollowerErrors[userId];
 
   // ── API Integration: Fetch Followers ───────────────────────────────────────
   Future<void> _fetchFollowers() async {
@@ -127,6 +172,7 @@ class FollowConnectionsViewModel extends ChangeNotifier {
               id: follower.id,
               displayName: follower.fullName,
               isFollowing: follower.isFollowing,
+              subtitle: _subtitleFromFollowerItem(follower),
             ),
           )
           .toList();
@@ -208,6 +254,7 @@ class FollowConnectionsViewModel extends ChangeNotifier {
             (user) => FollowConnectionUser(
               id: user.id,
               displayName: user.fullName,
+              subtitle: _subtitleFromFollowerItem(user),
             ),
           )
           .toList();
@@ -267,6 +314,7 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       _followedBackIds.add(userId);
       _activeFollowingIds.add(userId);
       _followingUserIds.remove(userId);
+      ProfileService().adjustSocialStats(followingDelta: 1);
       notifyListeners();
 
       return true;
@@ -307,10 +355,9 @@ class FollowConnectionsViewModel extends ChangeNotifier {
       log('✅ [FollowConnectionsVM] Successfully unfollowed user: $userId');
       log('📝 [FollowConnectionsVM] Message: ${result.message}');
 
-      // Remove from active following and update visible list
       _activeFollowingIds.remove(userId);
       _unfollowingUserIds.remove(userId);
-      _rebuildVisible();
+      ProfileService().adjustSocialStats(followingDelta: -1);
       notifyListeners();
 
       return true;
@@ -326,6 +373,96 @@ class FollowConnectionsViewModel extends ChangeNotifier {
     }
   }
 
+  /// Re-follow from **your** following list after unfollow (row stays on screen).
+  Future<bool> followAgainFromFollowingList(FollowConnectionUser user) async {
+    if (mode != FollowConnectionsMode.following) return false;
+    if (!canManageFollowingActions) return false;
+
+    final userId = user.id;
+    if (userId.isEmpty) return false;
+    if (_activeFollowingIds.contains(userId)) {
+      log('ℹ️ [FollowConnectionsVM] Already following $userId');
+      return true;
+    }
+    if (_followingUserIds.contains(userId)) {
+      log('ℹ️ [FollowConnectionsVM] Follow-in-flight for $userId');
+      return false;
+    }
+
+    try {
+      _followingUserIds.add(userId);
+      _userFollowErrors.remove(userId);
+      notifyListeners();
+
+      log(
+        '🟡 [FollowConnectionsVM] Re-follow from following list: '
+        '${user.displayName} ($userId)',
+      );
+
+      final repo = FollowUserRepo();
+      final result = await repo.followUser(userId: userId);
+      log('📝 [FollowConnectionsVM] Follow response: ${result.message}');
+
+      _activeFollowingIds.add(userId);
+      _followingUserIds.remove(userId);
+      ProfileService().adjustSocialStats(followingDelta: 1);
+      notifyListeners();
+
+      return true;
+    } catch (e, stack) {
+      log('❌ [FollowConnectionsVM] Re-follow failed $userId: $e');
+      log('📍 [FollowConnectionsVM] Stacktrace: $stack');
+
+      _userFollowErrors[userId] = 'Failed to follow user';
+      _followingUserIds.remove(userId);
+      notifyListeners();
+
+      return false;
+    }
+  }
+
+  // ── API: remove follower (they unfollow you; edge follower → you deleted) ─
+  Future<bool> removeFollowerApi(FollowConnectionUser user) async {
+    if (mode != FollowConnectionsMode.followers) return false;
+    if (!canRemoveFollowers) return false;
+
+    final userId = user.id;
+    if (userId.isEmpty) return false;
+
+    if (_removingFollowerIds.contains(userId)) return false;
+
+    try {
+      _removingFollowerIds.add(userId);
+      _userRemoveFollowerErrors.remove(userId);
+      notifyListeners();
+
+      log('🟡 [FollowConnectionsVM] Remove follower: $userId');
+
+      final repo = RemoveFollowerRepo();
+      final result = await repo.removeFollower(followerUserId: userId);
+
+      _allUsers.removeWhere((e) => e.id == userId);
+      _followedBackIds.remove(userId);
+      _removingFollowerIds.remove(userId);
+      _rebuildVisible();
+      ProfileService().adjustSocialStats(followersDelta: -1);
+      notifyListeners();
+
+      log(
+        '✅ [FollowConnectionsVM] Removed follower $userId msg=${result.message}',
+      );
+      return true;
+    } catch (e, stack) {
+      log('❌ [FollowConnectionsVM] Remove follower failed $userId: $e');
+      log('📍 [FollowConnectionsVM] Stacktrace: $stack');
+
+      _userRemoveFollowerErrors[userId] = messageFromApiException(e);
+      _removingFollowerIds.remove(userId);
+      notifyListeners();
+      return false;
+    }
+  }
+
   // ── Search and filtering ───────────────────────────────────────────────────
   void onSearchChanged(String _) {
     _rebuildVisible();
@@ -335,9 +472,8 @@ class FollowConnectionsViewModel extends ChangeNotifier {
   void _rebuildVisible() {
     final q = searchController.text.trim().toLowerCase();
     Iterable<FollowConnectionUser> rows = _allUsers;
-    if (mode == FollowConnectionsMode.following) {
-      rows = rows.where((u) => _activeFollowingIds.contains(u.id));
-    }
+    // Following: keep every loaded row; use [_activeFollowingIds] only for
+    // Follow vs Unfollow trailing (same screen on mobile and web).
     if (q.isNotEmpty) {
       rows = rows.where((u) => u.displayName.toLowerCase().contains(q));
     }

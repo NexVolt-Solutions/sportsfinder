@@ -46,9 +46,17 @@ const int _kProfileWebSplitBreakpointPx = 980;
 enum _WebProfileShellDetail { public, private, terms, privacy, followers, following }
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, this.embedInBottomBar = false});
+  const ProfileScreen({
+    super.key,
+    this.embedInBottomBar = false,
+    this.forceMobileLayout = false,
+  });
 
   final bool embedInBottomBar;
+
+  /// When true (narrow web with bottom-bar mobile chrome), profile settings use
+  /// full-screen routes — same as native — instead of the wide-web split pane.
+  final bool forceMobileLayout;
 
   /// Returns a valid http URL or null — prevents passing placeholder
   /// strings like "default avatar url" to Image.network.
@@ -68,8 +76,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   bool _useWebProfileSplit(BuildContext context) {
-    return kIsWeb &&
-        widget.embedInBottomBar &&
+    if (!kIsWeb) return false;
+    if (widget.forceMobileLayout) return false;
+    return widget.embedInBottomBar &&
         MediaQuery.sizeOf(context).width >= _kProfileWebSplitBreakpointPx;
   }
 

@@ -72,31 +72,18 @@ class _SearchDropdownFieldState extends State<SearchDropdownField> {
     final hasValue = widget.controller.text.trim().isNotEmpty;
 
     return InputDecorator(
-      decoration: InputDecoration(
-        alignLabelWithHint: true,
-        isDense: true,
-        constraints: AppFormFieldLayout.singleLineConstraints(context),
+      decoration: AppFormFieldLayout.standardOutlineInputDecoration(
+        context,
         label: widget.label != null
             ? Text(
                 widget.label!,
                 style: context.appText.text16W400.copyWith(color: c.onSurface),
               )
             : null,
-        filled: true,
-        fillColor: c.transparent,
-        border: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.greylight, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppFormFieldLayout.borderRadius(context),
-          borderSide: BorderSide(color: c.primary, width: 1),
-        ),
-       ),
+        hintText: widget.hintText,
+        constraints: AppFormFieldLayout.singleLineConstraints(context),
+        isDense: true,
+      ),
       child: InkWell(
         onTap: _openDropdown,
         borderRadius: AppFormFieldLayout.borderRadius(context),
@@ -256,27 +243,11 @@ class _DropdownSheetState extends State<_DropdownSheet> {
                   child: TextField(
                     controller: widget.searchController,
                     autofocus: true,
-                    decoration: InputDecoration(
+                    decoration: AppFormFieldLayout.standardOutlineInputDecoration(
+                      context,
                       hintText: 'Search items...',
                       prefixIcon: Icon(Icons.search, color: c.greyDark),
-                      filled: true,
-                      fillColor: c.transparent,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: c.greylight),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: c.greylight),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: c.primary, width: 1.5),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
+                      isDense: true,
                     ),
                   ),
                 ),

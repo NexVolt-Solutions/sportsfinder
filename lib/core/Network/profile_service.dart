@@ -156,6 +156,48 @@ class ProfileService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Bumps cached [profile.stats] after follow/unfollow/remove-follower so the
+  /// profile tab reflects counts immediately (without waiting for a full refetch).
+  void adjustSocialStats({int followersDelta = 0, int followingDelta = 0}) {
+    final p = profile;
+    if (p == null) return;
+    if (followersDelta == 0 && followingDelta == 0) return;
+
+    final s = p.stats;
+    var nf = s.followers + followersDelta;
+    if (nf < 0) nf = 0;
+    var nfol = s.following + followingDelta;
+    if (nfol < 0) nfol = 0;
+
+    final newStats = Stats(
+      followers: nf,
+      following: nfol,
+      matches: s.matches,
+      rating: s.rating,
+    );
+
+    profile = UserProfileModel(
+      id: p.id,
+      fullName: p.fullName,
+      email: p.email,
+      bio: p.bio,
+      location: p.location,
+      avatarUrl: p.avatarUrl,
+      isAdmin: p.isAdmin,
+      status: p.status,
+      sports: p.sports,
+      totalReviews: p.totalReviews,
+      reviews: p.reviews,
+      stats: newStats,
+      actions: p.actions,
+      settings: p.settings,
+      navigation: p.navigation,
+      cta: p.cta,
+      createdAt: p.createdAt,
+    );
+    notifyListeners();
+  }
+
   void updateNotificationPreference(bool enabled) {
     final p = profile;
     if (p == null) return;

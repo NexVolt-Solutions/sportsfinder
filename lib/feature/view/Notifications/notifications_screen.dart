@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/Data/model/discovery_match.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/feature/view/Notifications/viewModel/notifications_screen_view_model.dart';
+import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/card_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -235,12 +237,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors;
-    final vm = context.watch<NotificationsScreenViewModel>();
-    final service = context.watch<NotificationService>();
-    final visibleNotifications = service.notifications;
+  List<Widget> _buildNotificationSections(
+    BuildContext context,
+    NotificationsScreenViewModel vm, {
+    required List<NotificationModel> visibleNotifications,
+  }) {
     final todayItems = visibleNotifications
         .where(_isTodayNotification)
         .toList();
@@ -251,54 +252,109 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         .where(_isEarlierNotification)
         .toList();
 
-    return Scaffold(
-      body: MainFrame(
-        child: service.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: context.padSym(h: 20),
-                children: [
-                  _NotificationsHeader(
-                    service: service,
-                    visibleNotifications: visibleNotifications,
-                    onReadAll: _handleReadAll,
-                    onClearMessages: _handleClearMessages,
-                  ),
-                  SizedBox(height: context.h(12)),
-                  ..._buildSection(
-                    context,
-                    vm,
-                    title: AppText.today,
-                    items: todayItems,
-                    addBottomSpacing: true,
-                  ),
-                  ..._buildSection(
-                    context,
-                    vm,
-                    title: AppText.yesterday,
-                    items: yesterdayItems,
-                  ),
-                  ..._buildSection(
-                    context,
-                    vm,
-                    title: AppText.earlier,
-                    items: earlierItems,
-                    addTopSpacing: true,
-                  ),
-                  if (visibleNotifications.isEmpty)
-                    Padding(
-                      padding: context.padSym(v: 40),
-                      child: Center(
-                        child: Text(
-                          'No notifications found',
-                          style: context.appText.text14W400.copyWith(
-                            color: c.greyDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+    return <Widget>[
+      ..._buildSection(
+        context,
+        vm,
+        title: AppText.today,
+        items: todayItems,
+        addBottomSpacing: true,
+      ),
+      ..._buildSection(
+        context,
+        vm,
+        title: AppText.yesterday,
+        items: yesterdayItems,
+      ),
+      ..._buildSection(
+        context,
+        vm,
+        title: AppText.earlier,
+        items: earlierItems,
+        addTopSpacing: true,
+      ),
+      if (visibleNotifications.isEmpty)
+        Padding(
+          padding: context.padSym(v: 40),
+          child: Center(
+            child: Text(
+              'No notifications found',
+              style: context.appText.text14W400.copyWith(
+                color: context.appColors.greyDark,
               ),
+            ),
+          ),
+        ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<NotificationsScreenViewModel>();
+    final service = context.watch<NotificationService>();
+    final visibleNotifications = service.notifications;
+
+    final sections = _buildNotificationSections(
+      context,
+      vm,
+      visibleNotifications: visibleNotifications,
+    );
+
+    final overflowMenu = _NotificationsOverflowMenu(
+      service: service,
+      visibleNotifications: visibleNotifications,
+      onReadAll: _handleReadAll,
+      onClearMessages: _handleClearMessages,
+    );
+
+    Widget listBody({required bool webStyleHeader}) {
+      if (service.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return ListView(
+        padding: context.padSym(h: 20).copyWith(
+          bottom: webStyleHeader ? context.h(24) : context.h(32),
+        ),
+        children: [
+          if (webStyleHeader) ...[
+            _NotificationsHeader(
+              service: service,
+              visibleNotifications: visibleNotifications,
+              onReadAll: _handleReadAll,
+              onClearMessages: _handleClearMessages,
+            ),
+            SizedBox(height: context.h(12)),
+          ],
+          ...sections,
+        ],
+      );
+    }
+
+    if (kIsWeb) {
+      return Scaffold(
+        body: MainFrame(
+          child: listBody(webStyleHeader: true),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: MainFrame(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: context.padSym(h: 20),
+              child: AppBarWidget(
+                title: AppText.notifications,
+                onLeadingTap: () => Navigator.pop(context),
+                trailing: overflowMenu,
+              ),
+            ),
+            Expanded(child: listBody(webStyleHeader: false)),
+          ],
+        ),
       ),
     );
   }
@@ -357,6 +413,54 @@ class _NotificationItem {
   }
 }
 
+class _NotificationsOverflowMenu extends StatelessWidget {
+  const _NotificationsOverflowMenu({
+    required this.service,
+    required this.visibleNotifications,
+    required this.onReadAll,
+    required this.onClearMessages,
+  });
+
+  final NotificationService service;
+  final List<NotificationModel> visibleNotifications;
+  final VoidCallback onReadAll;
+  final VoidCallback onClearMessages;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return PopupMenuButton<_NotificationMenuAction>(
+      icon: Icon(Icons.more_vert, color: c.greyDark, size: context.w(22)),
+      onSelected: (action) {
+        switch (action) {
+          case _NotificationMenuAction.readAll:
+            onReadAll();
+            break;
+          case _NotificationMenuAction.clearMessages:
+            onClearMessages();
+            break;
+        }
+      },
+      itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
+        PopupMenuItem<_NotificationMenuAction>(
+          value: _NotificationMenuAction.readAll,
+          enabled: service.hasUnread && !service.isMarkingAllRead,
+          child: Text(
+            service.isMarkingAllRead
+                ? '${AppText.readAll}...'
+                : AppText.readAll,
+          ),
+        ),
+        PopupMenuItem<_NotificationMenuAction>(
+          value: _NotificationMenuAction.clearMessages,
+          enabled: visibleNotifications.isNotEmpty,
+          child: const Text('Clear messages'),
+        ),
+      ],
+    );
+  }
+}
+
 class _NotificationsHeader extends StatelessWidget {
   const _NotificationsHeader({
     required this.service,
@@ -397,34 +501,11 @@ class _NotificationsHeader extends StatelessWidget {
             ),
           ),
         ),
-        PopupMenuButton<_NotificationMenuAction>(
-          icon: Icon(Icons.more_vert, color: c.greyDark, size: context.w(22)),
-          onSelected: (action) {
-            switch (action) {
-              case _NotificationMenuAction.readAll:
-                onReadAll();
-                break;
-              case _NotificationMenuAction.clearMessages:
-                onClearMessages();
-                break;
-            }
-          },
-          itemBuilder: (_) => <PopupMenuEntry<_NotificationMenuAction>>[
-            PopupMenuItem<_NotificationMenuAction>(
-              value: _NotificationMenuAction.readAll,
-              enabled: service.hasUnread && !service.isMarkingAllRead,
-              child: Text(
-                service.isMarkingAllRead
-                    ? '${AppText.readAll}...'
-                    : AppText.readAll,
-              ),
-            ),
-            PopupMenuItem<_NotificationMenuAction>(
-              value: _NotificationMenuAction.clearMessages,
-              enabled: visibleNotifications.isNotEmpty,
-              child: const Text('Clear messages'),
-            ),
-          ],
+        _NotificationsOverflowMenu(
+          service: service,
+          visibleNotifications: visibleNotifications,
+          onReadAll: onReadAll,
+          onClearMessages: onClearMessages,
         ),
       ],
     );

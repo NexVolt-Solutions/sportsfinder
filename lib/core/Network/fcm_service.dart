@@ -12,6 +12,7 @@ import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
 import 'package:sport_finding/core/utils/network_errors.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -94,6 +95,44 @@ class FcmService {
         'Foreground FCM received: ${message.messageId ?? 'no-id'}',
         tag: 'FcmService',
       );
+      if (!kIsWeb) {
+        final t = '${message.data['type'] ?? ''}'.trim().toLowerCase();
+        if (t.contains('direct') && t.contains('message')) {
+          AppLogger.info(
+            'FCM direct_message — scheduling chat list sync from /api/v1/chats',
+            tag: 'FcmService',
+          );
+          final senderId =
+              '${message.data['sender_id'] ?? message.data['senderId'] ?? ''}'
+                  .trim();
+          final msgId =
+              '${message.data['message_id'] ?? message.data['messageId'] ?? ''}'
+                  .trim();
+          if (senderId.isNotEmpty && msgId.isNotEmpty) {
+            final preview =
+                '${message.data['preview'] ?? message.data['body'] ?? ''}'
+                    .trim();
+            final senderName =
+                '${message.data['sender_name'] ?? message.data['senderName'] ?? ''}'
+                    .trim();
+            final avatar =
+                '${message.data['sender_avatar'] ?? message.data['senderAvatar'] ?? ''}'
+                    .trim();
+            final sentAt = DateTime.tryParse(
+              '${message.data['sent_at'] ?? message.data['created_at'] ?? ''}',
+            );
+            ChatListScreenViewModel.incrementUnread(
+              userName: senderName.isNotEmpty ? senderName : 'Someone',
+              targetUserId: senderId,
+              avatarUrl: avatar.isEmpty ? null : avatar,
+              lastMessage: preview.isEmpty ? null : preview,
+              lastAt: sentAt,
+              messageId: msgId,
+            );
+          }
+        }
+        ChatListScreenViewModel.scheduleMergeDirectChatsFromBackend();
+      }
       unawaited(FcmLocalNotifications.showForeground(message));
       unawaited(notificationService.fetchNotifications());
     });

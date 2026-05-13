@@ -231,6 +231,7 @@ class AppText {
   static const String description = 'Description';
   static const String describeYourMatch = 'Describe your match...';
   static const String invitationSent = 'Invitation Sent';
+  static const String invitationAlreadySent = 'Invitation already sent';
   static const String
   youHaveSentTheInvitationToTheOtherPlayerWaitUntilAccepted =
       'You have sent the invitation to the other player wait until Accepted!';
@@ -247,10 +248,15 @@ class AppText {
   static const String invited = 'Invited';
   static const String invite = 'Invite';
   static const String follow = 'Follow';
+  static const String unfollow = 'Unfollow';
+  static const String unfollowedUserSuccess = 'You unfollowed this user';
 
   /// Search field placeholder (profile connections screens).
   static const String search = 'Search';
   static const String followBack = 'Follow Back';
+  static const String removeFollowerTitle = 'Remove follower?';
+  static const String removeFollowerMessage =
+      'They will be removed from your followers list. They can follow you again later unless you block them.';
 
   /// Outlined state on Following list (user already follows this person).
   static const String followed = 'Followed';
@@ -298,6 +304,8 @@ class AppText {
 
   /// Shown in the chat list after the user clears messages locally (web/mobile).
   static const String chatClearedPreview = 'No messages yet';
+  /// Shown to the **other** participant when a message was deleted for everyone.
+  static const String chatMessageWasDeleted = 'This message was deleted';
   static const String profile = 'Profile';
 
   static const String online = 'Online';
