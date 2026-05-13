@@ -5,6 +5,7 @@ import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/web_embedded_chat_open_coordinator.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
@@ -99,6 +100,7 @@ class _BottomBarContentState extends State<_BottomBarContent> {
   bool _appliedRouteTab = false;
   bool _requestedInitialNotifications = false;
   bool _requestedInitialProfile = false;
+  bool _scheduledWebChatTabFromCoordinator = false;
 
   List<Widget> _tabChildren({required bool forceMobileLayout}) => <Widget>[
         _MyMatchesTabSlot(forceMobileLayout: forceMobileLayout),
@@ -178,7 +180,6 @@ class _BottomBarContentState extends State<_BottomBarContent> {
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),
       unreadCount: 0,
-      isOnline: true,
     );
 
     await ChatListRealtimeCoordinator.disposeListSocketIfBound(
@@ -198,8 +199,22 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     }
   }
 
+  void _maybeScheduleWebChatTabFromCoordinator(BuildContext context) {
+    if (!kIsWeb) return;
+    if (!WebEmbeddedChatOpenCoordinator.hasPending) return;
+    if (_scheduledWebChatTabFromCoordinator) return;
+    _scheduledWebChatTabFromCoordinator = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scheduledWebChatTabFromCoordinator = false;
+      if (!mounted) return;
+      if (!WebEmbeddedChatOpenCoordinator.hasPending) return;
+      context.read<BottomBarScreenViewModel>().setSelectedIndex(_chatTabIndex);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _maybeScheduleWebChatTabFromCoordinator(context);
     return Consumer<BottomBarScreenViewModel>(
       builder: (context, vm, _) {
         final width = MediaQuery.sizeOf(context).width;
@@ -229,7 +244,6 @@ class _BottomBarContentState extends State<_BottomBarContent> {
               : null,
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           body: MainFrame(
-            showDecorationLayer: !kIsWeb,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final innerWidth = constraints.maxWidth;
@@ -237,12 +251,13 @@ class _BottomBarContentState extends State<_BottomBarContent> {
                 final tabChildren = _tabChildren(
                   forceMobileLayout: kIsWeb && innerUseMobileChrome,
                 );
-
+            
                 final tabStack = BottomBarTabStack(
                   selectedIndex: vm.selectedIndex,
+                  preloadTabIndices: const {_chatTabIndex},
                   children: tabChildren,
                 );
-
+            
                 if (kIsWeb && !innerUseMobileChrome) {
                   return BottomBarWebLayout(
                     viewModel: vm,
@@ -251,16 +266,19 @@ class _BottomBarContentState extends State<_BottomBarContent> {
                     onLogout: () => logoutFromBottomBar(context),
                   );
                 }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    BottomBarTopBar(
-                      onNotificationTap: () => _handleNotificationTap(context),
-                    ),
-                    tabStack,
-                    BottomBarBottomNav(viewModel: vm),
-                  ],
+            
+                return MainFrame(
+                  showDecorationLayer: kIsWeb,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      BottomBarTopBar(
+                        onNotificationTap: () => _handleNotificationTap(context),
+                      ),
+                      tabStack,
+                      BottomBarBottomNav(viewModel: vm),
+                    ],
+                  ),
                 );
               },
             ),

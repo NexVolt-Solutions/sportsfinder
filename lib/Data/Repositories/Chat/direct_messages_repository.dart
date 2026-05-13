@@ -2,7 +2,8 @@ import 'package:sport_finding/core/Network/api_service.dart';
 
 enum DeleteMessageScope {
   me,
-  both,
+  /// Maps to REST body `scope: "everyone"` (tombstone for both participants).
+  everyone,
 }
 
 class DirectMessagesRepository {
@@ -23,7 +24,7 @@ class DirectMessagesRepository {
     await _apiService.delete(
       '/api/v1/users/$trimmedUserId/messages/$trimmedMessageId',
       data: <String, dynamic>{
-        'scope': scope == DeleteMessageScope.both ? 'both' : 'me',
+        'scope': scope == DeleteMessageScope.everyone ? 'everyone' : 'me',
       },
     );
   }

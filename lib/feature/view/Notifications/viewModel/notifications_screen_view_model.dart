@@ -8,8 +8,7 @@ enum InviteLoadingPhase { accepting, declining }
 
 enum ResolvedInviteAction { accepted, declined }
 
-/// Result of accept/decline so the UI can show snackbars and navigate.
-class InviteActionUiOutcome {
+ class InviteActionUiOutcome {
   const InviteActionUiOutcome._({
     required this.isSuccess,
     this.message,

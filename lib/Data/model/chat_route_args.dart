@@ -2,7 +2,7 @@ class ChatRouteArgs {
   const ChatRouteArgs({
     required this.contactName,
     this.targetUserId,
-    this.isOnline = true,
+    this.isOnline = false,
     this.contactAvatarUrl,
   });
 

@@ -1,7 +1,6 @@
 import 'dart:async' show unawaited;
 
-import 'package:device_preview/device_preview.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,6 +9,8 @@ import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Constants/google_maps_config.dart';
 import 'package:sport_finding/core/utils/google_maps_js_loader.dart';
+import 'package:sport_finding/core/Network/chat_connectivity_gate.dart';
+import 'package:sport_finding/core/Network/chat_presence_lifecycle.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes.dart';
@@ -134,6 +135,7 @@ Future<void> _bootstrapMapsAndFcmAfterFirstFrame({
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ChatConnectivityGate.instance.ensureStarted();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GoogleMapsConfig.loadEnv();
@@ -145,29 +147,24 @@ Future<void> main() async {
     nav.pushNamedAndRemoveUntil(RoutesName.LoginScreen, (route) => false);
   };
   runApp(
-    DevicePreview(
-      enabled: !kReleaseMode,
-      builder: (context) => MultiProvider(
-        providers: [ChangeNotifierProvider(create: (_) => notificationService)],
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          locale: DevicePreview.locale(context),
-          theme: AppTheme.light,
-          scaffoldMessengerKey: rootScaffoldMessengerKey,
-          navigatorKey: rootNavigatorKey,
-          initialRoute: _materialInitialRoute(),
-          onGenerateInitialRoutes: _onGenerateInitialRoutes,
-          onGenerateRoute: Routes.generateRoute,
-          builder: (context, child) {
-            final scaled = MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: appResponsiveTextScaler(context),
-              ),
-              child: TapOutsideUnfocus(child: child),
-            );
-            return DevicePreview.appBuilder(context, scaled);
-          },
-        ),
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => notificationService)],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
+        navigatorKey: rootNavigatorKey,
+        initialRoute: _materialInitialRoute(),
+        onGenerateInitialRoutes: _onGenerateInitialRoutes,
+        onGenerateRoute: Routes.generateRoute,
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: appResponsiveTextScaler(context),
+            ),
+            child: TapOutsideUnfocus(child: child),
+          );
+        },
       ),
     ),
   );
@@ -175,6 +172,7 @@ Future<void> main() async {
   // Maps + FCM must not block [runApp]: slow/blocked Google Maps JS or FCM
   // would otherwise leave a permanent white screen on web.
   WidgetsBinding.instance.addPostFrameCallback((_) {
+    ChatPresenceLifecycle.register();
     unawaited(
       _bootstrapMapsAndFcmAfterFirstFrame(
         notificationService: notificationService,

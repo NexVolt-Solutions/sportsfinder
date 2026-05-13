@@ -117,6 +117,63 @@ class ChatMessage {
   }
 }
 
+/// In-memory: reopening a direct chat shows the last list immediately while REST/WS
+/// reconnect. Cleared on logout / thread removed / clear-chat.
+class ChatScreenMessagesCache {
+  ChatScreenMessagesCache._();
+
+  static final Map<String, ChatScreenCacheSnapshot> _byTargetUserId = {};
+
+  static ChatScreenCacheSnapshot? peek(String targetUserId) {
+    final id = targetUserId.trim();
+    if (id.isEmpty) return null;
+    final s = _byTargetUserId[id];
+    if (s == null || s.messages.isEmpty) return null;
+    return s;
+  }
+
+  static void save(
+    String targetUserId,
+    List<ChatMessage> messages,
+    Set<String> messageIds,
+    int localMessageCounter,
+  ) {
+    final id = targetUserId.trim();
+    if (id.isEmpty) return;
+    if (messages.isEmpty) {
+      _byTargetUserId.remove(id);
+      return;
+    }
+    _byTargetUserId[id] = ChatScreenCacheSnapshot(
+      messages: List<ChatMessage>.from(messages),
+      messageIds: Set<String>.from(messageIds),
+      localMessageCounter: localMessageCounter,
+    );
+  }
+
+  static void invalidate(String targetUserId) {
+    final id = targetUserId.trim();
+    if (id.isEmpty) return;
+    _byTargetUserId.remove(id);
+  }
+
+  static void clearAll() {
+    _byTargetUserId.clear();
+  }
+}
+
+class ChatScreenCacheSnapshot {
+  const ChatScreenCacheSnapshot({
+    required this.messages,
+    required this.messageIds,
+    required this.localMessageCounter,
+  });
+
+  final List<ChatMessage> messages;
+  final Set<String> messageIds;
+  final int localMessageCounter;
+}
+
 typedef MatchChatServiceFactory =
     MatchChatService Function(String accessToken, String targetUserId);
 typedef AccessTokenProvider = Future<String?> Function();
@@ -125,7 +182,7 @@ typedef CurrentUserIdProvider = String Function();
 class ChatScreenViewModel extends ChangeNotifier {
   ChatScreenViewModel({
     this.contactName = AppText.alexJohnson,
-    this.isOnline = true,
+    this.isOnline = false,
     String? contactAvatarUrl,
     MatchChatServiceFactory? chatServiceFactory,
     AccessTokenProvider? accessTokenProvider,
@@ -134,6 +191,7 @@ class ChatScreenViewModel extends ChangeNotifier {
          final t = (contactAvatarUrl ?? '').trim();
          return t.isEmpty ? null : t;
        })(),
+       _peerOnline = isOnline,
        _chatServiceFactory = chatServiceFactory ??
            ((accessToken, targetUserId) => MatchChatService(
                  accessToken: accessToken,
@@ -148,7 +206,7 @@ class ChatScreenViewModel extends ChangeNotifier {
   final bool isOnline;
   final String? _routeContactAvatarUrl;
   String? _peerAvatarUrlFromMessages;
-  bool _peerOnline = true;
+  bool _peerOnline;
   DateTime? _peerLastSeenUtc;
   final MatchChatServiceFactory _chatServiceFactory;
   final AccessTokenProvider _accessTokenProvider;
@@ -165,10 +223,24 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool _isConnected = false;
   String? _errorMessage;
   bool _isBindingRealtime = false;
+  /// Invalidates in-flight [bindDirectChat] after [dispose] or a new bind cycle.
+  Object? _bindLease;
+  bool _vmDisposed = false;
   String _boundTargetUserId = '';
+  /// Dedup WS `message_read` frames for peer messages (per thread bind).
+  final Set<String> _readReceiptSentForMessageIds = <String>{};
   int _localMessageCounter = 0;
   final Map<String, Timer> _pendingFailTimers = <String, Timer>{};
   static const Duration _pendingFailureTimeout = Duration(seconds: 12);
+  static const Duration _peerOfflinePresenceDebounce = Duration(milliseconds: 1600);
+  static const Duration _peerOfflineSnapshotDebounce = Duration(milliseconds: 4500);
+  static const Duration _suppressSnapshotOfflineAfterConnect = Duration(seconds: 4);
+  /// REST gap-fill while the socket is up; avoids a history fetch on every reconnect.
+  static const Duration _historyGapFillInterval = Duration(seconds: 12);
+  Timer? _peerOfflineDebounce;
+  Timer? _historyGapFillTimer;
+  DateTime? _initialHistoryLoadedAt;
+  DateTime? _suppressPeerOfflineSnapshotUntil;
   final DirectMessagesRepository _directMessagesRepository =
       DirectMessagesRepository();
   final ChatUploadRepository _chatUploadRepository = ChatUploadRepository();
@@ -178,6 +250,9 @@ class ChatScreenViewModel extends ChangeNotifier {
   bool get isConnected => _isConnected;
   String? get errorMessage => _errorMessage;
   bool get isRealtimeChatBound => _matchChatService != null;
+  /// WebSocket / presence: peer has connectivity (affects sent-message ticks).
+  bool get peerOnline => _peerOnline;
+
   String get activeChatSubtitle {
     if (!_isConnected) return 'Connecting...';
     if (_peerOnline) return 'Online';
@@ -196,6 +271,69 @@ class ChatScreenViewModel extends ChangeNotifier {
 
   void _log(String message) {
     debugPrint('[ChatScreenVM] $message');
+  }
+
+  bool _shouldEmitReadReceiptsNow() {
+    if (_vmDisposed) return false;
+    final s = WidgetsBinding.instance.lifecycleState;
+    return s == null || s == AppLifecycleState.resumed;
+  }
+
+  /// Tells the server this user has seen the peer's message (direct WS §5.4).
+  /// Skips when app is backgrounded so we do not mark read from a notification
+  /// pipeline alone.
+  void _sendReadReceiptForPeerMessageIfNeeded(String? rawMessageId) {
+    if (!_shouldEmitReadReceiptsNow()) return;
+    final id = (rawMessageId ?? '').trim();
+    if (id.isEmpty) return;
+    if (_readReceiptSentForMessageIds.contains(id)) return;
+    final svc = _matchChatService;
+    if (svc == null) return;
+    if (!svc.sendReadReceipt(id)) return;
+    _readReceiptSentForMessageIds.add(id);
+    _log('read receipt sent for peer message id=$id');
+  }
+
+  void _flushReadReceiptsForLoadedPeerMessages() {
+    if (!_shouldEmitReadReceiptsNow()) return;
+    for (final m in _messages) {
+      if (m.isMe || m.isDeleted) continue;
+      _sendReadReceiptForPeerMessageIfNeeded(m.messageId);
+    }
+  }
+
+  /// When the app returns to foreground on an open chat, send reads that were
+  /// skipped while backgrounded (and after [pullMissedMessages] adds rows).
+  void flushPendingReadReceipts() {
+    _flushReadReceiptsForLoadedPeerMessages();
+  }
+
+  /// True when this row is **our** message in a 1:1 thread.
+  ///
+  /// Prefer **peer comparison** when the bound peer id is known: on this
+  /// socket only the peer and the authenticated user exist, so any
+  /// `sender_id` that is not the peer is ours. This must run **before**
+  /// [ProfileService] id — profile id can be missing, stale, or wrong while
+  /// `sender_id` from the server is always correct (fixes pending never
+  /// reconciling and self-echo shown as incoming).
+  bool _isDirectMessageFromMe(RealtimeChatMessage message) {
+    final sender = message.senderId.trim();
+    if (sender.isEmpty) return false;
+    final peer = _boundTargetUserId.trim();
+    if (peer.isNotEmpty) {
+      if (sender == peer) return false;
+      return true;
+    }
+    final myId = _currentUserIdProvider().trim();
+    return myId.isNotEmpty && sender == myId;
+  }
+
+  String _receiptMyUserIdFor(RealtimeChatMessage message) {
+    if (_isDirectMessageFromMe(message)) {
+      final s = message.senderId.trim();
+      if (s.isNotEmpty) return s;
+    }
+    return _currentUserIdProvider().trim();
   }
 
   void sendMessage(String text) {
@@ -420,9 +558,12 @@ class ChatScreenViewModel extends ChangeNotifier {
 
   Future<void> bindDirectChat(String targetUserId) async {
     final trimmedTargetUserId = targetUserId.trim();
-    if (trimmedTargetUserId.isEmpty || _isBindingRealtime) return;
+    if (trimmedTargetUserId.isEmpty || _isBindingRealtime || _vmDisposed) {
+      return;
+    }
     _log('bindDirectChat start targetUserId=$trimmedTargetUserId');
     _boundTargetUserId = trimmedTargetUserId;
+    _readReceiptSentForMessageIds.clear();
     _peerOnline = isOnline;
     _peerLastSeenUtc = null;
     _peerAvatarUrlFromMessages = null;
@@ -432,8 +573,25 @@ class ChatScreenViewModel extends ChangeNotifier {
       _log('bindDirectChat aborted: access token missing');
       return;
     }
+    if (_vmDisposed) return;
     final myIdAtBind = _currentUserIdProvider();
     _log('bindDirectChat ctx myId=$myIdAtBind tokenLen=${token.length}');
+
+    final cached = ChatScreenMessagesCache.peek(trimmedTargetUserId);
+    if (cached != null) {
+      _messages
+        ..clear()
+        ..addAll(cached.messages);
+      _messageIds
+        ..clear()
+        ..addAll(cached.messageIds);
+      _localMessageCounter = cached.localMessageCounter;
+      _reschedulePendingTimersForCurrentMessages();
+      _log(
+        'bindDirectChat seeded from cache count=${_messages.length}',
+      );
+      notifyListeners();
+    }
 
     _isBindingRealtime = true;
     _errorMessage = null;
@@ -441,17 +599,65 @@ class ChatScreenViewModel extends ChangeNotifier {
 
     await _disposeRealtimeOnly();
     _log('old realtime state disposed');
+    _initialHistoryLoadedAt = null;
+    _suppressPeerOfflineSnapshotUntil = null;
+
+    if (_vmDisposed) {
+      _isBindingRealtime = false;
+      return;
+    }
+
+    final lease = Object();
+    _bindLease = lease;
 
     final service = _chatServiceFactory(token, trimmedTargetUserId);
     _matchChatService = service;
 
     try {
       final history = await service.loadHistory();
+      if (_vmDisposed || !identical(_bindLease, lease)) {
+        _isBindingRealtime = false;
+        return;
+      }
+      _initialHistoryLoadedAt = DateTime.now();
+      final preserved = _messages
+          .where((m) => m.isPending || m.isFailed)
+          .toList();
       _messages.clear();
       _messageIds.clear();
       for (final item in history) {
         _appendRealtimeMessage(item);
       }
+      for (final m in preserved) {
+        if (m.isFailed) {
+          _messages.add(m);
+          continue;
+        }
+        if (m.isPending) {
+          if (_messages.any((x) => x.localId == m.localId)) {
+            continue;
+          }
+          final echoed = _messages.any(
+            (x) =>
+                x.isMe &&
+                !x.isPending &&
+                (x.messageId ?? '').trim().isNotEmpty &&
+                x.type == m.type &&
+                (m.type == ChatMessageType.text
+                    ? x.text.trim() == m.text.trim()
+                    : ((x.fileName ?? '').trim().isNotEmpty &&
+                            (x.fileName ?? '').trim() ==
+                                (m.fileName ?? '').trim()) ||
+                        ((x.mediaUrl ?? '').trim().isNotEmpty &&
+                            (x.mediaUrl ?? '').trim() ==
+                                (m.mediaUrl ?? '').trim())),
+          );
+          if (!echoed) {
+            _messages.add(m);
+          }
+        }
+      }
+      _reschedulePendingTimersForCurrentMessages();
       _log('direct history loaded count=${history.length}');
       ChatListScreenViewModel.upsertThread(
         userName: contactName,
@@ -463,25 +669,47 @@ class ChatScreenViewModel extends ChangeNotifier {
         isOnline: _peerOnline,
       );
     } catch (e) {
+      if (_vmDisposed || !identical(_bindLease, lease)) {
+        _isBindingRealtime = false;
+        return;
+      }
       _errorMessage = 'Could not load direct chat history: $e';
       _log('direct history load failed: $e');
+    }
+
+    if (_vmDisposed || !identical(_bindLease, lease)) {
+      _isBindingRealtime = false;
+      return;
     }
 
     _connectedSub = service.onConnected.listen((_) {
       _isConnected = true;
       _errorMessage = null;
+      _suppressPeerOfflineSnapshotUntil = DateTime.now().add(
+        _suppressSnapshotOfflineAfterConnect,
+      );
       _log('direct ws connected targetUserId=$_boundTargetUserId');
       notifyListeners();
+      _startHistoryGapFillTimer(service);
+      _flushReadReceiptsForLoadedPeerMessages();
     });
 
     _messageSub = service.onMessage.listen((msg) {
-      final myId = _currentUserIdProvider();
-      final isMine = myId.isNotEmpty && msg.senderId.trim() == myId.trim();
+      final isMine = _isDirectMessageFromMe(msg);
+      final myId = _currentUserIdProvider().trim();
       _log(
         'direct ws message id=${msg.messageId} sender=${msg.senderId} '
-        'isMine=$isMine myId=$myId targetUserId=$_boundTargetUserId len=${msg.content.length}',
+        'isMine=$isMine myId=${myId.isEmpty ? "(peer-heuristic)" : myId} '
+        'targetUserId=$_boundTargetUserId len=${msg.content.length}',
       );
- 
+
+      // Backend often emits presence_update with the viewer's own user_id, so
+      // peer online state never updates. Any live message from the peer
+      // implies they are reachable now.
+      if (!isMine) {
+        _applyPeerPresenceFromLiveMessage(msg.sentAt);
+      }
+
       if (!kIsWeb && !isMine) {
         _maybeNotifyIncomingDirectChatWhileBackgrounded(msg);
       }
@@ -495,24 +723,72 @@ class ChatScreenViewModel extends ChangeNotifier {
         unreadCount: 0,
         isOnline: _peerOnline,
       );
+      if (!isMine) {
+        _sendReadReceiptForPeerMessageIfNeeded(msg.messageId);
+      }
       _errorMessage = null;
       notifyListeners();
     });
 
     _presenceSub = service.onPresence.listen((ChatPresenceEvent e) {
       final peerId = _boundTargetUserId.trim();
-      if (peerId.isEmpty || e.userId.trim() != peerId) return;
+      final myId = _currentUserIdProvider().trim();
+      final subject = e.userId.trim();
+      if (peerId.isEmpty) return;
+      // Ignore self-echo presence on this socket (common server behaviour).
+      if (myId.isNotEmpty && subject == myId) return;
+      if (subject != peerId) return;
       final st = e.status.trim().toLowerCase();
-      _peerOnline =
+      final nowOnline =
           st == 'online' || st == 'active' || st == 'available';
-      _peerLastSeenUtc =
-          _peerOnline ? null : (e.sentAt ?? DateTime.now().toUtc());
-      ChatListScreenViewModel.applyPresenceForUser(
-        subjectUserId: peerId,
-        status: e.status,
-        sentAt: e.sentAt,
-      );
-      notifyListeners();
+
+      if (nowOnline) {
+        _peerOfflineDebounce?.cancel();
+        _peerOfflineDebounce = null;
+        _peerOnline = true;
+        _peerLastSeenUtc = null;
+        _suppressPeerOfflineSnapshotUntil = null;
+        ChatListScreenViewModel.applyPresenceForUser(
+          subjectUserId: peerId,
+          status: e.status,
+          sentAt: e.sentAt,
+        );
+        if (!_vmDisposed) {
+          notifyListeners();
+        }
+        return;
+      }
+
+      // Stale `presence_snapshot` often arrives milliseconds after connect while
+      // the peer is actively on another device; ignore offline snapshots briefly.
+      final until = _suppressPeerOfflineSnapshotUntil;
+      if (e.fromSnapshot &&
+          until != null &&
+          DateTime.now().isBefore(until)) {
+        return;
+      }
+
+      final offlineWait = e.fromSnapshot
+          ? _peerOfflineSnapshotDebounce
+          : _peerOfflinePresenceDebounce;
+
+      _peerOfflineDebounce?.cancel();
+      _peerOfflineDebounce = Timer(offlineWait, () {
+        _peerOfflineDebounce = null;
+        if (_vmDisposed) return;
+        if (_boundTargetUserId.trim() != peerId) return;
+        _peerOnline = false;
+        _peerLastSeenUtc = e.sentAt ?? DateTime.now().toUtc();
+        ChatListScreenViewModel.applyPresenceForUser(
+          subjectUserId: peerId,
+          status: e.status,
+          sentAt: e.sentAt,
+          immediate: true,
+        );
+        if (!_vmDisposed) {
+          notifyListeners();
+        }
+      });
     });
 
     _receiptSub = service.onReceipt.listen((ChatReceiptEvent r) {
@@ -521,12 +797,17 @@ class ChatScreenViewModel extends ChangeNotifier {
       final idx = _messages.indexWhere((m) => (m.messageId ?? '').trim() == mid);
       if (idx < 0) return;
       final at = r.at ?? DateTime.now().toUtc();
+      final row = _messages[idx];
       if (r.kind == 'read') {
-        _messages[idx] = _messages[idx].copyWith(readAt: at);
+        _messages[idx] = row.copyWith(readAt: at);
       } else if (r.kind == 'delivered') {
-        _messages[idx] = _messages[idx].copyWith(deliveredAt: at);
+        _messages[idx] = row.copyWith(deliveredAt: at);
       } else {
         return;
+      }
+      // Read/delivery on our outgoing messages means the peer is active in this thread.
+      if (row.isMe) {
+        _applyPeerPresenceFromLiveMessage(at);
       }
       notifyListeners();
     });
@@ -542,7 +823,39 @@ class ChatScreenViewModel extends ChangeNotifier {
     service.connect();
     _isBindingRealtime = false;
     _log('bindDirectChat done');
-    notifyListeners();
+    if (!_vmDisposed) {
+      notifyListeners();
+    }
+  }
+
+  void _applyPeerPresenceFromLiveMessage(DateTime sentAt) {
+    final peerId = _boundTargetUserId.trim();
+    if (peerId.isEmpty || _vmDisposed) return;
+    _peerOfflineDebounce?.cancel();
+    _peerOfflineDebounce = null;
+    _peerOnline = true;
+    _peerLastSeenUtc = null;
+    ChatListScreenViewModel.applyPresenceForUser(
+      subjectUserId: peerId,
+      status: 'online',
+      sentAt: sentAt.toUtc(),
+    );
+    if (!_vmDisposed) {
+      notifyListeners();
+    }
+  }
+
+  void _startHistoryGapFillTimer(MatchChatService service) {
+    _historyGapFillTimer?.cancel();
+    _historyGapFillTimer = Timer.periodic(_historyGapFillInterval, (_) {
+      if (_vmDisposed || _matchChatService != service) return;
+      unawaited(_mergeMissedHistoryFromRest(service));
+    });
+  }
+
+  void _stopHistoryGapFillTimer() {
+    _historyGapFillTimer?.cancel();
+    _historyGapFillTimer = null;
   }
 
   /// WebSocket can stay connected briefly when the user backgrounds the app on
@@ -567,10 +880,51 @@ class ChatScreenViewModel extends ChangeNotifier {
         payload: <String, dynamic>{
           'type': 'direct_chat',
           'sender_id': msg.senderId,
+          'target_user_id': _boundTargetUserId,
           'message_id': msg.messageId,
         },
       ),
     );
+  }
+
+  /// Fetches any messages missed while the WebSocket was down or the app was
+  /// backgrounded (REST gap-fill; same as post-connect merge).
+  Future<void> pullMissedMessages() async {
+    final service = _matchChatService;
+    if (service == null || _vmDisposed) return;
+    await _mergeMissedHistoryFromRest(service);
+  }
+
+  Future<void> _mergeMissedHistoryFromRest(MatchChatService service) async {
+    final anchor = _initialHistoryLoadedAt;
+    if (anchor != null) {
+      final sinceFirstPage = DateTime.now().difference(anchor);
+      if (sinceFirstPage < const Duration(seconds: 1)) {
+        _log(
+          'skip post-connect history merge (${sinceFirstPage.inMilliseconds}ms '
+          'since initial page — avoids duplicate bulk load)',
+        );
+        return;
+      }
+    }
+    try {
+      final history = await service.loadHistory();
+      if (_vmDisposed || _matchChatService != service) return;
+      var added = false;
+      for (final item in history) {
+        final id = item.messageId.trim();
+        if (id.isNotEmpty && _messageIds.contains(id)) continue;
+        _appendRealtimeMessage(item);
+        added = true;
+      }
+      if (added && !_vmDisposed) {
+        _log('direct history merge after WS connect applied new rows');
+        notifyListeners();
+        _flushReadReceiptsForLoadedPeerMessages();
+      }
+    } catch (e) {
+      _log('merge history after WS connect failed: $e');
+    }
   }
 
   void _appendRealtimeMessage(RealtimeChatMessage message) {
@@ -602,8 +956,7 @@ class ChatScreenViewModel extends ChangeNotifier {
     }
 
     final now = message.sentAt.toLocal();
-    final myId = _currentUserIdProvider();
-    final isMine = myId.isNotEmpty && message.senderId.trim() == myId;
+    final isMine = _isDirectMessageFromMe(message);
     _maybeCapturePeerAvatar(message);
     if (isMine && _reconcilePendingOutgoing(message, now)) {
       return;
@@ -612,6 +965,7 @@ class ChatScreenViewModel extends ChangeNotifier {
     final serverMessageId = id.isNotEmpty ? id : null;
     final localId = serverMessageId ?? 'rt_${now.microsecondsSinceEpoch}';
     final parsedType = _parseChatMessageType(message.messageType);
+    final rdDelNew = message.receiptTimesForUi(_receiptMyUserIdFor(message));
     _messages.add(
       ChatMessage(
         text: message.content,
@@ -627,16 +981,14 @@ class ChatScreenViewModel extends ChangeNotifier {
         mimeType: message.mimeType,
         fileName: message.fileName,
         sizeBytes: message.sizeBytes,
-        readAt: message.readAt,
-        deliveredAt: message.deliveredAt,
+        readAt: rdDelNew.$1,
+        deliveredAt: rdDelNew.$2,
       ),
     );
   }
 
   void _maybeCapturePeerAvatar(RealtimeChatMessage message) {
-    final myId = _currentUserIdProvider();
-    final isMine = myId.isNotEmpty && message.senderId.trim() == myId;
-    if (isMine) return;
+    if (_isDirectMessageFromMe(message)) return;
     final av = (message.senderAvatar ?? '').trim();
     if (av.isEmpty) return;
     _peerAvatarUrlFromMessages = av;
@@ -714,6 +1066,18 @@ class ChatScreenViewModel extends ChangeNotifier {
     _log('failed message added (immediate)');
   }
 
+  void _reschedulePendingTimersForCurrentMessages() {
+    for (final t in _pendingFailTimers.values) {
+      t.cancel();
+    }
+    _pendingFailTimers.clear();
+    for (final m in _messages) {
+      if (m.isPending && m.localId.trim().isNotEmpty) {
+        _schedulePendingFailure(m.localId.trim());
+      }
+    }
+  }
+
   void _schedulePendingFailure(String localId) {
     _pendingFailTimers.remove(localId)?.cancel();
     _pendingFailTimers[localId] = Timer(_pendingFailureTimeout, () {
@@ -741,6 +1105,7 @@ class ChatScreenViewModel extends ChangeNotifier {
     final localId = _messages[pendingIndex].localId;
     _pendingFailTimers.remove(localId)?.cancel();
     final parsedType = _parseChatMessageType(message.messageType);
+    final rdDel = message.receiptTimesForUi(_receiptMyUserIdFor(message));
     _messages[pendingIndex] = _messages[pendingIndex].copyWith(
       isPending: false,
       isFailed: false,
@@ -753,8 +1118,8 @@ class ChatScreenViewModel extends ChangeNotifier {
       mimeType: message.mimeType,
       fileName: message.fileName,
       sizeBytes: message.sizeBytes,
-      readAt: message.readAt,
-      deliveredAt: message.deliveredAt,
+      readAt: rdDel.$1,
+      deliveredAt: rdDel.$2,
     );
     _log('pending reconciled with server ack localId=$localId');
     return true;
@@ -839,6 +1204,10 @@ class ChatScreenViewModel extends ChangeNotifier {
 
   Future<void> _disposeRealtimeOnly() async {
     _log('disposeRealtimeOnly start');
+    _bindLease = null;
+    _stopHistoryGapFillTimer();
+    _peerOfflineDebounce?.cancel();
+    _peerOfflineDebounce = null;
     for (final timer in _pendingFailTimers.values) {
       timer.cancel();
     }
@@ -862,6 +1231,14 @@ class ChatScreenViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _log('dispose called');
+    _vmDisposed = true;
+    ChatScreenMessagesCache.save(
+      _boundTargetUserId,
+      _messages,
+      _messageIds,
+      _localMessageCounter,
+    );
+    _bindLease = null;
     _disposeRealtimeOnly();
     super.dispose();
   }

@@ -256,6 +256,14 @@ class AppText {
   static const String followed = 'Followed';
   static const String noConnectionsMatchSearch = 'No people match your search.';
   static const String message = 'Message';
+
+  /// Shown when the device has no data connection (not DNS/API failures).
+  static const String chatNoInternetConnection =
+      'No internet connection. We’ll retry when you’re back online.';
+
+  /// DNS / radio / server reachability (e.g. Failed host lookup, errno 7).
+  static const String chatNetworkUnreachable =
+      'Can’t reach the server. Check your network or try again later.';
   static const String followers = 'Followers';
   static const String following = 'Following';
   static const String rate = 'Rate';
@@ -275,6 +283,11 @@ class AppText {
   static const String davidGam = 'David gam';
   static const String oneDayAgo = '1 day ago';
   static const String mySports = 'My Sports';
+
+  /// Public profile — link style header (mock).
+  static const String allSportsLink = 'All Sports →';
+  static const String publicProfileAbout = 'About';
+  static const String publicProfileBack = '← Back';
   static const String reviews = 'Reviews';
   static const String hadAGreatMatchReview =
       'Had a great match with mostaffa! He is such a great player and easy to communicate with on the field';
@@ -282,6 +295,7 @@ class AppText {
   static const String discover = 'Discover';
   static const String match = 'Match';
   static const String chat = 'Chat';
+
   /// Shown in the chat list after the user clears messages locally (web/mobile).
   static const String chatClearedPreview = 'No messages yet';
   static const String profile = 'Profile';
@@ -479,5 +493,4 @@ class AppText {
   static const String cancelMatch = 'Cancel Match';
   static const String failedToDeleteMatch = 'Failed to delete match';
   static const String editMatch = 'Edit Match';
-
 }

@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -12,10 +14,15 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/widget/direct_chat_bubble.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_messages_repository.dart';
 import 'package:sport_finding/feature/widget/app_dialog.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
+import 'package:sport_finding/core/utils/web_embedded_chat_open_coordinator.dart';
+
+/// Same breakpoint as [ChatListScreen] split inbox / full-screen chat on Flutter web.
+const int _kWebChatSplitBreakpointPx = 980;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.targetUserId});
@@ -26,19 +33,58 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _boundRealtimeChat = false;
   String? _sessionTargetUserId;
   int _lastRenderedMessageCount = 0;
   final Set<String> _selectedMessageLocalIds = <String>{};
+  /// Web: avoid scheduling multiple pops onto the embedded split inbox.
+  bool _webEmbedHandoffIssued = false;
 
   bool get _isSelectionMode => _selectedMessageLocalIds.isNotEmpty;
+
+  ChatRouteArgs? _effectiveChatRouteArgs() {
+    final routeArgs = ModalRoute.of(context)?.settings.arguments;
+    if (routeArgs is ChatRouteArgs) {
+      final id = (routeArgs.targetUserId ?? '').trim();
+      if (id.isNotEmpty) return routeArgs;
+    }
+    final wId = widget.targetUserId?.trim() ?? '';
+    if (wId.isNotEmpty) {
+      return ChatRouteArgs(contactName: '', targetUserId: wId, isOnline: false);
+    }
+    return null;
+  }
+
+  /// Flutter web at desktop width uses the bottom-bar embedded split view, not this route.
+  void _handOffToWebEmbeddedSplitIfWide() {
+    if (!kIsWeb || _webEmbedHandoffIssued) return;
+    final w = MediaQuery.sizeOf(context).width;
+    if (w < _kWebChatSplitBreakpointPx) return;
+    final args = _effectiveChatRouteArgs();
+    if (args == null) return;
+    final tid = (args.targetUserId ?? '').trim();
+    if (tid.isEmpty) return;
+    _webEmbedHandoffIssued = true;
+    debugPrint(
+      '[ChatScreen] web width=$w >= $_kWebChatSplitBreakpointPx — hand off to embedded split',
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      WebEmbeddedChatOpenCoordinator.requestOpen(args);
+      Navigator.of(context).pop();
+    });
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (kIsWeb) {
+      _handOffToWebEmbeddedSplitIfWide();
+      if (_webEmbedHandoffIssued) return;
+    }
     if (_boundRealtimeChat) return;
 
     final routeArgs = ModalRoute.of(context)?.settings.arguments;
@@ -59,6 +105,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _boundRealtimeChat = true;
     _sessionTargetUserId = targetUserId;
     ChatListRealtimeCoordinator.beginFullScreenDirectChat(targetUserId);
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final vm = context.read<ChatScreenViewModel>();
@@ -69,7 +116,22 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state != AppLifecycleState.resumed) return;
+    if (!mounted) return;
+    if ((_sessionTargetUserId ?? '').trim().isEmpty) return;
+    final vm = context.read<ChatScreenViewModel>();
+    unawaited(() async {
+      await vm.pullMissedMessages();
+      if (!mounted) return;
+      vm.flushPendingReadReceipts();
+    }());
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     final t = _sessionTargetUserId?.trim();
     if (t != null && t.isNotEmpty) {
       ChatListRealtimeCoordinator.endFullScreenDirectChat(t);
@@ -511,6 +573,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   _buildMessageBubble(
                                     context,
                                     msg,
+                                    peerOnline: model.peerOnline,
                                     isSelected: _selectedMessageLocalIds
                                         .contains(msg.localId),
                                     isSelectionMode: _isSelectionMode,
@@ -601,58 +664,26 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageBubble(
     BuildContext context,
     ChatMessage msg, {
+    required bool peerOnline,
     required bool isSelected,
     required bool isSelectionMode,
     required VoidCallback onToggleSelected,
     required VoidCallback onEnterSelection,
     VoidCallback? onRetry,
   }) {
-    final isMe = msg.isMe;
-    final selectedBg = context.appColors.primary.withValues(alpha: 0.12);
-    final hasMedia = (msg.mediaUrl ?? '').trim().isNotEmpty;
-    bool isProbablyImage(String? url, String? mime) {
-      final u = (url ?? '').trim().toLowerCase();
-      final m = (mime ?? '').trim().toLowerCase();
-      if (u.isEmpty && m.isEmpty) return false;
-
-      // URL extension wins (avoids bad mime types like `image/pdf`).
-      if (u.endsWith('.jpg') ||
-          u.endsWith('.jpeg') ||
-          u.endsWith('.png') ||
-          u.endsWith('.webp') ||
-          u.endsWith('.gif')) {
-        return true;
-      }
-      if (u.endsWith('.pdf') ||
-          u.endsWith('.doc') ||
-          u.endsWith('.docx') ||
-          u.endsWith('.xls') ||
-          u.endsWith('.xlsx') ||
-          u.endsWith('.ppt') ||
-          u.endsWith('.pptx') ||
-          u.endsWith('.zip') ||
-          u.endsWith('.rar')) {
-        return false;
-      }
-
-      // Fallback to mime type when URL isn't informative.
-      if (m == 'image/pdf' || m == 'application/pdf') return false;
-      return m.startsWith('image/');
-    }
-
-    final inferredType = hasMedia
-        ? (isProbablyImage(msg.mediaUrl ?? msg.thumbnailUrl, msg.mimeType)
-              ? ChatMessageType.image
-              : ChatMessageType.file)
-        : msg.type;
-    final effectiveType =
-        (msg.type == ChatMessageType.text && hasMedia) ? inferredType : msg.type;
-
+    final model = DirectChatBubbleModel.fromChatMessage(
+      msg,
+      peerOnline: peerOnline,
+    );
     return Padding(
       padding: EdgeInsets.only(bottom: context.h(10)),
       child: Align(
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: GestureDetector(
+        alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: DirectChatBubble(
+          maxWidth: context.screenWidth * 0.68,
+          model: model,
+          isSelected: isSelected,
+          isSelectionMode: isSelectionMode,
           onLongPress: () {
             if (isSelectionMode) return;
             debugPrint(
@@ -667,196 +698,12 @@ class _ChatScreenState extends State<ChatScreen> {
             );
             onToggleSelected();
           },
-          child: Container(
-            constraints: BoxConstraints(maxWidth: context.screenWidth * 0.68),
-            padding: context.padSym(h: 12, v: 6),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? selectedBg
-                  : (isMe ? context.appColors.primary : Colors.white),
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(18),
-                topRight: const Radius.circular(18),
-                bottomLeft: Radius.circular(isMe ? 18 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 18),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: context.appColors.onSurface.withValues(alpha: 0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-              border: isSelected
-                  ? Border.all(
-                      color: context.appColors.primary.withValues(alpha: 0.6),
-                      width: 1,
-                    )
-                  : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: isSelectionMode ? null : onRetry,
-                  behavior: HitTestBehavior.opaque,
-                  child: NormalText(
-                    titleText: msg.isDeleted
-                        ? 'This message was deleted'
-                        : (effectiveType == ChatMessageType.text
-                            ? msg.text
-                            : (effectiveType == ChatMessageType.image
-                                ? ''
-                                : ((msg.fileName ?? 'File').trim().isEmpty
-                                      ? 'File'
-                                      : (msg.fileName ?? 'File').trim()))),
-                    titleColor: isMe
-                        ? context.appColors.onPrimary
-                        : context.appColors.onSurface,
-                    titleFontWeight: FontWeight.w400,
-                    titleFontSize: context.text(16),
-                    sizeBoxheight: context.h(4),
-                    subText: msg.isFailed
-                        ? 'Failed • Tap to retry'
-                        : (msg.isPending
-                            ? 'Sending...'
-                            : (isMe ? '' : msg.time)),
-                    subColor: msg.isFailed
-                        ? context.appColors.error
-                        : (isMe
-                              ? context.appColors.onPrimary
-                                  .withValues(alpha: 0.7)
-                              : context.appColors.greylight),
-                    subFontSize: context.text(12),
-                    subFontWeight: FontWeight.w400,
-                  ),
-                ),
-                if (isMe &&
-                    !msg.isDeleted &&
-                    !msg.isFailed &&
-                    !msg.isPending &&
-                    effectiveType == ChatMessageType.text)
-                  Padding(
-                    padding: EdgeInsets.only(top: context.h(4)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          msg.time,
-                          style: context.appText.text12W400.copyWith(
-                            color: context.appColors.onPrimary
-                                .withValues(alpha: 0.72),
-                          ),
-                        ),
-                        SizedBox(width: context.w(4)),
-                        Icon(
-                          (msg.readAt != null || msg.deliveredAt != null)
-                              ? Icons.done_all_rounded
-                              : Icons.done_rounded,
-                          size: context.w(14),
-                          color: msg.readAt != null
-                              ? Colors.lightBlueAccent
-                              : context.appColors.onPrimary
-                                  .withValues(alpha: 0.75),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (!msg.isDeleted && effectiveType == ChatMessageType.image)
-                  Padding(
-                    padding: EdgeInsets.only(top: context.h(8)),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.zero,
-                      child: AspectRatio(
-                        aspectRatio: 16 / 10,
-                        child: InkWell(
-                          onTap: isSelectionMode
-                              ? null
-                              : () {
-                                  final url =
-                                      (msg.mediaUrl ?? msg.thumbnailUrl ?? '')
-                                          .trim();
-                                  if (url.isEmpty) return;
-                                  _openImagePreview(context, url);
-                                },
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.network(
-                                (msg.mediaUrl ?? msg.thumbnailUrl ?? '').trim(),
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) => Container(
-                                  color: context.appColors.blue10,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    'Image unavailable',
-                                    style: context.appText.text12W500.copyWith(
-                                      color: context.appColors.greylight,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                right: context.w(8),
-                                bottom: context.h(8),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: context.w(8),
-                                    vertical: context.h(4),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.45),
-                                    borderRadius: BorderRadius.circular(
-                                      context.radius(12),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    msg.time,
-                                    style: context.appText.text12W500.copyWith(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (!msg.isDeleted && effectiveType == ChatMessageType.file)
-                  Padding(
-                    padding: EdgeInsets.only(top: context.h(8)),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.insert_drive_file_outlined,
-                          size: 18,
-                          color: isMe
-                              ? context.appColors.onPrimary
-                                  .withValues(alpha: 0.85)
-                              : context.appColors.greyDark,
-                        ),
-                        SizedBox(width: context.w(8)),
-                        Expanded(
-                          child: Text(
-                            (msg.fileName ?? 'File').trim(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.appText.text12W600.copyWith(
-                              color: isMe
-                                  ? context.appColors.onPrimary
-                                  : context.appColors.onSurface,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          onRetryTap: msg.isFailed ? onRetry : null,
+          onImageTap: () {
+            final url = (msg.mediaUrl ?? msg.thumbnailUrl ?? '').trim();
+            if (url.isEmpty) return;
+            _openImagePreview(context, url);
+          },
         ),
       ),
     );
@@ -971,7 +818,7 @@ class _ChatScreenState extends State<ChatScreen> {
               try {
                 await model.deleteMessages(
                   selected,
-                  scope: DeleteMessageScope.both,
+                  scope: DeleteMessageScope.everyone,
                 );
                 if (mounted) _exitSelectionMode();
               } catch (_) {}

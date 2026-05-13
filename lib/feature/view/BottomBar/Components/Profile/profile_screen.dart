@@ -16,7 +16,16 @@ import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
 import 'package:sport_finding/core/utils/share_sheet_helper.dart';
 import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
+import 'package:sport_finding/Data/model/follow_connections_args.dart';
+import 'package:sport_finding/Data/model/public_profile_args.dart';
 import 'package:sport_finding/core/Network/list_of_all_user_service.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/followers_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/following_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/private_profile_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/public_profile_screen.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/Legal/privacy_policy_screen.dart';
+import 'package:sport_finding/feature/view/Legal/terms_of_service_screen.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/profile_screen_view_model.dart';
@@ -31,7 +40,12 @@ import 'package:sport_finding/feature/widget/shimmer_loading.dart';
 import 'package:sport_finding/feature/widget/user_greeting_widget.dart';
 import 'package:sport_finding/feature/widget/app_dialog.dart';
 
-class ProfileScreen extends StatelessWidget {
+/// Same breakpoint as chat / bottom-bar “desktop” chrome ([ChatListScreen]).
+const int _kProfileWebSplitBreakpointPx = 980;
+
+enum _WebProfileShellDetail { public, private, terms, privacy, followers, following }
+
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.embedInBottomBar = false});
 
   final bool embedInBottomBar;
@@ -40,10 +54,130 @@ class ProfileScreen extends StatelessWidget {
   /// strings like "default avatar url" to Image.network.
   static String? _safeAvatarUrl(String? raw) => normalizeImageUrl(raw);
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  _WebProfileShellDetail? _webShellDetail;
+  bool _shellResetScheduled = false;
+
+  void _closeWebShell() {
+    if (_webShellDetail == null) return;
+    setState(() => _webShellDetail = null);
+  }
+
+  bool _useWebProfileSplit(BuildContext context) {
+    return kIsWeb &&
+        widget.embedInBottomBar &&
+        MediaQuery.sizeOf(context).width >= _kProfileWebSplitBreakpointPx;
+  }
+
+  void _maybeResetWebShell(BuildContext context, int bottomBarTabIndex) {
+    if (_webShellDetail == null || _shellResetScheduled) return;
+    final split = _useWebProfileSplit(context);
+    final shouldClear = !split ||
+        (widget.embedInBottomBar && kIsWeb && bottomBarTabIndex != 4);
+    if (!shouldClear) return;
+    _shellResetScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _shellResetScheduled = false;
+      if (!mounted || _webShellDetail == null) return;
+      final split2 = _useWebProfileSplit(context);
+      final tab = widget.embedInBottomBar && kIsWeb
+          ? context.read<BottomBarScreenViewModel>().selectedIndex
+          : 4;
+      if (!split2 || tab != 4) {
+        setState(() => _webShellDetail = null);
+      }
+    });
+  }
+
+  void _handleProfileSettingTap(
+    BuildContext context,
+    ProfileScreenViewModel model,
+    int index,
+  ) {
+    if (!_useWebProfileSplit(context)) {
+      model.onTapFun(context, index);
+      return;
+    }
+    switch (index) {
+      case 0:
+        setState(() => _webShellDetail = _WebProfileShellDetail.public);
+        break;
+      case 1:
+        setState(() => _webShellDetail = _WebProfileShellDetail.private);
+        break;
+      case 3:
+        setState(() => _webShellDetail = _WebProfileShellDetail.terms);
+        break;
+      case 4:
+        setState(() => _webShellDetail = _WebProfileShellDetail.privacy);
+        break;
+      default:
+        model.onTapFun(context, index);
+    }
+  }
+
+  void _handleFollowersTap(
+    BuildContext context,
+    ProfileScreenViewModel model,
+  ) {
+    if (_useWebProfileSplit(context)) {
+      setState(() => _webShellDetail = _WebProfileShellDetail.followers);
+    } else {
+      model.openFollowers(context);
+    }
+  }
+
+  void _handleFollowingTap(
+    BuildContext context,
+    ProfileScreenViewModel model,
+  ) {
+    if (_useWebProfileSplit(context)) {
+      setState(() => _webShellDetail = _WebProfileShellDetail.following);
+    } else {
+      model.openFollowing(context);
+    }
+  }
+
+  Widget _buildWebShellDetailPane(
+    BuildContext context,
+    ProfileScreenViewModel model,
+  ) {
+    final detail = _webShellDetail;
+    if (detail == null) return const SizedBox.shrink();
+    final close = _closeWebShell;
+    final followArgs = FollowConnectionsArgs(userId: ProfileService().profile?.id);
+
+    switch (detail) {
+      case _WebProfileShellDetail.public:
+        return PublicProfileScreen(
+          args: PublicProfileArgs(
+            userId: ProfileService().profile?.id ?? '',
+            displayName: model.fullName,
+            forceRefreshProfile: true,
+          ),
+          onEmbeddedClose: close,
+        );
+      case _WebProfileShellDetail.private:
+        return PrivateProfileScreen(onEmbeddedClose: close);
+      case _WebProfileShellDetail.terms:
+        return TermsOfServiceScreen(onEmbeddedClose: close);
+      case _WebProfileShellDetail.privacy:
+        return PrivacyPolicyScreen(onEmbeddedClose: close);
+      case _WebProfileShellDetail.followers:
+        return FollowersScreen(args: followArgs, onEmbeddedClose: close);
+      case _WebProfileShellDetail.following:
+        return FollowingScreen(args: followArgs, onEmbeddedClose: close);
+    }
+  }
+
   Widget _buildNotificationBell(BuildContext context) {
     final c = context.appColors;
     final unreadCount = context.select<NotificationService, int>(
-      (service) => service.unreadCount,
+      (service) => service.unreadNonDirectMessageCount,
     );
 
     return Stack(
@@ -166,17 +300,25 @@ class ProfileScreen extends StatelessWidget {
       child: Consumer<ProfileScreenViewModel>(
         builder: (context, model, _) {
           final notificationService = context.watch<NotificationService>();
+          final bottomBarTabIndex = widget.embedInBottomBar && kIsWeb
+              ? context.select<BottomBarScreenViewModel, int>(
+                  (vm) => vm.selectedIndex,
+                )
+              : 4;
+          _maybeResetWebShell(context, bottomBarTabIndex);
 
-          return MainFrame(
-            showDecorationLayer: !embedInBottomBar,
-            child: ListView(
+          final useSplit = _useWebProfileSplit(context);
+          final listBottomPad = widget.embedInBottomBar
+              ? (kIsWeb && useSplit ? context.h(24) : context.h(100))
+              : context.h(24);
+
+          Widget mainScrollable() {
+            return ListView(
               padding: context
                   .padSym(h: 20)
-                  .copyWith(
-                    bottom: embedInBottomBar ? context.h(100) : context.h(24),
-                  ),
+                  .copyWith(bottom: listBottomPad),
               children: [
-                if (!embedInBottomBar)
+                if (!widget.embedInBottomBar)
                   AppBarWidget(
                     onTapFirst: () => Navigator.pop(context),
                     leading: NormalText(titleText: AppText.sportFinding),
@@ -199,7 +341,7 @@ class ProfileScreen extends StatelessWidget {
                   const _ProfileGreetingShimmer()
                 else
                   UserGreetingWidget(
-                    imageUrl: _safeAvatarUrl(model.avatarUrl),
+                    imageUrl: ProfileScreen._safeAvatarUrl(model.avatarUrl),
                     title: model.fullName,
                     locName: model.location,
                     subTitle: model.bio,
@@ -211,20 +353,17 @@ class ProfileScreen extends StatelessWidget {
                   followingCount: model.followingCount,
                   ratingValue: model.ratingValue,
                   matchesPlayedValue: model.matchesPlayedLabel,
-                  onFollowersTap: () => model.openFollowers(context),
-                  onFollowingTap: () => model.openFollowing(context),
+                  onFollowersTap: () => _handleFollowersTap(context, model),
+                  onFollowingTap: () => _handleFollowingTap(context, model),
                 ),
                 SizedBox(height: context.h(16)),
-
                 ListView.builder(
                   itemCount: model.profileData.length,
                   shrinkWrap: true,
-
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     final item = model.profileData[index];
                     return Padding(
-                      // Mobile had too much vertical gap between cards.
                       padding: context.padSym(v: 4),
                       child: CustomSettingCard(
                         icon: item['leading'],
@@ -254,7 +393,8 @@ class ProfileScreen extends StatelessWidget {
                         switchLoading: index == 2
                             ? notificationService.isUpdatingPreference
                             : false,
-                        onTap: () => model.onTapFun(context, index),
+                        onTap: () =>
+                            _handleProfileSettingTap(context, model, index),
                       ),
                     );
                   },
@@ -293,7 +433,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                 ],
-
                 SizedBox(height: context.h(16)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -332,7 +471,8 @@ class ProfileScreen extends StatelessWidget {
                               initialBio: model.bio.isNotEmpty
                                   ? model.bio
                                   : null,
-                              initialAvatarUrl: _safeAvatarUrl(model.avatarUrl),
+                              initialAvatarUrl:
+                                  ProfileScreen._safeAvatarUrl(model.avatarUrl),
                               initialSport: sportUi,
                               initialSkill: skillUi,
                             ),
@@ -359,7 +499,43 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ],
-            ),
+            );
+          }
+
+          final frameChild = useSplit && _webShellDetail != null
+              ? LayoutBuilder(
+                  builder: (context, constraints) {
+                    final leftW =
+                        (constraints.maxWidth * 0.38).clamp(300.0, 440.0);
+                    final dividerColor = context.appColors.greylight
+                        .withValues(alpha: 0.2);
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: leftW,
+                          child: mainScrollable(),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 1,
+                          color: dividerColor,
+                        ),
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: _buildWebShellDetailPane(context, model),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                )
+              : mainScrollable();
+
+          return MainFrame(
+            showDecorationLayer: !widget.embedInBottomBar,
+            child: frameChild,
           );
         },
       ),

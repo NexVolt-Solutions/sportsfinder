@@ -11,6 +11,7 @@ import 'package:sport_finding/Data/Repositories/NotificationSettings/notificatio
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
 import 'package:sport_finding/Data/model/NotificationSettings/notification_settings_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/chat_connectivity_gate.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
@@ -53,6 +54,17 @@ class NotificationService extends ChangeNotifier {
   DateTime? _notificationsClearedAt;
 
   int get unreadCount => notifications.where((item) => !item.isRead).length;
+
+  /// Unread rows that represent DM/chat alerts (show on Chat tab, not the bell).
+  int get unreadDirectMessageCount => notifications
+      .where((item) => !item.isRead && item.isDirectMessageNotification)
+      .length;
+
+  /// Bell / profile dots: everything except DM notification rows.
+  int get unreadNonDirectMessageCount => notifications
+      .where((item) => !item.isRead && !item.isDirectMessageNotification)
+      .length;
+
   bool get hasUnread => unreadCount > 0;
   bool get notificationsEnabled => ProfileService().notificationsEnabled;
   bool get isRealtimeConnected => _isRealtimeConnected;
@@ -117,9 +129,11 @@ class NotificationService extends ChangeNotifier {
   }
 
   Uri _notificationsWsUri(String token) {
-    return Uri.parse(
-      '$_baseWs/ws/notifications?token=${Uri.encodeQueryComponent(token)}',
-    );
+    final path = Uri.parse('$_baseWs/ws/notifications');
+    if (kIsWeb) {
+      return path.replace(queryParameters: <String, String>{'token': token});
+    }
+    return path;
   }
 
   Map<String, dynamic> _authHeaders(String token) {
@@ -129,6 +143,14 @@ class NotificationService extends ChangeNotifier {
   Future<void> ensureRealtimeConnected() async {
     if (_isDisposed || _channel != null) return;
     if (_retryAfter != null && DateTime.now().isBefore(_retryAfter!)) return;
+    if (!kIsWeb && !ChatConnectivityGate.instance.appearsReachable) {
+      ChatConnectivityGate.instance.whenReachable(() {
+        if (!_isDisposed) {
+          unawaited(ensureRealtimeConnected());
+        }
+      });
+      return;
+    }
     _reconnectScheduler.cancel();
     final token = await _tokenProvider();
     if (token == null || token.isEmpty) return;

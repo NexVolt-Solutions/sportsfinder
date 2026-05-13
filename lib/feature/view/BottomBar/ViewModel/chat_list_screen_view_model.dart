@@ -1,3 +1,8 @@
+import 'dart:async';
+
+import 'dart:ui' show PlatformDispatcher;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_chats_repository.dart';
@@ -15,7 +20,7 @@ class ChatThreadPreview {
     this.lastAtIso,
     this.lastSeenIso,
     this.unreadCount = 0,
-    this.isOnline = true,
+    this.isOnline = false,
   });
 
   final String userName;
@@ -85,7 +90,7 @@ class ChatThreadPreview {
           ? null
           : (json['lastSeenIso'] ?? '').toString().trim(),
       unreadCount: int.tryParse((json['unreadCount'] ?? '0').toString()) ?? 0,
-      isOnline: json['isOnline'] is bool ? (json['isOnline'] as bool) : true,
+      isOnline: json['isOnline'] is bool ? (json['isOnline'] as bool) : false,
     );
   }
 }
@@ -96,6 +101,12 @@ class ChatListScreenViewModel extends ChangeNotifier {
       <ChatListScreenViewModel>{};
   static bool _hydrationStarted = false;
   static bool _hydratedOnce = false;
+  static Timer? _webNotifyCoalesceTimer;
+  static final Map<String, Timer> _presenceOfflineDebounceTimers = {};
+  static const Duration _presenceOfflineDebounce = Duration(milliseconds: 1500);
+  /// Web: batch WS bursts; post-frame delivery avoids scheduling paints while
+  /// the CanvasKit view is mid-dispose (hot restart / route swap).
+  static const Duration _webNotifyCoalesce = Duration(milliseconds: 80);
   bool _isDisposed = false;
 
   final DirectChatsRepository _directChatsRepository = DirectChatsRepository();
@@ -158,14 +169,55 @@ class ChatListScreenViewModel extends ChangeNotifier {
     });
   }
 
+  /// Sum of per-thread unread badges (drives the Chat tab indicator).
+  static int get totalDirectChatUnread => _globalThreads.fold<int>(
+        0,
+        (sum, t) => sum + t.unreadCount,
+      );
+
+  /// Bumps when [totalDirectChatUnread] may have changed (tab bar listens).
+  static final ValueNotifier<int> directChatUnreadListenable =
+      ValueNotifier<int>(0);
+
+  static void _syncDirectChatUnreadSignal() {
+    final next = totalDirectChatUnread;
+    if (directChatUnreadListenable.value != next) {
+      directChatUnreadListenable.value = next;
+    }
+  }
+
   static void _notifyAllListeners() {
-    for (final vm in _listeners.toList(growable: false)) {
-      if (vm._isDisposed) continue;
-      try {
-        vm.notifyListeners();
-      } catch (_) {
-        // Stale notifier or widget unmount during notify; skip.
+    void deliver() {
+      _syncDirectChatUnreadSignal();
+      if (kIsWeb) {
+        try {
+          if (PlatformDispatcher.instance.views.isEmpty) return;
+        } catch (_) {
+          return;
+        }
       }
+      for (final vm in _listeners.toList(growable: false)) {
+        if (vm._isDisposed) continue;
+        try {
+          vm.notifyListeners();
+        } catch (_) {
+          // Stale notifier or widget unmount during notify; skip.
+        }
+      }
+    }
+
+    // Web: coalesce bursts, then deliver on the next frame so we are not in the
+    // same scheduler turn as embed/view teardown (reduces EngineFlutterView asserts).
+    if (kIsWeb) {
+      _webNotifyCoalesceTimer?.cancel();
+      _webNotifyCoalesceTimer = Timer(_webNotifyCoalesce, () {
+        _webNotifyCoalesceTimer = null;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          deliver();
+        });
+      });
+    } else {
+      deliver();
     }
   }
 
@@ -176,7 +228,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
     String? lastMessage,
     DateTime? lastAt,
     int? unreadCount,
-    bool isOnline = true,
+    bool? isOnline,
     String? lastSeenIso,
   }) {
     final trimmedName = userName.trim();
@@ -203,6 +255,8 @@ class ChatListScreenViewModel extends ChangeNotifier {
     final resolvedAvatar = trimmedAvatarUrl.isNotEmpty
         ? trimmedAvatarUrl
         : (existingTrimmed.isNotEmpty ? existingTrimmed : null);
+    final existingOnline = idx < 0 ? false : _globalThreads[idx].isOnline;
+    final resolvedOnline = isOnline ?? existingOnline;
 
     if (idx < 0) {
       _globalThreads.insert(
@@ -216,7 +270,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
           lastAtIso: lastAtIso,
           lastSeenIso: resolvedLastSeen,
           unreadCount: resolvedUnread,
-          isOnline: isOnline,
+          isOnline: resolvedOnline,
         ),
       );
     } else {
@@ -229,7 +283,7 @@ class ChatListScreenViewModel extends ChangeNotifier {
         lastAtIso: lastAtIso,
         lastSeenIso: resolvedLastSeen,
         unreadCount: resolvedUnread,
-        isOnline: isOnline,
+        isOnline: resolvedOnline,
       );
       _globalThreads
         ..removeAt(idx)
@@ -242,11 +296,11 @@ class ChatListScreenViewModel extends ChangeNotifier {
     _notifyAllListeners();
   }
 
-  /// Updates online / last-seen for a thread keyed by [subjectUserId] (peer user id).
-  static void applyPresenceForUser({
+   static void applyPresenceForUser({
     required String subjectUserId,
     required String status,
     DateTime? sentAt,
+    bool immediate = false,
   }) {
     final uid = subjectUserId.trim();
     if (uid.isEmpty) return;
@@ -255,6 +309,45 @@ class ChatListScreenViewModel extends ChangeNotifier {
         normalized == 'online' ||
         normalized == 'active' ||
         normalized == 'available';
+
+    if (isOnline) {
+      _presenceOfflineDebounceTimers.remove(uid)?.cancel();
+      _applyPresenceForUserNow(
+        subjectUserId: uid,
+        isOnline: true,
+        sentAt: sentAt,
+      );
+      return;
+    }
+
+    if (immediate) {
+      _presenceOfflineDebounceTimers.remove(uid)?.cancel();
+      _applyPresenceForUserNow(
+        subjectUserId: uid,
+        isOnline: false,
+        sentAt: sentAt,
+      );
+      return;
+    }
+
+    _presenceOfflineDebounceTimers.remove(uid)?.cancel();
+    _presenceOfflineDebounceTimers[uid] = Timer(_presenceOfflineDebounce, () {
+      _presenceOfflineDebounceTimers.remove(uid);
+      _applyPresenceForUserNow(
+        subjectUserId: uid,
+        isOnline: false,
+        sentAt: sentAt,
+      );
+    });
+  }
+
+  static void _applyPresenceForUserNow({
+    required String subjectUserId,
+    required bool isOnline,
+    DateTime? sentAt,
+  }) {
+    final uid = subjectUserId.trim();
+    if (uid.isEmpty) return;
     final lastSeenIso = !isOnline && sentAt != null
         ? sentAt.toUtc().toIso8601String()
         : null;
@@ -388,7 +481,6 @@ class ChatListScreenViewModel extends ChangeNotifier {
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),
       unreadCount: 0,
-      isOnline: true,
     );
   }
 
@@ -450,16 +542,30 @@ class ChatListScreenViewModel extends ChangeNotifier {
         limit: limit,
       );
 
-      final mapped = res.items
-          .map(_conversationToPreview)
-          .whereType<ChatThreadPreview>()
-          .toList();
-
       if (replace) {
-        _globalThreads
-          ..clear()
-          ..addAll(mapped);
+        final prevUnreadByUserId = <String, int>{
+          for (final t in _globalThreads)
+            if ((t.targetUserId ?? '').trim().isNotEmpty)
+              (t.targetUserId ?? '').trim(): t.unreadCount,
+        };
+        _globalThreads.clear();
+        for (final c in res.items) {
+          final p = _conversationToPreview(c);
+          if (p == null) continue;
+          final id = (p.targetUserId ?? '').trim();
+          final int mergedUnread;
+          if (c.unreadFromApi != null) {
+            mergedUnread = c.unreadFromApi!;
+          } else {
+            mergedUnread = id.isEmpty ? 0 : (prevUnreadByUserId[id] ?? 0);
+          }
+          _globalThreads.add(p.copyWith(unreadCount: mergedUnread));
+        }
       } else {
+        final mapped = res.items
+            .map(_conversationToPreview)
+            .whereType<ChatThreadPreview>()
+            .toList();
         // De-dupe by targetUserId if present, else by name.
         for (final t in mapped) {
           final exists = _globalThreads.any((e) {
@@ -505,8 +611,8 @@ class ChatListScreenViewModel extends ChangeNotifier {
       lastTime: formattedTime,
       lastAtIso: lastAtIso,
       lastSeenIso: null,
-      unreadCount: 0,
-      isOnline: true,
+      unreadCount: c.unreadFromApi ?? 0,
+      isOnline: false,
     );
   }
 

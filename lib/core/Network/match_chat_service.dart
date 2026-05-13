@@ -1,12 +1,18 @@
 // ignore_for_file: use_null_aware_elements
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' show Random, min;
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http/http.dart' as http;
+import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/chat_connectivity_gate.dart';
 import 'package:sport_finding/core/Network/chat_realtime_events.dart';
+import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -80,12 +86,15 @@ class RealtimeChatMessage {
   final int? sizeBytes;
   final bool isDeleted;
   final DateTime? deletedAt;
-  final String? deletedScope; // "me" | "both"
+  /// REST: `me` | `everyone`. WS `message_deleted`: typically `everyone`.
+  final String? deletedScope;
   final DateTime? deliveredAt;
   final DateTime? readAt;
 
   factory RealtimeChatMessage.fromJson(Map<String, dynamic> json) {
-    final isDeletedRaw = json['is_deleted'] ?? json['deleted'] ?? false;
+    final deletedForEveryone = _chatJsonTruthy(json['deleted_for_everyone']);
+    final isDeletedRaw =
+        json['is_deleted'] ?? json['deleted'] ?? deletedForEveryone;
     final isDeleted = isDeletedRaw is bool
         ? isDeletedRaw
         : ('$isDeletedRaw'.toLowerCase() == 'true');
@@ -139,31 +148,137 @@ class RealtimeChatMessage {
           sentUtc;
     }
 
+    final mid =
+        '${json['message_id'] ?? json['id'] ?? json['messageId'] ?? ''}'.trim();
+
+    final explicitMsgType =
+        '${json['message_type'] ?? json['messageType'] ?? ''}'.trim();
+    final topType = '${json['type'] ?? ''}'.trim().toLowerCase();
+    final resolvedMessageType = explicitMsgType.isNotEmpty
+        ? explicitMsgType
+        : (topType.isEmpty || topType == 'chat_message'
+              ? null
+              : '${json['type']}'.trim());
+
+    final deletedAt = _chatFirstUtc(json, [
+      'deleted_at',
+      'deletedAt',
+      'deleted_for_everyone_at',
+      'deletedForEveryoneAt',
+    ]);
+
     return RealtimeChatMessage(
-      messageId: '${json['message_id'] ?? ''}',
-      senderId: '${json['sender_id'] ?? ''}',
-      senderName: '${json['sender_name'] ?? ''}',
-      senderAvatar: json['sender_avatar']?.toString(),
+      messageId: mid,
+      senderId: '${json['sender_id'] ?? json['senderId'] ?? ''}',
+      senderName: '${json['sender_name'] ?? json['senderName'] ?? ''}',
+      senderAvatar:
+          (json['sender_avatar'] ?? json['senderAvatar'])?.toString(),
       content: '${json['content'] ?? ''}',
       sentAt: sentAt,
-      messageType: (json['type'] ?? json['message_type'])?.toString(),
-      mediaUrl: (json['media_url'] ?? json['file_url'])?.toString(),
-      thumbnailUrl: (json['thumbnail_url'] ?? json['thumb_url'])?.toString(),
-      mimeType: (json['mime_type'] ?? json['mime'])?.toString(),
-      fileName: (json['file_name'] ?? json['filename'])?.toString(),
+      messageType: resolvedMessageType,
+      mediaUrl: (json['media_url'] ?? json['mediaUrl'] ?? json['file_url'])
+          ?.toString(),
+      thumbnailUrl:
+          (json['thumbnail_url'] ?? json['thumbnailUrl'] ?? json['thumb_url'])
+              ?.toString(),
+      mimeType: (json['mime_type'] ?? json['mimeType'] ?? json['mime'])
+          ?.toString(),
+      fileName: (json['file_name'] ?? json['fileName'] ?? json['filename'])
+          ?.toString(),
       sizeBytes: json['size_bytes'] is num
           ? (json['size_bytes'] as num).toInt()
-          : null,
+          : (json['sizeBytes'] is num
+                ? (json['sizeBytes'] as num).toInt()
+                : null),
       isDeleted: isDeleted,
-      deletedAt: DateTime.tryParse('${json['deleted_at'] ?? ''}'),
-      deletedScope: (json['deleted_scope'] ?? json['scope'])?.toString(),
+      deletedAt: deletedAt,
+      deletedScope:
+          (json['deleted_scope'] ?? json['deletedScope'] ?? json['scope'])
+              ?.toString(),
       deliveredAt: deliveredAt,
       readAt: readAt,
     );
   }
 }
 
+extension RealtimeChatMessageUiReceipts on RealtimeChatMessage {
+  /// Read / delivered timestamps for tick UI. When the server echoes our message
+  /// without receipt fields, use [sentAt] as a minimum "server accepted" delivery
+  /// time (double grey tick) until explicit read receipts arrive.
+  (DateTime? read, DateTime? delivered) receiptTimesForUi(String myUserId) {
+    final mine =
+        myUserId.trim().isNotEmpty && senderId.trim() == myUserId.trim();
+    if (!mine) return (readAt, deliveredAt);
+    if (readAt != null || deliveredAt != null) return (readAt, deliveredAt);
+    return (readAt, sentAt.toUtc());
+  }
+}
+
 class MatchChatService {
+  /// Sockets that have completed the server `connected` handshake — used to push
+  /// foreground/background presence on app lifecycle (best-effort; server may ignore).
+  static final Set<MatchChatService> _clientPresenceTargets =
+      <MatchChatService>{};
+
+  /// Notify all open direct-chat WebSockets that this user is [status] (`online` / `offline`).
+  static void broadcastClientPresence(String status) {
+    final normalized = status.trim().toLowerCase();
+    if (normalized.isEmpty) return;
+    for (final s in List<MatchChatService>.from(_clientPresenceTargets)) {
+      if (s._isDisposed) {
+        _clientPresenceTargets.remove(s);
+        continue;
+      }
+      s._sendClientPresenceFrame(normalized);
+    }
+  }
+
+  /// When DNS / radio drops, every open DM socket fails at once; without a
+  /// shared cooldown they all reconnect on the same 1s timer and spam the OS.
+  static DateTime _earliestGlobalWsConnect =
+      DateTime.fromMillisecondsSinceEpoch(0);
+  static int _globalNetworkFailStreak = 0;
+  static DateTime? _lastGlobalCooldownBump;
+
+  static Duration _globalCooldownRemaining() {
+    final now = DateTime.now();
+    if (now.isBefore(_earliestGlobalWsConnect)) {
+      return _earliestGlobalWsConnect.difference(now);
+    }
+    return Duration.zero;
+  }
+
+  static final Random _reconnectJitter = Random();
+
+  static void _noteTransientNetworkFailure() {
+    final now = DateTime.now();
+    if (_lastGlobalCooldownBump != null &&
+        now.difference(_lastGlobalCooldownBump!) <
+            const Duration(milliseconds: 500)) {
+      return;
+    }
+    _lastGlobalCooldownBump = now;
+    _globalNetworkFailStreak =
+        (_globalNetworkFailStreak + 1).clamp(1, 8);
+    const caps = <int>[3, 5, 10, 20, 40, 60, 90, 120];
+    final i = _globalNetworkFailStreak - 1;
+    final sec = caps[i < caps.length ? i : caps.length - 1];
+    final proposed = now.add(Duration(seconds: sec));
+    if (proposed.isAfter(_earliestGlobalWsConnect)) {
+      _earliestGlobalWsConnect = proposed;
+    }
+  }
+
+  static void _clearGlobalNetworkCooldown() {
+    _globalNetworkFailStreak = 0;
+    _earliestGlobalWsConnect =
+        DateTime.fromMillisecondsSinceEpoch(0);
+    _lastGlobalCooldownBump = null;
+  }
+
+  static Uri _wsUriForLog(Uri uri) =>
+      uri.replace(queryParameters: const <String, dynamic>{});
+
   MatchChatService({
     required this.accessToken,
     this.targetUserId,
@@ -190,12 +305,28 @@ class MatchChatService {
   StreamSubscription<dynamic>? _channelSub;
   late final ReconnectScheduler _reconnectScheduler;
   bool _isDisposed = false;
+  bool _offlineResumeWaiter = false;
 
   final _messageController = StreamController<RealtimeChatMessage>.broadcast();
   final _errorController = StreamController<String>.broadcast();
   final _connectedController = StreamController<void>.broadcast();
   final _presenceController = StreamController<ChatPresenceEvent>.broadcast();
   final _receiptController = StreamController<ChatReceiptEvent>.broadcast();
+
+  /// Suppress duplicate `chat_message` frames (server or multi-listener echo).
+  final LinkedHashSet<String> _recentChatMessageIds = LinkedHashSet<String>();
+  static const int _maxRecentChatMessageIds = 128;
+
+  bool _takeChatMessageIdIfNew(String messageId) {
+    final id = messageId.trim();
+    if (id.isEmpty) return true;
+    if (_recentChatMessageIds.contains(id)) return false;
+    _recentChatMessageIds.add(id);
+    while (_recentChatMessageIds.length > _maxRecentChatMessageIds) {
+      _recentChatMessageIds.remove(_recentChatMessageIds.first);
+    }
+    return true;
+  }
 
   Stream<RealtimeChatMessage> get onMessage => _messageController.stream;
   Stream<String> get onError => _errorController.stream;
@@ -215,18 +346,28 @@ class MatchChatService {
     Uri uri,
     Map<String, dynamic> headers,
   ) {
+    final safeUri = _wsUriForLog(uri);
     if (kIsWeb) {
-      debugPrint('[MatchChatService] [WS] Web connector -> $uri');
+      debugPrint('[MatchChatService] [WS] Web connector -> $safeUri');
       return WebSocketChannel.connect(uri);
     }
-    debugPrint('[MatchChatService] [WS] IO connector -> $uri');
+    debugPrint('[MatchChatService] [WS] IO connector -> $safeUri');
     return IOWebSocketChannel.connect(uri, headers: headers);
   }
 
   static Duration _defaultReconnectDelay(int attempt) {
-    if (attempt <= 1) return const Duration(seconds: 1);
-    if (attempt <= 3) return const Duration(seconds: 2);
-    return const Duration(seconds: 5);
+    final safeAttempt = attempt < 1 ? 1 : attempt;
+    final cappedPow = min(6, safeAttempt - 1);
+    final seconds = min(60, 1 << cappedPow);
+    final jitterMs = _reconnectJitter.nextInt(500);
+    return Duration(seconds: seconds, milliseconds: jitterMs);
+  }
+
+  static String _userVisibleWsError(Object e) {
+    if (isTransientNetworkError(e)) {
+      return AppText.chatNetworkUnreachable;
+    }
+    return 'WebSocket error: $e';
   }
 
   static String _toWsBase(String restBaseUrl) {
@@ -235,12 +376,27 @@ class MatchChatService {
     return uri.replace(scheme: wsScheme, path: '', query: null).toString();
   }
 
-  Future<List<RealtimeChatMessage>> loadHistory() async {
+  /// Loads DM history. [before] is keyset pagination (message uuid), newest-first pages.
+  Future<List<RealtimeChatMessage>> loadHistory({
+    int page = 1,
+    int limit = 20,
+    String? before,
+  }) async {
     final activeTargetUserId = targetUserId?.trim() ?? '';
     if (activeTargetUserId.isEmpty) {
       throw Exception('Chat history requires targetUserId.');
     }
-    final uri = Uri.parse('$_baseRest/users/$activeTargetUserId/messages');
+    final safePage = page < 1 ? 1 : page;
+    final safeLimit = limit.clamp(1, 100);
+    final q = <String, String>{
+      'page': '$safePage',
+      'limit': '$safeLimit',
+    };
+    final b = before?.trim() ?? '';
+    if (b.isNotEmpty) q['before'] = b;
+    final uri = Uri.parse(
+      '$_baseRest/users/$activeTargetUserId/messages',
+    ).replace(queryParameters: q);
     debugPrint('[MatchChatService] [History] GET $uri');
     final response = await http.get(
       uri,
@@ -279,6 +435,11 @@ class MatchChatService {
     return history;
   }
 
+  void _emitError(String message) {
+    if (_errorController.isClosed) return;
+    _errorController.add(message);
+  }
+
   void connect() {
     if (_isDisposed || _channel != null) {
       debugPrint(
@@ -286,32 +447,88 @@ class MatchChatService {
       );
       return;
     }
+    final cooldown = _globalCooldownRemaining();
+    if (cooldown > Duration.zero) {
+      debugPrint(
+        '[MatchChatService] [WS] defer connect ${cooldown.inMilliseconds}ms '
+        '(shared network cooldown) targetUserId=$targetUserId',
+      );
+      _reconnectScheduler.schedule(
+        canSchedule: () => !_isDisposed && _channel == null,
+        onFire: connect,
+        overrideDelay: cooldown,
+      );
+      return;
+    }
     _reconnectScheduler.cancel();
-    final uri = Uri.parse(
-      '$_baseWs$_chatPath?token=${Uri.encodeQueryComponent(accessToken)}',
-    );
+    if (!kIsWeb && !ChatConnectivityGate.instance.appearsReachable) {
+      _emitError(AppText.chatNoInternetConnection);
+      if (!_offlineResumeWaiter) {
+        _offlineResumeWaiter = true;
+        ChatConnectivityGate.instance.whenReachable(() {
+          _offlineResumeWaiter = false;
+          if (!_isDisposed && _channel == null) {
+            connect();
+          }
+        });
+      }
+      return;
+    }
+
+    final pathUri = Uri.parse('$_baseWs$_chatPath');
+    final uri = kIsWeb
+        ? pathUri.replace(
+            queryParameters: <String, String>{'token': accessToken},
+          )
+        : pathUri;
 
     debugPrint('[MatchChatService] [WS] connecting path=$_chatPath');
-    _channel = _wsConnector(uri, <String, dynamic>{
-      HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-    });
+    try {
+      _channel = _wsConnector(uri, <String, dynamic>{
+        HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+      });
+    } catch (e) {
+      debugPrint('[MatchChatService] [WS] connect ctor failed $e');
+      _emitError(_userVisibleWsError(e));
+      _resetSocket();
+      if (!_isDisposed) {
+        _scheduleReconnect(triggerError: e);
+      }
+      return;
+    }
     _channelSub = _channel!.stream.listen(
       (dynamic data) {
+        if (_isDisposed) return;
         if (data is! String) return;
         debugPrint('[MatchChatService] [WS] event raw=$data');
-        _handleServerEvent(jsonDecode(data) as Map<String, dynamic>);
+        try {
+          final decoded = jsonDecode(data);
+          if (decoded is Map<String, dynamic>) {
+            _handleServerEvent(decoded);
+          }
+        } catch (e) {
+          debugPrint('[MatchChatService] [WS] bad frame: $e');
+        }
       },
       onError: (Object error) {
         debugPrint('[MatchChatService] [WS] error $error');
-        _errorController.add('WebSocket error: $error');
+        if (_isDisposed) {
+          _resetSocket();
+          return;
+        }
+        _emitError(_userVisibleWsError(error));
         _resetSocket();
-        _scheduleReconnect();
+        _scheduleReconnect(triggerError: error);
       },
       onDone: () {
         final closeCode = _channel?.closeCode;
         debugPrint('[MatchChatService] [WS] done/closed code=$closeCode');
+        if (_isDisposed) {
+          _resetSocket();
+          return;
+        }
         final message = _messageForCloseCode(closeCode);
-        _errorController.add(message);
+        _emitError(message);
         _resetSocket();
         if (_shouldReconnect(closeCode)) {
           _scheduleReconnect();
@@ -319,37 +536,82 @@ class MatchChatService {
       },
       cancelOnError: true,
     );
+    final dynamic dynamicChannel = _channel;
+    final dynamic readyFuture = dynamicChannel?.ready;
+    if (readyFuture is Future) {
+      unawaited(
+        readyFuture.catchError((Object e) {
+          if (_isDisposed) return;
+          _emitError(_userVisibleWsError(e));
+          _resetSocket();
+          _scheduleReconnect(triggerError: e);
+        }),
+      );
+    }
   }
 
   void _handleServerEvent(Map<String, dynamic> event) {
+    if (_isDisposed) return;
     debugPrint(
       '[MatchChatService] [WS] parsed event type=${event['type']} targetUserId=$targetUserId',
     );
     switch ('${event['type'] ?? ''}') {
       case 'connected':
         _reconnectScheduler.resetAttempts();
-        _connectedController.add(null);
+        _clearGlobalNetworkCooldown();
+        if (!_isDisposed) {
+          _clientPresenceTargets.add(this);
+        }
+        if (!_connectedController.isClosed) {
+          _connectedController.add(null);
+        }
         debugPrint('[MatchChatService] [WS] connected acknowledged');
         break;
       case 'chat_message':
-        _messageController.add(RealtimeChatMessage.fromJson(event));
+        final mid =
+            '${event['message_id'] ?? event['id'] ?? event['messageId'] ?? ''}'
+                .trim();
+        if (!_takeChatMessageIdIfNew(mid)) {
+          debugPrint(
+            '[MatchChatService] [WS] skip duplicate chat_message id=$mid',
+          );
+          break;
+        }
+        if (!_messageController.isClosed) {
+          _messageController.add(RealtimeChatMessage.fromJson(event));
+        }
+        final sid = '${event['sender_id'] ?? ''}'.trim();
+        final peer = targetUserId?.trim() ?? '';
+        final delivery = peer.isEmpty
+            ? 'unknown_ctx'
+            : (sid == peer ? 'from_peer' : 'from_self_echo');
         debugPrint(
-          '[MatchChatService] [WS] incoming messageId=${event['message_id']} sender=${event['sender_id']}',
+          '[MatchChatService] [WS] chat_message_delivery=$delivery '
+          'message_id=$mid sender=$sid target_peer=$peer',
         );
         break;
       // Forward-compat: treat delete/read/delivered as events that the UI can react to.
       case 'message_deleted':
-        _messageController.add(
-          RealtimeChatMessage.fromJson(<String, dynamic>{
-            ...event,
-            'is_deleted': true,
-          }),
-        );
+        if (!_messageController.isClosed) {
+          final merged = Map<String, dynamic>.from(event);
+          merged['is_deleted'] = true;
+          final mid =
+              '${merged['message_id'] ?? merged['id'] ?? merged['messageId'] ?? ''}'
+                  .trim();
+          if (mid.isNotEmpty) merged['message_id'] = mid;
+          _messageController.add(RealtimeChatMessage.fromJson(merged));
+        }
         break;
       case 'presence_update':
-        final presence = ChatPresenceEvent.tryParse(event);
+        final presence = ChatPresenceEvent.tryParse(event, fromSnapshot: false);
         if (presence != null && !_presenceController.isClosed) {
           _presenceController.add(presence);
+        }
+        break;
+      case 'presence_snapshot':
+        final snap = ChatPresenceEvent.tryParse(event, fromSnapshot: true);
+        if (snap != null && !_presenceController.isClosed) {
+          _presenceController.add(snap);
         }
         break;
       case 'message_read':
@@ -364,6 +626,7 @@ class MatchChatService {
         break;
       case 'message_delivered':
       case 'delivered':
+      case 'delivery_ack':
       case 'message_received':
       case 'chat_delivered':
         final delivered = ChatReceiptEvent.tryParseDelivered(event);
@@ -375,7 +638,7 @@ class MatchChatService {
       case 'typing_stop':
         break;
       case 'error':
-        _errorController.add('${event['detail'] ?? 'Unknown error'}');
+        _emitError('${event['detail'] ?? 'Unknown error'}');
         debugPrint('[MatchChatService] [WS] server error ${event['detail']}');
         break;
       default:
@@ -389,6 +652,30 @@ class MatchChatService {
           _receiptController.add(delImp);
         }
         break;
+    }
+  }
+
+  void _sendClientPresenceFrame(String status) {
+    if (_isDisposed || _channel == null) return;
+    // Server currently rejects client-originated `presence_update` on web
+    // ("Unsupported message type."); skip until the API accepts this frame.
+    if (kIsWeb) return;
+    final myId = ProfileService().profile?.id.trim() ?? '';
+    if (myId.isEmpty) return;
+    try {
+      _channel!.sink.add(
+        jsonEncode(<String, dynamic>{
+          'type': 'presence_update',
+          'user_id': myId,
+          'status': status,
+          'sent_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+      debugPrint(
+        '[MatchChatService] [WS] client presence sent status=$status targetUserId=$targetUserId',
+      );
+    } catch (e) {
+      debugPrint('[MatchChatService] [WS] client presence send failed: $e');
     }
   }
 
@@ -416,14 +703,14 @@ class MatchChatService {
         : messageType.trim().toLowerCase();
     if (trimmed.isEmpty && (mediaUrl ?? '').trim().isEmpty) return false;
     if (trimmed.length > 1000) {
-      _errorController.add('Message too long (max 1000 characters)');
+      _emitError('Message too long (max 1000 characters)');
       return false;
     }
     if (_channel == null) {
       debugPrint(
         '[MatchChatService] [WS] send blocked: no channel. scheduling reconnect',
       );
-      _errorController.add('Not connected. Reconnecting...');
+      _emitError('Not connected. Reconnecting...');
       _scheduleReconnect();
       return false;
     }
@@ -447,18 +734,53 @@ class MatchChatService {
     return true;
   }
 
+  /// Direct chat WS (§5.4): notify peer that this user read [messageId].
+  /// Server responds with canonical `message_read` broadcast.
+  bool sendReadReceipt(String messageId) {
+    final id = messageId.trim();
+    if (id.isEmpty || _isDisposed || _channel == null) return false;
+    _channel!.sink.add(
+      jsonEncode(<String, dynamic>{
+        'type': 'message_read',
+        'message_id': id,
+      }),
+    );
+    return true;
+  }
+
+  /// Optional client ack: use only if the backend requires it before it
+  /// broadcasts [message_delivered] to the sender. Most deployments infer
+  /// delivery server-side when the message is persisted or pushed to the peer.
+  bool sendDeliveredReceipt(String messageId) {
+    final id = messageId.trim();
+    if (id.isEmpty || _isDisposed || _channel == null) return false;
+    _channel!.sink.add(
+      jsonEncode(<String, dynamic>{
+        'type': 'message_delivered',
+        'message_id': id,
+      }),
+    );
+    return true;
+  }
+
   void _resetSocket() {
     debugPrint('[MatchChatService] [WS] reset socket');
+    _clientPresenceTargets.remove(this);
     _channelSub?.cancel();
     _channelSub = null;
     _channel = null;
   }
 
-  void _scheduleReconnect() {
+  void _scheduleReconnect({Object? triggerError}) {
+    if (triggerError != null && isTransientNetworkError(triggerError)) {
+      _noteTransientNetworkFailure();
+    }
+    final wait = _globalCooldownRemaining();
     debugPrint('[MatchChatService] [WS] schedule reconnect');
     _reconnectScheduler.schedule(
       canSchedule: () => !_isDisposed && _channel == null,
       onFire: connect,
+      overrideDelay: wait > Duration.zero ? wait : null,
     );
   }
 
@@ -485,6 +807,9 @@ class MatchChatService {
   void dispose() {
     debugPrint('[MatchChatService] dispose targetUserId=$targetUserId');
     _isDisposed = true;
+    _offlineResumeWaiter = false;
+    _clientPresenceTargets.remove(this);
+    _recentChatMessageIds.clear();
     _reconnectScheduler.cancel();
     _channelSub?.cancel();
     _channelSub = null;

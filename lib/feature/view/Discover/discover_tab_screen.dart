@@ -60,7 +60,7 @@ class _DiscoverTabContentState extends State<_DiscoverTabContent> {
   Widget _buildNotificationBell(BuildContext context) {
     final c = context.appColors;
     final unreadCount = context.select<NotificationService, int>(
-      (service) => service.unreadCount,
+      (service) => service.unreadNonDirectMessageCount,
     );
 
     return Stack(

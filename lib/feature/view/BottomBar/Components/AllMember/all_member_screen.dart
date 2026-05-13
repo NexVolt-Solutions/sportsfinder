@@ -82,7 +82,6 @@ class _AllMemberScreenState extends State<AllMemberScreen> {
                                   ChatRouteArgs(
                                     contactName: (user.fullName ?? '').trim(),
                                     targetUserId: (user.id ?? '').trim(),
-                                    isOnline: true,
                                     contactAvatarUrl: user.avatarUrl,
                                   ),
                                 ),

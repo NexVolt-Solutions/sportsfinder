@@ -97,6 +97,7 @@ import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:sport_finding/core/utils/match_list_refresh_coordinator.dart';
 
 class HostDetailScreenViewModel extends ChangeNotifier {
   static final Map<String, bool> _sessionJoinStateByMatchId = <String, bool>{};
@@ -909,6 +910,7 @@ class HostDetailScreenViewModel extends ChangeNotifier {
       _sessionStatusByMatchId[matchId.trim()] = resolvedStatus;
       _isUpdatingMatchStatus = false;
       notifyListeners();
+      MatchListRefreshCoordinator.requestRefresh();
       return true;
     } catch (e, stack) {
       log('❌ [ViewModel] Failed to update match status — error: $e');

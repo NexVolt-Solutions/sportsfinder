@@ -144,7 +144,7 @@ class RouteProviders {
         );
       case RoutesName.chatScreen:
         final args = _argAs<ChatRouteArgs>(routeArguments) ??
-            const ChatRouteArgs(contactName: 'Chat', isOnline: true);
+            const ChatRouteArgs(contactName: 'Chat');
         return ChangeNotifierProvider(
           create: (_) => ChatScreenViewModel(
             contactName: args.contactName,

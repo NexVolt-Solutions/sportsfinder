@@ -40,6 +40,7 @@ class DirectChatConversation {
     required this.lastMessage,
     this.lastMessageSenderId,
     this.lastMessageSentAt,
+    this.unreadFromApi,
   });
 
   final ChatUserSummary user;
@@ -47,6 +48,10 @@ class DirectChatConversation {
   final String lastMessage;
   final String? lastMessageSenderId;
   final DateTime? lastMessageSentAt;
+
+  /// When non-null, the API included an unread count for this peer (use as-is,
+  /// including `0` after read). When null, the client keeps prior local badge.
+  final int? unreadFromApi;
 
   factory DirectChatConversation.fromJson(Map<String, dynamic> json) {
     final userJson = json['user'];
@@ -58,8 +63,30 @@ class DirectChatConversation {
       lastMessage: (json['last_message'] ?? '').toString(),
       lastMessageSenderId: _trimOrNull(json['last_message_sender_id']),
       lastMessageSentAt: DateTime.tryParse('${json['last_message_sent_at'] ?? ''}'),
+      unreadFromApi: _parseOptionalUnreadCount(json),
     );
   }
+}
+
+ 
+int? _parseOptionalUnreadCount(Map<String, dynamic> json) {
+  const keys = <String>[
+    'unread_count',
+    'unreadCount',
+    'unread_messages',
+    'unreadMessages',
+  ];
+  for (final key in keys) {
+    if (!json.containsKey(key)) continue;
+    final v = json[key];
+    if (v == null) return 0;
+    if (v is int) return v < 0 ? 0 : v;
+    if (v is num) return v.toInt() < 0 ? 0 : v.toInt();
+    final n = int.tryParse(v.toString().trim());
+    if (n != null) return n < 0 ? 0 : n;
+    return 0;
+  }
+  return null;
 }
 
 class ChatUserSummary {

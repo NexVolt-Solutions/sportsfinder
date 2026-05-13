@@ -24,11 +24,19 @@ class ReconnectScheduler {
   void schedule({
     required bool Function() canSchedule,
     required void Function() onFire,
+    /// When set (e.g. shared network cooldown), used instead of the normal
+    /// backoff curve and does not advance [_attempt].
+    Duration? overrideDelay,
   }) {
     if (_isScheduled || !canSchedule()) return;
     _isScheduled = true;
-    _attempt += 1;
-    final delay = _delayForAttempt(_attempt);
+    late final Duration delay;
+    if (overrideDelay != null) {
+      delay = overrideDelay;
+    } else {
+      _attempt += 1;
+      delay = _delayForAttempt(_attempt);
+    }
     _timer = Timer(delay, () {
       _isScheduled = false;
       if (!canSchedule()) return;

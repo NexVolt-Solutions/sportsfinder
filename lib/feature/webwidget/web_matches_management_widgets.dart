@@ -52,6 +52,8 @@ class WebMatchTableRowData {
     this.onView,
     this.onEdit,
     this.onDelete,
+    this.editEnabled = true,
+    this.deleteEnabled = true,
   });
 
   final String title;
@@ -62,6 +64,10 @@ class WebMatchTableRowData {
   final VoidCallback? onView;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  /// When false, "Edit match" appears in the actions menu but is non-interactive (e.g. completed match).
+  final bool editEnabled;
+  /// When false, "Delete match" appears but is non-interactive.
+  final bool deleteEnabled;
 }
 
 class WebMatchesManagementSection extends StatelessWidget {
@@ -333,18 +339,22 @@ class _ActionsMenuButton extends StatelessWidget {
       required IconData icon,
       required String label,
       Color? color,
+      bool enabled = true,
     }) {
-      final resolved = color ?? c.onSurface;
+      final base = color ?? c.onSurface;
+      // Explicit muted fg: PopupMenuItem does not dim [child] icon/text when enabled is false.
+      final fg = enabled ? base : c.greylight;
       return PopupMenuItem<String>(
         value: value,
+        enabled: enabled,
         height: 40,
         child: Row(
           children: [
-            Icon(icon, size: 18, color: resolved),
+            Icon(icon, size: 18, color: fg),
             const SizedBox(width: 10),
             Text(
               label,
-              style: context.appText.text12W500.copyWith(color: resolved),
+              style: context.appText.text12W500.copyWith(color: fg),
             ),
           ],
         ),
@@ -378,6 +388,7 @@ class _ActionsMenuButton extends StatelessWidget {
             value: 'edit',
             icon: Icons.edit_outlined,
             label: 'Edit match',
+            enabled: row.editEnabled,
           ),
         if (row.onDelete != null)
           item(
@@ -385,6 +396,7 @@ class _ActionsMenuButton extends StatelessWidget {
             icon: Icons.delete_outline_rounded,
             label: 'Delete match',
             color: c.error,
+            enabled: row.deleteEnabled,
           ),
       ],
       onSelected: (value) {

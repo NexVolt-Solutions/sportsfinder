@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -307,43 +307,49 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             AppBarWidget(
                         onLeadingTap: _handleBackNavigation,
                         title: AppText.hostMatchDetails,
-                        trailingActions: kIsWeb
-                            ? const <Widget>[]
-                            : [
-                                GestureDetector(
-                                  onTap: model.isDeletingMatch
-                                      ? null
-                                      : _deleteMatchFromAppBar,
-                                  behavior: HitTestBehavior.opaque,
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: model.isDeletingMatch
-                                        ? CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: context.appColors.error,
-                                          )
-                                        : Icon(
-                                            Icons.delete,
-                                            color: context.appColors.error,
-                                            size: 20,
-                                          ),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: isMatchLocked
-                                      ? null
-                                      : _navigateToEditScreen,
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Icon(
-                                    Icons.edit,
-                                    color: isMatchLocked
-                                        ? context.appColors.greylight
-                                        : context.appColors.greyDark,
-                                    size: 20,
-                                  ),
-                                ),
-                              ],
+                        trailingActions:
+                        
+                        
+                        kIsWeb ? null
+                        
+                        : [
+                          GestureDetector(
+                            onTap: isMatchLocked || model.isDeletingMatch
+                                ? null
+                                : _deleteMatchFromAppBar,
+                            behavior: HitTestBehavior.opaque,
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: model.isDeletingMatch
+                                  ? CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: context.appColors.error,
+                                    )
+                                  : Icon(
+                                      Icons.delete,
+                                      color: isMatchLocked
+                                          ? context.appColors.greylight
+                                          : context.appColors.error,
+                                      size: 20,
+                                    ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: isMatchLocked
+                                ? null
+                                : _navigateToEditScreen,
+                            behavior: HitTestBehavior.opaque,
+                            child: Icon(
+                              Icons.edit,
+                              color: isMatchLocked
+                                  ? context.appColors.greylight
+                                  : context.appColors.greyDark,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      
                       ),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,

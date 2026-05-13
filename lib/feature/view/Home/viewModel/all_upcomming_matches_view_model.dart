@@ -8,6 +8,7 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/geo_distance.dart';
+import 'package:sport_finding/core/utils/match_list_refresh_coordinator.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
@@ -64,6 +65,12 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   }) {
     DeletedMatchesService().addListener(_onDeletedMatchesChanged);
     ProfileService().addListener(_onProfileChanged);
+    MatchListRefreshCoordinator.register(_onExternalListRefresh);
+  }
+
+  void _onExternalListRefresh() {
+    if (_isDisposed) return;
+    fetchMatches(reset: true);
   }
 
   void _onDeletedMatchesChanged() {
@@ -400,6 +407,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    MatchListRefreshCoordinator.unregister(_onExternalListRefresh);
     DeletedMatchesService().removeListener(_onDeletedMatchesChanged);
     ProfileService().removeListener(_onProfileChanged);
     super.dispose();

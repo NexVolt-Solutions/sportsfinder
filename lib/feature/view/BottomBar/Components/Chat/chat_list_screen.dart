@@ -10,12 +10,16 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/utils/date_time_formatters.dart';
 import 'package:sport_finding/core/Network/chat_realtime_events.dart';
+import 'package:sport_finding/core/Network/fcm_local_notifications.dart';
 import 'package:sport_finding/core/Network/match_chat_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/web_embedded_chat_open_coordinator.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart'
+    show ChatScreenMessagesCache;
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/web/web_chat_content.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
@@ -33,9 +37,11 @@ class ChatListScreen extends StatefulWidget {
   State<ChatListScreen> createState() => _ChatListScreenState();
 }
 
-class _ChatListScreenState extends State<ChatListScreen> {
+class _ChatListScreenState extends State<ChatListScreen>
+    with WidgetsBindingObserver {
   static const int _chatTabIndex = 3;
   static const double _webCompactBreakpoint = 980;
+  static const Duration _webHistoryGapFillInterval = Duration(seconds: 12);
 
   ChatListScreenViewModel? _vm;
   ChatListScreenViewModel get _safeVm => _vm ??= ChatListScreenViewModel();
@@ -55,10 +61,74 @@ class _ChatListScreenState extends State<ChatListScreen> {
       <String, StreamSubscription<ChatPresenceEvent>>{};
   final Map<String, StreamSubscription<ChatReceiptEvent>> _webReceiptSubs =
       <String, StreamSubscription<ChatReceiptEvent>>{};
+  final Map<String, StreamSubscription<void>> _webConnectedSubs =
+      <String, StreamSubscription<void>>{};
+  final Map<String, DateTime> _webThreadInitialHistoryLoadedAt =
+      <String, DateTime>{};
+  final Map<String, DateTime> _webPresenceSnapshotSuppressUntil =
+      <String, DateTime>{};
+  final Map<String, Timer> _webThreadHistoryGapFillTimers =
+      <String, Timer>{};
+  final Map<String, Set<String>> _webReadReceiptSentIds =
+      <String, Set<String>>{};
   String? _activeWebThreadKey;
   int _webLocalMessageCounter = 0;
   bool _wasActiveBottomBarTab = false;
   String? _lastEmbeddedRealtimeThreadIdsSig;
+
+  /// Same logic as [ChatScreenViewModel._isDirectMessageFromMe]: peer id wins
+  /// over profile id (profile can be wrong/stale).
+  bool _webDmIsMine(String senderId, String peerTargetUserId) {
+    final sender = senderId.trim();
+    if (sender.isEmpty) return false;
+    final peer = peerTargetUserId.trim();
+    if (peer.isNotEmpty) {
+      if (sender == peer) return false;
+      return true;
+    }
+    final myId = (ProfileService().profile?.id ?? '').trim();
+    return myId.isNotEmpty && sender == myId;
+  }
+
+  String _webDmReceiptUserId(String senderId, String peerTargetUserId) {
+    if (_webDmIsMine(senderId, peerTargetUserId)) {
+      return senderId.trim();
+    }
+    return (ProfileService().profile?.id ?? '').trim();
+  }
+
+  bool _webShouldEmitReadReceiptsNow() {
+    final s = WidgetsBinding.instance.lifecycleState;
+    return s == null || s == AppLifecycleState.resumed;
+  }
+
+  void _webSendReadReceiptOnce({
+    required String key,
+    required MatchChatService service,
+    required String rawMessageId,
+  }) {
+    if (!mounted || !_webShouldEmitReadReceiptsNow()) return;
+    final id = rawMessageId.trim();
+    if (id.isEmpty) return;
+    if (!identical(_webThreadServices[key], service)) return;
+    final sent = _webReadReceiptSentIds.putIfAbsent(key, () => <String>{});
+    if (sent.contains(id)) return;
+    if (!service.sendReadReceipt(id)) return;
+    sent.add(id);
+  }
+
+  void _webFlushReadReceiptsForThread(String key, MatchChatService service) {
+    if (!mounted || !_webShouldEmitReadReceiptsNow()) return;
+    if (!identical(_webThreadServices[key], service)) return;
+    final list = _webThreadMessages[key];
+    if (list == null) return;
+    for (final m in list) {
+      if (m.isMe) continue;
+      final id = (m.messageId ?? '').trim();
+      if (id.isEmpty) continue;
+      _webSendReadReceiptOnce(key: key, service: service, rawMessageId: id);
+    }
+  }
 
   Future<void> _embeddedDisposeHook(String targetUserId) async {
     final id = targetUserId.trim();
@@ -68,8 +138,54 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<void> _embeddedSyncHook() async {
     if (!mounted) return;
-    if (!_useEmbeddedListRealtimeLayout(context)) return;
     await _syncEmbeddedThreadRealtime(_safeVm.threads);
+  }
+
+  Future<void> _disposeWebThreadsExcept(String? keepKey) async {
+    for (final k in List<String>.from(_webThreadServices.keys)) {
+      if (keepKey != null && k == keepKey) continue;
+      await _disposeWebThread(k);
+    }
+  }
+
+  Future<void> _pruneWebSocketsForThreadList(
+    List<ChatThreadPreview> threads,
+  ) async {
+    final ids = <String>{
+      for (final t in threads) (t.targetUserId ?? '').trim(),
+    }..remove('');
+    final stale = <String>[];
+    for (final k in _webThreadServices.keys) {
+      if (!k.startsWith('user:')) continue;
+      final id = k.substring('user:'.length).trim();
+      if (id.isEmpty || !ids.contains(id)) {
+        stale.add(k);
+      }
+    }
+    for (final k in stale) {
+      await _disposeWebThread(k);
+    }
+  }
+
+  Future<void> _syncWebDesktopSelectedSocketOnly() async {
+    if (!mounted || !kIsWeb || !widget.embedInBottomBar) return;
+    final w = MediaQuery.sizeOf(context).width;
+    if (w < _webCompactBreakpoint) return;
+    final sel = (_selectedWebTargetUserId ?? '').trim();
+    if (sel.isEmpty) {
+      await _disposeWebThreadsExcept(null);
+      return;
+    }
+    final thread = _findThreadByTargetUserId(sel);
+    if (thread == null) {
+      await _disposeWebThreadsExcept(null);
+      return;
+    }
+    final key = _threadKey(thread);
+    await _disposeWebThreadsExcept(key);
+    if (!_webThreadServices.containsKey(key)) {
+      await _bindWebThread(thread);
+    }
   }
 
   String _threadKey(ChatThreadPreview thread) {
@@ -129,10 +245,106 @@ class _ChatListScreenState extends State<ChatListScreen> {
     await _bindWebThread(selected);
   }
 
+  Future<void> _consumePendingWebEmbeddedOpen(ChatRouteArgs pending) async {
+    if (!mounted) return;
+    final id = (pending.targetUserId ?? '').trim();
+    if (id.isEmpty) return;
+    _safeVm.startOrOpenThread(
+      pending.contactName,
+      targetUserId: id,
+      avatarUrl: pending.contactAvatarUrl,
+    );
+    if (!kIsWeb || !widget.embedInBottomBar) return;
+    setState(() => _selectedWebTargetUserId = id);
+    await _bindSelectedWebThread();
+  }
+
+  void _upsertPreviewFromWebRealtime({
+    required ChatThreadPreview thread,
+    required String targetUserId,
+    required RealtimeChatMessage msg,
+    required bool isMine,
+    bool isNewLiveMessage = true,
+  }) {
+    final selectedPeer = (_selectedWebTargetUserId ?? '').trim();
+    final viewingThisThread =
+        selectedPeer.isNotEmpty && selectedPeer == targetUserId;
+    if (!isMine &&
+        !kIsWeb &&
+        isNewLiveMessage &&
+        WidgetsBinding.instance.lifecycleState != null &&
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      final title = msg.senderName.trim().isNotEmpty
+          ? msg.senderName.trim()
+          : thread.userName.trim().isNotEmpty
+              ? thread.userName.trim()
+              : AppText.sportFinding;
+      final raw = msg.content.trim();
+      if (raw.isNotEmpty) {
+        final body = raw.length > 120 ? '${raw.substring(0, 117)}...' : raw;
+        unawaited(
+          FcmLocalNotifications.showSimple(
+            title: title,
+            body: body,
+            payload: <String, dynamic>{
+              'type': 'direct_chat',
+              'sender_id': msg.senderId,
+              'target_user_id': targetUserId,
+              'message_id': msg.messageId,
+            },
+          ),
+        );
+      }
+    }
+    if (!isMine && !viewingThisThread) {
+      ChatListScreenViewModel.incrementUnread(
+        userName: thread.userName,
+        targetUserId: thread.targetUserId,
+        avatarUrl: thread.avatarUrl,
+        lastMessage: msg.content,
+        lastAt: msg.sentAt,
+      );
+    } else {
+      ChatListScreenViewModel.upsertThread(
+        userName: thread.userName,
+        targetUserId: thread.targetUserId,
+        avatarUrl: thread.avatarUrl,
+        lastMessage: msg.content,
+        lastAt: msg.sentAt,
+        unreadCount: (!isMine && viewingThisThread) ? 0 : null,
+      );
+    }
+  }
+
+  void _safeWebSetState() {
+    if (!mounted) return;
+    if (kIsWeb) {
+      // Defer: synchronous setState from WS streams can run while the web
+      // EngineFlutterView is tearing down, triggering !isDisposed asserts.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !context.mounted) return;
+        try {
+          setState(() {});
+        } catch (_) {}
+      });
+      return;
+    }
+    try {
+      setState(() {});
+    } catch (_) {}
+  }
+
   Future<void> _bindWebThread(ChatThreadPreview thread) async {
     final targetUserId = (thread.targetUserId ?? '').trim();
     if (targetUserId.isEmpty) return;
     final key = _threadKey(thread);
+
+    if (kIsWeb && widget.embedInBottomBar && mounted) {
+      final w = MediaQuery.sizeOf(context).width;
+      if (w >= _webCompactBreakpoint) {
+        await _disposeWebThreadsExcept(key);
+      }
+    }
 
     if (_webThreadServices.containsKey(key)) return;
 
@@ -153,25 +365,46 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     try {
       final history = await service.loadHistory();
+      if (!mounted || !identical(_webThreadServices[key], service)) {
+        if (identical(_webThreadServices[key], service)) {
+          unawaited(_disposeWebThread(key));
+        } else {
+          service.dispose();
+        }
+        return;
+      }
+      _webThreadInitialHistoryLoadedAt[key] = DateTime.now();
       final localizations = mounted ? MaterialLocalizations.of(context) : null;
       final list = _webThreadMessages.putIfAbsent(key, () => <WebChatMessageItem>[]);
-      if (list.isEmpty) {
-        final myId = ProfileService().profile?.id.trim() ?? '';
-        for (final item in history) {
-          list.add(
-            WebChatMessageItem(
-              text: item.content,
-              time: localizations?.formatTimeOfDay(
-                    TimeOfDay.fromDateTime(item.sentAt.toLocal()),
-                  ) ??
-                  '',
-              isMe: myId.isNotEmpty && item.senderId.trim() == myId,
-              messageId: item.messageId.trim().isEmpty ? null : item.messageId.trim(),
-              readAt: item.readAt,
-              deliveredAt: item.deliveredAt,
-            ),
-          );
+      // Always replace with this REST page after a (re)bind. Previously we only
+      // filled when the list was empty; switching threads disposed the socket but
+      // left stale rows, so a fresh loadHistory() was ignored and new messages
+      // (e.g. from mobile) never appeared until a lucky WS push.
+      list.clear();
+      final peerId = targetUserId.trim();
+      final seenIds = <String>{};
+      for (final item in history) {
+        final rawId = item.messageId.trim();
+        if (rawId.isNotEmpty && !seenIds.add(rawId)) {
+          continue;
         }
+        final isMeHist = _webDmIsMine(item.senderId, peerId);
+        final rdDel = item.receiptTimesForUi(
+          _webDmReceiptUserId(item.senderId, peerId),
+        );
+        list.add(
+          WebChatMessageItem(
+            text: item.content,
+            time: localizations?.formatTimeOfDay(
+                  TimeOfDay.fromDateTime(item.sentAt.toLocal()),
+                ) ??
+                '',
+            isMe: isMeHist,
+            messageId: rawId.isEmpty ? null : rawId,
+            readAt: rdDel.$1,
+            deliveredAt: rdDel.$2,
+          ),
+        );
       }
       if (mounted &&
           kIsWeb &&
@@ -182,12 +415,63 @@ class _ChatListScreenState extends State<ChatListScreen> {
       }
     } catch (_) {}
 
+    if (!mounted || !identical(_webThreadServices[key], service)) {
+      if (identical(_webThreadServices[key], service)) {
+        unawaited(_disposeWebThread(key));
+      } else {
+        service.dispose();
+      }
+      return;
+    }
+
     _webMessageSubs[key] = service.onMessage.listen((msg) {
       if (!mounted) return;
-      final myId = ProfileService().profile?.id.trim() ?? '';
-      final isMine = myId.isNotEmpty && msg.senderId.trim() == myId;
+      final isMine = _webDmIsMine(msg.senderId, targetUserId);
+      final receiptUserId = _webDmReceiptUserId(msg.senderId, targetUserId);
       final list = _webThreadMessages.putIfAbsent(key, () => <WebChatMessageItem>[]);
+      final mid = msg.messageId.trim();
+
+      // Backend sometimes emits the same chat_message twice; merge by id so we
+      // don't duplicate rows or double-count sidebar previews.
+      if (mid.isNotEmpty) {
+        final dupIdx = list.indexWhere((m) => (m.messageId ?? '').trim() == mid);
+        if (dupIdx >= 0) {
+          final rdDel = msg.receiptTimesForUi(receiptUserId);
+          final ex = list[dupIdx];
+          list[dupIdx] = ex.copyWith(
+            readAt: rdDel.$1 ?? ex.readAt,
+            deliveredAt: rdDel.$2 ?? ex.deliveredAt,
+            isPending: false,
+            isFailed: false,
+          );
+          if (!isMine) {
+            ChatListScreenViewModel.applyPresenceForUser(
+              subjectUserId: targetUserId,
+              status: 'online',
+              sentAt: msg.sentAt.toUtc(),
+            );
+          }
+          _upsertPreviewFromWebRealtime(
+            thread: thread,
+            targetUserId: targetUserId,
+            msg: msg,
+            isMine: isMine,
+            isNewLiveMessage: false,
+          );
+          if (!isMine) {
+            _webSendReadReceiptOnce(
+              key: key,
+              service: service,
+              rawMessageId: mid,
+            );
+          }
+          _safeWebSetState();
+          return;
+        }
+      }
+
       if (isMine) {
+        final rdDelMine = msg.receiptTimesForUi(receiptUserId);
         final pendingIndex = list.indexWhere(
           (item) => item.isMe && item.isPending && item.text.trim() == msg.content.trim(),
         );
@@ -196,8 +480,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
             isPending: false,
             isFailed: false,
             messageId: msg.messageId.trim().isEmpty ? null : msg.messageId.trim(),
-            readAt: msg.readAt,
-            deliveredAt: msg.deliveredAt,
+            readAt: rdDelMine.$1,
+            deliveredAt: rdDelMine.$2,
             time: MaterialLocalizations.of(
               context,
             ).formatTimeOfDay(TimeOfDay.fromDateTime(msg.sentAt.toLocal())),
@@ -211,12 +495,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ).formatTimeOfDay(TimeOfDay.fromDateTime(msg.sentAt.toLocal())),
               isMe: true,
               messageId: msg.messageId.trim().isEmpty ? null : msg.messageId.trim(),
-              readAt: msg.readAt,
-              deliveredAt: msg.deliveredAt,
+              readAt: rdDelMine.$1,
+              deliveredAt: rdDelMine.$2,
             ),
           );
         }
       } else {
+        ChatListScreenViewModel.applyPresenceForUser(
+          subjectUserId: targetUserId,
+          status: 'online',
+          sentAt: msg.sentAt.toUtc(),
+        );
+        final rdDelPeer = msg.receiptTimesForUi(receiptUserId);
         list.add(
           WebChatMessageItem(
             text: msg.content,
@@ -225,49 +515,52 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ).formatTimeOfDay(TimeOfDay.fromDateTime(msg.sentAt.toLocal())),
             isMe: false,
             messageId: msg.messageId.trim().isEmpty ? null : msg.messageId.trim(),
-            readAt: msg.readAt,
-            deliveredAt: msg.deliveredAt,
+            readAt: rdDelPeer.$1,
+            deliveredAt: rdDelPeer.$2,
           ),
         );
       }
-      final selectedPeer = (_selectedWebTargetUserId ?? '').trim();
-      final viewingThisThread =
-          selectedPeer.isNotEmpty && selectedPeer == targetUserId;
-      if (!isMine && !viewingThisThread) {
-        ChatListScreenViewModel.incrementUnread(
-          userName: thread.userName,
-          targetUserId: thread.targetUserId,
-          avatarUrl: thread.avatarUrl,
-          lastMessage: msg.content,
-          lastAt: msg.sentAt,
-        );
-      } else {
-        ChatListScreenViewModel.upsertThread(
-          userName: thread.userName,
-          targetUserId: thread.targetUserId,
-          avatarUrl: thread.avatarUrl,
-          lastMessage: msg.content,
-          lastAt: msg.sentAt,
-          unreadCount: (!isMine && viewingThisThread) ? 0 : null,
+      if (!isMine && mid.isNotEmpty) {
+        _webSendReadReceiptOnce(
+          key: key,
+          service: service,
+          rawMessageId: mid,
         );
       }
-      // Always rebuild: Consumer depends on the static VM, but this State also
-      // owns `_webThreadMessages`; a missed notify must not hide realtime text.
-      if (mounted) {
-        setState(() {});
-      }
+      _upsertPreviewFromWebRealtime(
+        thread: thread,
+        targetUserId: targetUserId,
+        msg: msg,
+        isMine: isMine,
+      );
+      _safeWebSetState();
     });
     _webErrorSubs[key] = service.onError.listen((_) {});
     _webPresenceSubs[key] = service.onPresence.listen((ChatPresenceEvent e) {
       final peerId = (thread.targetUserId ?? '').trim();
       if (peerId.isEmpty) return;
+      final myId = ProfileService().profile?.id.trim() ?? '';
+      if (myId.isNotEmpty && e.userId.trim() == myId) return;
       if (e.userId.trim() != peerId) return;
+      final st = e.status.trim().toLowerCase();
+      final nowOnline =
+          st == 'online' || st == 'active' || st == 'available';
+      if (nowOnline) {
+        _webPresenceSnapshotSuppressUntil.remove(key);
+      } else {
+        final until = _webPresenceSnapshotSuppressUntil[key];
+        if (e.fromSnapshot &&
+            until != null &&
+            DateTime.now().isBefore(until)) {
+          return;
+        }
+      }
       ChatListScreenViewModel.applyPresenceForUser(
         subjectUserId: peerId,
         status: e.status,
         sentAt: e.sentAt,
       );
-      if (mounted) setState(() {});
+      _safeWebSetState();
     });
     _webReceiptSubs[key] = service.onReceipt.listen((ChatReceiptEvent r) {
       final mid = r.messageId.trim();
@@ -284,9 +577,127 @@ class _ChatListScreenState extends State<ChatListScreen> {
       } else {
         return;
       }
-      if (mounted) setState(() {});
+      _safeWebSetState();
+    });
+    _webConnectedSubs[key] = service.onConnected.listen((_) {
+      _webPresenceSnapshotSuppressUntil[key] =
+          DateTime.now().add(const Duration(seconds: 4));
+      _webFlushReadReceiptsForThread(key, service);
+      _startWebThreadHistoryGapFillTimer(
+        key: key,
+        thread: thread,
+        targetUserId: targetUserId,
+        service: service,
+      );
+      // One catch-up merge shortly after connect: initial GET can race with a
+      // message just persisted on another device (no WS push yet).
+      unawaited(
+        Future<void>.delayed(const Duration(seconds: 2), () async {
+          if (!mounted || !identical(_webThreadServices[key], service)) return;
+          final t = _findThreadByTargetUserId(targetUserId) ?? thread;
+          await _mergeWebThreadHistoryAfterWsConnect(
+            key: key,
+            thread: t,
+            targetUserId: targetUserId,
+            service: service,
+          );
+        }),
+      );
     });
     service.connect();
+  }
+
+  void _startWebThreadHistoryGapFillTimer({
+    required String key,
+    required ChatThreadPreview thread,
+    required String targetUserId,
+    required MatchChatService service,
+  }) {
+    _webThreadHistoryGapFillTimers.remove(key)?.cancel();
+    _webThreadHistoryGapFillTimers[key] = Timer.periodic(
+      _webHistoryGapFillInterval,
+      (_) {
+        if (!mounted) return;
+        if (!identical(_webThreadServices[key], service)) return;
+        final t = _findThreadByTargetUserId(targetUserId) ?? thread;
+        unawaited(
+          _mergeWebThreadHistoryAfterWsConnect(
+            key: key,
+            thread: t,
+            targetUserId: targetUserId,
+            service: service,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Fetches REST history on a timer while the WS is up and appends any
+  /// message ids not already in the pane (covers missed pushes; live dual
+  /// delivery still needs the server to emit to both sockets).
+  Future<void> _mergeWebThreadHistoryAfterWsConnect({
+    required String key,
+    required ChatThreadPreview thread,
+    required String targetUserId,
+    required MatchChatService service,
+  }) async {
+    if (!mounted) return;
+    final anchor = _webThreadInitialHistoryLoadedAt[key];
+    if (anchor != null &&
+        DateTime.now().difference(anchor) < const Duration(seconds: 1)) {
+      return;
+    }
+    try {
+      final history = await service.loadHistory();
+      if (!mounted || !identical(_webThreadServices[key], service)) return;
+      final list = _webThreadMessages.putIfAbsent(key, () => <WebChatMessageItem>[]);
+      final existing = <String>{
+        for (final m in list)
+          if ((m.messageId ?? '').trim().isNotEmpty) (m.messageId ?? '').trim(),
+      };
+      final peerId = targetUserId.trim();
+      final localizations = MaterialLocalizations.of(context);
+      var added = false;
+      RealtimeChatMessage? lastMerged;
+      for (final item in history) {
+        final rawId = item.messageId.trim();
+        if (rawId.isEmpty) continue;
+        if (existing.contains(rawId)) continue;
+        existing.add(rawId);
+        final isMeHist = _webDmIsMine(item.senderId, peerId);
+        final rdDel = item.receiptTimesForUi(
+          _webDmReceiptUserId(item.senderId, peerId),
+        );
+        list.add(
+          WebChatMessageItem(
+            text: item.content,
+            time: localizations.formatTimeOfDay(
+              TimeOfDay.fromDateTime(item.sentAt.toLocal()),
+            ),
+            isMe: isMeHist,
+            messageId: rawId,
+            readAt: rdDel.$1,
+            deliveredAt: rdDel.$2,
+          ),
+        );
+        lastMerged = item;
+        added = true;
+      }
+      if (lastMerged != null) {
+        final isMine = _webDmIsMine(lastMerged.senderId, peerId);
+        _upsertPreviewFromWebRealtime(
+          thread: thread,
+          targetUserId: targetUserId,
+          msg: lastMerged,
+          isMine: isMine,
+          isNewLiveMessage: false,
+        );
+      }
+      if (added) {
+        _webFlushReadReceiptsForThread(key, service);
+        _safeWebSetState();
+      }
+    } catch (_) {}
   }
 
   Future<void> _disposeWebThread(String key) async {
@@ -294,44 +705,41 @@ class _ChatListScreenState extends State<ChatListScreen> {
     await _webErrorSubs.remove(key)?.cancel();
     await _webPresenceSubs.remove(key)?.cancel();
     await _webReceiptSubs.remove(key)?.cancel();
+    await _webConnectedSubs.remove(key)?.cancel();
+    _webThreadHistoryGapFillTimers.remove(key)?.cancel();
+    _webThreadInitialHistoryLoadedAt.remove(key);
+    _webPresenceSnapshotSuppressUntil.remove(key);
+    _webReadReceiptSentIds.remove(key);
+    _webThreadMessages.remove(key);
     _webThreadServices.remove(key)?.dispose();
   }
 
-  bool _useEmbeddedListRealtimeLayout(BuildContext context) {
-    if (!widget.embedInBottomBar) return false;
-    return !kIsWeb || MediaQuery.sizeOf(context).width < _webCompactBreakpoint;
-  }
-
   Future<void> _syncEmbeddedThreadRealtime(List<ChatThreadPreview> threads) async {
-    final desiredKeys = <String>{};
-    for (final t in threads) {
-      final id = (t.targetUserId ?? '').trim();
-      if (id.isEmpty) continue;
-      desiredKeys.add(_threadKey(t));
-    }
+    await _pruneWebSocketsForThreadList(threads);
 
     final activeFullscreen =
         (ChatListRealtimeCoordinator.fullScreenDirectTargetUserId ?? '').trim();
     final activeFullscreenKey =
         activeFullscreen.isEmpty ? null : 'user:$activeFullscreen';
-
-    final staleKeys = _webThreadServices.keys
-        .where((k) => !desiredKeys.contains(k))
-        .toList(growable: false);
-    for (final k in staleKeys) {
-      await _disposeWebThread(k);
+    if (activeFullscreenKey != null &&
+        _webThreadServices.containsKey(activeFullscreenKey)) {
+      await _disposeWebThread(activeFullscreenKey);
     }
 
-    for (final t in threads) {
-      final id = (t.targetUserId ?? '').trim();
-      if (id.isEmpty) continue;
-      final key = _threadKey(t);
-      if (activeFullscreenKey != null && key == activeFullscreenKey) {
-        await _disposeWebThread(key);
-        continue;
-      }
-      await _bindWebThread(t);
+    if (!widget.embedInBottomBar || !mounted) return;
+
+    if (!kIsWeb) {
+      await _disposeWebThreadsExcept(null);
+      return;
     }
+
+    final w = MediaQuery.sizeOf(context).width;
+    if (w < _webCompactBreakpoint) {
+      await _disposeWebThreadsExcept(null);
+      return;
+    }
+
+    await _syncWebDesktopSelectedSocketOnly();
   }
 
   Future<void> _openEmbeddedDirectChat(ChatThreadPreview t) async {
@@ -342,6 +750,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
       isOnline: t.isOnline,
       contactAvatarUrl: t.avatarUrl,
     );
+    if (kIsWeb &&
+        widget.embedInBottomBar &&
+        MediaQuery.sizeOf(context).width >= _webCompactBreakpoint &&
+        id.isNotEmpty) {
+      await _disposeWebThread(_threadKey(t));
+      if (!mounted) return;
+      _safeVm.startOrOpenThread(
+        t.userName,
+        targetUserId: id,
+        avatarUrl: t.avatarUrl,
+      );
+      setState(() => _selectedWebTargetUserId = id);
+      ChatListScreenViewModel.markRead(
+        userName: t.userName,
+        targetUserId: t.targetUserId,
+      );
+      await _bindSelectedWebThread();
+      await _embeddedSyncHook();
+      return;
+    }
     if (id.isNotEmpty) {
       await _disposeWebThread(_threadKey(t));
       ChatListRealtimeCoordinator.beginFullScreenDirectChat(id);
@@ -363,6 +791,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<void> _openEmbeddedDirectChatFromRouteArgs(ChatRouteArgs selected) async {
     final id = (selected.targetUserId ?? '').trim();
+    if (kIsWeb &&
+        widget.embedInBottomBar &&
+        MediaQuery.sizeOf(context).width >= _webCompactBreakpoint &&
+        id.isNotEmpty) {
+      await _disposeWebThread('user:$id');
+      if (!mounted) return;
+      _safeVm.startOrOpenThread(
+        selected.contactName,
+        targetUserId: id,
+        avatarUrl: selected.contactAvatarUrl,
+      );
+      setState(() => _selectedWebTargetUserId = id);
+      ChatListScreenViewModel.markRead(
+        userName: selected.contactName,
+        targetUserId: id,
+      );
+      await _bindSelectedWebThread();
+      await _embeddedSyncHook();
+      return;
+    }
     if (id.isNotEmpty) {
       await _disposeWebThread('user:$id');
       ChatListRealtimeCoordinator.beginFullScreenDirectChat(id);
@@ -382,9 +830,32 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
+  Future<void> _catchUpOpenWebThreadsOnResume() async {
+    if (!mounted || _webThreadServices.isEmpty) return;
+    for (final entry in Map<String, MatchChatService>.from(_webThreadServices)
+        .entries) {
+      final key = entry.key;
+      final service = entry.value;
+      if (!key.startsWith('user:')) continue;
+      final targetUserId = key.substring('user:'.length).trim();
+      if (targetUserId.isEmpty) continue;
+      final thread = _findThreadByTargetUserId(targetUserId);
+      if (thread == null) continue;
+      await _mergeWebThreadHistoryAfterWsConnect(
+        key: key,
+        thread: thread,
+        targetUserId: targetUserId,
+        service: service,
+      );
+      if (!mounted) return;
+      _webFlushReadReceiptsForThread(key, service);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.embedInBottomBar) {
       ChatListRealtimeCoordinator.disposeListSocketForTargetUser =
           _embeddedDisposeHook;
@@ -396,7 +867,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state != AppLifecycleState.resumed) return;
+    unawaited(_catchUpOpenWebThreadsOnResume());
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (widget.embedInBottomBar) {
       if (identical(
             ChatListRealtimeCoordinator.disposeListSocketForTargetUser,
@@ -425,9 +904,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
     for (final sub in _webReceiptSubs.values) {
       sub.cancel();
     }
+    for (final t in _webThreadHistoryGapFillTimers.values) {
+      t.cancel();
+    }
+    _webThreadHistoryGapFillTimers.clear();
     for (final service in _webThreadServices.values) {
       service.dispose();
     }
+    _webThreadServices.clear();
+    _webThreadMessages.clear();
+    _webReadReceiptSentIds.clear();
     super.dispose();
   }
 
@@ -692,6 +1178,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             targetUserId: t.targetUserId,
                                             userName: t.userName,
                                           );
+                                          ChatScreenMessagesCache.invalidate(
+                                            (t.targetUserId ?? '').trim(),
+                                          );
                                           setState(() {});
                                         },
                                         background: Container(
@@ -752,6 +1241,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       // Tab changed away from Chat; clear ephemeral UI state.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        unawaited(_disposeWebThreadsExcept(null));
         _searchController.clear();
         _webMessageController.clear();
         if (_selectedWebTargetUserId != null) {
@@ -772,9 +1262,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
       value: _safeVm,
       child: Consumer<ChatListScreenViewModel>(
         builder: (context, model, _) {
-          if (widget.embedInBottomBar &&
-              isActiveTab &&
-              _useEmbeddedListRealtimeLayout(context)) {
+          if (kIsWeb && widget.embedInBottomBar && isActiveTab) {
+            final pending = WebEmbeddedChatOpenCoordinator.takePending();
+            if (pending != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _consumePendingWebEmbeddedOpen(pending);
+              });
+            }
+          }
+          // Inbox uses REST; optional single list-level DM socket only for web
+          // split-view (selected thread). Mobile relies on FCM + open-chat WS.
+          if (widget.embedInBottomBar) {
             final ids = <String>{
               for (final t in model.threads) (t.targetUserId ?? '').trim(),
             }..remove('');
@@ -782,7 +1280,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             if (sig != _lastEmbeddedRealtimeThreadIdsSig) {
               _lastEmbeddedRealtimeThreadIdsSig = sig;
               WidgetsBinding.instance.addPostFrameCallback((_) async {
-                if (!mounted) return;
+                if (!mounted || !context.mounted) return;
                 await _syncEmbeddedThreadRealtime(model.threads);
               });
             }
@@ -871,8 +1369,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         userName: thread.userName,
                         targetUserId: thread.targetUserId,
                       );
+                      ChatScreenMessagesCache.invalidate(
+                        (thread.targetUserId ?? '').trim(),
+                      );
                     }
                     _webMessageController.clear();
+                    unawaited(_disposeWebThreadsExcept(null));
                     setState(() {
                       _selectedWebTargetUserId = null;
                       _activeWebThreadKey = null;
@@ -887,6 +1389,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     ChatListScreenViewModel.removeThread(
                       targetUserId: thread.targetUserId,
                       userName: thread.userName,
+                    );
+                    ChatScreenMessagesCache.invalidate(
+                      (thread.targetUserId ?? '').trim(),
                     );
                     _webMessageController.clear();
                     setState(() {

@@ -299,6 +299,12 @@ class FcmService {
       return true;
     }
 
+    if (!kReleaseMode) {
+      AppLogger.debug('FCM token: $token', tag: 'FcmService');
+    } else {
+      AppLogger.debug('FCM token len=${token.length}', tag: 'FcmService');
+    }
+
     final access = await AppPreferences.getAccessToken();
     if (access == null || access.trim().isEmpty) {
       AppLogger.debug(
@@ -307,11 +313,6 @@ class FcmService {
       );
       return true;
     }
-
-    AppLogger.debug(
-      'FCM token len=${token.length} (registered after auth)',
-      tag: 'FcmService',
-    );
     final platform = _platformName();
     if (platform == null) {
       AppLogger.warning(

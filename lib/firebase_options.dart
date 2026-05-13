@@ -53,6 +53,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '147032468406',
     projectId: 'sportfinding-ttagmu',
     storageBucket: 'sportfinding-ttagmu.firebasestorage.app',
+    androidClientId: '147032468406-6f9g9bpt4od357te14s5ib1u2bs7h3vc.apps.googleusercontent.com',
     iosClientId: '147032468406-u2dud8ekavnorss76179sf0co7d9bhe1.apps.googleusercontent.com',
     iosBundleId: 'com.sportfinding.app',
   );
@@ -63,6 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '147032468406',
     projectId: 'sportfinding-ttagmu',
     storageBucket: 'sportfinding-ttagmu.firebasestorage.app',
+    androidClientId: '147032468406-6f9g9bpt4od357te14s5ib1u2bs7h3vc.apps.googleusercontent.com',
     iosClientId: '147032468406-u2dud8ekavnorss76179sf0co7d9bhe1.apps.googleusercontent.com',
     iosBundleId: 'com.sportfinding.app',
   );
@@ -75,4 +77,5 @@ class DefaultFirebaseOptions {
     authDomain: 'sportfinding-ttagmu.firebaseapp.com',
     storageBucket: 'sportfinding-ttagmu.firebasestorage.app',
   );
+
 }

@@ -1,7 +1,3 @@
-import 'dart:ui';
-
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -13,10 +9,10 @@ import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/feature/view/Auth/Login/login_viewmodel.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
-import 'package:sport_finding/feature/widget/mainframe.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
+ import 'package:sport_finding/feature/widget/normal_text.dart';
 
 class BottomBarWebMetrics {
   BottomBarWebMetrics._();
@@ -25,7 +21,7 @@ class BottomBarWebMetrics {
   static const double designHeight = 1169;
   static const double webHeaderHeight = 68;
   static const double barHeight = 64;
-  static const double barBottomPadding = 4;
+  static const double barBottomPadding = 8;
   static const double barRadius = 12;
   static const double homeButtonSize = 48;
   static const double webSidebarWidth = 280;
@@ -56,7 +52,7 @@ class BottomBarNotificationBell extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors;
     final unreadCount = context.select<NotificationService, int>(
-      (service) => service.notifications.where((item) => !item.isRead).length,
+      (service) => service.unreadNonDirectMessageCount,
     );
 
     return Stack(
@@ -114,12 +110,14 @@ class BottomBarMobileNavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final String iconPath;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -133,11 +131,44 @@ class BottomBarMobileNavItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset(
-            iconPath,
-            width: BottomBarWebMetrics.navIconSize,
-            height: BottomBarWebMetrics.navIconSize,
-            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              SvgPicture.asset(
+                iconPath,
+                width: BottomBarWebMetrics.navIconSize,
+                height: BottomBarWebMetrics.navIconSize,
+                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: c.error,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      textAlign: TextAlign.center,
+                      style: context.appText.text12W500.copyWith(
+                        color: c.onPrimary,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           SizedBox(height: BottomBarWebMetrics.navItemIconLabelGap),
           NormalText(
@@ -159,12 +190,14 @@ class BottomBarWebNavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final String iconPath;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +249,28 @@ class BottomBarWebNavItem extends StatelessWidget {
                     style: context.appText.text14W600.copyWith(color: color),
                   ),
                 ),
+                if (badgeCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 20),
+                    decoration: BoxDecoration(
+                      color: c.error,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      textAlign: TextAlign.center,
+                      style: context.appText.text12W500.copyWith(
+                        color: c.onPrimary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -230,10 +285,15 @@ class BottomBarTabStack extends StatefulWidget {
     super.key,
     required this.selectedIndex,
     required this.children,
+    this.preloadTabIndices = const <int>{},
   });
 
   final int selectedIndex;
   final List<Widget> children;
+
+  /// Tab indices built immediately (not only after first visit). Used so the
+  /// chat list can hydrate from REST / prefs without waiting for a first visit.
+  final Set<int> preloadTabIndices;
 
   @override
   State<BottomBarTabStack> createState() => _BottomBarTabStackState();
@@ -246,6 +306,11 @@ class _BottomBarTabStackState extends State<BottomBarTabStack> {
   void initState() {
     super.initState();
     _builtTabs = List<bool>.filled(widget.children.length, false);
+    for (final i in widget.preloadTabIndices) {
+      if (i >= 0 && i < _builtTabs.length) {
+        _builtTabs[i] = true;
+      }
+    }
     _markSelectedTabBuilt();
   }
 
@@ -253,9 +318,12 @@ class _BottomBarTabStackState extends State<BottomBarTabStack> {
   void didUpdateWidget(covariant BottomBarTabStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_builtTabs.length != widget.children.length) {
+      final old = _builtTabs;
+      final n = widget.children.length;
       _builtTabs = List<bool>.generate(
-        widget.children.length,
-        (index) => index < _builtTabs.length && _builtTabs[index],
+        n,
+        (i) =>
+            (i < old.length && old[i]) || widget.preloadTabIndices.contains(i),
       );
     }
     _markSelectedTabBuilt();
@@ -343,11 +411,26 @@ class BottomBarBottomNav extends StatelessWidget {
                     SizedBox(width: context.sw(12)),
                     Expanded(child: SizedBox(width: context.sw(12))),
                     Expanded(
-                      child: BottomBarMobileNavItem(
-                        iconPath: AppAssets.chatIcon,
-                        label: AppText.chat,
-                        isSelected: viewModel.selectedIndex == 3,
-                        onTap: () => viewModel.setSelectedIndex(3),
+                      child: ValueListenableBuilder<int>(
+                        valueListenable:
+                            ChatListScreenViewModel.directChatUnreadListenable,
+                        builder: (context, _, _) {
+                          final threadUnread =
+                              ChatListScreenViewModel.totalDirectChatUnread;
+                          return Selector<NotificationService, int>(
+                            selector: (_, s) => s.unreadDirectMessageCount,
+                            builder: (context, dmNotifUnread, _) {
+                              final badge = threadUnread + dmNotifUnread;
+                              return BottomBarMobileNavItem(
+                                iconPath: AppAssets.chatIcon,
+                                label: AppText.chat,
+                                isSelected: viewModel.selectedIndex == 3,
+                                badgeCount: badge,
+                                onTap: () => viewModel.setSelectedIndex(3),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
                     Expanded(
@@ -515,11 +598,26 @@ class BottomBarWebSidebar extends StatelessWidget {
                   isSelected: viewModel.selectedIndex == 0,
                   onTap: () => viewModel.setSelectedIndex(0),
                 ),
-                BottomBarWebNavItem(
-                  iconPath: AppAssets.chatIcon,
-                  label: 'Chat',
-                  isSelected: viewModel.selectedIndex == 3,
-                  onTap: () => viewModel.setSelectedIndex(3),
+                ValueListenableBuilder<int>(
+                  valueListenable:
+                      ChatListScreenViewModel.directChatUnreadListenable,
+                  builder: (context, _, _) {
+                    final threadUnread =
+                        ChatListScreenViewModel.totalDirectChatUnread;
+                    return Selector<NotificationService, int>(
+                      selector: (_, s) => s.unreadDirectMessageCount,
+                      builder: (context, dmNotifUnread, _) {
+                        final badge = threadUnread + dmNotifUnread;
+                        return BottomBarWebNavItem(
+                          iconPath: AppAssets.chatIcon,
+                          label: 'Chat',
+                          isSelected: viewModel.selectedIndex == 3,
+                          badgeCount: badge,
+                          onTap: () => viewModel.setSelectedIndex(3),
+                        );
+                      },
+                    );
+                  },
                 ),
                 BottomBarWebNavItem(
                   iconPath: AppAssets.profileIcon,
@@ -595,12 +693,9 @@ class BottomBarWebLayout extends StatelessWidget {
             children: [
               BottomBarWebSidebar(viewModel: viewModel, onLogout: onLogout),
               Expanded(
-                child: MainFrame(
-                  showDecorationLayer: true,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [tabStack],
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [tabStack],
                 ),
               ),
             ],

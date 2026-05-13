@@ -8,7 +8,7 @@ import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
-import 'package:sport_finding/feature/widget/normal_text.dart';
+import 'package:sport_finding/feature/widget/direct_chat_bubble.dart';
 import 'package:sport_finding/feature/widget/search_bar_widget.dart';
 import 'package:sport_finding/feature/widget/text_form_field_widget.dart';
 
@@ -109,7 +109,12 @@ class _WebChatContentState extends State<WebChatContent> {
   void _whenFrameSafe(void Function() fn, {required int job}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || job != _scrollJob) return;
-      if (PlatformDispatcher.instance.views.isEmpty) return;
+      if (!context.mounted) return;
+      try {
+        if (PlatformDispatcher.instance.views.isEmpty) return;
+      } catch (_) {
+        return;
+      }
       try {
         fn();
       } catch (e, _) {
@@ -139,14 +144,18 @@ class _WebChatContentState extends State<WebChatContent> {
     if (!_messagesScrollController.hasClients) return;
     // We render the chat with `reverse: true`, so offset 0 == visual bottom.
     const targetOffset = 0.0;
-    if (animated) {
-      _messagesScrollController.animateTo(
-        targetOffset,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-      );
-    } else {
-      _messagesScrollController.jumpTo(targetOffset);
+    try {
+      if (animated) {
+        _messagesScrollController.animateTo(
+          targetOffset,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        );
+      } else {
+        _messagesScrollController.jumpTo(targetOffset);
+      }
+    } catch (e, _) {
+      debugPrint('[WebChat] scroll skipped: $e');
     }
   }
 
@@ -584,7 +593,9 @@ class _WebChatContentState extends State<WebChatContent> {
                                                                       ),
                                                                     ),
                                                                     child: Text(
-                                                                      '${thread.unreadCount}',
+                                                                      thread.unreadCount > 99
+                                                                          ? '99+'
+                                                                          : '${thread.unreadCount}',
                                                                       style: context
                                                                           .appText
                                                                           .text12W500
@@ -832,19 +843,27 @@ class _WebChatContentState extends State<WebChatContent> {
                                                             EdgeInsets.only(
                                                           bottom: context.h(8),
                                                         ),
-                                                        child: WebBubble(
-                                                          text: message.text,
-                                                          time: message.time,
-                                                          isMe: message.isMe,
-                                                          isPending: message
-                                                              .isPending,
-                                                          isFailed:
-                                                              message.isFailed,
-                                                          readAt: message.readAt,
-                                                          deliveredAt:
-                                                              message.deliveredAt,
+                                                        child: DirectChatBubble(
                                                           maxWidth:
                                                               messageMaxWidth,
+                                                          model:
+                                                              DirectChatBubbleModel
+                                                                  .plainText(
+                                                            text: message.text,
+                                                            time: message.time,
+                                                            isMe: message.isMe,
+                                                            isPending: message
+                                                                .isPending,
+                                                            isFailed: message
+                                                                .isFailed,
+                                                            readAt:
+                                                                message.readAt,
+                                                            deliveredAt: message
+                                                                .deliveredAt,
+                                                            peerOnline:
+                                                                activeThread
+                                                                    .isOnline,
+                                                          ),
                                                         ),
                                                       ),
                                                     );
@@ -998,103 +1017,3 @@ class WebFilterChip extends StatelessWidget {
   }
 }
 
-class WebBubble extends StatelessWidget {
-  const WebBubble({
-    super.key,
-    required this.text,
-    required this.time,
-    required this.isMe,
-    this.isPending = false,
-    this.isFailed = false,
-    this.readAt,
-    this.deliveredAt,
-    this.maxWidth,
-  });
-
-  final String text;
-  final String time;
-  final bool isMe;
-  final bool isPending;
-  final bool isFailed;
-  final DateTime? readAt;
-  final DateTime? deliveredAt;
-  final double? maxWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors;
-    final bubbleBorderRadius = BorderRadius.only(
-      topLeft: Radius.circular(context.radius(12)),
-      topRight: Radius.circular(context.radius(12)),
-      bottomLeft: Radius.circular(context.radius(isMe ? 12 : 0)),
-      bottomRight: Radius.circular(context.radius(isMe ? 0 : 12)),
-    );
-
-    return Card(
-      color: isMe ? context.appColors.primary : context.appColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: bubbleBorderRadius,
-      ),
-      child: Container(
-        constraints: BoxConstraints(maxWidth: maxWidth ?? context.w(320)),
-        padding: context.padSym(h: 14, v: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (isMe)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!isPending && !isFailed)
-                    Padding(
-                      padding: EdgeInsets.only(top: context.h(2)),
-                      child: Icon(
-                        (readAt != null || deliveredAt != null)
-                            ? Icons.done_all_rounded
-                            : Icons.done_rounded,
-                        size: context.w(14),
-                        color: readAt != null
-                            ? Colors.lightBlueAccent
-                            : c.onPrimary.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  if (!isPending && !isFailed) SizedBox(width: context.w(8)),
-                  Expanded(
-                    child: NormalText(
-                      titleText: text,
-                      titleStyle: context.appText.text14W400.copyWith(
-                        color: c.onPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else
-              NormalText(
-                titleText: text,
-                titleStyle: context.appText.text14W400.copyWith(
-                  color: c.greyDark,
-                ),
-              ),
-            SizedBox(height: context.h(6)),
-            Align(
-              alignment: Alignment.centerRight,
-              child: NormalText(
-                titleText: isFailed
-                    ? 'Failed'
-                    : (isPending ? 'Sending...' : time),
-                titleStyle: context.appText.text12W400.copyWith(
-                  color: isFailed
-                      ? c.error
-                      : (isMe
-                          ? c.onPrimary.withValues(alpha: 0.85)
-                          : c.greylight.withValues(alpha: 0.9)),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

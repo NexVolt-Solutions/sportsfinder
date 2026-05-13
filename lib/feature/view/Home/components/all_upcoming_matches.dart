@@ -143,37 +143,42 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
         if (kIsWeb && widget.embedAsBottomTab && !widget.forceMobileLayout) {
           final rows = model.matches
               .map(
-                (match) => WebMatchTableRowData(
-                  title: match.title,
-                  sport: match.sport,
-                  players:
-                      '${match.currentPlayers}/${match.maxPlayers}',
-                  location: match.locationName.isNotEmpty
-                      ? match.locationName
-                      : match.location,
-                  status: _formatWebStatus(match.status),
-                  onView: () => _openMatchDetails(
-                    context,
-                    model,
-                    DiscoveryMatch.fromAllMatches(match),
-                  ),
-                  onEdit: () {
-                    Navigator.pushNamed(
+                (match) {
+                  final locked = _webMatchEditDeleteLocked(match.status);
+                  return WebMatchTableRowData(
+                    title: match.title,
+                    sport: match.sport,
+                    players:
+                        '${match.currentPlayers}/${match.maxPlayers}',
+                    location: match.locationName.isNotEmpty
+                        ? match.locationName
+                        : match.location,
+                    status: _formatWebStatus(match.status),
+                    onView: () => _openMatchDetails(
                       context,
-                      RoutesName.createMatchScreen,
-                      arguments: DiscoveryMatch.fromAllMatches(match),
-                    );
-                  },
-                  onDelete:
-                      model.listScope == UpcomingMatchesScope.myMatches
-                      ? () => _confirmAndDeleteMatch(
-                          context,
-                          model,
-                          match.id,
-                          match.title,
-                        )
-                      : null,
-                ),
+                      model,
+                      DiscoveryMatch.fromAllMatches(match),
+                    ),
+                    onEdit: () {
+                      Navigator.pushNamed(
+                        context,
+                        RoutesName.createMatchScreen,
+                        arguments: DiscoveryMatch.fromAllMatches(match),
+                      );
+                    },
+                    onDelete:
+                        model.listScope == UpcomingMatchesScope.myMatches
+                        ? () => _confirmAndDeleteMatch(
+                            context,
+                            model,
+                            match.id,
+                            match.title,
+                          )
+                        : null,
+                    editEnabled: !locked,
+                    deleteEnabled: !locked,
+                  );
+                },
               )
               .toList();
 
@@ -364,4 +369,9 @@ String _formatWebStatus(String raw) {
   final value = trimmed.toLowerCase();
   if (value == 'open' || value == 'pending') return 'Pending';
   return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
+}
+
+bool _webMatchEditDeleteLocked(String apiStatus) {
+  final s = apiStatus.trim().toLowerCase();
+  return s == 'completed' || s == 'cancelled';
 }

@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/Data/model/Review/create_review_model.dart';
@@ -15,6 +16,8 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
+import 'package:sport_finding/core/utils/web_embedded_chat_open_coordinator.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_list_screen_view_model.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 
 class PublicProfileViewModel extends ChangeNotifier {
@@ -361,15 +364,38 @@ class PublicProfileViewModel extends ChangeNotifier {
       return;
     }
 
+    final chatArgs = ChatRouteArgs(
+      contactName: fullName.isNotEmpty ? fullName : 'Player Chat',
+      targetUserId: selectedUserId,
+      contactAvatarUrl: avatarUrl.isNotEmpty ? avatarUrl : null,
+    );
+
+    if (kIsWeb) {
+      final name = chatArgs.contactName.trim();
+      final tid = (chatArgs.targetUserId ?? '').trim();
+      if (name.isEmpty || tid.isEmpty) {
+        AppSnackBar.show(AppText.invalidUserProfile);
+        return;
+      }
+      ChatListScreenViewModel.upsertThread(
+        userName: name,
+        targetUserId: tid,
+        avatarUrl: chatArgs.contactAvatarUrl,
+        lastMessage: 'Chat started',
+        lastAt: DateTime.now(),
+        unreadCount: 0,
+      );
+      WebEmbeddedChatOpenCoordinator.requestOpen(chatArgs);
+      Navigator.of(context).popUntil(
+        (route) => route.settings.name == RoutesName.bottomBarScreen,
+      );
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       RoutesName.chatScreen,
-      arguments: ChatRouteArgs(
-        contactName: fullName.isNotEmpty ? fullName : 'Player Chat',
-        targetUserId: selectedUserId,
-        isOnline: true,
-        contactAvatarUrl: avatarUrl.isNotEmpty ? avatarUrl : null,
-      ),
+      arguments: chatArgs,
     );
   }
 

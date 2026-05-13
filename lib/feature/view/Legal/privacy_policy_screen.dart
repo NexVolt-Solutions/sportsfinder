@@ -8,7 +8,10 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 
 /// Privacy Policy — typography matches design ref; uses [NormalText] + [AppTextTheme].
 class PrivacyPolicyScreen extends StatelessWidget {
-  const PrivacyPolicyScreen({super.key});
+  const PrivacyPolicyScreen({super.key, this.onEmbeddedClose});
+
+  /// Web profile split shell: leading tap closes the pane instead of popping the route.
+  final VoidCallback? onEmbeddedClose;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +41,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
               padding: context.padSym(h: 20),
               child: AppBarWidget(
                 title: AppText.privacyPolicy,
-                onLeadingTap: () => Navigator.pop(context),
+                onLeadingTap:
+                    onEmbeddedClose ?? () => Navigator.pop(context),
               ),
             ),
             Expanded(

@@ -89,15 +89,23 @@ class ChatPresenceEvent {
     required this.userId,
     required this.status,
     this.sentAt,
+    this.fromSnapshot = false,
   });
 
   final String userId;
   /// Server values observed in the wild: `online`, `offline`, `away`, etc.
   final String status;
   final DateTime? sentAt;
+  /// `presence_snapshot` is often stale right after connect; treat offline more carefully.
+  final bool fromSnapshot;
 
-  static ChatPresenceEvent? tryParse(Map<String, dynamic> json) {
-    final uid = '${json['user_id'] ?? json['userId'] ?? ''}'.trim();
+  static ChatPresenceEvent? tryParse(
+    Map<String, dynamic> json, {
+    bool fromSnapshot = false,
+  }) {
+    final uid =
+        '${json['user_id'] ?? json['userId'] ?? json['presence_user_id'] ?? json['subject_user_id'] ?? json['about_user_id'] ?? ''}'
+            .trim();
     if (uid.isEmpty) return null;
     final status = '${json['status'] ?? ''}'.trim();
     if (status.isEmpty) return null;
@@ -105,7 +113,12 @@ class ChatPresenceEvent {
     final sentAt = raw == null
         ? null
         : DateTime.tryParse('$raw')?.toUtc();
-    return ChatPresenceEvent(userId: uid, status: status, sentAt: sentAt);
+    return ChatPresenceEvent(
+      userId: uid,
+      status: status,
+      sentAt: sentAt,
+      fromSnapshot: fromSnapshot,
+    );
   }
 }
 
@@ -125,13 +138,17 @@ class ChatReceiptEvent {
     final m = _flattenWsEvent(json);
     final id = _messageIdFromMap(m);
     if (id == null) return null;
-    final raw = m['read_at'] ??
-        m['readAt'] ??
-        m['read_timestamp'] ??
-        m['read_time'] ??
-        m['seen_at'] ??
-        m['seenAt'];
-    final at = raw == null ? null : DateTime.tryParse('$raw')?.toUtc();
+    final at = _firstUtc(m, [
+          'read_at',
+          'readAt',
+          'read_timestamp',
+          'read_time',
+          'seen_at',
+          'seenAt',
+          'sent_at',
+          'sentAt',
+        ]) ??
+        DateTime.now().toUtc();
     return ChatReceiptEvent(kind: 'read', messageId: id, at: at);
   }
 
@@ -139,11 +156,15 @@ class ChatReceiptEvent {
     final m = _flattenWsEvent(json);
     final id = _messageIdFromMap(m);
     if (id == null) return null;
-    final raw = m['delivered_at'] ??
-        m['deliveredAt'] ??
-        m['delivery_at'] ??
-        m['deliveryAt'];
-    final at = raw == null ? null : DateTime.tryParse('$raw')?.toUtc();
+    final at = _firstUtc(m, [
+          'delivered_at',
+          'deliveredAt',
+          'delivery_at',
+          'deliveryAt',
+          'sent_at',
+          'sentAt',
+        ]) ??
+        DateTime.now().toUtc();
     return ChatReceiptEvent(kind: 'delivered', messageId: id, at: at);
   }
 
