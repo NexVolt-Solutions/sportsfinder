@@ -8,7 +8,10 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 
 /// Terms of Service — same layout/typography pattern as [PrivacyPolicyScreen].
 class TermsOfServiceScreen extends StatelessWidget {
-  const TermsOfServiceScreen({super.key});
+  const TermsOfServiceScreen({super.key, this.onEmbeddedClose});
+
+  /// Web profile split shell: leading tap closes the pane instead of popping the route.
+  final VoidCallback? onEmbeddedClose;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +35,8 @@ class TermsOfServiceScreen extends StatelessWidget {
               padding: context.padSym(h: 20),
               child: AppBarWidget(
                 title: AppText.termsOfServiceTitle,
-                onLeadingTap: () => Navigator.pop(context),
+                onLeadingTap:
+                    onEmbeddedClose ?? () => Navigator.pop(context),
               ),
             ),
             Expanded(

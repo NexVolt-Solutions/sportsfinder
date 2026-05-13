@@ -1,4 +1,8 @@
+// ignore_for_file: avoid_print
+
+import 'package:flutter/foundation.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 
 class MyProfileRepository {
   final ApiService apiService;
@@ -19,9 +23,15 @@ class MyProfileRepository {
 
       return response;
     } catch (e, stackTrace) {
-      print("========== GET MY PROFILE ERROR ==========");
-      print("Error: $e");
-      print("StackTrace: $stackTrace");
+      if (isTransientNetworkError(e)) {
+        debugPrint(
+          '[MyProfileRepository] GET /users/me failed (transient network): $e',
+        );
+      } else {
+        print("========== GET MY PROFILE ERROR ==========");
+        print("Error: $e");
+        print("StackTrace: $stackTrace");
+      }
       rethrow;
     }
   }

@@ -1,7 +1,13 @@
+import 'dart:async';
+
+import 'dart:ui' show PlatformDispatcher;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sport_finding/Data/Repositories/Chat/direct_chats_repository.dart';
 import 'package:sport_finding/Data/model/chat/direct_chats_model.dart';
+import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 
 class ChatThreadPreview {
@@ -12,8 +18,9 @@ class ChatThreadPreview {
     required this.lastMessage,
     required this.lastTime,
     this.lastAtIso,
+    this.lastSeenIso,
     this.unreadCount = 0,
-    this.isOnline = true,
+    this.isOnline = false,
   });
 
   final String userName;
@@ -22,6 +29,8 @@ class ChatThreadPreview {
   final String lastMessage;
   final String lastTime;
   final String? lastAtIso;
+  /// When peer is offline, last presence `sent_at` from WebSocket (UTC ISO).
+  final String? lastSeenIso;
   final int unreadCount;
   final bool isOnline;
 
@@ -32,6 +41,7 @@ class ChatThreadPreview {
     String? lastMessage,
     String? lastTime,
     String? lastAtIso,
+    String? lastSeenIso,
     int? unreadCount,
     bool? isOnline,
   }) {
@@ -42,6 +52,7 @@ class ChatThreadPreview {
       lastMessage: lastMessage ?? this.lastMessage,
       lastTime: lastTime ?? this.lastTime,
       lastAtIso: lastAtIso ?? this.lastAtIso,
+      lastSeenIso: lastSeenIso ?? this.lastSeenIso,
       unreadCount: unreadCount ?? this.unreadCount,
       isOnline: isOnline ?? this.isOnline,
     );
@@ -54,6 +65,7 @@ class ChatThreadPreview {
     'lastMessage': lastMessage,
     'lastTime': lastTime,
     'lastAtIso': lastAtIso,
+    'lastSeenIso': lastSeenIso,
     'unreadCount': unreadCount,
     'isOnline': isOnline,
   };
@@ -74,8 +86,11 @@ class ChatThreadPreview {
       lastAtIso: (json['lastAtIso'] ?? '').toString().trim().isEmpty
           ? null
           : (json['lastAtIso'] ?? '').toString().trim(),
+      lastSeenIso: (json['lastSeenIso'] ?? '').toString().trim().isEmpty
+          ? null
+          : (json['lastSeenIso'] ?? '').toString().trim(),
       unreadCount: int.tryParse((json['unreadCount'] ?? '0').toString()) ?? 0,
-      isOnline: json['isOnline'] is bool ? (json['isOnline'] as bool) : true,
+      isOnline: json['isOnline'] is bool ? (json['isOnline'] as bool) : false,
     );
   }
 }
@@ -86,6 +101,12 @@ class ChatListScreenViewModel extends ChangeNotifier {
       <ChatListScreenViewModel>{};
   static bool _hydrationStarted = false;
   static bool _hydratedOnce = false;
+  static Timer? _webNotifyCoalesceTimer;
+  static final Map<String, Timer> _presenceOfflineDebounceTimers = {};
+  static const Duration _presenceOfflineDebounce = Duration(milliseconds: 1500);
+  /// Web: batch WS bursts; post-frame delivery avoids scheduling paints while
+  /// the CanvasKit view is mid-dispose (hot restart / route swap).
+  static const Duration _webNotifyCoalesce = Duration(milliseconds: 80);
   bool _isDisposed = false;
 
   final DirectChatsRepository _directChatsRepository = DirectChatsRepository();
@@ -148,9 +169,55 @@ class ChatListScreenViewModel extends ChangeNotifier {
     });
   }
 
+  /// Sum of per-thread unread badges (drives the Chat tab indicator).
+  static int get totalDirectChatUnread => _globalThreads.fold<int>(
+        0,
+        (sum, t) => sum + t.unreadCount,
+      );
+
+  /// Bumps when [totalDirectChatUnread] may have changed (tab bar listens).
+  static final ValueNotifier<int> directChatUnreadListenable =
+      ValueNotifier<int>(0);
+
+  static void _syncDirectChatUnreadSignal() {
+    final next = totalDirectChatUnread;
+    if (directChatUnreadListenable.value != next) {
+      directChatUnreadListenable.value = next;
+    }
+  }
+
   static void _notifyAllListeners() {
-    for (final vm in _listeners) {
-      vm.notifyListeners();
+    void deliver() {
+      _syncDirectChatUnreadSignal();
+      if (kIsWeb) {
+        try {
+          if (PlatformDispatcher.instance.views.isEmpty) return;
+        } catch (_) {
+          return;
+        }
+      }
+      for (final vm in _listeners.toList(growable: false)) {
+        if (vm._isDisposed) continue;
+        try {
+          vm.notifyListeners();
+        } catch (_) {
+          // Stale notifier or widget unmount during notify; skip.
+        }
+      }
+    }
+
+    // Web: coalesce bursts, then deliver on the next frame so we are not in the
+    // same scheduler turn as embed/view teardown (reduces EngineFlutterView asserts).
+    if (kIsWeb) {
+      _webNotifyCoalesceTimer?.cancel();
+      _webNotifyCoalesceTimer = Timer(_webNotifyCoalesce, () {
+        _webNotifyCoalesceTimer = null;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          deliver();
+        });
+      });
+    } else {
+      deliver();
     }
   }
 
@@ -160,8 +227,9 @@ class ChatListScreenViewModel extends ChangeNotifier {
     String? avatarUrl,
     String? lastMessage,
     DateTime? lastAt,
-    int unreadCount = 0,
-    bool isOnline = true,
+    int? unreadCount,
+    bool? isOnline,
+    String? lastSeenIso,
   }) {
     final trimmedName = userName.trim();
     final trimmedTargetUserId = (targetUserId ?? '').trim();
@@ -178,30 +246,44 @@ class ChatListScreenViewModel extends ChangeNotifier {
       }
       return t.userName.toLowerCase() == trimmedName.toLowerCase();
     });
+    final existingUnread = idx < 0 ? 0 : _globalThreads[idx].unreadCount;
+    final resolvedUnread = unreadCount ?? existingUnread;
+    final existingLastSeen = idx < 0 ? null : _globalThreads[idx].lastSeenIso;
+    final resolvedLastSeen = lastSeenIso ?? existingLastSeen;
+    final existingAvatar = idx < 0 ? null : _globalThreads[idx].avatarUrl;
+    final existingTrimmed = (existingAvatar ?? '').trim();
+    final resolvedAvatar = trimmedAvatarUrl.isNotEmpty
+        ? trimmedAvatarUrl
+        : (existingTrimmed.isNotEmpty ? existingTrimmed : null);
+    final existingOnline = idx < 0 ? false : _globalThreads[idx].isOnline;
+    final resolvedOnline = isOnline ?? existingOnline;
+
     if (idx < 0) {
       _globalThreads.insert(
         0,
         ChatThreadPreview(
           userName: trimmedName,
           targetUserId: trimmedTargetUserId.isNotEmpty ? trimmedTargetUserId : null,
-          avatarUrl: trimmedAvatarUrl.isNotEmpty ? trimmedAvatarUrl : null,
+          avatarUrl: resolvedAvatar,
           lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
           lastTime: formattedTime,
           lastAtIso: lastAtIso,
-          unreadCount: unreadCount,
-          isOnline: isOnline,
+          lastSeenIso: resolvedLastSeen,
+          unreadCount: resolvedUnread,
+          isOnline: resolvedOnline,
         ),
       );
     } else {
       final updated = _globalThreads[idx].copyWith(
         userName: trimmedName,
         targetUserId: trimmedTargetUserId.isNotEmpty ? trimmedTargetUserId : null,
-        avatarUrl: trimmedAvatarUrl.isNotEmpty ? trimmedAvatarUrl : null,
+        avatarUrl: resolvedAvatar,
         lastMessage: previewMessage.isEmpty ? 'Chat started' : previewMessage,
         lastTime: formattedTime,
         lastAtIso: lastAtIso,
-        unreadCount: unreadCount,
-        isOnline: isOnline,
+        lastSeenIso: resolvedLastSeen,
+        unreadCount: resolvedUnread,
+        isOnline: resolvedOnline,
       );
       _globalThreads
         ..removeAt(idx)
@@ -210,6 +292,160 @@ class ChatListScreenViewModel extends ChangeNotifier {
     debugPrint(
       '[ChatListVM] upsertThread user=$trimmedName targetUserId=$trimmedTargetUserId total=${_globalThreads.length}',
     );
+    _persistThreads();
+    _notifyAllListeners();
+  }
+
+   static void applyPresenceForUser({
+    required String subjectUserId,
+    required String status,
+    DateTime? sentAt,
+    bool immediate = false,
+  }) {
+    final uid = subjectUserId.trim();
+    if (uid.isEmpty) return;
+    final normalized = status.trim().toLowerCase();
+    final isOnline =
+        normalized == 'online' ||
+        normalized == 'active' ||
+        normalized == 'available';
+
+    if (isOnline) {
+      _presenceOfflineDebounceTimers.remove(uid)?.cancel();
+      _applyPresenceForUserNow(
+        subjectUserId: uid,
+        isOnline: true,
+        sentAt: sentAt,
+      );
+      return;
+    }
+
+    if (immediate) {
+      _presenceOfflineDebounceTimers.remove(uid)?.cancel();
+      _applyPresenceForUserNow(
+        subjectUserId: uid,
+        isOnline: false,
+        sentAt: sentAt,
+      );
+      return;
+    }
+
+    _presenceOfflineDebounceTimers.remove(uid)?.cancel();
+    _presenceOfflineDebounceTimers[uid] = Timer(_presenceOfflineDebounce, () {
+      _presenceOfflineDebounceTimers.remove(uid);
+      _applyPresenceForUserNow(
+        subjectUserId: uid,
+        isOnline: false,
+        sentAt: sentAt,
+      );
+    });
+  }
+
+  static void _applyPresenceForUserNow({
+    required String subjectUserId,
+    required bool isOnline,
+    DateTime? sentAt,
+  }) {
+    final uid = subjectUserId.trim();
+    if (uid.isEmpty) return;
+    final lastSeenIso = !isOnline && sentAt != null
+        ? sentAt.toUtc().toIso8601String()
+        : null;
+
+    final idx = _globalThreads.indexWhere(
+      (t) => (t.targetUserId ?? '').trim() == uid,
+    );
+    if (idx < 0) return;
+
+    final existing = _globalThreads[idx];
+    final mergedLastSeen = lastSeenIso ?? existing.lastSeenIso;
+    final updated = existing.copyWith(
+      isOnline: isOnline,
+      lastSeenIso: isOnline ? null : mergedLastSeen,
+    );
+    _globalThreads
+      ..removeAt(idx)
+      ..insert(0, updated);
+    _persistThreads();
+    _notifyAllListeners();
+  }
+
+  static void incrementUnread({
+    required String userName,
+    String? targetUserId,
+    String? avatarUrl,
+    String? lastMessage,
+    DateTime? lastAt,
+  }) {
+    final trimmedTargetUserId = (targetUserId ?? '').trim();
+    final idx = _globalThreads.indexWhere((t) {
+      if (trimmedTargetUserId.isNotEmpty) {
+        return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
+      }
+      return t.userName.trim().toLowerCase() == userName.trim().toLowerCase();
+    });
+    final next = (idx >= 0 ? _globalThreads[idx].unreadCount : 0) + 1;
+    upsertThread(
+      userName: userName,
+      targetUserId: targetUserId,
+      avatarUrl: avatarUrl,
+      lastMessage: lastMessage,
+      lastAt: lastAt,
+      unreadCount: next,
+    );
+  }
+
+  /// Updates persisted thread preview after **Clear Chat** (local messages only).
+  static void recordThreadClearedLocally({
+    required String userName,
+    String? targetUserId,
+  }) {
+    final trimmedTarget = (targetUserId ?? '').trim();
+    final trimmedName = userName.trim();
+    if (trimmedName.isEmpty) return;
+
+    final idx = _globalThreads.indexWhere((t) {
+      if (trimmedTarget.isNotEmpty) {
+        return (t.targetUserId ?? '').trim() == trimmedTarget;
+      }
+      return t.userName.trim().toLowerCase() == trimmedName.toLowerCase();
+    });
+    if (idx < 0) return;
+
+    final now = DateTime.now();
+    final formattedTime = DateFormat('h:mm a').format(now);
+    final lastAtIso = now.toUtc().toIso8601String();
+    final existing = _globalThreads[idx];
+    final updated = existing.copyWith(
+      lastMessage: AppText.chatClearedPreview,
+      lastTime: formattedTime,
+      lastAtIso: lastAtIso,
+      unreadCount: 0,
+    );
+    _globalThreads
+      ..removeAt(idx)
+      ..insert(0, updated);
+    _persistThreads();
+    _notifyAllListeners();
+  }
+
+  static void markRead({
+    required String userName,
+    String? targetUserId,
+  }) {
+    final trimmedTargetUserId = (targetUserId ?? '').trim();
+    final idx = _globalThreads.indexWhere((t) {
+      if (trimmedTargetUserId.isNotEmpty) {
+        return (t.targetUserId ?? '').trim() == trimmedTargetUserId;
+      }
+      return t.userName.trim().toLowerCase() == userName.trim().toLowerCase();
+    });
+    if (idx < 0) return;
+    if (_globalThreads[idx].unreadCount == 0) return;
+    final updated = _globalThreads[idx].copyWith(unreadCount: 0);
+    _globalThreads
+      ..removeAt(idx)
+      ..insert(idx, updated);
     _persistThreads();
     _notifyAllListeners();
   }
@@ -233,14 +469,18 @@ class ChatListScreenViewModel extends ChangeNotifier {
     _notifyAllListeners();
   }
 
-  void startOrOpenThread(String userName, {String? targetUserId}) {
+  void startOrOpenThread(
+    String userName, {
+    String? targetUserId,
+    String? avatarUrl,
+  }) {
     upsertThread(
       userName: userName,
       targetUserId: targetUserId,
+      avatarUrl: avatarUrl,
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),
       unreadCount: 0,
-      isOnline: true,
     );
   }
 
@@ -302,16 +542,30 @@ class ChatListScreenViewModel extends ChangeNotifier {
         limit: limit,
       );
 
-      final mapped = res.items
-          .map(_conversationToPreview)
-          .whereType<ChatThreadPreview>()
-          .toList();
-
       if (replace) {
-        _globalThreads
-          ..clear()
-          ..addAll(mapped);
+        final prevUnreadByUserId = <String, int>{
+          for (final t in _globalThreads)
+            if ((t.targetUserId ?? '').trim().isNotEmpty)
+              (t.targetUserId ?? '').trim(): t.unreadCount,
+        };
+        _globalThreads.clear();
+        for (final c in res.items) {
+          final p = _conversationToPreview(c);
+          if (p == null) continue;
+          final id = (p.targetUserId ?? '').trim();
+          final int mergedUnread;
+          if (c.unreadFromApi != null) {
+            mergedUnread = c.unreadFromApi!;
+          } else {
+            mergedUnread = id.isEmpty ? 0 : (prevUnreadByUserId[id] ?? 0);
+          }
+          _globalThreads.add(p.copyWith(unreadCount: mergedUnread));
+        }
       } else {
+        final mapped = res.items
+            .map(_conversationToPreview)
+            .whereType<ChatThreadPreview>()
+            .toList();
         // De-dupe by targetUserId if present, else by name.
         for (final t in mapped) {
           final exists = _globalThreads.any((e) {
@@ -356,8 +610,9 @@ class ChatListScreenViewModel extends ChangeNotifier {
       lastMessage: lastMessage,
       lastTime: formattedTime,
       lastAtIso: lastAtIso,
-      unreadCount: 0,
-      isOnline: true,
+      lastSeenIso: null,
+      unreadCount: c.unreadFromApi ?? 0,
+      isOnline: false,
     );
   }
 
@@ -366,5 +621,54 @@ class ChatListScreenViewModel extends ChangeNotifier {
     _isDisposed = true;
     _listeners.remove(this);
     super.dispose();
+  }
+}
+
+/// Coordinates list-level WebSocket bindings with fullscreen [ChatScreen] so the
+/// same peer is not subscribed twice (duplicate events / battery drain).
+class ChatListRealtimeCoordinator {
+  ChatListRealtimeCoordinator._();
+
+  static String? _fullScreenDirectTargetUserId;
+
+  /// Set by [ChatListScreen] while mounted so other entry points (e.g. bottom-bar FAB)
+  /// can drop list-level sockets before opening fullscreen chat.
+  static Future<void> Function(String targetUserId)? disposeListSocketForTargetUser;
+
+  /// Re-binds list-level sockets after fullscreen chat closes (FAB / deep links).
+  static Future<void> Function()? syncEmbeddedListRealtimeNow;
+
+  static String? get fullScreenDirectTargetUserId =>
+      _fullScreenDirectTargetUserId;
+
+  static bool matchesFullscreen(String targetUserId) {
+    final t = targetUserId.trim();
+    if (t.isEmpty) return false;
+    return _fullScreenDirectTargetUserId == t;
+  }
+
+  static void beginFullScreenDirectChat(String targetUserId) {
+    final t = targetUserId.trim();
+    _fullScreenDirectTargetUserId = t.isEmpty ? null : t;
+  }
+
+  static void endFullScreenDirectChat(String targetUserId) {
+    final t = targetUserId.trim();
+    if (t.isEmpty) return;
+    if (_fullScreenDirectTargetUserId == t) {
+      _fullScreenDirectTargetUserId = null;
+    }
+  }
+
+  static Future<void> disposeListSocketIfBound(String targetUserId) async {
+    final f = disposeListSocketForTargetUser;
+    if (f == null) return;
+    await f(targetUserId);
+  }
+
+  static Future<void> syncEmbeddedNowIfRegistered() async {
+    final f = syncEmbeddedListRealtimeNow;
+    if (f == null) return;
+    await f();
   }
 }

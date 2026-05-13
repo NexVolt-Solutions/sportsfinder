@@ -25,10 +25,10 @@ class DiscoveryTabViewModel extends ChangeNotifier {
       });
     };
     ProfileService().addListener(_profileListener);
-    Future.microtask(_loadMatches);
   }
 
   bool _disposed = false;
+  bool _hasRequestedInitialLoad = false;
 
   final MatchesRepo _repo = MatchesRepo();
   final TextEditingController searchController = TextEditingController();
@@ -52,7 +52,14 @@ class DiscoveryTabViewModel extends ChangeNotifier {
   int _selectedFilterIndex = 0;
   FilterData? currentFilters;
 
+  void ensureLoaded() {
+    if (_hasRequestedInitialLoad) return;
+    _hasRequestedInitialLoad = true;
+    Future.microtask(_loadMatches);
+  }
+
   Future<void> _loadMatches() async {
+    if (_disposed) return;
     isLoading = true;
     error = null;
     notifyListeners();
@@ -83,8 +90,10 @@ class DiscoveryTabViewModel extends ChangeNotifier {
       error = e.toString();
       _apiItems = [];
     } finally {
-      isLoading = false;
-      notifyListeners();
+      if (!_disposed) {
+        isLoading = false;
+        notifyListeners();
+      }
     }
   }
 

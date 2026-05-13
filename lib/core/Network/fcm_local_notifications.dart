@@ -93,4 +93,46 @@ class FcmLocalNotifications {
       payload: jsonEncode(message.data),
     );
   }
+
+  /// In-app heads-up when not using a [RemoteMessage] (e.g. WebSocket chat while
+  /// the app is backgrounded). No-op on web / unsupported platforms.
+  static Future<void> showSimple({
+    required String title,
+    required String body,
+    Map<String, dynamic>? payload,
+  }) async {
+    if (!_initialized || !_supported) return;
+    final t = title.trim();
+    var b = body.trim();
+    if (t.isEmpty && b.isEmpty) return;
+    final safeTitle = t.isEmpty ? 'SportFinding' : t;
+    if (b.length > 512) {
+      b = '${b.substring(0, 509)}...';
+    }
+
+    const android = AndroidNotificationDetails(
+      'fcm_foreground',
+      'Push notifications',
+      channelDescription: 'Alerts while the app is open',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+    const darwin = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(android: android, iOS: darwin);
+
+    final id = DateTime.now().microsecondsSinceEpoch.remainder(2147483647);
+
+    await _plugin.show(
+      id: id,
+      title: safeTitle,
+      body: b.isEmpty ? null : b,
+      notificationDetails: details,
+      payload: payload == null ? null : jsonEncode(payload),
+    );
+  }
 }

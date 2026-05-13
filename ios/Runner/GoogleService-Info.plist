@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>147032468406-u2dud8ekavnorss76179sf0co7d9bhe1.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.147032468406-u2dud8ekavnorss76179sf0co7d9bhe1</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>147032468406-6f9g9bpt4od357te14s5ib1u2bs7h3vc.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBvRb7DkwlU3NAirNeR5xIXorjwTRjCriw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>147032468406</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.sportfinding.app</string>
+	<key>PROJECT_ID</key>
+	<string>sportfinding-ttagmu</string>
+	<key>STORAGE_BUCKET</key>
+	<string>sportfinding-ttagmu.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:147032468406:ios:48e6f59ea536a1b1e56f17</string>
+</dict>
+</plist>

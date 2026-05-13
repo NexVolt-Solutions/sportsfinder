@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -148,6 +149,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
         hostMatchesPlayed: match.hostMatchesPlayed,
         latitude: result.latitude ?? match.latitude,
         longitude: result.longitude ?? match.longitude,
+        durationMinutes: result.durationMinutes ?? match.durationMinutes,
       );
 
       debugPrint(
@@ -305,9 +307,14 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             AppBarWidget(
                         onLeadingTap: _handleBackNavigation,
                         title: AppText.hostMatchDetails,
-                        trailingActions: [
+                        trailingActions:
+                        
+                        
+                        kIsWeb ? null
+                        
+                        : [
                           GestureDetector(
-                            onTap: model.isDeletingMatch
+                            onTap: isMatchLocked || model.isDeletingMatch
                                 ? null
                                 : _deleteMatchFromAppBar,
                             behavior: HitTestBehavior.opaque,
@@ -321,14 +328,17 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                                     )
                                   : Icon(
                                       Icons.delete,
-                                      color: context.appColors.error,
+                                      color: isMatchLocked
+                                          ? context.appColors.greylight
+                                          : context.appColors.error,
                                       size: 20,
                                     ),
                             ),
                           ),
-                              
                           GestureDetector(
-                            onTap: isMatchLocked ? null : _navigateToEditScreen,
+                            onTap: isMatchLocked
+                                ? null
+                                : _navigateToEditScreen,
                             behavior: HitTestBehavior.opaque,
                             child: Icon(
                               Icons.edit,
@@ -339,6 +349,7 @@ class _HostDetailsScreenState extends State<HostDetailsScreen> {
                             ),
                           ),
                         ],
+                      
                       ),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,

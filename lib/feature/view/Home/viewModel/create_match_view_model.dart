@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:sport_finding/Data/Repositories/UpdateMatch/update_match_repo.dart';
 import 'package:sport_finding/Data/Repositories/create_match_repo.dart';
 import 'package:sport_finding/Data/model/UpdateMatch/update_match_model.dart';
@@ -19,6 +18,7 @@ import 'package:sport_finding/core/Network/platform_options_store.dart';
 import 'package:sport_finding/core/utils/api_error_message.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/location_selection_result.dart';
+import 'package:sport_finding/Data/model/Option/options_model.dart';
 
 class CreateMatchViewModel extends ChangeNotifier {
   bool _isDisposed = false;
@@ -38,7 +38,10 @@ class CreateMatchViewModel extends ChangeNotifier {
   }
 
   void _safeNotifyListeners() {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    if (_isDisposed) return;
+    // Using a microtask here avoids scheduling extra frames via post-frame
+    // callbacks, which can trip Flutter Web assertions during hot restart.
+    Future<void>.microtask(() {
       if (_isDisposed) return;
       notifyListeners();
     });
@@ -84,10 +87,20 @@ class CreateMatchViewModel extends ChangeNotifier {
 
   /// From [GET /api/v1/options/] via [PlatformOptionsStore].
   List<String> sportTypes = [];
+  List<SportOptionModel> sportOptions = [];
   List<String> skillLevels = [];
   bool optionsLoading = false;
   bool optionsLoaded = false;
   String? optionsError;
+
+  String? _sportIdForSelectedLabel() {
+    final label = selectedSportType?.trim();
+    if (label == null || label.isEmpty) return null;
+    for (final s in sportOptions) {
+      if (s.name.trim().toLowerCase() == label.toLowerCase()) return s.id;
+    }
+    return null;
+  }
 
   Future<void> ensureOptionsLoaded() async {
     if (optionsLoaded) return;
@@ -102,6 +115,7 @@ class CreateMatchViewModel extends ChangeNotifier {
     try {
       final o = await PlatformOptionsStore.instance.load();
       sportTypes = _normalizeOptions(o.sports);
+      sportOptions = o.sportOptions;
       skillLevels = _normalizeOptions(o.skills);
       optionsLoaded = sportTypes.isNotEmpty && skillLevels.isNotEmpty;
       if (!optionsLoaded) {
@@ -119,6 +133,7 @@ class CreateMatchViewModel extends ChangeNotifier {
     } catch (e) {
       optionsError = e.toString();
       sportTypes = <String>[];
+      sportOptions = <SportOptionModel>[];
       skillLevels = <String>[];
       optionsLoaded = false;
       AppLogger.warning('Options API failed: $e', tag: 'CreateMatchVM');
@@ -181,6 +196,7 @@ class CreateMatchViewModel extends ChangeNotifier {
         skillValueForMatchDropdown(match.skillLevel, skillLevels);
     selectedSportType = fromMatchSport;
     selectedSkillLevel = fromMatchSkill;
+    duration = match.durationMinutes > 0 ? match.durationMinutes : 60;
     matchDurationController.text = matchDurationLabelFromApiMinutes(duration);
 
     final dt = match.matchScheduledStart;
@@ -490,22 +506,30 @@ class CreateMatchViewModel extends ChangeNotifier {
         AppLogger.warning(error!, tag: 'CreateMatchVM');
         return false;
       }
-      final data = MatchModel(
-        id: '',
-        title: matchTitleController.text.trim(),
-        description: descriptionController.text.trim(),
-        sport: selectedSportType ?? '',
-        skillLevel: selectedSkillLevel ?? '',
-        status: '',
-        scheduledAt: _buildScheduledAt(),
-        scheduledDate: dateController.text,
-        scheduledTime: timeController.text,
-        durationMinutes: duration,
-        location: resolvedLocation,
-        latitude: _selectedLatitude,
-        longitude: _selectedLongitude,
-        maxPlayers: maxPlayers,
-      ).toJson();
+      final sportId = _sportIdForSelectedLabel();
+      if (sportId == null || sportId.isEmpty) {
+        error = 'Please select a valid sport.';
+        AppLogger.warning(
+          'Missing sport_id for selectedSportType=$selectedSportType',
+          tag: 'CreateMatchVM',
+        );
+        return false;
+      }
+
+      final data = <String, dynamic>{
+        'title': matchTitleController.text.trim(),
+        'description': descriptionController.text.trim(),
+        'sport_id': sportId,
+        'skill_level': selectedSkillLevel ?? '',
+        'scheduled_at': _buildScheduledAt(),
+        'scheduled_date': dateController.text.trim(),
+        'scheduled_time': timeController.text.trim(),
+        'duration_minutes': duration,
+        'location': resolvedLocation,
+        'latitude': _selectedLatitude,
+        'longitude': _selectedLongitude,
+        'max_players': maxPlayers,
+      };
 
       createdMatch = await _createRepo.createMatch(data);
       return true;
@@ -549,10 +573,11 @@ class CreateMatchViewModel extends ChangeNotifier {
         AppLogger.warning(error!, tag: 'CreateMatchVM');
         return false;
       }
+      final sportId = _sportIdForSelectedLabel();
       final data = {
         'title': matchTitleController.text.trim(),
         'description': descriptionController.text.trim(),
-        'sport': selectedSportType,
+        if (sportId != null && sportId.isNotEmpty) 'sport_id': sportId,
         'skill_level': selectedSkillLevel,
         'scheduled_at': _buildScheduledAt(),
         'scheduled_date': dateController.text.trim(),

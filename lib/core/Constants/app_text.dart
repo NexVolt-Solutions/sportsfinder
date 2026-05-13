@@ -118,10 +118,20 @@ class AppText {
   static const String allUpcomingMatches = 'All Upcoming Matches';
   static const String upcomingMatches = 'Upcoming Matches';
   static const String myMatches = 'My Matches';
-  static const String noHostedMatchesYet =
-      'No matches you host yet. Create a match from Home.';
-  static const String noMyMatchesYet =
-      'No matches yet. Join a game or create one from Home.';
+  static const String noHostedMatchesYet = 'No matches created yet';
+
+  /// Web “My Matches” empty panel — shown when the user truly has no hosted matches.
+  static const String myMatchesWebEmptySubtitle =
+      'Use Create Match to host your first game.';
+
+  /// Web table when search/filters hide all rows but data still exists.
+  static const String matchesTrySearchOrFilters =
+      'Try changing your search or filters.';
+
+  /// Web “All upcoming” when there are simply no upcoming rows to show.
+  static const String allUpcomingWebEmptySubtitle =
+      'No upcoming matches are available right now.';
+
   static const String noMatchesFound = 'No matches found';
   static const String youAreHosting = "You're hosting";
   static const String allInvitedPlayers = 'All Invited Players';
@@ -246,6 +256,14 @@ class AppText {
   static const String followed = 'Followed';
   static const String noConnectionsMatchSearch = 'No people match your search.';
   static const String message = 'Message';
+
+  /// Shown when the device has no data connection (not DNS/API failures).
+  static const String chatNoInternetConnection =
+      'No internet connection. We’ll retry when you’re back online.';
+
+  /// DNS / radio / server reachability (e.g. Failed host lookup, errno 7).
+  static const String chatNetworkUnreachable =
+      'Can’t reach the server. Check your network or try again later.';
   static const String followers = 'Followers';
   static const String following = 'Following';
   static const String rate = 'Rate';
@@ -265,6 +283,11 @@ class AppText {
   static const String davidGam = 'David gam';
   static const String oneDayAgo = '1 day ago';
   static const String mySports = 'My Sports';
+
+  /// Public profile — link style header (mock).
+  static const String allSportsLink = 'All Sports →';
+  static const String publicProfileAbout = 'About';
+  static const String publicProfileBack = '← Back';
   static const String reviews = 'Reviews';
   static const String hadAGreatMatchReview =
       'Had a great match with mostaffa! He is such a great player and easy to communicate with on the field';
@@ -272,6 +295,9 @@ class AppText {
   static const String discover = 'Discover';
   static const String match = 'Match';
   static const String chat = 'Chat';
+
+  /// Shown in the chat list after the user clears messages locally (web/mobile).
+  static const String chatClearedPreview = 'No messages yet';
   static const String profile = 'Profile';
 
   static const String online = 'Online';
@@ -467,5 +493,4 @@ class AppText {
   static const String cancelMatch = 'Cancel Match';
   static const String failedToDeleteMatch = 'Failed to delete match';
   static const String editMatch = 'Edit Match';
-
 }

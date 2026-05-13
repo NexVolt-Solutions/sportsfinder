@@ -22,7 +22,6 @@ class SeeAllInvatedPlayerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final raw = ModalRoute.of(context)?.settings.arguments;
     final labels = _labelsForRouteArgs(raw);
-    final matchId = _matchIdForRouteArgs(raw);
 
     return Consumer<SeeAllInvatedPlayerScreenViewModel>(
       builder: (context, model, _) => Scaffold(
@@ -91,7 +90,6 @@ class SeeAllInvatedPlayerScreen extends StatelessWidget {
                               arguments: PublicProfileArgs(
                                 userId: row.user.id,
                                 displayName: name,
-                                initialMatchId: matchId,
                                 canRateForMatch: false,
                               ),
                             );
@@ -111,14 +109,6 @@ class SeeAllInvatedPlayerScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-String? _matchIdForRouteArgs(Object? raw) {
-  return switch (raw) {
-    AllMatches m => m.id,
-    DiscoveryMatch m => m.id,
-    _ => null,
-  };
 }
 
 class _CardLabels {

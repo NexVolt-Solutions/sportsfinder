@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sport_finding/Data/model/chat_route_args.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
-import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/core/Network/notification_service.dart';
 import 'package:sport_finding/core/Routes/routes_name.dart';
+import 'package:sport_finding/core/utils/web_embedded_chat_open_coordinator.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Chat/chat_list_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_screen.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/bottom_bar_screen_view_model.dart';
@@ -18,6 +18,7 @@ import 'package:sport_finding/feature/view/Home/viewModel/all_upcomming_matches_
 import 'package:sport_finding/feature/view/Home/viewModel/home_screen_view_model.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
+import 'package:sport_finding/feature/webwidget/web_home_content.dart';
 
 class BottomBarScreen extends StatelessWidget {
   const BottomBarScreen({super.key});
@@ -28,32 +29,27 @@ class BottomBarScreen extends StatelessWidget {
   }
 }
 
-List<Widget> _bottomBarTabChildren() => <Widget>[
-  const _MyMatchesTabSlot(),
-  const DiscoverTabScreen(embedInBottomBar: true),
-  ChangeNotifierProvider(
-    create: (_) => HomeScreenViewModel(),
-    child: const HomeScreen(),
-  ),
-  const ChatListScreen(embedInBottomBar: true),
-  const ProfileScreen(embedInBottomBar: true),
-];
+// (moved into _BottomBarContentState to support responsive layouts)
 
 class _MyMatchesTabSlot extends StatelessWidget {
-  const _MyMatchesTabSlot();
+  const _MyMatchesTabSlot({required this.forceMobileLayout});
+
+  final bool forceMobileLayout;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) =>
           AllUpcommingMatchesViewModel(scope: UpcomingMatchesScope.myMatches),
-      child: const _MyMatchesFetchWhenTabSelected(),
+      child: _MyMatchesFetchWhenTabSelected(forceMobileLayout: forceMobileLayout),
     );
   }
 }
 
 class _MyMatchesFetchWhenTabSelected extends StatefulWidget {
-  const _MyMatchesFetchWhenTabSelected();
+  const _MyMatchesFetchWhenTabSelected({required this.forceMobileLayout});
+
+  final bool forceMobileLayout;
 
   @override
   State<_MyMatchesFetchWhenTabSelected> createState() =>
@@ -83,9 +79,10 @@ class _MyMatchesFetchWhenTabSelectedState
       }
     }
 
-    return const AllUpcomingMatches(
+    return AllUpcomingMatches(
       embedAsBottomTab: true,
       listTitle: AppText.myMatches,
+      forceMobileLayout: widget.forceMobileLayout,
     );
   }
 }
@@ -99,11 +96,29 @@ class _BottomBarContent extends StatefulWidget {
 
 class _BottomBarContentState extends State<_BottomBarContent> {
   static const int _chatTabIndex = 3;
+  static const double _webToMobileBreakpoint = 980;
   bool _appliedRouteTab = false;
   bool _requestedInitialNotifications = false;
   bool _requestedInitialProfile = false;
+  bool _scheduledWebChatTabFromCoordinator = false;
 
-  late final List<Widget> _tabChildren = _bottomBarTabChildren();
+  List<Widget> _tabChildren({required bool forceMobileLayout}) => <Widget>[
+        _MyMatchesTabSlot(forceMobileLayout: forceMobileLayout),
+        DiscoverTabScreen(
+          embedInBottomBar: true,
+          forceMobileLayout: forceMobileLayout,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => HomeScreenViewModel(),
+          child: kIsWeb && !forceMobileLayout
+              ? Consumer<HomeScreenViewModel>(
+                  builder: (context, model, _) => WebHomeContent(model: model),
+                )
+              : const HomeScreen(),
+        ),
+        const ChatListScreen(embedInBottomBar: true),
+        const ProfileScreen(embedInBottomBar: true),
+      ];
 
   @override
   void didChangeDependencies() {
@@ -130,7 +145,8 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! int) return;
     _appliedRouteTab = true;
-    final maxIndex = _tabChildren.length - 1;
+    // Tab count is stable regardless of responsive layout.
+    const maxIndex = 4;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<BottomBarScreenViewModel>().setSelectedIndex(
@@ -160,67 +176,115 @@ class _BottomBarContentState extends State<_BottomBarContent> {
     ChatListScreenViewModel.upsertThread(
       userName: selectedName,
       targetUserId: selectedTargetUserId,
+      avatarUrl: selected.contactAvatarUrl,
       lastMessage: 'Chat started',
       lastAt: DateTime.now(),
       unreadCount: 0,
-      isOnline: true,
     );
 
-    await Navigator.pushNamed(
-      context,
-      RoutesName.chatScreen,
-      arguments: selected,
+    await ChatListRealtimeCoordinator.disposeListSocketIfBound(
+      selectedTargetUserId,
     );
+    if (!context.mounted) return;
+    ChatListRealtimeCoordinator.beginFullScreenDirectChat(selectedTargetUserId);
+    try {
+      await Navigator.pushNamed(
+        context,
+        RoutesName.chatScreen,
+        arguments: selected,
+      );
+    } finally {
+      ChatListRealtimeCoordinator.endFullScreenDirectChat(selectedTargetUserId);
+      await ChatListRealtimeCoordinator.syncEmbeddedNowIfRegistered();
+    }
+  }
+
+  void _maybeScheduleWebChatTabFromCoordinator(BuildContext context) {
+    if (!kIsWeb) return;
+    if (!WebEmbeddedChatOpenCoordinator.hasPending) return;
+    if (_scheduledWebChatTabFromCoordinator) return;
+    _scheduledWebChatTabFromCoordinator = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scheduledWebChatTabFromCoordinator = false;
+      if (!mounted) return;
+      if (!WebEmbeddedChatOpenCoordinator.hasPending) return;
+      context.read<BottomBarScreenViewModel>().setSelectedIndex(_chatTabIndex);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: Consumer<BottomBarScreenViewModel>(
-        builder: (context, vm, _) {
-          if (vm.selectedIndex != _chatTabIndex) return const SizedBox.shrink();
-          return Padding(
-            padding: context.paddingOnly(bottom: 65),
-            child: FloatingActionButton(
-              elevation: 2,
-              onPressed: () => _pickAndOpenUserForChat(context),
-              backgroundColor: Theme.of(context).primaryColor,
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          );
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: Consumer<BottomBarScreenViewModel>(
-        builder: (context, vm, _) => MainFrame(
-          showDecorationLayer: !kIsWeb,
-          child: kIsWeb
-              ? BottomBarWebLayout(
-                  viewModel: vm,
-                  tabStack: BottomBarTabStack(
-                    selectedIndex: vm.selectedIndex,
-                    children: _tabChildren,
+    _maybeScheduleWebChatTabFromCoordinator(context);
+    return Consumer<BottomBarScreenViewModel>(
+      builder: (context, vm, _) {
+        final width = MediaQuery.sizeOf(context).width;
+        final useMobileChrome = width < _webToMobileBreakpoint;
+        // Native + narrow web: [ChatListScreen] has no local FAB when embedInBottomBar.
+        // Wide web: [WebChatContent] provides its own "+" control.
+        final showChatNewMessageFab =
+            vm.selectedIndex == _chatTabIndex && (!kIsWeb || useMobileChrome);
+
+        // [BottomBarBottomNav] lives inside [body], so the FAB must be lifted by
+        // that chrome height or it sits on / under the pill bar.
+        final chatFabLift = BottomBarWebMetrics.barBottomPadding +
+            BottomBarWebMetrics.bottomChromeHeight(context);
+
+        return Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          floatingActionButton: showChatNewMessageFab
+              ? Padding(
+                  padding: EdgeInsets.only(bottom: chatFabLift),
+                  child: FloatingActionButton(
+                    onPressed: () => _pickAndOpenUserForChat(context),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: const Icon(Icons.add, color: Colors.white),
                   ),
-                  onNotificationTap: () => _handleNotificationTap(context),
-                  onLogout: () => logoutFromBottomBar(context),
                 )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    BottomBarTopBar(
-                      onNotificationTap: () => _handleNotificationTap(context),
-                    ),
-                    BottomBarTabStack(
-                      selectedIndex: vm.selectedIndex,
-                      children: _tabChildren,
-                    ),
-                    BottomBarBottomNav(viewModel: vm),
-                  ],
-                ),
-        ),
-      ),
+              : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          body: MainFrame(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final innerWidth = constraints.maxWidth;
+                final innerUseMobileChrome = innerWidth < _webToMobileBreakpoint;
+                final tabChildren = _tabChildren(
+                  forceMobileLayout: kIsWeb && innerUseMobileChrome,
+                );
+            
+                final tabStack = BottomBarTabStack(
+                  selectedIndex: vm.selectedIndex,
+                  preloadTabIndices: const {_chatTabIndex},
+                  children: tabChildren,
+                );
+            
+                if (kIsWeb && !innerUseMobileChrome) {
+                  return BottomBarWebLayout(
+                    viewModel: vm,
+                    tabStack: tabStack,
+                    onNotificationTap: () => _handleNotificationTap(context),
+                    onLogout: () => logoutFromBottomBar(context),
+                  );
+                }
+            
+                return MainFrame(
+                  showDecorationLayer: kIsWeb,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      BottomBarTopBar(
+                        onNotificationTap: () => _handleNotificationTap(context),
+                      ),
+                      tabStack,
+                      BottomBarBottomNav(viewModel: vm),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

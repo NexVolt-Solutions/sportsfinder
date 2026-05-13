@@ -12,22 +12,32 @@ import 'package:sport_finding/feature/widget/normal_text.dart';
 
 /// Followers or Following list — pixel-aligned with design (search, rows, actions).
 class FollowConnectionsScreen extends StatelessWidget {
-  const FollowConnectionsScreen({super.key, required this.mode, this.args});
+  const FollowConnectionsScreen({
+    super.key,
+    required this.mode,
+    this.args,
+    this.onEmbeddedClose,
+  });
 
   final FollowConnectionsMode mode;
   final FollowConnectionsArgs? args;
+
+  /// Web profile split shell: back closes the pane instead of [Navigator.pop].
+  final VoidCallback? onEmbeddedClose;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => FollowConnectionsViewModel(mode, args: args),
-      child: const _FollowConnectionsScaffold(),
+      child: _FollowConnectionsScaffold(onEmbeddedClose: onEmbeddedClose),
     );
   }
 }
 
 class _FollowConnectionsScaffold extends StatelessWidget {
-  const _FollowConnectionsScaffold();
+  const _FollowConnectionsScaffold({this.onEmbeddedClose});
+
+  final VoidCallback? onEmbeddedClose;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +56,8 @@ class _FollowConnectionsScaffold extends StatelessWidget {
               padding: context.padSym(h: 20),
               child: AppBarWidget(
                 title: title,
-                onLeadingTap: () => Navigator.pop(context),
+                onLeadingTap:
+                    onEmbeddedClose ?? () => Navigator.pop(context),
               ),
             ),
 

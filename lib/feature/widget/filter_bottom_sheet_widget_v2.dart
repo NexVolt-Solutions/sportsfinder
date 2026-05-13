@@ -15,36 +15,64 @@ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class FilterBottomSheet extends StatelessWidget {
-  const FilterBottomSheet({super.key, required this.onApply});
+  const FilterBottomSheet({
+    super.key,
+    required this.onApply,
+    this.asDialog = false,
+    this.initial,
+  });
 
   final Function(FilterData) onApply;
+  final bool asDialog;
+  final FilterData? initial;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => FilterBottomSheetViewModel(),
-      child: _FilterBottomSheetBody(onApply: onApply),
+      create: (_) => FilterBottomSheetViewModel(initial: initial),
+      child: _FilterBottomSheetBody(onApply: onApply, asDialog: asDialog),
     );
   }
 }
 
-class _FilterBottomSheetBody extends StatelessWidget {
-  const _FilterBottomSheetBody({required this.onApply});
+class _FilterBottomSheetBody extends StatefulWidget {
+  const _FilterBottomSheetBody({
+    required this.onApply,
+    required this.asDialog,
+  });
 
   final Function(FilterData) onApply;
+  final bool asDialog;
+
+  @override
+  State<_FilterBottomSheetBody> createState() => _FilterBottomSheetBodyState();
+}
+
+class _FilterBottomSheetBodyState extends State<_FilterBottomSheetBody> {
+  late final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<FilterBottomSheetViewModel>(
       builder: (context, vm, _) {
+        final onApply = widget.onApply;
+        final asDialog = widget.asDialog;
+        final radius = context.radius(12);
+        final shapeRadius = asDialog
+            ? BorderRadius.circular(radius)
+            : BorderRadius.vertical(top: Radius.circular(radius));
         if (vm.isLoading) {
           return Container(
             padding: context.padSym(h: 20, v: 40),
             decoration: BoxDecoration(
               color: context.appColors.onPrimary,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(context.radius(12)),
-              ),
+              borderRadius: shapeRadius,
             ),
             child: Center(
               child: SizedBox(
@@ -63,9 +91,7 @@ class _FilterBottomSheetBody extends StatelessWidget {
             padding: context.padSym(h: 20, v: 24),
             decoration: BoxDecoration(
               color: context.appColors.onPrimary,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(context.radius(12)),
-              ),
+              borderRadius: shapeRadius,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -87,54 +113,80 @@ class _FilterBottomSheetBody extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: context.appColors.onPrimary,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(context.radius(12)),
-            ),
+            borderRadius: shapeRadius,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
-              Container(
-                margin: EdgeInsets.only(top: context.h(8)),
-                width: context.w(40),
-                height: context.h(4),
-                decoration: BoxDecoration(
-                  color: context.appColors.greylight,
-                  borderRadius: BorderRadius.circular(context.radius(2)),
+              if (!asDialog)
+                // Handle bar
+                Container(
+                  margin: EdgeInsets.only(top: context.h(8)),
+                  width: context.w(40),
+                  height: context.h(4),
+                  decoration: BoxDecoration(
+                    color: context.appColors.greylight,
+                    borderRadius: BorderRadius.circular(context.radius(2)),
+                  ),
                 ),
-              ),
-
-              // Content
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: context.padSym(h: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              if (asDialog)
+                Padding(
+                  padding: context.padSym(h: 20, v: 16),
+                  child: Row(
                     children: [
-                      // Header row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          NormalText(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            titleText: AppText.filters,
-                            maxLines: 2,
-                            titleStyle: context.appText.text16W600,
-                            titleColor: context.appColors.onSurface,
+                      Expanded(
+                        child: Text(
+                          AppText.filters,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.appText.text16W600.copyWith(
+                            color: context.appColors.onSurface,
                           ),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => Navigator.pop(context),
+                          hoverColor:
+                              context.appColors.primary.withValues(alpha: 0.06),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
                             child: Icon(
-                              Icons.close,
+                              Icons.close_rounded,
                               size: 20,
                               color: context.appColors.greyDark,
                             ),
                           ),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              if (asDialog)
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: context.appColors.greylight.withValues(alpha: 0.18),
+                ),
 
-                      SizedBox(height: context.h(12)),
+              // Content
+              Expanded(
+                child: Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: asDialog,
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: asDialog
+                        ? context.padSym(h: 20, v: 16)
+                        : context.padSym(h: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!asDialog) SizedBox(height: context.h(12)),
 
                       // Sport Type section
                       NormalText(
@@ -349,18 +401,82 @@ class _FilterBottomSheetBody extends StatelessWidget {
 
                       SizedBox(height: context.h(24)),
 
-                      // Bottom Buttons
-                      Row(
+                      if (!asDialog) SizedBox(height: context.h(16)),
+                    ],
+                  ),
+                ),
+              ), // scrollable content
+              ),
+              Padding(
+                padding: context.padSym(h: 20, v: asDialog ? 16 : 0),
+                child: asDialog
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: Size.fromHeight(
+                                  AppFormFieldLayout.controlHeight(context),
+                                ),
+                                side: BorderSide(
+                                  color: context.appColors.greylight,
+                                  width: 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    context.radius(12),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Reset pressed → ${vm.buildFilterData()}',
+                                );
+                                vm.reset();
+                                onApply(vm.buildFilterData());
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                AppText.reset,
+                                style: context.appText.text16W500.copyWith(
+                                  color: context.appColors.greyDark,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: context.w(12)),
+                          Expanded(
+                            flex: 2,
+                            child: CustomButton(
+                              text: AppText.apply,
+                              color: context.appColors.primary,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              onTap: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Apply tapped → ${vm.buildFilterData()}',
+                                );
+                                onApply(vm.buildFilterData());
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
                         children: [
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Reset tapped → ${vm.buildFilterData()}',
+                                );
                                 vm.reset();
                                 onApply(vm.buildFilterData());
                                 Navigator.pop(context);
                               },
                               child: Container(
-                                height: AppFormFieldLayout.controlHeight(context),
+                                height:
+                                    AppFormFieldLayout.controlHeight(context),
                                 decoration: BoxDecoration(
                                   color: context.appColors.onPrimary,
                                   borderRadius: BorderRadius.circular(
@@ -390,6 +506,9 @@ class _FilterBottomSheetBody extends StatelessWidget {
                               color: context.appColors.primary,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               onTap: () {
+                                debugPrint(
+                                  '🧰 [FilterBottomSheet] Apply tapped → ${vm.buildFilterData()}',
+                                );
                                 onApply(vm.buildFilterData());
                                 Navigator.pop(context);
                               },
@@ -397,12 +516,8 @@ class _FilterBottomSheetBody extends StatelessWidget {
                           ),
                         ],
                       ),
-
-                      SizedBox(height: context.h(16)),
-                    ],
-                  ),
-                ),
               ),
+              SizedBox(height: context.h(asDialog ? 8 : 16)),
             ],
           ),
         );

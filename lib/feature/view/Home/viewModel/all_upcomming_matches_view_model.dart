@@ -1,40 +1,76 @@
- 
 import 'package:flutter/material.dart';
+import 'package:sport_finding/Data/Repositories/DeleteMatch/delete_match_repo.dart';
 import 'package:sport_finding/Data/Repositories/matches_repo.dart';
 import 'package:sport_finding/Data/model/all_matches_model.dart';
 import 'package:sport_finding/Data/model/match_filters.dart';
 import 'package:sport_finding/core/Network/deleted_matches_service.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
+import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/api_error_message.dart';
+import 'package:sport_finding/core/utils/geo_distance.dart';
+import 'package:sport_finding/core/utils/match_list_refresh_coordinator.dart';
 import 'package:sport_finding/feature/view/Home/viewModel/upcoming_matches_scope.dart';
 
 class AllUpcommingMatchesViewModel extends ChangeNotifier {
   final MatchesRepo _repo = MatchesRepo();
+  final DeleteMatchRepo _deleteRepo = DeleteMatchRepo();
 
-  // ================= DATA =================
   List<AllMatches> allMatches = [];
   List<AllMatches> matches = [];
 
-  // ================= STATE =================
   bool isLoading = false;
   String? error;
   bool hasFetchedOnce = false;
 
-  // ================= FILTERS =================
   int selectedIndex = 0;
   FilterData? currentFilters;
+
+  String _searchQuery = '';
+
+  String get lastSearchQuery => _searchQuery;
+
+  bool get hasAnyMatchesInCurrentScope => _scopedBaseMatches().isNotEmpty;
+
+  bool get showSearchOrFilterEmptyState {
+    if (matches.isNotEmpty) return false;
+    if (_searchQuery.isNotEmpty) return true;
+    if (hasAnyMatchesInCurrentScope &&
+        currentFilters != null &&
+        !currentFilters!.isEffectivelyEmpty) {
+      return true;
+    }
+    return false;
+  }
 
   final UpcomingMatchesScope scope;
 
   UpcomingMatchesScope get listScope => scope;
 
-  // ================= PAGINATION =================
   int page = 1;
   bool hasNext = true;
   bool _isDisposed = false;
 
-  AllUpcommingMatchesViewModel({this.scope = UpcomingMatchesScope.allUpcoming}) {
+  double? _viewerLat;
+  double? _viewerLng;
+
+  Future<void> _refreshViewerLocation() async {
+    final loc = await AppPreferences.getCurrentLocation();
+    if (_isDisposed) return;
+    _viewerLat = loc?.$1;
+    _viewerLng = loc?.$2;
+  }
+
+  AllUpcommingMatchesViewModel({
+    this.scope = UpcomingMatchesScope.allUpcoming,
+  }) {
     DeletedMatchesService().addListener(_onDeletedMatchesChanged);
     ProfileService().addListener(_onProfileChanged);
+    MatchListRefreshCoordinator.register(_onExternalListRefresh);
+  }
+
+  void _onExternalListRefresh() {
+    if (_isDisposed) return;
+    fetchMatches(reset: true);
   }
 
   void _onDeletedMatchesChanged() {
@@ -44,31 +80,39 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void _onProfileChanged() {
     if (scope != UpcomingMatchesScope.myMatches) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future<void>.microtask(() {
       if (_isDisposed) return;
       _rebuildVisibleMatches();
       notifyListeners();
     });
   }
 
-  /// Seeds lists from Home (or another screen) so the initial GET is skipped.
   void applyPrefetchedMatches(List<AllMatches> items, {bool? hasNext}) {
     allMatches = List<AllMatches>.from(items);
-    _rebuildVisibleMatches();
     page = 1;
     this.hasNext = hasNext ?? items.length >= 20;
     isLoading = false;
     hasFetchedOnce = true;
     error = null;
+    _rebuildVisibleMatches();
+    notifyListeners();
+    _prefetchViewerLocationAndRebuild();
+  }
+
+  Future<void> _prefetchViewerLocationAndRebuild() async {
+    await _refreshViewerLocation();
+    if (_isDisposed) return;
+    _rebuildVisibleMatches();
     notifyListeners();
   }
 
-  // ================= FETCH =================
   Future<void> fetchMatches({bool reset = false}) async {
     try {
       isLoading = true;
       error = null;
       notifyListeners();
+
+      await _refreshViewerLocation();
 
       if (reset) {
         page = 1;
@@ -78,14 +122,8 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
       }
 
       if (scope == UpcomingMatchesScope.allUpcoming) {
-        final allRes = await _repo.getAllMatches(
-          page: page,
-          type: 'all',
-        );
-        final myRes = await _repo.getAllMatches(
-          page: page,
-          type: 'my',
-        );
+        final allRes = await _repo.getAllMatches(page: page, type: 'all');
+        final myRes = await _repo.getAllMatches(page: page, type: 'my');
         final merged = <String, AllMatches>{};
         for (final m in allRes.items) {
           if (!DeletedMatchesService().isDeleted(m.id)) {
@@ -100,9 +138,6 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
         allMatches.addAll(merged.values);
         hasNext = allRes.hasNext || myRes.hasNext;
       } else {
-        // Fallback for backends that omit completed/cancelled hosted matches
-        // from `type=my`. We merge current page of `type=my` + `type=all`,
-        // then host-filter in `_scopedBaseMatches()`.
         final myRes = await _repo.getAllMatches(page: page, type: 'my');
         final allRes = await _repo.getAllMatches(page: page, type: 'all');
         final merged = <String, AllMatches>{};
@@ -130,24 +165,12 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     }
   }
 
-  // ================= SEARCH =================
   void searchMatches(String query) {
-    if (query.isEmpty) {
-      _rebuildVisibleMatches();
-    } else {
-      final q = query.toLowerCase();
-
-      matches = _scopedBaseMatches().where((m) {
-        return m.title.toLowerCase().contains(q) ||
-            m.sport.toLowerCase().contains(q) ||
-            m.locationName.toLowerCase().contains(q);
-      }).toList();
-    }
-
+    _searchQuery = query.trim();
+    _rebuildVisibleMatches();
     notifyListeners();
   }
 
-  // ================= FILTER (SPORT CHIPS) =================
   List<AllMatches> _baseListForChips() {
     final scoped = _scopedBaseMatches();
     if (selectedIndex == 0) return List.from(scoped);
@@ -165,43 +188,109 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void filterMatches(int index) {
     selectedIndex = index;
-
-    final base = _baseListForChips();
-
-    matches = currentFilters != null ? _applyFilters(base) : List.from(base);
-
+    _rebuildVisibleMatches();
     notifyListeners();
   }
 
   // ================= APPLY FILTER SHEET =================
   void applyFilters(FilterData filterData) {
-    currentFilters = filterData;
+    final before = matches.length;
+    final scoped = _scopedBaseMatches().length;
+    debugPrint(
+      '🎛️ [AllUpcomingVM] applyFilters called (scoped=$scoped, visibleBefore=$before) '
+      'filters={sport:${filterData.sportName}, skill:${filterData.skillLevel}, '
+      'date:${filterData.date}, time:${filterData.time}, distance:${filterData.distance}} '
+      'viewer=(${_viewerLat?.toStringAsFixed(5)},${_viewerLng?.toStringAsFixed(5)})',
+    );
 
-    final base = _baseListForChips();
-
-    matches = _applyFilters(base);
-
+    currentFilters = filterData.isEffectivelyEmpty ? null : filterData;
+    _rebuildVisibleMatches();
+    debugPrint(
+      '🎛️ [AllUpcomingVM] applyFilters done (visibleAfter=${matches.length}, currentFiltersNull=${currentFilters == null})',
+    );
     notifyListeners();
   }
 
-  List<AllMatches> _applyFilters(List<AllMatches> input) {
+  List<AllMatches> _applySearchTo(List<AllMatches> input) {
+    if (_searchQuery.isEmpty) return List<AllMatches>.from(input);
+    final q = _searchQuery.toLowerCase();
     return input.where((m) {
-      final matchSkill = m.skillLevel.toLowerCase();
-      final filterSkill = currentFilters?.skillLevel?.toLowerCase();
-
-      final skillOk = filterSkill == null || matchSkill == filterSkill;
-
-      return skillOk;
+      return m.title.toLowerCase().contains(q) ||
+          m.sport.toLowerCase().contains(q) ||
+          m.locationName.toLowerCase().contains(q) ||
+          m.location.toLowerCase().contains(q);
     }).toList();
   }
 
-  // ================= LOAD MORE =================
+  /// Same criteria as [applyFilterDataToMatches] for [DiscoveryMatch], but for [AllMatches].
+  List<AllMatches> _applyFilters(List<AllMatches> input) {
+    final f = currentFilters;
+    if (f == null || f.isEffectivelyEmpty) {
+      return List<AllMatches>.from(input);
+    }
+
+    return input.where((m) {
+      final sport = f.sportName?.trim();
+      if (sport != null && sport.isNotEmpty) {
+        if (m.sport.trim().toLowerCase() != sport.toLowerCase()) return false;
+      }
+
+      final skill = f.skillLevel?.trim();
+      if (skill != null && skill.isNotEmpty) {
+        if (m.skillLevel.trim().toLowerCase() != skill.toLowerCase()) {
+          return false;
+        }
+      }
+
+      if (f.distance < kMaxFilterDistanceKm - 0.5) {
+        final dk = m.distanceKm;
+        double? effectiveKm = dk;
+        if (effectiveKm == null &&
+            _viewerLat != null &&
+            _viewerLng != null &&
+            m.latitude != null &&
+            m.longitude != null) {
+          effectiveKm = haversineDistanceKm(
+            _viewerLat!,
+            _viewerLng!,
+            m.latitude!,
+            m.longitude!,
+          );
+        }
+        if (effectiveKm != null && effectiveKm > f.distance) return false;
+      }
+
+      if (f.date != null) {
+        final d = f.date!;
+        final start = m.scheduledStartUtc?.toLocal();
+        if (start != null) {
+          if (start.year != d.year ||
+              start.month != d.month ||
+              start.day != d.day) {
+            return false;
+          }
+        }
+      }
+
+      if (f.time != null) {
+        final t = f.time!;
+        final start = m.scheduledStartUtc?.toLocal();
+        if (start != null) {
+          if (start.hour != t.hour || start.minute != t.minute) return false;
+        }
+      }
+
+      return true;
+    }).toList();
+  }
+
   Future<void> loadMore() async {
     if (!hasNext || isLoading) return;
 
     try {
       isLoading = true;
       notifyListeners();
+      await _refreshViewerLocation();
       page++;
 
       if (scope == UpcomingMatchesScope.allUpcoming) {
@@ -259,6 +348,23 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Deletes on the server, then removes locally. Returns `null` on success,
+  /// or an error message string on failure.
+  Future<String?> deleteMatchById(String matchId) async {
+    if (_isDisposed) return 'Not available';
+    final trimmedId = matchId.trim();
+    if (trimmedId.isEmpty) return 'Match ID is missing';
+
+    try {
+      await _deleteRepo.deleteMatch(matchId: trimmedId);
+      if (_isDisposed) return null;
+      removeMatchById(trimmedId);
+      return null;
+    } catch (e) {
+      return messageFromApiException(e);
+    }
+  }
+
   List<AllMatches> _scopedBaseMatches() {
     final nowUtc = DateTime.now().toUtc();
     final visible = allMatches.where((m) {
@@ -286,7 +392,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
 
   void _rebuildVisibleMatches() {
     final base = _baseListForChips();
-    matches = currentFilters != null ? _applyFilters(base) : List.from(base);
+    matches = _applySearchTo(_applyFilters(base));
   }
 
   void _dedupeAllMatchesById() {
@@ -301,6 +407,7 @@ class AllUpcommingMatchesViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    MatchListRefreshCoordinator.unregister(_onExternalListRefresh);
     DeletedMatchesService().removeListener(_onDeletedMatchesChanged);
     ProfileService().removeListener(_onProfileChanged);
     super.dispose();

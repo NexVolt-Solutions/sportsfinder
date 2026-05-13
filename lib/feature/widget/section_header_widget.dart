@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:sport_finding/core/Constants/app_assets.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
@@ -25,7 +23,8 @@ class SectionHeaderWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(flex: 2,
+        Expanded(
+          flex: 2,
           child: NormalText(
             crossAxisAlignment: CrossAxisAlignment.start,
             titleText: title,
@@ -44,17 +43,21 @@ class SectionHeaderWidget extends StatelessWidget {
                 children: [
                   Flexible(
                     child: NormalText(
-                      
                       crossAxisAlignment: CrossAxisAlignment.center,
                       titleText: actionText!,
-                      titleStyle: context.appText.text14W600.copyWith(color: context.appColors.primary,decoration: TextDecoration.underline,decorationColor:context.appColors.primary,decorationThickness: 2),
+                      titleStyle: context.appText.text14W600.copyWith(
+                        color: context.appColors.primary,
+                        decoration: TextDecoration.underline,
+                        decorationColor: context.appColors.primary,
+                        decorationThickness: 2,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       titleColor: context.appColors.primary,
                     ),
                   ),
 
-                   // SvgPicture.asset(icon ?? AppAssets.nextIcon, width: context.w(14), height: context.h(14)),
+                  // SvgPicture.asset(icon ?? AppAssets.nextIcon, width: context.w(14), height: context.h(14)),
                 ],
               ),
             ),

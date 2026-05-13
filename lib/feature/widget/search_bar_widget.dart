@@ -56,13 +56,14 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           child: TextFormFieldWidget(
             fillColor: c.blue10,
             controller: _controller,
-            hintText: widget.hintText ?? "Search sports or locations...",
+            hintText: widget.hintText ?? "Search matches, sports or locations...",
             onChanged: widget.onChanged,
             textInputAction: TextInputAction.search,
-            suffixIcon: Icons.search,
+            preffixIcon: Icons.search_rounded,
+            controlHeight: context.h(48),
           ),
-        ),   if (widget.isShow)
-        SizedBox(width: context.w(12)),
+        ),
+        if (widget.isShow) SizedBox(width: context.w(12)),
         if (widget.isShow)
           GestureDetector(
             onTap: widget.onFilterTap,

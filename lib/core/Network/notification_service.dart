@@ -11,9 +11,11 @@ import 'package:sport_finding/Data/Repositories/NotificationSettings/notificatio
 import 'package:sport_finding/Data/model/Notification/notification_model.dart';
 import 'package:sport_finding/Data/model/NotificationSettings/notification_settings_model.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
+import 'package:sport_finding/core/Network/chat_connectivity_gate.dart';
 import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/logger.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 import 'package:sport_finding/core/utils/reconnect_scheduler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -25,7 +27,8 @@ typedef NotificationTokenProvider = Future<String?> Function();
 
 class NotificationService extends ChangeNotifier {
   final NotificationRepository _repo = NotificationRepository();
-  final NotificationReadRepository _readRepository = NotificationReadRepository();
+  final NotificationReadRepository _readRepository =
+      NotificationReadRepository();
   final NotificationReadAllRepository _readAllRepository =
       NotificationReadAllRepository();
   final NotificationSettingsRepository _settingsRepository =
@@ -51,6 +54,17 @@ class NotificationService extends ChangeNotifier {
   DateTime? _notificationsClearedAt;
 
   int get unreadCount => notifications.where((item) => !item.isRead).length;
+
+  /// Unread rows that represent DM/chat alerts (show on Chat tab, not the bell).
+  int get unreadDirectMessageCount => notifications
+      .where((item) => !item.isRead && item.isDirectMessageNotification)
+      .length;
+
+  /// Bell / profile dots: everything except DM notification rows.
+  int get unreadNonDirectMessageCount => notifications
+      .where((item) => !item.isRead && !item.isDirectMessageNotification)
+      .length;
+
   bool get hasUnread => unreadCount > 0;
   bool get notificationsEnabled => ProfileService().notificationsEnabled;
   bool get isRealtimeConnected => _isRealtimeConnected;
@@ -115,9 +129,11 @@ class NotificationService extends ChangeNotifier {
   }
 
   Uri _notificationsWsUri(String token) {
-    return Uri.parse(
-      '$_baseWs/ws/notifications?token=${Uri.encodeQueryComponent(token)}',
-    );
+    final path = Uri.parse('$_baseWs/ws/notifications');
+    if (kIsWeb) {
+      return path.replace(queryParameters: <String, String>{'token': token});
+    }
+    return path;
   }
 
   Map<String, dynamic> _authHeaders(String token) {
@@ -127,24 +143,32 @@ class NotificationService extends ChangeNotifier {
   Future<void> ensureRealtimeConnected() async {
     if (_isDisposed || _channel != null) return;
     if (_retryAfter != null && DateTime.now().isBefore(_retryAfter!)) return;
+    if (!kIsWeb && !ChatConnectivityGate.instance.appearsReachable) {
+      ChatConnectivityGate.instance.whenReachable(() {
+        if (!_isDisposed) {
+          unawaited(ensureRealtimeConnected());
+        }
+      });
+      return;
+    }
     _reconnectScheduler.cancel();
     final token = await _tokenProvider();
     if (token == null || token.isEmpty) return;
 
     try {
-      _channel = _wsConnector(
-        _notificationsWsUri(token),
-        _authHeaders(token),
-      );
+      _channel = _wsConnector(_notificationsWsUri(token), _authHeaders(token));
       _channelSub = _channel!.stream.listen(
         (dynamic data) {
+          if (_isDisposed) return;
           if (data is! String) return;
           _handleRealtimeEvent(jsonDecode(data) as Map<String, dynamic>);
         },
         onError: (Object error) {
+          if (_isDisposed) return;
           _handleSocketError(error);
         },
         onDone: () {
+          if (_isDisposed) return;
           _handleSocketDone();
         },
         cancelOnError: true,
@@ -162,6 +186,7 @@ class NotificationService extends ChangeNotifier {
       if (readyFuture is Future) {
         unawaited(
           readyFuture.catchError((Object e) {
+            if (_isDisposed) return;
             _handleSocketError(e);
           }),
         );
@@ -206,16 +231,20 @@ class NotificationService extends ChangeNotifier {
     _channelSub?.cancel();
     _channelSub = null;
     _channel = null;
-    _setRealtimeConnected(false);
+    if (!_isDisposed) {
+      _setRealtimeConnected(false);
+    }
   }
 
   void _setRealtimeConnected(bool value) {
+    if (_isDisposed) return;
     if (_isRealtimeConnected == value) return;
     _isRealtimeConnected = value;
     notifyListeners();
   }
 
   void _handleSocketError(Object error) {
+    if (_isDisposed) return;
     _applyTemporaryBackoffIfNeeded(error);
     final fingerprint = error.toString();
     if (_lastSocketErrorFingerprint == fingerprint) {
@@ -224,16 +253,24 @@ class NotificationService extends ChangeNotifier {
       return;
     }
     _lastSocketErrorFingerprint = fingerprint;
-    AppLogger.error(
-      'Notification WebSocket error',
-      tag: 'NotificationService',
-      error: error,
-    );
+    if (isTransientNetworkError(error)) {
+      AppLogger.warning(
+        'Notification WebSocket error (transient network): $error',
+        tag: 'NotificationService',
+      );
+    } else {
+      AppLogger.error(
+        'Notification WebSocket error',
+        tag: 'NotificationService',
+        error: error,
+      );
+    }
     _cleanupRealtimeState();
     _scheduleReconnect();
   }
 
   void _handleSocketDone() {
+    if (_isDisposed) return;
     final closeCode = _channel?.closeCode;
     AppLogger.warning(
       'Notification WebSocket closed (code=$closeCode)',
@@ -263,7 +300,9 @@ class NotificationService extends ChangeNotifier {
     final notificationType = '${event['notification_type'] ?? ''}'.trim();
     final payloadMap = payload is Map<String, dynamic>
         ? payload
-        : (payload is Map ? Map<String, dynamic>.from(payload) : <String, dynamic>{});
+        : (payload is Map
+              ? Map<String, dynamic>.from(payload)
+              : <String, dynamic>{});
     final notificationMap = <String, dynamic>{
       ...payloadMap,
       if (event['recipient_id'] != null) 'recipient_id': event['recipient_id'],
@@ -271,9 +310,12 @@ class NotificationService extends ChangeNotifier {
         'recipient_user_id': event['recipient_user_id'],
       if (event['user_id'] != null) 'user_id': event['user_id'],
       if (payloadMap['id'] == null)
-        'id': '${notificationType.isNotEmpty ? notificationType : 'notification'}_${DateTime.now().microsecondsSinceEpoch}',
+        'id':
+            '${notificationType.isNotEmpty ? notificationType : 'notification'}_${DateTime.now().microsecondsSinceEpoch}',
       if (payloadMap['type'] == null)
-        'type': notificationType.isNotEmpty ? notificationType : '${event['type'] ?? 'notification'}',
+        'type': notificationType.isNotEmpty
+            ? notificationType
+            : '${event['type'] ?? 'notification'}',
       if (payloadMap['payload'] == null) 'payload': payloadMap,
       if (payloadMap['is_read'] == null) 'is_read': false,
       if (payloadMap['created_at'] == null)
@@ -306,6 +348,7 @@ class NotificationService extends ChangeNotifier {
   }
 
   void _scheduleReconnect() {
+    if (_isDisposed) return;
     _reconnectScheduler.schedule(
       canSchedule: () => !_isDisposed && _channel == null,
       onFire: ensureRealtimeConnected,
@@ -320,6 +363,7 @@ class NotificationService extends ChangeNotifier {
   }
 
   Future<void> fetchNotifications() async {
+    if (_isDisposed) return;
     AppLogger.info(
       'Fetching notifications from /api/v1/notifications',
       tag: 'NotificationService',
@@ -364,6 +408,7 @@ class NotificationService extends ChangeNotifier {
       );
     }
 
+    if (_isDisposed) return;
     isLoading = false;
     notifyListeners();
   }
@@ -378,7 +423,9 @@ class NotificationService extends ChangeNotifier {
     }
 
     try {
-      final response = await _readRepository.markAsRead(notificationId: trimmedId);
+      final response = await _readRepository.markAsRead(
+        notificationId: trimmedId,
+      );
       notifications = notifications.withNotificationMarkedRead(trimmedId);
       notifyListeners();
       return response.message;
@@ -427,7 +474,9 @@ class NotificationService extends ChangeNotifier {
 
     try {
       final response = await _settingsRepository.updateNotificationPreference(
-        request: NotificationSettingsRequestModel(notificationsEnabled: enabled),
+        request: NotificationSettingsRequestModel(
+          notificationsEnabled: enabled,
+        ),
       );
       final server = response.notificationsEnabled;
       if (server != null && server != enabled) {
@@ -461,7 +510,9 @@ class NotificationService extends ChangeNotifier {
 
     notifications = next;
     _hiddenNotificationIds.add(notificationId.trim());
-    unawaited(AppPreferences.setHiddenNotificationIds(_hiddenNotificationIds.toList()));
+    unawaited(
+      AppPreferences.setHiddenNotificationIds(_hiddenNotificationIds.toList()),
+    );
     AppLogger.info(
       'Notification removed from local UI state: $notificationId',
       tag: 'NotificationService',
@@ -509,6 +560,7 @@ class NotificationService extends ChangeNotifier {
     _channelSub = null;
     _pingTimer?.cancel();
     _channel?.sink.close();
+    _channel = null;
     super.dispose();
   }
 }

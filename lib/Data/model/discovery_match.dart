@@ -26,6 +26,7 @@ class DiscoveryMatch {
     this.latitude,
     this.longitude,
     this.status = 'pending',
+    this.durationMinutes = 60,
   });
 
   final String id;
@@ -57,6 +58,7 @@ class DiscoveryMatch {
   final double? latitude;
   final double? longitude;
   final String status;
+  final int durationMinutes;
 
   /// Minimal row used when opening a match from an FCM `data.match_id` payload;
   /// [HostDetailScreenViewModel.refreshRoster] loads full detail from the API.
@@ -117,6 +119,7 @@ class DiscoveryMatch {
       latitude: m.latitude,
       longitude: m.longitude,
       status: m.status,
+      durationMinutes: m.durationMinutes > 0 ? m.durationMinutes : 60,
     );
   }
 
@@ -262,6 +265,7 @@ class DiscoveryMatch {
     double? latitude,
     double? longitude,
     String? status,
+    int? durationMinutes,
   }) {
     return DiscoveryMatch(
       id: id ?? this.id,
@@ -285,6 +289,7 @@ class DiscoveryMatch {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       status: status ?? this.status,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 }

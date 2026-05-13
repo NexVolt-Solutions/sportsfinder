@@ -10,6 +10,8 @@ import 'package:sport_finding/core/Network/profile_service.dart';
 import 'package:sport_finding/core/Network/fcm_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
 import 'package:sport_finding/core/utils/auth_route_resolver.dart';
+import 'package:sport_finding/feature/view/BottomBar/ViewModel/chat_screen_view_model.dart'
+    show ChatScreenMessagesCache;
 
 class LoginScreenViewModel extends ChangeNotifier {
   LoginScreenViewModel({
@@ -323,6 +325,7 @@ class LoginScreenViewModel extends ChangeNotifier {
 
     await AppPreferences.clearAuthSession();
     ProfileService().clear();
+    ChatScreenMessagesCache.clearAll();
     debugPrint('USER LOGGED OUT (auth cleared; onboarding prefs kept)');
   }
 

@@ -216,7 +216,10 @@ class WebProfileContent extends StatelessWidget {
                                         child: Center(
                                           child: SvgPicture.asset(
                                             secondaryActionIconAsset,
-                                            color: context.appColors.primary,
+                                            colorFilter: ColorFilter.mode(
+                                              context.appColors.primary,
+                                              BlendMode.srcIn,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -380,6 +383,7 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final VoidCallback? onTap;
+
   /// Width of one stat slot (row minus gaps / 4); drives padding and font scale.
   final double slotWidth;
 

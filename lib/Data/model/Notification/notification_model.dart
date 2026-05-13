@@ -114,6 +114,13 @@ class NotificationModel {
     return normalized.contains('FOLLOW');
   }
 
+  /// In-app / push type for DM alerts (bell badge excludes these; chat tab includes them).
+  bool get isDirectMessageNotification {
+    final n = type.trim().toLowerCase();
+    if (n.isEmpty) return false;
+    return n == 'direct_message' || n.contains('direct_message');
+  }
+
   bool get isMatchDeleted {
     final normalized = type.trim().toUpperCase();
     return normalized.contains('DELETE') ||

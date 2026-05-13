@@ -1,13 +1,12 @@
-// splash_background.dart
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
- 
+
 class MainFrame extends StatelessWidget {
   const MainFrame({super.key, this.child, this.showDecorationLayer = true});
 
   final Widget? child;
 
-    final bool showDecorationLayer;
+  final bool showDecorationLayer;
 
   @override
   Widget build(BuildContext context) {
@@ -15,39 +14,21 @@ class MainFrame extends StatelessWidget {
     if (!showDecorationLayer) {
       return content;
     }
-     return SafeArea(
+    return SafeArea(
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                 gradient: 
-                  const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFF8FBFF),
-                          Color(0xFFEFF7FF),
-                          Color(0xFFF7FBFF),
-                        ],
-                      )
-                  
-              ),
-            ),
+          Positioned(
+            top: 80,
+            right: -80,
+            child: _GlowCircle(size: 220, color: context.appColors.blue20),
           ),
-        
-            Positioned(
-              top: 80,
-              right: -80,
-              child: _GlowCircle(size: 220, color:context.appColors.blue20),
-            ),
-         
-            Positioned(
-              bottom: 40,
-              left: -80,
-              child: _GlowCircle(size: 180,color:context.appColors.blue20),
-            ),
+
+          Positioned(
+            bottom: 40,
+            left: -80,
+            child: _GlowCircle(size: 180, color: context.appColors.blue20),
+          ),
           Positioned.fill(child: content),
         ],
       ),

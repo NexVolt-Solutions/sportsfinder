@@ -18,7 +18,8 @@ class AllMatchesResponse {
   factory AllMatchesResponse.fromJson(Map<String, dynamic> json) {
     return AllMatchesResponse(
       items: (json['items'] as List<dynamic>? ?? [])
-          .map((e) => AllMatches.fromJson(e))
+          .whereType<Map>()
+          .map((e) => AllMatches.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       total: json['total'] ?? 0,
       page: json['page'] ?? 0,
@@ -73,24 +74,24 @@ class AllMatches {
 
   factory AllMatches.fromJson(Map<String, dynamic> json) {
     return AllMatches(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      sport: json['sport'] ?? '',
-      skillLevel: json['skill_level'] ?? '',
-      status: json['status'] ?? '',
-      scheduledAt: json['scheduled_at'] ?? '',
+      id: _stringFromJson(json['id']),
+      title: _stringFromJson(json['title']),
+      sport: _sportNameFromJson(json['sport']),
+      skillLevel: _stringFromJson(json['skill_level']),
+      status: _stringFromJson(json['status']),
+      scheduledAt: _stringFromJson(json['scheduled_at']),
       durationMinutes: json['duration_minutes'] ?? 0,
-      scheduledDate: json['scheduled_date'] ?? '',
-      scheduledTime: json['scheduled_time'] ?? '',
-      locationName: json['location_name'] ?? '',
-      location: json['location'] ?? '',
-      facilityAddress: json['facility_address'] ?? '',
+      scheduledDate: _stringFromJson(json['scheduled_date']),
+      scheduledTime: _stringFromJson(json['scheduled_time']),
+      locationName: _stringFromJson(json['location_name']),
+      location: _stringFromJson(json['location']),
+      facilityAddress: _stringFromJson(json['facility_address']),
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       maxPlayers: json['max_players'] ?? 0,
       currentPlayers: json['current_players'] ?? 0,
       distanceKm: (json['distance_km'] as num?)?.toDouble(),
-      host: MatchHost.fromJson(json['host'] ?? {}),
+      host: MatchHost.fromJson(_mapFromJson(json['host'])),
     );
   }
 
@@ -99,6 +100,27 @@ class AllMatches {
     if (scheduledAt.isEmpty) return null;
     return DateTime.tryParse(scheduledAt);
   }
+}
+
+String _stringFromJson(dynamic raw) => raw?.toString() ?? '';
+
+String _sportNameFromJson(dynamic raw) {
+  if (raw == null) return '';
+  if (raw is String) return raw;
+  if (raw is Map) {
+    final map = Map<String, dynamic>.from(raw);
+    final customName = _stringFromJson(map['custom_name']).trim();
+    if (customName.isNotEmpty) return customName;
+    final name = _stringFromJson(map['name']).trim();
+    if (name.isNotEmpty) return name;
+    return _stringFromJson(map['id']);
+  }
+  return raw.toString();
+}
+
+Map<String, dynamic> _mapFromJson(dynamic raw) {
+  if (raw is Map) return Map<String, dynamic>.from(raw);
+  return <String, dynamic>{};
 }
 
 class MatchHost {
@@ -116,9 +138,9 @@ class MatchHost {
 
   factory MatchHost.fromJson(Map<String, dynamic> json) {
     return MatchHost(
-      id: json['id'] ?? '',
-      fullName: json['full_name'] ?? '',
-      avatarUrl: json['avatar_url'],
+      id: _stringFromJson(json['id']),
+      fullName: _stringFromJson(json['full_name']),
+      avatarUrl: json['avatar_url']?.toString(),
       avgRating: (json['avg_rating'] ?? 0).toDouble(),
     );
   }

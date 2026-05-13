@@ -1,4 +1,5 @@
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:sport_finding/Data/Repositories/my_profile_repository.dart';
 import 'package:sport_finding/Data/model/UpdateProfile/update_profile_model.dart';
@@ -6,6 +7,7 @@ import 'package:sport_finding/Data/model/my_profile_model.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Network/api_service.dart';
 import 'package:sport_finding/core/Storage/app_preferences.dart';
+import 'package:sport_finding/core/utils/network_errors.dart';
 import 'package:sport_finding/feature/widget/app_avatar.dart';
 
 class ProfileService extends ChangeNotifier {
@@ -57,23 +59,53 @@ class ProfileService extends ChangeNotifier {
     try {
       // ApiService reads 'access_token' from SharedPreferences automatically
       log('Fetching profile...', name: 'ProfileService');
-      final response = await _repository.getMyProfile();
-      log('Profile API Response: $response', name: 'ProfileService');
 
-      if (response != null && response is Map) {
-        profile = UserProfileModel.fromJson(
-          Map<String, dynamic>.from(response),
-        );
-        await _hydrateFallbackLocation();
-        log('✅ Profile loaded: ${profile?.fullName}', name: 'ProfileService');
-        errorMessage = null;
-      } else {
-        errorMessage = 'Empty response from server';
-        log('Empty response from server', name: 'ProfileService');
+      const maxAttempts = 5;
+      for (var attempt = 0; attempt < maxAttempts; attempt++) {
+        if (attempt > 0) {
+          final backoff = Duration(milliseconds: 500 * (1 << (attempt - 1)));
+          log(
+            'Profile fetch retry after $backoff (attempt ${attempt + 1}/$maxAttempts)',
+            name: 'ProfileService',
+          );
+          await Future<void>.delayed(backoff);
+        }
+        try {
+          final response = await _repository.getMyProfile();
+          log('Profile API Response: $response', name: 'ProfileService');
+
+          if (response != null && response is Map) {
+            profile = UserProfileModel.fromJson(
+              Map<String, dynamic>.from(response),
+            );
+            await _hydrateFallbackLocation();
+            log('✅ Profile loaded: ${profile?.fullName}', name: 'ProfileService');
+            errorMessage = null;
+          } else {
+            errorMessage = 'Empty response from server';
+            log('Empty response from server', name: 'ProfileService');
+          }
+          break;
+        } catch (e) {
+          final transient = isTransientNetworkError(e);
+          final willRetry = transient && attempt < maxAttempts - 1;
+          if (willRetry) {
+            log(
+              'Transient network error loading profile, will retry: $e',
+              name: 'ProfileService',
+            );
+            continue;
+          }
+          errorMessage = e.toString();
+          log('❌ Error: $errorMessage', name: 'ProfileService');
+          rethrow;
+        }
       }
     } catch (e) {
-      errorMessage = e.toString();
-      log('❌ Error: $errorMessage', name: 'ProfileService');
+      if (errorMessage == null || errorMessage!.isEmpty) {
+        errorMessage = e.toString();
+        log('❌ Error: $errorMessage', name: 'ProfileService');
+      }
       // Re-throw so caller knows there was an error
       rethrow;
     } finally {

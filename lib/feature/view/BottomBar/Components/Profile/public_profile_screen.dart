@@ -1,56 +1,90 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import 'package:sport_finding/Data/model/edit_profile_route_args.dart';
-import 'package:sport_finding/core/Constants/app_assets.dart';
+import 'package:sport_finding/core/Constants/app_colors.dart';
 import 'package:sport_finding/core/Constants/app_text.dart';
 import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 import 'package:sport_finding/Data/model/public_profile_args.dart';
-import 'package:sport_finding/core/Network/profile_service.dart';
-import 'package:sport_finding/core/Routes/routes_name.dart';
-import 'package:sport_finding/core/utils/edit_profile_sports_mapping.dart';
 import 'package:sport_finding/core/utils/app_snack_bar.dart';
 import 'package:sport_finding/feature/view/BottomBar/Components/Profile/profile_detail_widgets.dart';
+import 'package:sport_finding/feature/view/BottomBar/Components/Profile/public_profile_pixel_widgets.dart';
 import 'package:sport_finding/feature/view/BottomBar/ViewModel/public_profile_view_model.dart';
 import 'package:sport_finding/feature/widget/app_bar_widget.dart';
 import 'package:sport_finding/feature/widget/custom_button.dart';
 import 'package:sport_finding/feature/widget/mainframe.dart';
 import 'package:sport_finding/feature/widget/normal_text.dart';
 import 'package:sport_finding/feature/widget/shimmer_loading.dart';
-import 'package:sport_finding/feature/webwidget/web_dashboard_widgets.dart';
-import 'package:sport_finding/feature/webwidget/web_profile_content.dart';
 
 class PublicProfileScreen extends StatelessWidget {
-  const PublicProfileScreen({super.key, this.args});
+  const PublicProfileScreen({super.key, this.args, this.onEmbeddedClose});
 
   final PublicProfileArgs? args;
 
-  void _openEditProfile(BuildContext context) {
-    final ps = ProfileService().profile;
-    String? sportUi;
-    String? skillUi;
-    if (ps != null && ps.sports.isNotEmpty) {
-      final raw = ps.sports.first;
-      if (raw is Map) {
-        final m = Map<String, dynamic>.from(raw);
-        sportUi = apiSportToUiDropdown(m['sport']?.toString());
-        skillUi = apiSkillToUiDropdown(
-          (m['skill_level'] ?? m['skill'])?.toString(),
-        );
-      }
+  /// Web profile split shell: back closes the pane instead of [Navigator.pop].
+  final VoidCallback? onEmbeddedClose;
+
+  void _popOrClose(BuildContext context) {
+    final c = onEmbeddedClose;
+    if (c != null) {
+      c();
+    } else {
+      Navigator.pop(context);
     }
-    Navigator.pushNamed(
-      context,
-      RoutesName.editProfileRoute,
-      arguments: EditProfileRouteArgs(
-        initialName: ProfileService().fullName,
-        initialBio: ProfileService().bio.isNotEmpty ? ProfileService().bio : null,
-        initialAvatarUrl: ProfileService().avatarUrl,
-        initialSport: sportUi,
-        initialSkill: skillUi,
-      ),
+  }
+
+  Widget _buildPixelProfile(
+    BuildContext context,
+    PublicProfileViewModel model,
+  ) {
+    final sports = <({String name, String skill})>[
+      for (final s in model.publicSportsForDisplay)
+        (name: s.name, skill: s.skill),
+    ];
+    final reviews =
+        <({String author, String date, String body, String initial})>[
+          for (final r in model.parsedReviews)
+            (
+              author: r['author'] ?? '—',
+              date: r['date'] ?? '',
+              body: r['body'] ?? AppText.profilePlaceholderReview,
+              initial: r['initial'] ?? '?',
+            ),
+        ];
+    return PublicProfilePixelScaffold(
+      onBack: () => _popOrClose(context),
+      displayName: model.fullName,
+      location: model.location,
+      bio: model.bio,
+      avatarUrl: model.avatarUrl,
+      followers: '${model.followersCount}',
+      following: '${model.followingCount}',
+      rating: model.ratingValue,
+      matches: model.matchesPlayedValue,
+      sports: sports,
+      reviews: reviews,
+      isOwnProfile: model.isOwnProfile,
+      onMessage: model.isOwnProfile ? null : () => model.onMessageTap(context),
+      onFollow: model.isOwnProfile ? null : () => model.onFollowTap(context),
+      isFollowing: model.isFollowing,
+      isFollowLoading: model.isFollowLoading,
+      onFollowersTap: model.isOwnProfile
+          ? () => model.openFollowers(context)
+          : null,
+      onFollowingTap: model.isOwnProfile
+          ? () => model.openFollowing(context)
+          : null,
+      onRatingTap: model.isOwnProfile
+          ? () => _showRateSheet(context, model)
+          : !model.canRateProfile
+          ? null
+          : () => _showRateSheet(context, model),
+      onMatchesTap: null,
+      onRatePlayer: model.isOwnProfile || model.canRateProfile
+          ? () => _showRateSheet(context, model)
+          : null,
+      showRateButton: model.isOwnProfile || model.canRateProfile,
+      onAllSportsTap: null,
     );
   }
 
@@ -69,6 +103,181 @@ class PublicProfileScreen extends StatelessWidget {
     );
   }
 
+  /// Same structure as [PrivateProfileScreen] (mobile / native), plus Message &
+  /// Follow for other users and optional Rate.
+  Widget _buildMobileListProfile(
+    BuildContext context,
+    PublicProfileViewModel model,
+  ) {
+    final c = context.appColors;
+    final t = context.appText;
+    final showRateCta = model.isOwnProfile || model.canRateProfile;
+
+    return MainFrame(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: context.padSym(h: 20),
+            child: AppBarWidget(
+              title: AppText.publicProfile,
+              onLeadingTap: () => _popOrClose(context),
+            ),
+          ),
+          Expanded(
+            child: model.showSpinner
+                ? const _MobilePublicProfileShimmer()
+                : model.showError
+                    ? Padding(
+                        padding: context.padSym(h: 20),
+                        child: Center(
+                          child: Text(
+                            model.displayError,
+                            textAlign: TextAlign.center,
+                            style: t.text14W400.copyWith(color: c.greyDark),
+                          ),
+                        ),
+                      )
+                    : ListView(
+                        padding: context
+                            .padSym(h: 20)
+                            .copyWith(bottom: context.h(32)),
+                        children: [
+                          ProfileDetailHeader(
+                            displayName: model.fullName,
+                            locationLabel: model.location,
+                            bio: model.bio,
+                            avatarUrl: model.avatarUrl,
+                            showTrophyBadge: true,
+                            nameStyle: t.style(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: c.onSurface,
+                              height: 1.2,
+                            ),
+                            bioStyle: t.text14W400.copyWith(
+                              color: c.greyDark,
+                              height: 1.45,
+                            ),
+                            locationStyle: t.text14W500.copyWith(
+                              color: c.greylight,
+                              height: 1.3,
+                            ),
+                          ),
+                          SizedBox(height: context.h(22)),
+                          ProfileDetailStatsRow(
+                            followersCount: model.followersCount,
+                            followingCount: model.followingCount,
+                            ratingValue: model.ratingValue,
+                            matchesPlayedValue: model.matchesPlayedValue,
+                            onFollowersTap: model.isOwnProfile
+                                ? () => model.openFollowers(context)
+                                : null,
+                            onFollowingTap: model.isOwnProfile
+                                ? () => model.openFollowing(context)
+                                : null,
+                          ),
+                          if (!model.isOwnProfile) ...[
+                            SizedBox(height: context.h(16)),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomButton(
+                                    text: AppText.message,
+                                    color: c.primary,
+                                    colorText: c.onPrimary,
+                                    radius: BorderRadius.circular(
+                                      context.radius(12),
+                                    ),
+                                    onTap: () => model.onMessageTap(context),
+                                  ),
+                                ),
+                                SizedBox(width: context.w(12)),
+                                Expanded(
+                                  child: CustomButton(
+                                    text: model.isFollowing
+                                        ? AppText.followed
+                                        : AppText.follow,
+                                    outlined: model.isFollowing,
+                                    borderColor: model.isFollowing
+                                        ? c.greylight
+                                        : AppColors.bluecolor,
+                                    titleStyle: model.isFollowing
+                                        ? t.text16W500.copyWith(
+                                            color: c.greyDark,
+                                          )
+                                        : t.text16Bold.copyWith(
+                                            color: AppColors.bluecolor,
+                                          ),
+                                    color: c.transparent,
+                                    radius: BorderRadius.circular(
+                                      context.radius(12),
+                                    ),
+                                    isLoading: model.isFollowLoading,
+                                    onTap: model.isFollowing
+                                        ? null
+                                        : () => model.onFollowTap(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (showRateCta) ...[
+                            SizedBox(height: context.h(16)),
+                            CustomButton(
+                              text: AppText.ratePlayer,
+                              color: c.transparent,
+                              outlined: true,
+                              titleStyle: t.text16Bold.copyWith(
+                                color: AppColors.bluecolor,
+                              ),
+                              borderColor: AppColors.bluecolor,
+                              radius: BorderRadius.circular(context.radius(12)),
+                              onTap: () => _showRateSheet(context, model),
+                            ),
+                          ],
+                          SizedBox(height: context.h(16)),
+                          NormalText(
+                            titleText: AppText.mySports,
+                            titleStyle: t.text16Bold.copyWith(
+                              color: c.greyDark,
+                            ),
+                          ),
+                          ...model.publicSportsForDisplay.map(
+                            (s) => ProfilePrivateSportRow(
+                              sportName: s.name,
+                              skillLabel: s.skill,
+                            ),
+                          ),
+                          if (model.hasReviews) ...[
+                            SizedBox(height: context.h(8)),
+                            NormalText(
+                              titleText: AppText.reviews,
+                              titleStyle: t.text16Bold.copyWith(
+                                color: c.greyDark,
+                              ),
+                            ),
+                            ...model.parsedReviews.map(
+                              (review) => Padding(
+                                padding: EdgeInsets.only(bottom: context.h(10)),
+                                child: ProfileDetailReviewCard(
+                                  reviewAuthor: review['author'] ?? '—',
+                                  reviewDate: review['date'] ?? '',
+                                  reviewBody: review['body'] ??
+                                      AppText.profilePlaceholderReview,
+                                  reviewInitial: review['initial'] ?? '?',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -80,234 +289,104 @@ class PublicProfileScreen extends StatelessWidget {
             final c = context.appColors;
             final t = context.appText;
 
-            if (kIsWeb) {
-              if (model.showSpinner) {
-                return const _ProfileScreenShimmer();
-              }
-              if (model.showError) {
-                return Center(
-                  child: Text(
-                    model.displayError,
-                    textAlign: TextAlign.center,
-                    style: t.text14W400.copyWith(color: c.greyDark),
-                  ),
-                );
-              }
-              return WebProfileContent(
-                title: AppText.publicProfile,
-                subtitle: 'Start messaging now',
-                displayName: model.fullName,
-                location: model.location,
-                bio: model.bio,
-                safeAvatarUrl: model.avatarUrl,
-                isLoading: false,
-                followersValue: '${model.followersCount}',
-                followingValue: '${model.followingCount}',
-                ratingValue: model.ratingValue,
-                matchesPlayedValue: model.matchesPlayedValue,
-                // Privacy: only allow opening follow lists for own profile.
-                onFollowersTap:
-                    model.isOwnProfile ? () => model.openFollowers(context) : null,
-                onFollowingTap:
-                    model.isOwnProfile ? () => model.openFollowing(context) : null,
-                onRatingTap: model.isOwnProfile
-                    ? () => _showRateSheet(context, model)
-                    : !model.canRateProfile
-                    ? null
-                    : () => _showRateSheet(context, model),
-                onBackTap: () => Navigator.pop(context),
-                headerActionText: model.isOwnProfile
-                    ? AppText.editProfile
-                    : null,
-                onHeaderActionTap: model.isOwnProfile
-                    ? () => _openEditProfile(context)
-                    : null,
-                showHeaderText: false,
-                actionSection: Column(
-                  children: [
-                    _FollowMessageRow(
-                      onFollow: !model.isOwnProfile
-                          ? () => model.onFollowTap(context)
-                          : null,
-                      onMessage: !model.isOwnProfile
-                          ? () => model.onMessageTap(context)
-                          : null,
-                      isFollowing: model.isFollowing,
-                      isFollowLoading: model.isFollowLoading,
-                    ),
-                    SizedBox(height: context.h(12)),
-                    _RatePlayerButton(
-                      onTap: model.isOwnProfile || model.canRateProfile
-                          ? () => _showRateSheet(context, model)
-                          : null,
-                    ),
-                  ],
-                ),
-                footerSection: model.hasReviews
-                    ? WebDashboardPanel(
-                        padding: context.padAll(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+            if (!kIsWeb) {
+              return _buildMobileListProfile(context, model);
+            }
+
+            if (model.showSpinner) {
+              return MainFrame(
+                showDecorationLayer: false,
+                child: ColoredBox(
+                  color: PublicProfilePixelTheme.pageBackground,
+                  child: onEmbeddedClose != null
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              AppText.reviews,
-                              style: t.text18W400.copyWith(
-                                color: c.onSurface,
-                              ),
+                            PublicProfileBackPill(
+                              onTap: () => _popOrClose(context),
                             ),
-                            SizedBox(height: context.h(16)),
-                            ...model.parsedReviews.map(
-                              (review) => Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: context.h(10),
-                                ),
-                                child: ProfileDetailReviewCard(
-                                  reviewAuthor: review['author'] ?? '—',
-                                  reviewDate: review['date'] ?? '',
-                                  reviewBody:
-                                      review['body'] ??
-                                      AppText.profilePlaceholderReview,
-                                  reviewInitial: review['initial'] ?? '?',
-                                ),
-                              ),
-                            ),
+                            const Expanded(child: _ProfileScreenShimmer()),
                           ],
+                        )
+                      : const _ProfileScreenShimmer(),
+                ),
+              );
+            }
+            if (model.showError) {
+              return MainFrame(
+                showDecorationLayer: false,
+                child: ColoredBox(
+                  color: PublicProfilePixelTheme.pageBackground,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (onEmbeddedClose != null)
+                        PublicProfileBackPill(
+                          onTap: () => _popOrClose(context),
                         ),
-                      )
-                    : null,
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: context.padSym(h: 24),
+                            child: Text(
+                              model.displayError,
+                              textAlign: TextAlign.center,
+                              style: t.text14W400.copyWith(color: c.greyDark),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 
             return MainFrame(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: context.padSym(h: 20),
-                    child: AppBarWidget(
-                      title: AppText.publicProfile,
-                      onLeadingTap: () => Navigator.pop(context),
-                    ),
-                  ),
-                  Expanded(
-                    child: model.showSpinner
-                        ? const _ProfileScreenShimmer()
-                        : model.showError
-                        ? Padding(
-                            padding: context.padSym(h: 20),
-                            child: Center(
-                              child: Text(
-                                model.displayError,
-                                textAlign: TextAlign.center,
-                                style: t.text14W400.copyWith(color: c.greyDark),
-                              ),
-                            ),
-                          )
-                        : ListView(
-                            padding: context
-                                .padSym(h: 20)
-                                .copyWith(bottom: context.h(32)),
-                            children: [
-                              ProfileDetailHeader(
-                                displayName: model.fullName,
-                                locationLabel: model.location,
-                                bio: model.bio,
-                                avatarUrl: model.avatarUrl,
-                                showTrophyBadge: true,
-                                nameStyle: t.style(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: c.onSurface,
-                                  height: 1.2,
-                                ),
-                                bioStyle: t.text14W400.copyWith(
-                                  color: c.greyDark,
-                                  height: 1.45,
-                                ),
-                                locationStyle: t.text14W500.copyWith(
-                                  color: c.greylight,
-                                  height: 1.3,
-                                ),
-                              ),
-                              SizedBox(height: context.h(20)),
-                              _FollowMessageRow(
-                                onFollow: !model.isOwnProfile
-                                    ? () => model.onFollowTap(context)
-                                    : null,
-                                onMessage: !model.isOwnProfile
-                                    ? () => model.onMessageTap(context)
-                                    : null,
-                                isFollowing: model.isFollowing,
-                                isFollowLoading: model.isFollowLoading,
-                              ),
-                              SizedBox(height: context.h(12)),
-                              _RatePlayerButton(
-                                onTap: model.isOwnProfile || model.canRateProfile
-                                    ? () => _showRateSheet(context, model)
-                                    : null,
-                              ),
-                              SizedBox(height: context.h(20)),
-                              ProfileDetailStatsRow(
-                                followersCount: model.followersCount,
-                                followingCount: model.followingCount,
-                                ratingValue: model.ratingValue,
-                                matchesPlayedValue: model.matchesPlayedValue,
-                                // Privacy: only allow opening follow lists for own profile.
-                                onFollowersTap: model.isOwnProfile
-                                    ? () => model.openFollowers(context)
-                                    : null,
-                                onFollowingTap: model.isOwnProfile
-                                    ? () => model.openFollowing(context)
-                                    : null,
-                              
-                              ),
-                              SizedBox(height: context.h(16)),
-                              NormalText(
-                                titleText: AppText.mySports,
-                                titleStyle: t.text16Bold.copyWith(
-                                  color: c.greyDark,
-                                ),
-                              ),
-                              ...model.publicSportsForDisplay.map(
-                                (s) => ProfilePrivateSportRow(
-                                  sportName: s.name,
-                                  skillLabel: s.skill,
-                                ),
-                              ),
-                              if (model.hasReviews) ...[
-                                SizedBox(height: context.h(8)),
-                                NormalText(
-                                  titleText: AppText.reviews,
-                                  titleStyle: t.text16Bold.copyWith(
-                                    color: c.greyDark,
-                                  ),
-                                ),
-                                SizedBox(height: context.h(8)),
-                                ...model.parsedReviews.map(
-                                  (review) => Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: context.h(10),
-                                    ),
-                                    child: ProfileDetailReviewCard(
-                                      reviewAuthor: review['author'] ?? '—',
-                                      reviewDate: review['date'] ?? '',
-                                      reviewBody:
-                                          review['body'] ??
-                                          AppText.profilePlaceholderReview,
-                                      reviewInitial: review['initial'] ?? '?',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                  ),
-                ],
-              ),
+              showDecorationLayer: false,
+              child: _buildPixelProfile(context, model),
             );
           },
         ),
       ),
+    );
+  }
+}
+
+class _MobilePublicProfileShimmer extends StatelessWidget {
+  const _MobilePublicProfileShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: context.padSym(h: 20).copyWith(bottom: context.h(32)),
+      children: [
+        const Center(
+          child: ShimmerBox(width: 96, height: 96, shape: BoxShape.circle),
+        ),
+        SizedBox(height: context.h(14)),
+        const Center(child: ShimmerBox(width: 170, height: 18)),
+        SizedBox(height: context.h(10)),
+        const Center(child: ShimmerBox(width: 140, height: 12)),
+        SizedBox(height: context.h(20)),
+        Row(
+          children: const [
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+            SizedBox(width: 10),
+            Expanded(child: ShimmerBox(height: 84)),
+          ],
+        ),
+        SizedBox(height: context.h(18)),
+        const ShimmerBox(width: 90, height: 16),
+        SizedBox(height: context.h(12)),
+        const ShimmerBox(height: 52),
+        SizedBox(height: context.h(10)),
+        const ShimmerBox(height: 52),
+      ],
     );
   }
 }
@@ -487,8 +566,7 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
             SizedBox(height: context.h(18)),
             CustomButton(
               text: AppText.submitReview,
-              isLoading:
-                  widget.model.isSubmittingReview || _isSubmittingLocal,
+              isLoading: widget.model.isSubmittingReview || _isSubmittingLocal,
               color: c.primary,
               colorText: c.onPrimary,
               onTap: widget.model.canRateProfile ? _submit : null,
@@ -496,116 +574,6 @@ class _RatePlayerSheetState extends State<_RatePlayerSheet> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _FollowMessageRow extends StatelessWidget {
-  const _FollowMessageRow({
-    required this.onFollow,
-    required this.onMessage,
-    required this.isFollowing,
-    required this.isFollowLoading,
-  });
-
-  final Future<void> Function()? onFollow;
-  final VoidCallback? onMessage;
-  final bool isFollowing;
-  final bool isFollowLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: isFollowLoading || onFollow == null
-              ? null
-              : () => onFollow!(),
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(30),
-            ),
-            color: isFollowing ? Colors.white : c.primary,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isFollowLoading)
-                    SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(
-                          isFollowing ? c.primary : c.onPrimary,
-                        ),
-                      ),
-                    )
-                  else ...[
-                    Icon(
-                      isFollowing ? Icons.check : Icons.person_add_alt_1,
-                      size: 22,
-                      color: isFollowing ? c.primary : c.onPrimary,
-                    ),
-                    SizedBox(width: context.w(4)),
-                    NormalText(
-                      titleText: isFollowing
-                          ? AppText.following
-                          : AppText.follow,
-                      titleColor: isFollowing ? c.primary : c.onPrimary,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: onMessage,
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(30),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Row(
-                children: [
-                  SvgPicture.asset(AppAssets.chat, width: 22, height: 22),
-                  SizedBox(width: context.w(4)),
-                  NormalText(
-                    titleText: AppText.message,
-                    titleColor: c.greyDark,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RatePlayerButton extends StatelessWidget {
-  const _RatePlayerButton({required this.onTap});
-
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors;
-    return CustomButton(
-      text: AppText.ratePlayer,
-      color: c.primary,
-      radius: BorderRadius.circular(30),
-      padding: context.padSym(h: 0, v: 6),
-      colorText: c.onPrimary,
-      onTap: onTap,
-      leading: Icon(Icons.star_rounded, color: c.onPrimary, size: 22),
     );
   }
 }

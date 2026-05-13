@@ -53,30 +53,67 @@ class UpdateMatchStatusModel {
 
   factory UpdateMatchStatusModel.fromJson(Map<String, dynamic> json) {
     return UpdateMatchStatusModel(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      sport: json['sport'],
-      skillLevel: json['skill_level'],
-      status: json['status'],
-      scheduledAt: json['scheduled_at'],
-      durationMinutes: json['duration_minutes'],
-      scheduledDate: json['scheduled_date'],
-      scheduledTime: json['scheduled_time'],
-      facilityAddress: json['facility_address'],
-      location: json['location'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
-      maxPlayers: json['max_players'],
-      currentPlayers: json['current_players'],
+      id: _nullableString(json['id']),
+      title: _nullableString(json['title']),
+      description: _nullableString(json['description']),
+      sport: _sportLabelFromJson(json['sport']),
+      skillLevel: _nullableString(json['skill_level']),
+      status: _nullableString(json['status']),
+      scheduledAt: _nullableString(json['scheduled_at']),
+      durationMinutes: json['duration_minutes'] is int
+          ? json['duration_minutes'] as int
+          : int.tryParse(json['duration_minutes']?.toString() ?? ''),
+      scheduledDate: _nullableString(json['scheduled_date']),
+      scheduledTime: _nullableString(json['scheduled_time']),
+      facilityAddress: _nullableString(json['facility_address']),
+      location: _nullableString(json['location']),
+      latitude: json['latitude'] is num ? json['latitude'] as num : null,
+      longitude: json['longitude'] is num ? json['longitude'] as num : null,
+      maxPlayers: json['max_players'] is int
+          ? json['max_players'] as int
+          : int.tryParse(json['max_players']?.toString() ?? ''),
+      currentPlayers: json['current_players'] is int
+          ? json['current_players'] as int
+          : int.tryParse(json['current_players']?.toString() ?? ''),
       host: json['host'] is Map<String, dynamic>
           ? MatchStatusHostModel.fromJson(json['host'] as Map<String, dynamic>)
-          : null,
-      hostGamesPlayed: json['host_games_played'],
+          : json['host'] is Map
+              ? MatchStatusHostModel.fromJson(
+                  Map<String, dynamic>.from(json['host'] as Map),
+                )
+              : null,
+      hostGamesPlayed: json['host_games_played'] is int
+          ? json['host_games_played'] as int
+          : int.tryParse(json['host_games_played']?.toString() ?? ''),
       participants: (json['participants'] as List<dynamic>? ?? const []),
-      createdAt: json['created_at'],
+      createdAt: _nullableString(json['created_at']),
     );
   }
+}
+
+String? _nullableString(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is String) return raw;
+  return raw.toString();
+}
+
+/// API may return `sport` as a string id or as `{ id, name, custom_name, ... }`.
+String? _sportLabelFromJson(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is String) {
+    final s = raw.trim();
+    return s.isEmpty ? null : s;
+  }
+  if (raw is Map) {
+    final map = Map<String, dynamic>.from(raw);
+    final custom = (map['custom_name'] ?? '').toString().trim();
+    if (custom.isNotEmpty) return custom;
+    final name = (map['name'] ?? '').toString().trim();
+    if (name.isNotEmpty) return name;
+    final id = (map['id'] ?? '').toString().trim();
+    return id.isEmpty ? null : id;
+  }
+  return raw.toString();
 }
 
 class MatchStatusHostModel {

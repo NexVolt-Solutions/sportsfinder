@@ -4,8 +4,12 @@ import 'dart:async';
 import 'dart:html' as html;
 
 import 'package:sport_finding/core/Constants/google_maps_config.dart';
+import 'package:sport_finding/core/utils/logger.dart';
 
 /// Loads Maps JS (`google_maps_flutter_web`) using [GoogleMapsConfig.apiKey].
+///
+/// Uses a timeout so startup never hangs forever when the script is blocked
+/// (ad blockers, corporate filters, or flaky networks that never fire load/error).
 Future<void> ensureGoogleMapsScriptLoaded() async {
   if (html.document.querySelector('script[data-sf-google-maps]') != null) {
     return;
@@ -29,5 +33,16 @@ Future<void> ensureGoogleMapsScriptLoaded() async {
     }
   });
   html.document.head!.append(script);
-  await completer.future;
+  try {
+    await completer.future.timeout(const Duration(seconds: 25));
+  } on TimeoutException {
+    AppLogger.warning(
+      'Google Maps JS did not load within 25s (blocked network or extension?). '
+      'Continuing startup; map widgets may fail until reload.',
+      tag: 'GoogleMapsJsLoader',
+    );
+    try {
+      script.remove();
+    } catch (_) {}
+  }
 }

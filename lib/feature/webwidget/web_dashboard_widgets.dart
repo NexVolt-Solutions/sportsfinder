@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sport_finding/core/Constants/app_colors.dart';
-import 'package:sport_finding/core/Constants/app_theme.dart';
+ import 'package:sport_finding/core/Constants/app_theme.dart';
 import 'package:sport_finding/core/Constants/size_extension.dart';
 
 class WebDashboardPanel extends StatelessWidget {
@@ -19,22 +18,22 @@ class WebDashboardPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      padding: padding ?? context.padSym(h: 18, v: 18),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.whitecolor,
-        borderRadius: BorderRadius.circular(context.radius(18)),
-        border: Border.all(color: AppColors.transparent),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0B0E4A84),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+    return Card(
+      color: backgroundColor ?? context.appColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(context.radius(12)),
       ),
-      child: child,
+      child: Container(
+        height: height,
+        padding: padding ?? context.padSym(h: 20, v: 20),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? context.appColors.blue10,
+          borderRadius: BorderRadius.circular(context.radius(12)),
+          border: Border.all(color: context.appColors.transparent),
+         
+        ),
+        child: child,
+      ),
     );
   }
 }
@@ -100,26 +99,31 @@ class WebQuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: context.padSym(h: 18, v: 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F8FF),
+      child: Card(
+          shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(context.radius(16)),
-          border: Border.all(color: const Color(0xFFD7E7F7)),
+           
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            SizedBox(height: context.h(10)),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: context.appText.text14W500.copyWith(
-                color: context.appColors.onSurface,
+        child: Container(
+          padding: context.padSym(h: 16, v: 16),
+           decoration: BoxDecoration(
+            color: context.appColors.blue10,
+            borderRadius: BorderRadius.circular(context.radius(16)),
+           ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              SizedBox(height: context.h(10)),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: context.appText.text14W500.copyWith(
+                  color: context.appColors.onSurface,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

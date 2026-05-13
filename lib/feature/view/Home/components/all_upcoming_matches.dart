@@ -24,10 +24,12 @@ class AllUpcomingMatches extends StatefulWidget {
     super.key,
     this.embedAsBottomTab = false,
     this.listTitle,
+    this.forceMobileLayout = false,
   });
 
   final bool embedAsBottomTab;
   final String? listTitle;
+  final bool forceMobileLayout;
 
   @override
   State<AllUpcomingMatches> createState() => _AllUpcomingMatchesState();
@@ -57,94 +59,181 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
     }
   }
 
+  Future<void> _confirmAndDeleteMatch(
+    BuildContext context,
+    AllUpcommingMatchesViewModel model,
+    String matchId,
+    String matchTitle,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(AppText.deleteMatchConfirmationTitle),
+          content: Text(
+            '${AppText.deleteMatchConfirmationMessage}\n\n“$matchTitle”',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(AppText.cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: dialogContext.appColors.error,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text(AppText.deleteMatch),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final err = await model.deleteMatchById(matchId);
+    if (!context.mounted) return;
+
+    if (err == null) {
+      AppSnackBar.show(
+        AppText.matchDeletedSuccessfully,
+        backgroundColor: context.appColors.primary,
+      );
+    } else {
+      AppSnackBar.show(
+        err,
+        backgroundColor: context.appColors.error,
+      );
+    }
+  }
+
+  /// Same centered filter dialog as Discover web matches management.
+  void _showWebMatchesFilterDialog(
+    BuildContext context,
+    AllUpcommingMatchesViewModel model,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 520,
+              maxHeight: 640,
+            ),
+            child: FilterBottomSheet(
+              onApply: model.applyFilters,
+              asDialog: true,
+              initial: model.currentFilters,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AllUpcommingMatchesViewModel>(
       builder: (context, model, _) {
-        if (kIsWeb && widget.embedAsBottomTab) {
+        if (kIsWeb && widget.embedAsBottomTab && !widget.forceMobileLayout) {
           final rows = model.matches
               .map(
-                (match) => WebMatchTableRowData(
-                  title: match.title,
-                  sport: match.sport,
-                  players:
-                      '${match.currentPlayers}/${match.maxPlayers}',
-                  location: match.locationName.isNotEmpty
-                      ? match.locationName
-                      : match.location,
-                  status: _formatWebStatus(match.status),
-                  onView: () => _openMatchDetails(
-                    context,
-                    model,
-                    DiscoveryMatch.fromAllMatches(match),
-                  ),
-                  onEdit: () {
-                    Navigator.pushNamed(
+                (match) {
+                  final locked = _webMatchEditDeleteLocked(match.status);
+                  return WebMatchTableRowData(
+                    title: match.title,
+                    sport: match.sport,
+                    players:
+                        '${match.currentPlayers}/${match.maxPlayers}',
+                    location: match.locationName.isNotEmpty
+                        ? match.locationName
+                        : match.location,
+                    status: _formatWebStatus(match.status),
+                    onView: () => _openMatchDetails(
                       context,
-                      RoutesName.createMatchScreen,
-                      arguments: DiscoveryMatch.fromAllMatches(match),
-                    );
-                  },
-                  onDelete: () => _openMatchDetails(
-                    context,
-                    model,
-                    DiscoveryMatch.fromAllMatches(match),
-                  ),
-                ),
+                      model,
+                      DiscoveryMatch.fromAllMatches(match),
+                    ),
+                    onEdit: () {
+                      Navigator.pushNamed(
+                        context,
+                        RoutesName.createMatchScreen,
+                        arguments: DiscoveryMatch.fromAllMatches(match),
+                      );
+                    },
+                    onDelete:
+                        model.listScope == UpcomingMatchesScope.myMatches
+                        ? () => _confirmAndDeleteMatch(
+                            context,
+                            model,
+                            match.id,
+                            match.title,
+                          )
+                        : null,
+                    editEnabled: !locked,
+                    deleteEnabled: !locked,
+                  );
+                },
               )
               .toList();
+
+          IconData webEmptyIcon = Icons.search_off_rounded;
+          String webEmptyLabel = AppText.noMatchesFound;
+          String webEmptyDescription = AppText.matchesTrySearchOrFilters;
+
+          if (model.isLoading) {
+            webEmptyIcon = Icons.hourglass_empty_outlined;
+            webEmptyLabel = 'Loading matches...';
+            webEmptyDescription = '';
+          } else if (model.listScope == UpcomingMatchesScope.myMatches) {
+            if (model.showSearchOrFilterEmptyState) {
+              webEmptyIcon = Icons.search_off_rounded;
+              webEmptyLabel = AppText.noMatchesFound;
+              webEmptyDescription = AppText.matchesTrySearchOrFilters;
+            } else {
+              webEmptyIcon = Icons.event_note_outlined;
+              webEmptyLabel = AppText.noHostedMatchesYet;
+              webEmptyDescription = AppText.myMatchesWebEmptySubtitle;
+            }
+          } else {
+            if (model.showSearchOrFilterEmptyState) {
+              webEmptyIcon = Icons.search_off_rounded;
+              webEmptyLabel = AppText.noMatchesFound;
+              webEmptyDescription = AppText.matchesTrySearchOrFilters;
+            } else {
+              webEmptyIcon = Icons.calendar_month_outlined;
+              webEmptyLabel = AppText.noMatchesFound;
+              webEmptyDescription = AppText.allUpcomingWebEmptySubtitle;
+            }
+          }
+
           return WebMatchesManagementSection(
             title: widget.listTitle ?? 'Matches Management',
             subtitle: '${rows.length} total matches',
             onSearchChanged: model.searchMatches,
-            onSportsTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return FilterBottomSheet(
-                    onApply: (filterData) {
-                      model.applyFilters(filterData);
-                    },
-                  );
-                },
-              );
-            },
-            onDateTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return FilterBottomSheet(
-                    onApply: (filterData) {
-                      model.applyFilters(filterData);
-                    },
-                  );
-                },
-              );
-            },
-            onLocationTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return FilterBottomSheet(
-                    onApply: (filterData) {
-                      model.applyFilters(filterData);
-                    },
-                  );
-                },
-              );
-            },
+            onFilterTap: () => _showWebMatchesFilterDialog(context, model),
+            headerTrailing:
+                model.listScope == UpcomingMatchesScope.myMatches
+                    ? FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, RoutesName.createMatchScreen);
+                        },
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Create Match'),
+                      )
+                    : null,
+            onSportsTap: () => _showWebMatchesFilterDialog(context, model),
+            onDateTap: () => _showWebMatchesFilterDialog(context, model),
+            onLocationTap: () => _showWebMatchesFilterDialog(context, model),
             rows: rows,
-            emptyLabel: model.isLoading
-                ? 'Loading matches...'
-                : model.listScope == UpcomingMatchesScope.myMatches
-                ? AppText.noHostedMatchesYet
-                : AppText.noMatchesFound,
+            emptyLabel: webEmptyLabel,
+            emptyDescription: webEmptyDescription,
+            emptyIcon: webEmptyIcon,
           );
         }
 
@@ -176,6 +265,7 @@ class _AllUpcomingMatchesState extends State<AllUpcomingMatches> {
                         onApply: (filterData) {
                           model.applyFilters(filterData);
                         },
+                        initial: model.currentFilters,
                       );
                     },
                   );
@@ -279,4 +369,9 @@ String _formatWebStatus(String raw) {
   final value = trimmed.toLowerCase();
   if (value == 'open' || value == 'pending') return 'Pending';
   return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
+}
+
+bool _webMatchEditDeleteLocked(String apiStatus) {
+  final s = apiStatus.trim().toLowerCase();
+  return s == 'completed' || s == 'cancelled';
 }

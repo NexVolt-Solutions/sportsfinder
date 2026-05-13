@@ -5,13 +5,16 @@ import 'package:sport_finding/Data/model/match_filters.dart';
 
  
 class FilterBottomSheetViewModel extends ChangeNotifier {
-  FilterBottomSheetViewModel() {
+  FilterBottomSheetViewModel({FilterData? initial}) : _initial = initial {
     _load();
   }
 
+  final FilterData? _initial;
+  bool _appliedInitial = false;
+
   int? selectedSportIndex;
   int? selectedSkillIndex;
- double distance = 10.0;
+  double distance = kMaxFilterDistanceKm;
   bool distanceEnabled = false;
 
   List<String> skillLevels = [];
@@ -31,6 +34,7 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
             (name) => SportType(name: name, icon: _iconForSportName(name)),
           )
           .toList();
+      _applyInitialIfNeeded();
     } catch (e) {
       loadError = e.toString();
       skillLevels = [];
@@ -84,24 +88,33 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
 
   void toggleSport(int index) {
     selectedSportIndex = selectedSportIndex == index ? null : index;
+    debugPrint(
+      '🧰 [FilterVM] toggleSport index=$index selectedSportIndex=$selectedSportIndex',
+    );
     notifyListeners();
   }
 
   void toggleSkill(int index) {
     selectedSkillIndex = selectedSkillIndex == index ? null : index;
+    debugPrint(
+      '🧰 [FilterVM] toggleSkill index=$index selectedSkillIndex=$selectedSkillIndex',
+    );
     notifyListeners();
   }
 
   void setDistance(double v) {
     distance = v;
     distanceEnabled = true;
+    debugPrint(
+      '🧰 [FilterVM] setDistance distance=$distance enabled=$distanceEnabled',
+    );
     notifyListeners();
   }
 
   void reset() {
     selectedSportIndex = null;
     selectedSkillIndex = null;
-    distance = 10.0;
+    distance = kMaxFilterDistanceKm;
     distanceEnabled = false;
     selectedDate = null;
     selectedTime = null;
@@ -112,7 +125,7 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
 
   FilterData buildFilterData() {
     final effectiveDistance = distanceEnabled ? distance : kMaxFilterDistanceKm;
-    return FilterData(
+    final data = FilterData(
       sportIndex: selectedSportIndex,
       sportName: selectedSportIndex != null &&
               selectedSportIndex! >= 0 &&
@@ -128,6 +141,70 @@ class FilterBottomSheetViewModel extends ChangeNotifier {
       time: selectedTime,
       date: selectedDate,
     );
+    debugPrint('🧰 [FilterVM] buildFilterData → $data');
+    return data;
+  }
+
+  void _applyInitialIfNeeded() {
+    if (_appliedInitial) return;
+    final initial = _initial;
+    if (initial == null) return;
+
+    // sport
+    final initialSportName = initial.sportName?.trim();
+    if (initial.sportIndex != null &&
+        initial.sportIndex! >= 0 &&
+        initial.sportIndex! < sports.length) {
+      selectedSportIndex = initial.sportIndex;
+    } else if (initialSportName != null && initialSportName.isNotEmpty) {
+      final idx = sports.indexWhere(
+        (s) => s.name.toLowerCase() == initialSportName.toLowerCase(),
+      );
+      if (idx >= 0) selectedSportIndex = idx;
+    }
+
+    // skill
+    final initialSkill = initial.skillLevel?.trim();
+    if (initialSkill != null && initialSkill.isNotEmpty) {
+      final idx = skillLevels.indexWhere(
+        (s) => s.toLowerCase() == initialSkill.toLowerCase(),
+      );
+      if (idx >= 0) selectedSkillIndex = idx;
+    }
+
+    // distance
+    final d = initial.distance;
+    if (d >= kMaxFilterDistanceKm - 0.5) {
+      distanceEnabled = false;
+      distance = kMaxFilterDistanceKm;
+    } else {
+      distanceEnabled = true;
+      distance = d.clamp(0, kMaxFilterDistanceKm);
+    }
+
+    // date/time
+    selectedDate = initial.date;
+    selectedTime = initial.time;
+    if (selectedDate != null) {
+      final date = selectedDate!;
+      dateController.text =
+          '${date.day}/${_getMonthName(date.month)}/${date.year}';
+    }
+    if (selectedTime != null) {
+      timeController.text = _formatAmPm(selectedTime!);
+    }
+
+    _appliedInitial = true;
+    debugPrint('🧰 [FilterVM] applied initial → ${buildFilterData()}');
+    notifyListeners();
+  }
+
+  String _formatAmPm(TimeOfDay t) {
+    final m = t.minute.toString().padLeft(2, '0');
+    final isPm = t.hour >= 12;
+    var h12 = t.hour % 12;
+    if (h12 == 0) h12 = 12;
+    return '$h12:$m ${isPm ? 'PM' : 'AM'}';
   }
 
   String _getMonthName(int month) {

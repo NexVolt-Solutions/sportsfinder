@@ -75,10 +75,29 @@ class Sport {
 
   Sport({required this.sport, required this.skillLevel});
 
-  factory Sport.fromJson(Map<String, dynamic> json) {
-    return Sport(
-      sport: json['sport'] ?? '',
-      skillLevel: json['skill_level'] ?? '',
-    );
+  /// Supports flat `{ sport: "Football", skill_level: "..." }` and nested profile
+  /// shape `{ sport: { id, name, ... }, skill_level: "..." }`.
+  factory Sport.fromJson(dynamic raw) {
+    if (raw is! Map) {
+      return Sport(sport: '', skillLevel: '');
+    }
+    final json = Map<String, dynamic>.from(raw);
+    final skillRaw = json['skill_level'] ?? json['skillLevel'] ?? '';
+    final skillLevel = skillRaw.toString();
+
+    final sportRaw = json['sport'];
+    final String sportName;
+    if (sportRaw is String) {
+      sportName = sportRaw;
+    } else if (sportRaw is Map) {
+      final sm = Map<String, dynamic>.from(sportRaw);
+      final name = sm['name']?.toString().trim() ?? '';
+      final id = sm['id']?.toString().trim() ?? '';
+      sportName = name.isNotEmpty ? name : id;
+    } else {
+      sportName = sportRaw?.toString() ?? '';
+    }
+
+    return Sport(sport: sportName, skillLevel: skillLevel);
   }
 }

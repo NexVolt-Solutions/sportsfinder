@@ -74,11 +74,14 @@ class Items {
     avatarUrl = json['avatar_url'];
     avgRating = (json['avg_rating'] as num?)?.toDouble();
     totalGamesPlayed = json['total_games_played'];
-    if (json['sports'] != null) {
+    final sportsRaw = json['sports'];
+    if (sportsRaw is List) {
       sports = <Sports>[];
-      json['sports'].forEach((v) {
-        sports!.add(Sports.fromJson(v));
-      });
+      for (final v in sportsRaw) {
+        if (v is Map) {
+          sports!.add(Sports.fromJson(Map<String, dynamic>.from(v)));
+        }
+      }
     }
     isFollowing = json['is_following'];
   }
@@ -107,8 +110,45 @@ class Sports {
   Sports({this.sport, this.skillLevel});
 
   Sports.fromJson(Map<String, dynamic> json) {
-    sport = json['sport'];
-    skillLevel = json['skill_level'];
+    sport = _sportLabelFromJson(json['sport']);
+    skillLevel = _nullableStringField(json['skill_level']);
+  }
+
+  /// API may send `sport` as a string (legacy) or nested `{ id, name, ... }`.
+  static String? _sportLabelFromJson(dynamic value) {
+    if (value == null) return null;
+    if (value is String) {
+      final s = value.trim();
+      return s.isEmpty ? null : s;
+    }
+    if (value is Map) {
+      final m = Map<String, dynamic>.from(value);
+      final name = '${m['name'] ?? ''}'.trim();
+      if (name.isNotEmpty) return name;
+      final id = '${m['id'] ?? ''}'.trim();
+      if (id.isNotEmpty) return id;
+      return null;
+    }
+    final t = value.toString().trim();
+    return t.isEmpty ? null : t;
+  }
+
+  static String? _nullableStringField(dynamic value) {
+    if (value == null) return null;
+    if (value is String) {
+      final s = value.trim();
+      return s.isEmpty ? null : s;
+    }
+    if (value is Map) {
+      final m = Map<String, dynamic>.from(value);
+      final name = '${m['name'] ?? m['label'] ?? ''}'.trim();
+      if (name.isNotEmpty) return name;
+      final id = '${m['id'] ?? m['skill_level'] ?? ''}'.trim();
+      if (id.isNotEmpty) return id;
+      return null;
+    }
+    final t = value.toString().trim();
+    return t.isEmpty ? null : t;
   }
 
   Map<String, dynamic> toJson() {

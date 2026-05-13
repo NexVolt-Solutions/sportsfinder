@@ -27,26 +27,6 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
     Navigator.pushNamed(context, RoutesName.hostDetailsScreen, arguments: this);
   }
 
-  /// Opens [PublicProfileScreen] for a player name from host / match flows.
-  void pushPublicProfileForPlayer(
-    BuildContext context, {
-    required String displayName,
-    required String userIdSuffix,
-  }) {
-    final name = displayName.trim();
-    if (name.isEmpty) return;
-    Navigator.pushNamed(
-      context,
-      RoutesName.publicProfileScreen,
-      arguments: PublicProfileArgs(
-        userId: '${id}_$userIdSuffix',
-        displayName: name,
-        initialMatchId: id,
-        canRateForMatch: !isUpcomingRelativeTo(DateTime.now()),
-      ),
-    );
-  }
-
   /// Opens [PublicProfileScreen] using a real user id from [GET /api/v1/users].
   void pushPublicProfileForUser(
     BuildContext context, {
@@ -62,7 +42,6 @@ extension DiscoveryMatchNavigation on DiscoveryMatch {
       arguments: PublicProfileArgs(
         userId: uid,
         displayName: name,
-        initialMatchId: id,
         canRateForMatch: !isUpcomingRelativeTo(DateTime.now()),
       ),
     );

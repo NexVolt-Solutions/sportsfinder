@@ -7,31 +7,41 @@ import 'package:sport_finding/core/Constants/size_extension.dart';
 class CardIconWidget extends StatelessWidget {
   final String imageAsset;
   final bool isSelected;
+  final double? iconSize;
+  final double? padding;
+  final double? borderRadius;
 
   const CardIconWidget({
     super.key,
     required this.imageAsset,
     this.isSelected = false,
+    this.iconSize,
+    this.padding,
+    this.borderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final resolvedPadding = padding ?? (kIsWeb ? 12 : 8);
+    final resolvedIconSize = iconSize ?? context.w(kIsWeb ? 22 : 18);
+    final resolvedRadius =
+        borderRadius ?? context.radius(kIsWeb ? 14 : 12);
     final box = Container(
-      padding: context.padAll(kIsWeb ? 12 : 8),
+      padding: context.padAll(resolvedPadding),
       decoration: BoxDecoration(
         color: isSelected
             ? c.primary
             : (kIsWeb ? const Color(0xFFF2F8FF) : c.surface),
-        borderRadius: BorderRadius.circular(context.radius(kIsWeb ? 14 : 12)),
+        borderRadius: BorderRadius.circular(resolvedRadius),
         border: kIsWeb && !isSelected
             ? Border.all(color: const Color(0xFFD7E7F7))
             : null,
       ),
       child: SvgPicture.asset(
         imageAsset,
-        width: context.w(kIsWeb ? 22 : 18),
-        height: context.w(kIsWeb ? 22 : 18),
+        width: resolvedIconSize,
+        height: resolvedIconSize,
         colorFilter: ColorFilter.mode(
           isSelected ? c.onPrimary : c.greyDark,
           BlendMode.srcIn,
